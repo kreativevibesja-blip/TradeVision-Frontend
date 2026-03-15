@@ -1,0 +1,194 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { useAuth } from '@/hooks/useAuth';
+import { api } from '@/lib/api';
+import {
+  BarChart3,
+  Upload,
+  Crown,
+  Clock,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Eye,
+  ArrowRight,
+  Zap,
+} from 'lucide-react';
+
+export default function DashboardPage() {
+  const { user, token } = useAuth();
+  const [analyses, setAnalyses] = useState<any[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (token) {
+      loadAnalyses();
+    }
+  }, [token]);
+
+  const loadAnalyses = async () => {
+    try {
+      const data = await api.getAnalyses(token!, 1);
+      setAnalyses(data.analyses);
+      setTotal(data.total);
+    } catch {
+      // silently fail
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="max-w-md w-full">
+          <CardContent className="p-8 text-center">
+            <p className="text-muted-foreground mb-4">Please sign in to view your dashboard</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const dailyLimit = user.subscription === 'PRO' ? 'Unlimited' : '3';
+  const usagePercent = user.subscription === 'PRO' ? 0 : ((user.dailyUsage || 0) / 3) * 100;
+
+  return (
+    <div className="min-h-screen py-8">
+      <div className="container mx-auto px-4 max-w-6xl">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          {/* Header */}
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+            <div>
+              <h1 className="text-3xl font-bold mb-1">Dashboard</h1>
+              <p className="text-muted-foreground">Welcome back, {user.name || user.email.split('@')[0]}</p>
+            </div>
+            <Link href="/analyze">
+              <Button variant="gradient" className="gap-2">
+                <Upload className="h-4 w-4" />
+                New Analysis
+              </Button>
+            </Link>
+          </div>
+
+          {/* Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-sm text-muted-foreground">Subscription</span>
+                  <Badge variant={user.subscription === 'PRO' ? 'default' : 'secondary'}>
+                    {user.subscription === 'PRO' ? <Crown className="h-3 w-3 mr-1" /> : <Zap className="h-3 w-3 mr-1" />}
+                    {user.subscription}
+                  </Badge>
+                </div>
+                {user.subscription !== 'PRO' && (
+                  <Link href="/pricing">
+                    <Button variant="outline" size="sm" className="w-full mt-2">Upgrade to Pro</Button>
+                  </Link>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-muted-foreground">Daily Usage</span>
+                  <span className="text-sm font-medium">{user.dailyUsage || 0} / {dailyLimit}</span>
+                </div>
+                {user.subscription !== 'PRO' && (
+                  <Progress value={usagePercent} className="h-2 mt-2" indicatorClassName={usagePercent >= 100 ? 'bg-red-500' : 'bg-primary'} />
+                )}
+                {user.subscription === 'PRO' && (
+                  <p className="text-2xl font-bold text-green-400 mt-2">Unlimited</p>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <span className="text-sm text-muted-foreground">Total Analyses</span>
+                <p className="text-3xl font-bold mt-2">{total}</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Recent Analyses */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-primary" />
+                Recent Analyses
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="text-center py-8 text-muted-foreground">Loading...</div>
+              ) : analyses.length === 0 ? (
+                <div className="text-center py-12">
+                  <BarChart3 className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" />
+                  <p className="text-muted-foreground mb-4">No analyses yet</p>
+                  <Link href="/analyze">
+                    <Button variant="gradient" size="sm">Analyze Your First Chart</Button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {analyses.map((a) => (
+                    <motion.div
+                      key={a.id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="flex items-center justify-between p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-colors"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="h-12 w-12 rounded-lg bg-white/5 flex items-center justify-center">
+                          {a.bias === 'BULLISH' ? (
+                            <TrendingUp className="h-5 w-5 text-green-400" />
+                          ) : a.bias === 'BEARISH' ? (
+                            <TrendingDown className="h-5 w-5 text-red-400" />
+                          ) : (
+                            <Minus className="h-5 w-5 text-yellow-400" />
+                          )}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium">{a.pair}</p>
+                            <Badge variant={a.bias === 'BULLISH' ? 'success' : a.bias === 'BEARISH' ? 'destructive' : 'warning'} className="text-xs">
+                              {a.bias}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                            <span>{a.timeframe}</span>
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {new Date(a.createdAt).toLocaleDateString()}
+                            </span>
+                            {a.confidence && (
+                              <span>Score: {a.confidence}/100</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="sm">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+    </div>
+  );
+}
