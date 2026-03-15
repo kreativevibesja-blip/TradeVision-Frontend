@@ -31,34 +31,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const clearLegacyTokens = () => {
+    localStorage.removeItem('tradevision_token');
+    localStorage.removeItem('chartmind_token');
+  };
+
+  const clearAuthState = () => {
+    setUser(null);
+    setToken(null);
+    clearLegacyTokens();
+  };
+
+  const syncProfile = async (accessToken: string, shouldSignOutOnFailure = true) => {
+    setToken(accessToken);
+    clearLegacyTokens();
+
+    try {
+      const data = await api.getProfile(accessToken);
+      setUser(data.user);
+      return data.user;
+    } catch (error) {
+      clearAuthState();
+
+      if (shouldSignOutOnFailure) {
+        await supabase.auth.signOut();
+      }
+
+      throw error;
+    }
+  };
+
   useEffect(() => {
     let active = true;
 
-    const clearLegacyTokens = () => {
-      localStorage.removeItem('tradevision_token');
-      localStorage.removeItem('chartmind_token');
-    };
-
-    const clearAuthState = () => {
+    const clearAuthStateIfActive = () => {
       if (!active) return;
-      setUser(null);
-      setToken(null);
-      clearLegacyTokens();
-    };
-
-    const syncProfile = async (accessToken: string) => {
-      setToken(accessToken);
-      clearLegacyTokens();
-
-      try {
-        const data = await api.getProfile(accessToken);
-        if (!active) return;
-        setUser(data.user);
-      } catch (error) {
-        clearAuthState();
-        await supabase.auth.signOut();
-        throw error;
-      }
+      clearAuthState();
     };
 
     const loadSession = async () => {
@@ -75,10 +83,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (session?.access_token) {
           await syncProfile(session.access_token);
         } else {
-          clearAuthState();
+          clearAuthStateIfActive();
         }
       } catch {
-        clearAuthState();
+        clearAuthStateIfActive();
       } finally {
         if (active) {
           setLoading(false);
@@ -92,7 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const accessToken = session?.access_token ?? null;
 
       if (!accessToken) {
-        clearAuthState();
+        clearAuthStateIfActive();
         setLoading(false);
         return;
       }
@@ -100,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(true);
       void syncProfile(accessToken)
         .catch(() => {
-          clearAuthState();
+          clearAuthStateIfActive();
         })
         .finally(() => {
           if (active) {
@@ -131,9 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error('Sign in failed. Please try again.');
     }
 
-    setToken(data.session.access_token);
-    const profile = await api.getProfile(data.session.access_token);
-    setUser(profile.user);
+    await syncProfile(data.session.access_token, false);
   };
 
   const register = async (email: string, password: string, name?: string) => {
@@ -151,9 +157,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error('Account created. Confirm your email, then sign in.');
     }
 
-    setToken(data.session.access_token);
-    const profile = await api.getProfile(data.session.access_token);
-    setUser(profile.user);
+    await syncProfile(data.session.access_token, false);
   };
 
   const logout = async () => {
