@@ -1,5 +1,25 @@
 /** @type {import('next').NextConfig} */
-const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+const defaultApiUrl = 'http://localhost:4000/api';
+
+const normalizeApiUrl = (value) => {
+  const rawValue = value?.trim();
+  if (!rawValue) {
+    return defaultApiUrl;
+  }
+
+  try {
+    const parsedUrl = new URL(rawValue);
+    const normalizedPath = parsedUrl.pathname === '/' ? '/api' : parsedUrl.pathname.replace(/\/$/, '');
+    parsedUrl.pathname = normalizedPath.endsWith('/api') ? normalizedPath : `${normalizedPath}/api`;
+    return parsedUrl.toString().replace(/\/$/, '');
+  } catch {
+    return rawValue.replace(/\/$/, '').endsWith('/api')
+      ? rawValue.replace(/\/$/, '')
+      : `${rawValue.replace(/\/$/, '')}/api`;
+  }
+};
+
+const apiUrl = normalizeApiUrl(process.env.NEXT_PUBLIC_API_URL);
 
 const getRemotePatterns = () => {
   const patterns = [
