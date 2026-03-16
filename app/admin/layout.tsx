@@ -31,8 +31,20 @@ const adminNav = [
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const pathname = usePathname();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="max-w-md w-full">
+          <CardContent className="p-8 text-center">
+            <p className="text-muted-foreground">Checking your access...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (!user || user.role !== 'ADMIN') {
     return (
