@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 
 export default function DashboardPage() {
-  const { user, token } = useAuth();
+  const { user, token, loading: authLoading } = useAuth();
   const [analyses, setAnalyses] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -31,8 +31,10 @@ export default function DashboardPage() {
   useEffect(() => {
     if (token) {
       loadAnalyses();
+    } else if (!authLoading) {
+      setLoading(false);
     }
-  }, [token]);
+  }, [token, authLoading]);
 
   const loadAnalyses = async () => {
     try {
@@ -45,6 +47,18 @@ export default function DashboardPage() {
       setLoading(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="max-w-md w-full">
+          <CardContent className="p-8 text-center">
+            <p className="text-muted-foreground">Loading your dashboard...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (!user) {
     return (
