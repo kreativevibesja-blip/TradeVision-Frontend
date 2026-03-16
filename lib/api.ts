@@ -57,6 +57,18 @@ export const api = {
     apiFetch<{ user: any }>('/auth/profile', { token }),
 
   // Analysis
+  submitAnalysisJob: (formData: FormData, token: string) =>
+    apiFetch<{ jobId: string; analysisId: string; status: string; progress: number; currentStage: string }>(
+      '/analyze-chart',
+      { method: 'POST', body: formData, token }
+    ),
+
+  getAnalysisJob: (jobId: string, token: string) =>
+    apiFetch<{ jobId: string; status: string; progress: number; currentStage: string; error?: string; analysis: any | null }>(
+      `/analysis/${encodeURIComponent(jobId)}`,
+      { token }
+    ),
+
   uploadChart: (formData: FormData, token: string) =>
     apiFetch<{ imageUrl: string; filename: string; pair: string; timeframe: string }>(
       '/upload-chart',
