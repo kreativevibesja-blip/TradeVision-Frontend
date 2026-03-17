@@ -20,6 +20,7 @@ import {
   Star,
   CheckCircle2,
 } from 'lucide-react';
+import StrategyShowcase from '@/components/StrategyShowcase';
 
 // Floating candlestick animation component
 function FloatingCandlesticks() {
@@ -275,132 +276,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ═══════ EXAMPLE ANALYSIS ═══════ */}
-      <section className="py-24">
-        <div className="container mx-auto px-4">
-          <FadeInSection className="text-center mb-16">
-            <Badge className="mb-4" variant="outline">Live Example</Badge>
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              See AI Analysis in <span className="text-gradient">Action</span>
-            </h2>
-          </FadeInSection>
-
-          <FadeInSection>
-            <Card className="max-w-5xl mx-auto overflow-hidden">
-              <CardContent className="p-0">
-                <div className="grid grid-cols-1 lg:grid-cols-2">
-                  {/* Mock Chart */}
-                  <div className="relative bg-gradient-to-br from-gray-900 to-gray-800 p-8 min-h-[400px]">
-                    {/* Chart grid */}
-                    <div className="absolute inset-8 grid grid-cols-8 grid-rows-6 gap-0">
-                      {Array.from({ length: 48 }).map((_, i) => (
-                        <div key={i} className="border border-white/5" />
-                      ))}
-                    </div>
-
-                    {/* Candlesticks */}
-                    <div className="relative z-10 flex items-end gap-2 h-full pt-8">
-                      {[35, 45, 30, 50, 55, 40, 60, 65, 55, 70, 75, 80, 72, 85, 78, 90].map((h, i) => (
-                        <motion.div
-                          key={i}
-                          className="flex-1 flex flex-col items-center"
-                          initial={{ scaleY: 0 }}
-                          whileInView={{ scaleY: 1 }}
-                          viewport={{ once: true }}
-                          transition={{ delay: i * 0.05, duration: 0.5 }}
-                          style={{ originY: 1 }}
-                        >
-                          <div className={`w-[2px] ${i > 10 ? 'bg-green-500' : i % 3 === 0 ? 'bg-red-500' : 'bg-green-500'}`} style={{ height: h * 0.2 }} />
-                          <div className={`w-full rounded-sm ${i > 10 ? 'bg-green-500' : i % 3 === 0 ? 'bg-red-500' : 'bg-green-500'}`} style={{ height: h * 0.6 }} />
-                          <div className={`w-[2px] ${i > 10 ? 'bg-green-500' : i % 3 === 0 ? 'bg-red-500' : 'bg-green-500'}`} style={{ height: h * 0.2 }} />
-                        </motion.div>
-                      ))}
-                    </div>
-
-                    {/* Overlay annotations */}
-                    <motion.div
-                      className="absolute top-16 left-12 px-2 py-1 bg-blue-500/20 border border-blue-500/40 rounded text-xs text-blue-400"
-                      initial={{ opacity: 0 }}
-                      whileInView={{ opacity: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: 1 }}
-                    >
-                      BOS ↑
-                    </motion.div>
-                    <motion.div
-                      className="absolute top-32 right-16 px-2 py-1 bg-purple-500/20 border border-purple-500/40 rounded text-xs text-purple-400"
-                      initial={{ opacity: 0 }}
-                      whileInView={{ opacity: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: 1.2 }}
-                    >
-                      CHOCH
-                    </motion.div>
-                    <motion.div
-                      className="absolute bottom-24 left-1/3 right-1/4 h-8 bg-green-500/10 border border-green-500/30 rounded flex items-center justify-center"
-                      initial={{ opacity: 0 }}
-                      whileInView={{ opacity: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: 1.4 }}
-                    >
-                      <span className="text-xs text-green-400">Entry Zone</span>
-                    </motion.div>
-                    <motion.div
-                      className="absolute bottom-14 left-1/3 right-1/4 border-t-2 border-dashed border-red-500/50"
-                      initial={{ opacity: 0, scaleX: 0 }}
-                      whileInView={{ opacity: 1, scaleX: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: 1.6 }}
-                    >
-                      <span className="text-xs text-red-400 absolute -top-5 left-0">Stop Loss</span>
-                    </motion.div>
-                    <motion.div
-                      className="absolute top-24 left-1/2 right-8 border-t-2 border-dashed border-green-500/50"
-                      initial={{ opacity: 0, scaleX: 0 }}
-                      whileInView={{ opacity: 1, scaleX: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: 1.8 }}
-                    >
-                      <span className="text-xs text-green-400 absolute -top-5 right-0">TP1</span>
-                    </motion.div>
-                  </div>
-
-                  {/* Analysis Results */}
-                  <div className="p-8 space-y-4">
-                    <div className="flex items-center gap-2 mb-6">
-                      <div className="h-3 w-3 rounded-full bg-green-500 animate-pulse" />
-                      <span className="text-sm text-green-400 font-medium">Analysis Complete</span>
-                    </div>
-
-                    {[
-                      { label: 'Market Bias', value: 'BULLISH', color: 'text-green-400' },
-                      { label: 'Entry Zone', value: '1.0850 - 1.0860', color: 'text-blue-400' },
-                      { label: 'Stop Loss', value: '1.0820', color: 'text-red-400' },
-                      { label: 'Take Profit 1', value: '1.0900', color: 'text-green-400' },
-                      { label: 'Take Profit 2', value: '1.0940', color: 'text-green-400' },
-                      { label: 'Take Profit 3', value: '1.0980', color: 'text-green-400' },
-                      { label: 'Strategy', value: 'Smart Money Concepts', color: 'text-purple-400' },
-                      { label: 'Confidence', value: '87/100', color: 'text-yellow-400' },
-                    ].map((item, i) => (
-                      <motion.div
-                        key={item.label}
-                        className="flex justify-between items-center py-2 border-b border-white/5"
-                        initial={{ opacity: 0, x: 20 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: 0.8 + i * 0.1 }}
-                      >
-                        <span className="text-sm text-muted-foreground">{item.label}</span>
-                        <span className={`font-semibold ${item.color}`}>{item.value}</span>
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </FadeInSection>
-        </div>
-      </section>
+      {/* ═══════ STRATEGY SHOWCASE ═══════ */}
+      <StrategyShowcase />
 
       {/* ═══════ TESTIMONIALS ═══════ */}
       <section className="py-24 bg-gradient-to-b from-transparent via-purple-950/20 to-transparent">
