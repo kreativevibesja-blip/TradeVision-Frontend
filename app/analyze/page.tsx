@@ -123,7 +123,6 @@ export default function AnalyzePage() {
   const [pair, setPair] = useState('');
   const [timeframe, setTimeframe] = useState('');
   const [loading, setLoading] = useState(false);
-  const [jobId, setJobId] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [currentStage, setCurrentStage] = useState(ANALYSIS_STEPS[0]);
   const [analysis, setAnalysis] = useState<any>(null);
@@ -151,38 +150,21 @@ export default function AnalyzePage() {
   });
 
   useEffect(() => {
-    if (!loading || !jobId || !token) {
+    if (!loading) {
       return;
     }
 
-    const interval = window.setInterval(async () => {
-      try {
-        const result = await api.getAnalysisJob(jobId, token);
-        setProgress(result.progress);
-        setCurrentStage(result.currentStage || ANALYSIS_STEPS[Math.min(ANALYSIS_STEPS.length - 1, Math.floor(result.progress / 25))]);
-
-        if (result.status === 'COMPLETED' && result.analysis) {
-          setAnalysis(result.analysis);
-          setLoading(false);
-          setJobId(null);
-        }
-
-        if (result.status === 'FAILED') {
-          setError(result.error || 'Analysis failed. Please try again.');
-          setLoading(false);
-          setJobId(null);
-        }
-      } catch (pollError: any) {
-        setError(pollError.message || 'Unable to fetch analysis status.');
-        setLoading(false);
-        setJobId(null);
-      }
-    }, 2000);
+    let stepIndex = 0;
+    const interval = window.setInterval(() => {
+      stepIndex = Math.min(stepIndex + 1, ANALYSIS_STEPS.length - 1);
+      setCurrentStage(ANALYSIS_STEPS[stepIndex]);
+      setProgress((current) => Math.min(current + 18, 90));
+    }, 1200);
 
     return () => {
       window.clearInterval(interval);
     };
-  }, [jobId, loading, token]);
+  }, [loading]);
 
   const handleAnalyze = async () => {
     if (!user || !token) {
@@ -208,10 +190,11 @@ export default function AnalyzePage() {
       formData.append('pair', pair);
       formData.append('timeframe', timeframe);
 
-      const result = await api.submitAnalysisJob(formData, token);
-      setJobId(result.jobId);
-      setProgress(result.progress);
-      setCurrentStage(result.currentStage || ANALYSIS_STEPS[0]);
+      const result = await api.analyzeChartUpload(formData, token);
+      setProgress(100);
+      setCurrentStage(ANALYSIS_STEPS[ANALYSIS_STEPS.length - 1]);
+      setAnalysis(result.analysis);
+      setLoading(false);
     } catch (submitError: any) {
       setError(submitError.message || 'Unable to start analysis.');
       setLoading(false);
@@ -348,7 +331,7 @@ export default function AnalyzePage() {
                     {loading ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        Queueing analysis...
+                        Analyzing chart...
                       </>
                     ) : (
                       <>
@@ -392,7 +375,6 @@ export default function AnalyzePage() {
                   variant="outline"
                   onClick={() => {
                     setAnalysis(null);
-                    setJobId(null);
                     setFile(null);
                     setPreview(null);
                     setProgress(0);
@@ -592,7 +574,7 @@ export default function AnalyzePage() {
                       {currentStage}
                     </motion.p>
                     <Progress value={progress} className="h-3" />
-                    <p className="text-sm text-muted-foreground/60">Job {jobId ? jobId.slice(0, 8) : 'pending'} · {progress}%</p>
+                    <p className="text-sm text-muted-foreground/60">Live analysis in progress · {progress}%</p>
                   </div>
 
                   <div className="space-y-2 rounded-xl border border-white/10 bg-white/5 p-4 text-left">
