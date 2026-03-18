@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
 import Link from 'next/link';
@@ -121,7 +121,7 @@ function ConfidenceMeter({ score }: { score: number }) {
   );
 }
 
-export default function AnalyzePage() {
+function AnalyzePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, token } = useAuth();
@@ -684,5 +684,19 @@ export default function AnalyzePage() {
         </motion.div>
       </div>
     </div>
+  );
+}
+
+export default function AnalyzePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center py-8">
+          <div className="text-sm text-muted-foreground">Loading analysis workspace...</div>
+        </div>
+      }
+    >
+      <AnalyzePageContent />
+    </Suspense>
   );
 }
