@@ -20,6 +20,37 @@ const normalizeApiUrl = (value?: string) => {
 
 const API_URL = normalizeApiUrl(process.env.NEXT_PUBLIC_API_URL);
 
+export interface AnalysisResult {
+  id: string;
+  pair: string;
+  timeframe: string;
+  assetClass?: string | null;
+  bias: string;
+  confidence: number;
+  currentPrice: number;
+  entry: number | null;
+  stopLoss: number | null;
+  takeProfits: number[];
+  riskReward: string | null;
+  entryType: 'breakout' | 'pullback' | 'reversal';
+  recommendation: string;
+  reasoning: string;
+  trendStrength: 'weak' | 'moderate' | 'strong';
+  structure: {
+    recentHighZone: string;
+    recentLowZone: string;
+  };
+  structureSummary: string;
+  liquidityContext: string;
+  clarity: 'clear' | 'mixed' | 'unclear';
+  range: number;
+  buffer: number;
+  priceSource: 'manual';
+  provider: 'gemini-vision+anchor';
+  waitConditions?: string | null;
+  createdAt?: string;
+}
+
 interface FetchOptions extends RequestInit {
   token?: string;
 }
@@ -58,16 +89,16 @@ export const api = {
 
   // Analysis
   analyzeChartUpload: (formData: FormData, token: string) =>
-    apiFetch<{ analysis: any }>('/analyze-chart', { method: 'POST', body: formData, token }),
+    apiFetch<{ analysis: AnalysisResult }>('/analyze-chart', { method: 'POST', body: formData, token }),
 
   getAnalyses: (token: string, page = 1) =>
-    apiFetch<{ analyses: any[]; total: number; page: number; pages: number }>(
+    apiFetch<{ analyses: AnalysisResult[]; total: number; page: number; pages: number }>(
       `/analyses?page=${page}`,
       { token }
     ),
 
   getAnalysis: (id: string, token: string) =>
-    apiFetch<{ analysis: any }>(`/analyses/${encodeURIComponent(id)}`, { token }),
+    apiFetch<{ analysis: AnalysisResult }>(`/analyses/${encodeURIComponent(id)}`, { token }),
 
   // Payments
   createPayment: (plan: string, token: string) =>
