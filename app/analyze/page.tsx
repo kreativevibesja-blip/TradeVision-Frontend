@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -121,6 +122,8 @@ function ConfidenceMeter({ score }: { score: number }) {
 }
 
 export default function AnalyzePage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, token } = useAuth();
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -134,6 +137,7 @@ export default function AnalyzePage() {
   const [error, setError] = useState('');
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const analysisId = searchParams.get('analysisId');
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const nextFile = acceptedFiles[0];
@@ -170,6 +174,50 @@ export default function AnalyzePage() {
       window.clearInterval(interval);
     };
   }, [loading]);
+
+  useEffect(() => {
+    if (!token || !analysisId || analysis?.id === analysisId) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadAnalysis = async () => {
+      setLoading(true);
+      setProgress(35);
+      setCurrentStage('Loading saved analysis...');
+      setError('');
+
+      try {
+        const result = await api.getAnalysis(analysisId, token);
+        if (cancelled) {
+          return;
+        }
+
+        setAnalysis(result.analysis);
+        setPair(result.analysis.pair);
+        setTimeframe(result.analysis.timeframe);
+        setCurrentPrice(String(result.analysis.currentPrice ?? ''));
+        setProgress(100);
+      } catch (loadError: any) {
+        if (cancelled) {
+          return;
+        }
+
+        setError(loadError.message || 'Unable to load saved analysis.');
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void loadAnalysis();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [analysis?.id, analysisId, token]);
 
   const handleAnalyze = async () => {
     if (!user || !token) {
@@ -407,11 +455,13 @@ export default function AnalyzePage() {
                 <Button
                   variant="outline"
                   onClick={() => {
+                    router.replace('/analyze');
                     setAnalysis(null);
                     setFile(null);
                     setPreview(null);
                     setProgress(0);
                     setCurrentStage(ANALYSIS_STEPS[0]);
+                    setError('');
                   }}
                 >
                   New Analysis
