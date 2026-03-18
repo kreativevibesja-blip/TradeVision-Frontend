@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { api } from '@/lib/api';
-import { supabase } from '@/lib/supabase';
+import { hasSupabaseEnv, missingSupabaseEnvMessage, supabase } from '@/lib/supabase';
 
 interface User {
   id: string;
@@ -30,7 +30,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(hasSupabaseEnv);
 
   const clearLegacyTokens = () => {
     localStorage.removeItem('tradevision_token');
@@ -54,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       clearAuthState();
 
-      if (shouldSignOutOnFailure) {
+      if (shouldSignOutOnFailure && supabase) {
         await supabase.auth.signOut();
       }
 
@@ -63,6 +63,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+
+    const supabaseClient = supabase;
+
     let active = true;
 
     const clearAuthStateIfActive = () => {
@@ -75,7 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const {
           data: { session },
           error,
-        } = await supabase.auth.getSession();
+        } = await supabaseClient.auth.getSession();
 
         if (error) {
           throw error;
@@ -97,7 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
+    } = supabaseClient.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
       const accessToken = session?.access_token ?? null;
 
       if (!accessToken) {
@@ -127,6 +134,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
+    if (!supabase) {
+      throw new Error(missingSupabaseEnvMessage);
+    }
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -144,6 +155,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const register = async (email: string, password: string, name?: string) => {
+    if (!supabase) {
+      throw new Error(missingSupabaseEnvMessage);
+    }
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -162,6 +177,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signInWithGoogle = async () => {
+    if (!supabase) {
+      throw new Error(missingSupabaseEnvMessage);
+    }
+
     const redirectTo = typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : undefined;
 
     const { data, error } = await supabase.auth.signInWithOAuth({
@@ -185,6 +204,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
+    if (!supabase) {
+      clearAuthState();
+      return;
+    }
+
     await supabase.auth.signOut();
     setUser(null);
     setToken(null);
