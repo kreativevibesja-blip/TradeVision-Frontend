@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +29,8 @@ import {
   Zap,
   CandlestickChart,
   Activity,
+  Lock,
+  Sparkles,
 } from 'lucide-react';
 
 const PAIRS = [
@@ -43,11 +46,11 @@ const PAIRS = [
 
 const TIMEFRAMES = ['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1', 'W1', 'MN'];
 const ANALYSIS_STEPS = [
-  'Scanning chart...',
-  'Detecting market structure...',
-  'Analyzing liquidity zones...',
-  'Calculating volatility...',
-  'Generating AI reasoning...',
+  'Processing chart image...',
+  'Mapping market structure...',
+  'Running Gemini vision...',
+  'Refining premium insights...',
+  'Preparing trade plan...',
 ];
 
 const formatPrice = (value: number | null | undefined, pair: string) => {
@@ -112,6 +115,26 @@ function ConfidenceMeter({ score }: { score: number }) {
       <p className={`text-sm font-medium ${getColor(score)}`}>
         {score >= 80 ? 'High conviction setup' : score >= 60 ? 'Tradable with confirmation' : score >= 40 ? 'Lower-quality setup' : 'Wait for better structure'}
       </p>
+    </div>
+  );
+}
+
+function LockedFeatureCard() {
+  return (
+    <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-5 text-center space-y-3">
+      <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-amber-500/10 border border-amber-500/20">
+        <Lock className="h-4 w-4 text-amber-300" />
+      </div>
+      <div>
+        <p className="font-medium text-amber-100">Upgrade to Pro to unlock full analysis</p>
+        <p className="text-sm text-amber-200/70 mt-1">Reasoning, confidence, risk/reward, and refined trade management are available on Pro.</p>
+      </div>
+      <Link href="/checkout">
+        <Button variant="gradient" size="sm" className="gap-2">
+          <Sparkles className="h-4 w-4" />
+          Upgrade to Pro
+        </Button>
+      </Link>
     </div>
   );
 }
@@ -204,6 +227,10 @@ export default function AnalyzePage() {
   const bias = analysis?.bias || 'NEUTRAL';
   const layer1 = analysis?.layer1Output;
   const layer2 = analysis?.layer2Output;
+  const isProFeatureLocked = Boolean(analysis?.isProFeatureLocked);
+  const takeProfits = Array.isArray(analysis?.takeProfits)
+    ? analysis.takeProfits.filter((value: unknown): value is number => typeof value === 'number' && Number.isFinite(value))
+    : [analysis?.tp1, analysis?.tp2].filter((value: unknown): value is number => typeof value === 'number' && Number.isFinite(value));
   const displayedSteps = ANALYSIS_STEPS.map((step, index) => ({
     step,
     complete: progress >= (index + 1) * 20 || currentStage === step,
@@ -369,6 +396,10 @@ export default function AnalyzePage() {
                     <CandlestickChart className="h-4 w-4 mr-1" />
                     {analysis.assetClass || 'market'}
                   </Badge>
+                  <Badge variant="outline" className="text-sm px-3 py-1 border-purple-500/40 text-purple-300 bg-purple-500/10">
+                    <Brain className="h-4 w-4 mr-1" />
+                    {analysis.provider === 'gemini+openai' ? 'Gemini + OpenAI' : 'Gemini'}
+                  </Badge>
                   <span className="text-muted-foreground">{pair} · {timeframe}</span>
                 </div>
                 <Button
@@ -409,7 +440,20 @@ export default function AnalyzePage() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-muted-foreground leading-relaxed">{analysis.explanation || analysis.analysisText}</p>
+                      {isProFeatureLocked ? (
+                        <div className="space-y-4">
+                          <div className="relative overflow-hidden rounded-lg border border-white/10 bg-white/5 p-4">
+                            <div className="space-y-3 blur-sm select-none opacity-75">
+                              <p className="text-muted-foreground leading-relaxed">Institutional flow favors a reaction from the current demand zone after liquidity was swept below the prior low. Risk management improves if entry occurs after confirmation inside the reclaim area.</p>
+                              <p className="text-muted-foreground leading-relaxed">Premium analysis also includes confidence scoring, risk/reward calibration, and refined execution notes from the second AI pass.</p>
+                            </div>
+                            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
+                          </div>
+                          <LockedFeatureCard />
+                        </div>
+                      ) : (
+                        <p className="text-muted-foreground leading-relaxed">{analysis.reasoning || analysis.explanation || analysis.analysisText}</p>
+                      )}
                     </CardContent>
                   </Card>
 
@@ -421,49 +465,53 @@ export default function AnalyzePage() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-5">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm text-muted-foreground mb-1">Market Bias</p>
-                          <p className="font-semibold">{layer2?.marketBias || bias}</p>
+                      <div className={isProFeatureLocked ? 'opacity-40 blur-[2px] pointer-events-none select-none' : ''}>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-sm text-muted-foreground mb-1">Market Bias</p>
+                            <p className="font-semibold">{layer2?.marketBias || bias}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground mb-1">Structure</p>
+                            <p className="font-semibold">{layer2?.structure || analysis.structureSummary || 'Not available'}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground mb-1">Liquidity</p>
+                            <p className="font-semibold">{layer2?.liquidity || 'Not available'}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground mb-1">Volatility Regime</p>
+                            <p className="font-semibold">{layer2?.volatilityRegime || layer1?.volatility || 'Not available'}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground mb-1">Structure</p>
-                          <p className="font-semibold">{layer2?.structure || 'Not available'}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground mb-1">Liquidity</p>
-                          <p className="font-semibold">{layer2?.liquidity || 'Not available'}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground mb-1">Volatility Regime</p>
-                          <p className="font-semibold">{layer2?.volatilityRegime || layer1?.volatility || 'Not available'}</p>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
+                          {[
+                            { label: 'Break of Structure', items: layer2?.smcSignals?.bos },
+                            { label: 'Change of Character', items: layer2?.smcSignals?.choch },
+                            { label: 'Liquidity Sweeps', items: layer2?.smcSignals?.liquiditySweeps },
+                            { label: 'Fair Value Gaps', items: layer2?.smcSignals?.fairValueGaps },
+                          ].map((section) => (
+                            <div key={section.label} className="space-y-2">
+                              <h4 className="text-sm font-medium">{section.label}</h4>
+                              {section.items?.length ? (
+                                <ul className="space-y-1">
+                                  {section.items.map((item: string, index: number) => (
+                                    <li key={index} className="text-sm text-muted-foreground flex items-start gap-2">
+                                      <CheckCircle2 className="h-3 w-3 mt-1 flex-shrink-0 text-primary" />
+                                      {item}
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <p className="text-sm text-muted-foreground">Not detected</p>
+                              )}
+                            </div>
+                          ))}
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {[
-                          { label: 'Break of Structure', items: layer2?.smcSignals?.bos },
-                          { label: 'Change of Character', items: layer2?.smcSignals?.choch },
-                          { label: 'Liquidity Sweeps', items: layer2?.smcSignals?.liquiditySweeps },
-                          { label: 'Fair Value Gaps', items: layer2?.smcSignals?.fairValueGaps },
-                        ].map((section) => (
-                          <div key={section.label} className="space-y-2">
-                            <h4 className="text-sm font-medium">{section.label}</h4>
-                            {section.items?.length ? (
-                              <ul className="space-y-1">
-                                {section.items.map((item: string, index: number) => (
-                                  <li key={index} className="text-sm text-muted-foreground flex items-start gap-2">
-                                    <CheckCircle2 className="h-3 w-3 mt-1 flex-shrink-0 text-primary" />
-                                    {item}
-                                  </li>
-                                ))}
-                              </ul>
-                            ) : (
-                              <p className="text-sm text-muted-foreground">Not detected</p>
-                            )}
-                          </div>
-                        ))}
-                      </div>
+                      {isProFeatureLocked ? <LockedFeatureCard /> : null}
                     </CardContent>
                   </Card>
                 </div>
@@ -471,7 +519,7 @@ export default function AnalyzePage() {
                 <div className="space-y-6">
                   <Card>
                     <CardContent className="p-6">
-                      <ConfidenceMeter score={analysis.confidence || 0} />
+                      {isProFeatureLocked ? <LockedFeatureCard /> : <ConfidenceMeter score={analysis.confidence || 0} />}
                     </CardContent>
                   </Card>
 
@@ -498,20 +546,17 @@ export default function AnalyzePage() {
                         </div>
                         <p className="text-sm text-muted-foreground pl-6">{formatPrice(analysis.stopLoss, pair)}</p>
                       </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-sm font-medium">
-                          <CheckCircle2 className="h-4 w-4 text-green-400" />
-                          Take Profit 1
+                      {takeProfits.length > 0 ? takeProfits.map((target: number, index: number) => (
+                        <div key={`${target}-${index}`} className="space-y-2">
+                          <div className="flex items-center gap-2 text-sm font-medium">
+                            <CheckCircle2 className="h-4 w-4 text-green-400" />
+                            {`Take Profit ${index + 1}`}
+                          </div>
+                          <p className="text-sm text-muted-foreground pl-6">{formatPrice(target, pair)}</p>
                         </div>
-                        <p className="text-sm text-muted-foreground pl-6">{formatPrice(analysis.tp1, pair)}</p>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-sm font-medium">
-                          <CheckCircle2 className="h-4 w-4 text-green-400" />
-                          Take Profit 2
-                        </div>
-                        <p className="text-sm text-muted-foreground pl-6">{formatPrice(analysis.tp2, pair)}</p>
-                      </div>
+                      )) : (
+                        <p className="text-sm text-muted-foreground">No take profit targets were returned.</p>
+                      )}
                     </CardContent>
                   </Card>
 
@@ -530,6 +575,20 @@ export default function AnalyzePage() {
                           <span className="text-sm font-medium">Wait Conditions</span>
                         </div>
                         <p className="text-sm text-muted-foreground">{analysis.waitConditions || 'Wait for confirmation at the entry zone before execution.'}</p>
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Sparkles className="h-4 w-4 text-emerald-400" />
+                          <span className="text-sm font-medium">Recommendation</span>
+                        </div>
+                        <p className="text-sm text-muted-foreground capitalize">{analysis.recommendation || 'wait'}</p>
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Target className="h-4 w-4 text-cyan-400" />
+                          <span className="text-sm font-medium">Risk / Reward</span>
+                        </div>
+                        {isProFeatureLocked ? <LockedFeatureCard /> : <p className="text-sm text-muted-foreground">{analysis.riskReward || 'Not available'}</p>}
                       </div>
                     </CardContent>
                   </Card>
