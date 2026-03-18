@@ -8,8 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
-import { api } from '@/lib/api';
+import { api, type AnalysisResult } from '@/lib/api';
 import { AuthModal } from '@/components/AuthModal';
 import {
   Upload,
@@ -29,8 +30,8 @@ import {
   Zap,
   CandlestickChart,
   Activity,
-  Lock,
   Sparkles,
+  CircleDollarSign,
 } from 'lucide-react';
 
 const PAIRS = [
@@ -46,11 +47,11 @@ const PAIRS = [
 
 const TIMEFRAMES = ['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1', 'W1', 'MN'];
 const ANALYSIS_STEPS = [
-  'Processing chart image...',
-  'Mapping market structure...',
-  'Running Gemini vision...',
-  'Structuring Gemini response...',
-  'Preparing trade plan...',
+  'Uploading chart...',
+  'Analyzing market structure...',
+  'Extracting structural logic...',
+  'Anchoring trade levels...',
+  'Preparing final signal...',
 ];
 
 const formatPrice = (value: number | null | undefined, pair: string) => {
@@ -119,36 +120,17 @@ function ConfidenceMeter({ score }: { score: number }) {
   );
 }
 
-function LockedFeatureCard() {
-  return (
-    <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-5 text-center space-y-3">
-      <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-amber-500/10 border border-amber-500/20">
-        <Lock className="h-4 w-4 text-amber-300" />
-      </div>
-      <div>
-        <p className="font-medium text-amber-100">Upgrade to Pro to unlock full analysis</p>
-        <p className="text-sm text-amber-200/70 mt-1">Detailed Gemini reasoning, confidence, risk/reward, and full trade management are available on Pro.</p>
-      </div>
-      <Link href="/checkout">
-        <Button variant="gradient" size="sm" className="gap-2">
-          <Sparkles className="h-4 w-4" />
-          Upgrade to Pro
-        </Button>
-      </Link>
-    </div>
-  );
-}
-
 export default function AnalyzePage() {
   const { user, token } = useAuth();
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [pair, setPair] = useState('');
   const [timeframe, setTimeframe] = useState('');
+  const [currentPrice, setCurrentPrice] = useState('');
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [currentStage, setCurrentStage] = useState(ANALYSIS_STEPS[0]);
-  const [analysis, setAnalysis] = useState<any>(null);
+  const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState('');
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
@@ -196,8 +178,8 @@ export default function AnalyzePage() {
       return;
     }
 
-    if (!file || !pair || !timeframe) {
-      setError('Please upload a chart, select a pair, and choose a timeframe.');
+    if (!file || !pair || !timeframe || !currentPrice.trim()) {
+      setError('Please upload a chart, select a pair, choose a timeframe, and enter the current price.');
       return;
     }
 
@@ -212,6 +194,7 @@ export default function AnalyzePage() {
       formData.append('chart', file);
       formData.append('pair', pair);
       formData.append('timeframe', timeframe);
+      formData.append('currentPrice', currentPrice.trim());
 
       const result = await api.analyzeChartUpload(formData, token);
       setProgress(100);
@@ -225,12 +208,9 @@ export default function AnalyzePage() {
   };
 
   const bias = analysis?.bias || 'NEUTRAL';
-  const layer1 = analysis?.layer1Output;
-  const layer2 = analysis?.layer2Output;
-  const isProFeatureLocked = Boolean(analysis?.isProFeatureLocked);
   const takeProfits = Array.isArray(analysis?.takeProfits)
     ? analysis.takeProfits.filter((value: unknown): value is number => typeof value === 'number' && Number.isFinite(value))
-    : [analysis?.tp1, analysis?.tp2].filter((value: unknown): value is number => typeof value === 'number' && Number.isFinite(value));
+    : [];
   const displayedSteps = ANALYSIS_STEPS.map((step, index) => ({
     step,
     complete: progress >= (index + 1) * 20 || currentStage === step,
@@ -246,10 +226,10 @@ export default function AnalyzePage() {
         >
           <div className="text-center mb-8">
             <h1 className="text-3xl md:text-4xl font-bold mb-2">
-              <span className="text-gradient">3-Layer Chart Analysis</span>
+              <span className="text-gradient">Hybrid Signal Engine</span>
             </h1>
             <p className="text-muted-foreground">
-              Upload a forex, crypto, indices, or Deriv synthetic chart screenshot and get structured AI trade analysis.
+              Gemini reads structure only. Trade levels are anchored to your supplied live price to avoid fake precision.
             </p>
           </div>
 
@@ -331,6 +311,21 @@ export default function AnalyzePage() {
                     </div>
                   </div>
 
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Current Price</label>
+                    <Input
+                      type="number"
+                      inputMode="decimal"
+                      step="any"
+                      value={currentPrice}
+                      onChange={(event) => setCurrentPrice(event.target.value)}
+                      placeholder="Enter the live price shown on your chart"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Required. The system uses this price as the anchor for entry, stop loss, and take profit calculations.
+                    </p>
+                  </div>
+
                   <div className="rounded-xl border border-white/10 bg-white/5 p-4 space-y-3">
                     <div className="flex items-center gap-2 text-sm font-medium">
                       <Activity className="h-4 w-4 text-blue-400" />
@@ -358,12 +353,12 @@ export default function AnalyzePage() {
                     {loading ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        Analyzing chart...
+                        Analyzing market structure...
                       </>
                     ) : (
                       <>
                         <Brain className="h-5 w-5" />
-                        Analyze Chart
+                        Generate Signal
                       </>
                     )}
                   </Button>
@@ -398,7 +393,14 @@ export default function AnalyzePage() {
                   </Badge>
                   <Badge variant="outline" className="text-sm px-3 py-1 border-purple-500/40 text-purple-300 bg-purple-500/10">
                     <Brain className="h-4 w-4 mr-1" />
-                    {analysis.provider === 'gemini+openai' ? 'Gemini + OpenAI' : 'Gemini'}
+                    {analysis.provider === 'gemini-vision+anchor' ? 'Gemini Vision + Anchor' : 'Gemini'}
+                  </Badge>
+                  <Badge
+                    variant={analysis.recommendation === 'wait' ? 'warning' : 'success'}
+                    className="text-sm px-3 py-1"
+                  >
+                    <Sparkles className="h-4 w-4 mr-1" />
+                    {analysis.recommendation}
                   </Badge>
                   <span className="text-muted-foreground">{pair} · {timeframe}</span>
                 </div>
@@ -436,24 +438,11 @@ export default function AnalyzePage() {
                     <CardHeader>
                       <CardTitle className="text-lg flex items-center gap-2">
                         <Brain className="h-5 w-5 text-primary" />
-                        AI Explanation
+                        Signal Reasoning
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {isProFeatureLocked ? (
-                        <div className="space-y-4">
-                          <div className="relative overflow-hidden rounded-lg border border-white/10 bg-white/5 p-4">
-                            <div className="space-y-3 blur-sm select-none opacity-75">
-                              <p className="text-muted-foreground leading-relaxed">Institutional flow favors a reaction from the current demand zone after liquidity was swept below the prior low. Risk management improves if entry occurs after confirmation inside the reclaim area.</p>
-                              <p className="text-muted-foreground leading-relaxed">Premium analysis also includes confidence scoring, risk/reward calibration, and refined execution notes from the second AI pass.</p>
-                            </div>
-                            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
-                          </div>
-                          <LockedFeatureCard />
-                        </div>
-                      ) : (
-                        <p className="text-muted-foreground leading-relaxed">{analysis.reasoning || analysis.explanation || analysis.analysisText}</p>
-                      )}
+                      <p className="text-muted-foreground leading-relaxed">{analysis.reasoning}</p>
                     </CardContent>
                   </Card>
 
@@ -461,57 +450,41 @@ export default function AnalyzePage() {
                     <CardHeader>
                       <CardTitle className="text-lg flex items-center gap-2">
                         <BarChart3 className="h-5 w-5 text-primary" />
-                        Market Structure Engine
+                        Vision Structure
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-5">
-                      <div className={isProFeatureLocked ? 'opacity-40 blur-[2px] pointer-events-none select-none' : ''}>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <p className="text-sm text-muted-foreground mb-1">Market Bias</p>
-                            <p className="font-semibold">{layer2?.marketBias || bias}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground mb-1">Structure</p>
-                            <p className="font-semibold">{layer2?.structure || analysis.structureSummary || 'Not available'}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground mb-1">Liquidity</p>
-                            <p className="font-semibold">{layer2?.liquidity || 'Not available'}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground mb-1">Volatility Regime</p>
-                            <p className="font-semibold">{layer2?.volatilityRegime || layer1?.volatility || 'Not available'}</p>
-                          </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">Trend Strength</p>
+                          <p className="font-semibold capitalize">{analysis.trendStrength}</p>
                         </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
-                          {[
-                            { label: 'Break of Structure', items: layer2?.smcSignals?.bos },
-                            { label: 'Change of Character', items: layer2?.smcSignals?.choch },
-                            { label: 'Liquidity Sweeps', items: layer2?.smcSignals?.liquiditySweeps },
-                            { label: 'Fair Value Gaps', items: layer2?.smcSignals?.fairValueGaps },
-                          ].map((section) => (
-                            <div key={section.label} className="space-y-2">
-                              <h4 className="text-sm font-medium">{section.label}</h4>
-                              {section.items?.length ? (
-                                <ul className="space-y-1">
-                                  {section.items.map((item: string, index: number) => (
-                                    <li key={index} className="text-sm text-muted-foreground flex items-start gap-2">
-                                      <CheckCircle2 className="h-3 w-3 mt-1 flex-shrink-0 text-primary" />
-                                      {item}
-                                    </li>
-                                  ))}
-                                </ul>
-                              ) : (
-                                <p className="text-sm text-muted-foreground">Not detected</p>
-                              )}
-                            </div>
-                          ))}
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">Entry Type</p>
+                          <p className="font-semibold capitalize">{analysis.entryType}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">Recent High Zone</p>
+                          <p className="font-semibold">{analysis.structure?.recentHighZone || 'Not available'}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">Recent Low Zone</p>
+                          <p className="font-semibold">{analysis.structure?.recentLowZone || 'Not available'}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">Liquidity Context</p>
+                          <p className="font-semibold capitalize">{analysis.liquidityContext || 'Not available'}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">Chart Clarity</p>
+                          <p className="font-semibold capitalize">{analysis.clarity}</p>
                         </div>
                       </div>
 
-                      {isProFeatureLocked ? <LockedFeatureCard /> : null}
+                      <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                        <p className="text-sm text-muted-foreground mb-2">Structure Summary</p>
+                        <p className="text-sm leading-relaxed">{analysis.structureSummary}</p>
+                      </div>
                     </CardContent>
                   </Card>
                 </div>
@@ -519,7 +492,7 @@ export default function AnalyzePage() {
                 <div className="space-y-6">
                   <Card>
                     <CardContent className="p-6">
-                      {isProFeatureLocked ? <LockedFeatureCard /> : <ConfidenceMeter score={analysis.confidence || 0} />}
+                      <ConfidenceMeter score={analysis.confidence || 0} />
                     </CardContent>
                   </Card>
 
@@ -530,14 +503,17 @@ export default function AnalyzePage() {
                     <CardContent className="space-y-4">
                       <div className="space-y-2">
                         <div className="flex items-center gap-2 text-sm font-medium">
-                          <Target className="h-4 w-4 text-blue-400" />
-                          Entry Zone
+                          <CircleDollarSign className="h-4 w-4 text-emerald-400" />
+                          Current Price Anchor
                         </div>
-                        <p className="text-sm text-muted-foreground pl-6">
-                          {layer2?.tradeSetup?.entryZone
-                            ? `${formatPrice(layer2.tradeSetup.entryZone[0], pair)} - ${formatPrice(layer2.tradeSetup.entryZone[1], pair)}`
-                            : formatPrice(analysis.entry, pair)}
-                        </p>
+                        <p className="text-sm text-muted-foreground pl-6">{formatPrice(analysis.currentPrice, pair)}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm font-medium">
+                          <Target className="h-4 w-4 text-blue-400" />
+                          Entry
+                        </div>
+                        <p className="text-sm text-muted-foreground pl-6">{formatPrice(analysis.entry, pair)}</p>
                       </div>
                       <div className="space-y-2">
                         <div className="flex items-center gap-2 text-sm font-medium">
@@ -555,7 +531,7 @@ export default function AnalyzePage() {
                           <p className="text-sm text-muted-foreground pl-6">{formatPrice(target, pair)}</p>
                         </div>
                       )) : (
-                        <p className="text-sm text-muted-foreground">No take profit targets were returned.</p>
+                        <p className="text-sm text-muted-foreground">No trade levels were returned because the structure is not clean enough yet.</p>
                       )}
                     </CardContent>
                   </Card>
@@ -565,9 +541,9 @@ export default function AnalyzePage() {
                       <div>
                         <div className="flex items-center gap-2 mb-2">
                           <Zap className="h-4 w-4 text-purple-400" />
-                          <span className="text-sm font-medium">Trade Setup</span>
+                          <span className="text-sm font-medium">Signal Type</span>
                         </div>
-                        <p className="text-sm text-purple-400 font-semibold">{layer2?.tradeSetup?.type || 'pullback'}</p>
+                        <p className="text-sm text-purple-400 font-semibold capitalize">{analysis.entryType}</p>
                       </div>
                       <div>
                         <div className="flex items-center gap-2 mb-2">
@@ -588,7 +564,7 @@ export default function AnalyzePage() {
                           <Target className="h-4 w-4 text-cyan-400" />
                           <span className="text-sm font-medium">Risk / Reward</span>
                         </div>
-                        {isProFeatureLocked ? <LockedFeatureCard /> : <p className="text-sm text-muted-foreground">{analysis.riskReward || 'Not available'}</p>}
+                        <p className="text-sm text-muted-foreground">{analysis.riskReward || 'Not available'}</p>
                       </div>
                     </CardContent>
                   </Card>
@@ -597,13 +573,13 @@ export default function AnalyzePage() {
                     <CardContent className="p-6">
                       <div className="flex items-center gap-2 mb-3">
                         <CandlestickChart className="h-4 w-4 text-blue-400" />
-                        <span className="text-sm font-medium">Image Processing Layer</span>
+                        <span className="text-sm font-medium">Anchoring Logic</span>
                       </div>
                       <div className="space-y-2 text-sm text-muted-foreground">
-                        <p>Trend: <span className="text-foreground font-medium">{layer1?.trend || 'Not available'}</span></p>
-                        <p>Recent High: <span className="text-foreground font-medium">{formatPrice(layer1?.recentHigh, pair)}</span></p>
-                        <p>Recent Low: <span className="text-foreground font-medium">{formatPrice(layer1?.recentLow, pair)}</span></p>
-                        <p>Volatility: <span className="text-foreground font-medium">{layer1?.volatility || 'Not available'}</span></p>
+                        <p>Price Source: <span className="text-foreground font-medium capitalize">{analysis.priceSource}</span></p>
+                        <p>Working Range: <span className="text-foreground font-medium">{formatPrice(analysis.range, pair)}</span></p>
+                        <p>Execution Buffer: <span className="text-foreground font-medium">{formatPrice(analysis.buffer, pair)}</span></p>
+                        <p>Method: <span className="text-foreground font-medium">Deterministic price anchoring from current price</span></p>
                       </div>
                     </CardContent>
                   </Card>
