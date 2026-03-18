@@ -49,7 +49,7 @@ const ANALYSIS_STEPS = [
   'Processing chart image...',
   'Mapping market structure...',
   'Running Gemini vision...',
-  'Refining premium insights...',
+  'Structuring Gemini response...',
   'Preparing trade plan...',
 ];
 
@@ -127,7 +127,7 @@ function LockedFeatureCard() {
       </div>
       <div>
         <p className="font-medium text-amber-100">Upgrade to Pro to unlock full analysis</p>
-        <p className="text-sm text-amber-200/70 mt-1">Reasoning, confidence, risk/reward, and refined trade management are available on Pro.</p>
+        <p className="text-sm text-amber-200/70 mt-1">Detailed Gemini reasoning, confidence, risk/reward, and full trade management are available on Pro.</p>
       </div>
       <Link href="/checkout">
         <Button variant="gradient" size="sm" className="gap-2">
