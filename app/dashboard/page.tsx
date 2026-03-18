@@ -192,9 +192,11 @@ export default function DashboardPage() {
                           </div>
                         </div>
                       </div>
-                      <Button variant="ghost" size="sm">
-                        <Eye className="h-4 w-4" />
-                      </Button>
+                      <Link href={`/analyze?analysisId=${encodeURIComponent(a.id)}`}>
+                        <Button variant="ghost" size="sm">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </Link>
                     </motion.div>
                   ))}
                 </div>
