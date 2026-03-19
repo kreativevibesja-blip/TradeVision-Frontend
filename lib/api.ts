@@ -143,6 +143,8 @@ export const api = {
     apiFetch<{ analysis: AnalysisResult }>(`/analyses/${encodeURIComponent(id)}`, { token }),
 
   // Payments
+  getPayPalClientToken: (token: string) =>
+    apiFetch<{ clientToken: string }>('/paypal-client-token', { token }),
   createPayment: (plan: string, token: string) =>
     apiFetch<{ orderId: string; approveUrl: string }>('/create-payment', {
       method: 'POST',
