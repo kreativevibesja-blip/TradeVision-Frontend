@@ -9,6 +9,7 @@ import {
   PayPalScriptProvider,
   usePayPalHostedFields,
 } from '@paypal/react-paypal-js';
+import type { HostedFieldsState } from '@paypal/paypal-js';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -107,35 +108,40 @@ const normalizeCountryDetails = (country: string) => {
 };
 
 function CardFieldsSubmitButton({
-  orderId,
   activeBillingAddress,
   onSuccess,
   onError,
   disabled,
   loading,
 }: {
-  orderId: string | null;
   activeBillingAddress: AddressForm;
-  onSuccess: () => Promise<void>;
+  onSuccess: (orderId: string) => Promise<void>;
   onError: (message: string) => void;
   disabled: boolean;
   loading: boolean;
 }) {
   const hostedFields = usePayPalHostedFields();
 
-  const handleSubmit = async () => {
-    if (!orderId) {
-      onError('Unable to start card checkout. Please try again.');
-      return;
-    }
+  const hasInvalidRequiredFields = (state: HostedFieldsState) => {
+    const requiredFields = ['number', 'cvv', 'expirationDate'] as const;
+    return requiredFields.some((fieldName) => !state.fields[fieldName]?.isValid);
+  };
 
+  const handleSubmit = async () => {
     if (!hostedFields.cardFields) {
       onError('Card fields are not ready yet. Please wait a moment and try again.');
       return;
     }
 
     try {
-      await hostedFields.cardFields.submit({
+      const currentState = hostedFields.cardFields.getState();
+
+      if (hasInvalidRequiredFields(currentState)) {
+        onError('Please enter a valid card number, expiry date, and CVV before continuing.');
+        return;
+      }
+
+      const submitResult = await hostedFields.cardFields.submit({
         cardholderName: `${activeBillingAddress.firstName} ${activeBillingAddress.lastName}`.trim(),
         billingAddress: {
           firstName: activeBillingAddress.firstName,
@@ -149,7 +155,7 @@ function CardFieldsSubmitButton({
         },
       });
 
-      await onSuccess();
+      await onSuccess(submitResult.orderId);
     } catch (error: any) {
       onError(error?.message || 'Card payment failed. Please review your details and try again.');
     }
@@ -185,12 +191,10 @@ function HostedCardCheckout({
   activeBillingAddress: AddressForm;
   formReady: boolean;
   onCreateOrder: () => Promise<string>;
-  onCardApproved: () => Promise<void>;
+  onCardApproved: (orderId: string) => Promise<void>;
   onError: (message: string) => void;
   loading: boolean;
 }) {
-  const [orderId, setOrderId] = useState<string | null>(null);
-
   return (
     <PayPalScriptProvider
       options={{
@@ -202,11 +206,7 @@ function HostedCardCheckout({
       }}
     >
       <PayPalHostedFieldsProvider
-        createOrder={async () => {
-          const nextOrderId = await onCreateOrder();
-          setOrderId(nextOrderId);
-          return nextOrderId;
-        }}
+        createOrder={onCreateOrder}
         styles={{
           input: {
             'font-size': '15px',
@@ -234,7 +234,8 @@ function HostedCardCheckout({
               <p className="text-sm font-medium text-foreground">Card Number</p>
               <PayPalHostedField
                 id="paypal-card-number"
-                className="rounded-xl border border-white/10 bg-black/20 px-4 py-3"
+                className="min-h-[52px] rounded-xl border border-white/10 bg-black/20 px-4 py-3"
+                style={{ minHeight: 52 }}
                 hostedFieldType="number"
                 options={{ selector: '#paypal-card-number', placeholder: '1234 1234 1234 1234' }}
               />
@@ -244,7 +245,8 @@ function HostedCardCheckout({
               <p className="text-sm font-medium text-foreground">Expiry</p>
               <PayPalHostedField
                 id="paypal-card-expiry"
-                className="rounded-xl border border-white/10 bg-black/20 px-4 py-3"
+                className="min-h-[52px] rounded-xl border border-white/10 bg-black/20 px-4 py-3"
+                style={{ minHeight: 52 }}
                 hostedFieldType="expirationDate"
                 options={{ selector: '#paypal-card-expiry', placeholder: 'MM / YY' }}
               />
@@ -254,7 +256,8 @@ function HostedCardCheckout({
               <p className="text-sm font-medium text-foreground">CVV</p>
               <PayPalHostedField
                 id="paypal-card-cvv"
-                className="rounded-xl border border-white/10 bg-black/20 px-4 py-3"
+                className="min-h-[52px] rounded-xl border border-white/10 bg-black/20 px-4 py-3"
+                style={{ minHeight: 52 }}
                 hostedFieldType="cvv"
                 options={{ selector: '#paypal-card-cvv', placeholder: '123' }}
               />
@@ -266,7 +269,6 @@ function HostedCardCheckout({
           </div>
 
           <CardFieldsSubmitButton
-            orderId={orderId}
             activeBillingAddress={activeBillingAddress}
             onSuccess={onCardApproved}
             onError={onError}
@@ -471,12 +473,7 @@ function CheckoutPageContent() {
     return result.orderId;
   };
 
-  const handleCardApproval = async () => {
-    const orderId = sessionStorage.getItem('tradevision_order_id');
-    if (!orderId) {
-      throw new Error('Unable to verify card payment. Please try again.');
-    }
-
+  const handleCardApproval = async (orderId: string) => {
     setLoadingMethod('card');
 
     try {
