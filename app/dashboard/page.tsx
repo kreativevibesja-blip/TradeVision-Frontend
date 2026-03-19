@@ -155,7 +155,7 @@ export default function DashboardPage() {
                   </Link>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="max-h-[32rem] overflow-y-auto pr-1 space-y-3">
                   {analyses.map((a) => (
                     <motion.div
                       key={a.id}
