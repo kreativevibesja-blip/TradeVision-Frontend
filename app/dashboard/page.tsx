@@ -24,13 +24,14 @@ import {
 } from 'lucide-react';
 
 export default function DashboardPage() {
-  const { user, token, loading: authLoading } = useAuth();
+  const { user, token, loading: authLoading, refreshUser } = useAuth();
   const [analyses, setAnalyses] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (token) {
+      void refreshUser();
       loadAnalyses();
     } else if (!authLoading) {
       setLoading(false);
@@ -77,8 +78,7 @@ export default function DashboardPage() {
   const usagePercent = user.subscription === 'PRO' ? 0 : ((user.dailyUsage || 0) / 2) * 100;
 
   return (
-    <div className="page-stack min-h-screen">
-      <div className="page-shell max-w-6xl">
+    <div>
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.28 }}>
           {/* Header */}
           <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
@@ -222,7 +222,6 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </motion.div>
-      </div>
     </div>
   );
 }

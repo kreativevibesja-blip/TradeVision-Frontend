@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { api, type BillingSummary } from '@/lib/api';
-import { AlertTriangle, CalendarClock, CheckCircle2, CreditCard, Crown, Loader2, RefreshCcw, ShieldAlert, Zap } from 'lucide-react';
+import { AlertTriangle, CalendarClock, CheckCircle2, CreditCard, Crown, Loader2, RefreshCcw, ShieldAlert, X, Zap } from 'lucide-react';
 
 const statusTone = {
   free: {
@@ -29,6 +29,12 @@ const statusTone = {
     className: 'warning' as const,
     text: 'Your Pro access has expired and can be renewed.',
   },
+  cancelled: {
+    label: 'Pro Cancelled',
+    icon: X,
+    className: 'secondary' as const,
+    text: 'Your Pro plan was cancelled and can be reactivated.',
+  },
 };
 
 export default function BillingPage() {
@@ -37,6 +43,7 @@ export default function BillingPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [cancelling, setCancelling] = useState(false);
+  const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
 
   const loadBilling = async () => {
     if (!token) {
@@ -110,17 +117,14 @@ export default function BillingPage() {
   }
 
   return (
-    <div className="page-stack min-h-screen">
-      <div className="page-shell max-w-5xl">
+    <div>
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.24 }}>
           <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-3xl font-bold">Billing</h1>
               <p className="text-muted-foreground">See your current plan, expiry date, and subscription actions.</p>
             </div>
-            <Link href="/dashboard">
-              <Button variant="outline">Back to Dashboard</Button>
-            </Link>
+            <div />
           </div>
 
           {error && (
@@ -174,8 +178,7 @@ export default function BillingPage() {
 
                 <div className="flex flex-wrap gap-3">
                   {billing?.canCancel && (
-                    <Button variant="destructive" onClick={handleCancel} disabled={cancelling}>
-                      {cancelling ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    <Button variant="destructive" onClick={() => setConfirmCancelOpen(true)} disabled={cancelling}>
                       Cancel Pro Plan
                     </Button>
                   )}
@@ -183,7 +186,7 @@ export default function BillingPage() {
                     <Link href="/checkout?plan=PRO">
                       <Button variant="gradient">
                         <RefreshCcw className="mr-2 h-4 w-4" />
-                        {billing?.status === 'expired' ? 'Renew Pro' : 'Upgrade to Pro'}
+                        {billing?.status === 'expired' || billing?.status === 'cancelled' ? 'Renew Pro' : 'Upgrade to Pro'}
                       </Button>
                     </Link>
                   )}
@@ -191,7 +194,7 @@ export default function BillingPage() {
 
                 {billing?.canCancel && (
                   <p className="text-xs text-muted-foreground">
-                    Canceling here downgrades the account to Free immediately in the current system.
+                    Canceling here downgrades the account to Free immediately and stores the cancellation state in billing.
                   </p>
                 )}
               </CardContent>
@@ -226,8 +229,30 @@ export default function BillingPage() {
               </CardContent>
             </Card>
           </div>
+
+          {confirmCancelOpen && (
+            <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" onClick={() => setConfirmCancelOpen(false)}>
+              <div className="w-full max-w-md rounded-[24px] border border-white/10 bg-background p-6 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+                <div className="mb-4 flex items-start justify-between gap-4">
+                  <div>
+                    <h2 className="text-xl font-bold">Cancel Pro access?</h2>
+                    <p className="mt-2 text-sm text-muted-foreground">This will switch your account back to Free immediately. You can renew Pro later from this billing page.</p>
+                  </div>
+                  <button onClick={() => setConfirmCancelOpen(false)} className="rounded-full border border-white/10 p-2 text-muted-foreground hover:text-foreground">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                <div className="flex justify-end gap-3">
+                  <Button variant="outline" onClick={() => setConfirmCancelOpen(false)}>Keep Pro</Button>
+                  <Button variant="destructive" onClick={async () => { setConfirmCancelOpen(false); await handleCancel(); }} disabled={cancelling}>
+                    {cancelling ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Confirm Cancel
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </motion.div>
-      </div>
     </div>
   );
 }
