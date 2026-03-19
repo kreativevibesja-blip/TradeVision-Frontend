@@ -72,9 +72,10 @@ export interface Announcement {
 
 export interface BillingSummary {
   currentPlan: 'FREE' | 'PRO';
-  status: 'free' | 'active' | 'expired';
+  status: 'free' | 'active' | 'expired' | 'cancelled';
   expiresAt: string | null;
   lastPaymentAt: string | null;
+  canceledAt: string | null;
   canCancel: boolean;
   canRenew: boolean;
   recentPayments: Array<{
