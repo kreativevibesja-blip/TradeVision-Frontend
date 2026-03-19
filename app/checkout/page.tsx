@@ -81,7 +81,7 @@ function CheckoutPageContent() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center py-16">
+      <div className="min-h-screen flex items-center justify-center py-12 sm:py-16">
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -112,20 +112,20 @@ function CheckoutPageContent() {
   }
 
   return (
-    <div className="min-h-screen py-16">
-      <div className="container mx-auto px-4 max-w-2xl">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <h1 className="text-3xl font-bold mb-2">Checkout</h1>
+    <div className="page-stack min-h-screen">
+      <div className="page-shell max-w-2xl">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.28 }}>
+          <h1 className="mb-2 text-2xl font-bold sm:text-3xl">Checkout</h1>
           <p className="text-muted-foreground mb-8">Complete your Pro subscription</p>
 
-          <div className="grid gap-6">
+          <div className="grid gap-4 sm:gap-6">
             {/* Order Summary */}
-            <Card>
+            <Card className="mobile-card">
               <CardHeader>
                 <CardTitle className="text-lg">Order Summary</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center justify-between p-4 rounded-xl bg-white/5">
+                <div className="flex flex-col gap-4 rounded-2xl bg-white/5 p-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center gap-3">
                     <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600">
                       <Crown className="h-5 w-5 text-white" />
@@ -156,7 +156,7 @@ function CheckoutPageContent() {
             </Card>
 
             {/* Payment Methods */}
-            <Card>
+            <Card className="mobile-card">
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                   <CreditCard className="h-5 w-5 text-primary" />
