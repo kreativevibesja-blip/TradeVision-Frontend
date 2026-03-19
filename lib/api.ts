@@ -70,6 +70,25 @@ export interface Announcement {
   updatedAt: string;
 }
 
+export interface BillingSummary {
+  currentPlan: 'FREE' | 'PRO';
+  status: 'free' | 'active' | 'expired';
+  expiresAt: string | null;
+  lastPaymentAt: string | null;
+  canCancel: boolean;
+  canRenew: boolean;
+  recentPayments: Array<{
+    id: string;
+    paypalOrderId: string;
+    amount: number;
+    currency: string;
+    status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
+    plan: 'FREE' | 'PRO';
+    createdAt: string;
+    updatedAt: string;
+  }>;
+}
+
 interface FetchOptions extends RequestInit {
   token?: string;
 }
@@ -134,6 +153,13 @@ export const api = {
     apiFetch<{ success: boolean }>('/payment-success', {
       method: 'POST',
       body: JSON.stringify({ orderId }),
+      token,
+    }),
+  getBillingSummary: (token: string) =>
+    apiFetch<{ billing: BillingSummary }>('/billing-summary', { token }),
+  cancelSubscription: (token: string) =>
+    apiFetch<{ success: boolean; billing: BillingSummary }>('/cancel-subscription', {
+      method: 'POST',
       token,
     }),
 
