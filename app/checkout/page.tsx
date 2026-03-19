@@ -4,12 +4,13 @@ import { Suspense, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useSearchParams } from 'next/navigation';
 import {
-  PayPalHostedField,
-  PayPalHostedFieldsProvider,
+  PayPalCardFieldsProvider,
+  PayPalCVVField,
+  PayPalExpiryField,
+  PayPalNumberField,
   PayPalScriptProvider,
-  usePayPalHostedFields,
+  usePayPalCardFields,
 } from '@paypal/react-paypal-js';
-import type { HostedFieldsState } from '@paypal/paypal-js';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -97,73 +98,44 @@ const paypalClientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || '';
 const isAddressComplete = (address: AddressForm) =>
   requiredAddressFields.every((field) => address[field].trim().length > 0);
 
-const normalizeCountryDetails = (country: string) => {
-  const trimmed = country.trim();
-
-  if (trimmed.length === 2) {
-    return { countryCodeAlpha2: trimmed.toUpperCase() };
-  }
-
-  return trimmed ? { countryName: trimmed } : {};
-};
-
 function CardFieldsSubmitButton({
-  activeBillingAddress,
-  onSuccess,
   onError,
   disabled,
   loading,
 }: {
-  activeBillingAddress: AddressForm;
-  onSuccess: (orderId: string) => Promise<void>;
   onError: (message: string) => void;
   disabled: boolean;
   loading: boolean;
 }) {
-  const hostedFields = usePayPalHostedFields();
-
-  const hasInvalidRequiredFields = (state: HostedFieldsState) => {
-    const requiredFields = ['number', 'cvv', 'expirationDate'] as const;
-    return requiredFields.some((fieldName) => !state.fields[fieldName]?.isValid);
-  };
+  const { cardFieldsForm } = usePayPalCardFields();
+  const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async () => {
-    if (!hostedFields.cardFields) {
+    if (!cardFieldsForm) {
       onError('Card fields are not ready yet. Please wait a moment and try again.');
       return;
     }
 
     try {
-      const currentState = hostedFields.cardFields.getState();
+      const currentState = await cardFieldsForm.getState();
 
-      if (hasInvalidRequiredFields(currentState)) {
+      if (!currentState.isFormValid) {
         onError('Please enter a valid card number, expiry date, and CVV before continuing.');
         return;
       }
 
-      const submitResult = await hostedFields.cardFields.submit({
-        cardholderName: `${activeBillingAddress.firstName} ${activeBillingAddress.lastName}`.trim(),
-        billingAddress: {
-          firstName: activeBillingAddress.firstName,
-          lastName: activeBillingAddress.lastName,
-          streetAddress: activeBillingAddress.address1,
-          extendedAddress: activeBillingAddress.address2 || undefined,
-          locality: activeBillingAddress.city,
-          region: activeBillingAddress.state,
-          postalCode: activeBillingAddress.postalCode,
-          ...normalizeCountryDetails(activeBillingAddress.country),
-        },
-      });
-
-      await onSuccess(submitResult.orderId);
+      setSubmitting(true);
+      await cardFieldsForm.submit();
     } catch (error: any) {
       onError(error?.message || 'Card payment failed. Please review your details and try again.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <Button variant="gradient" size="lg" className="w-full" onClick={handleSubmit} disabled={disabled || loading}>
-      {loading ? (
+    <Button variant="gradient" size="lg" className="w-full" onClick={handleSubmit} disabled={disabled || loading || submitting}>
+      {loading || submitting ? (
         <>
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           Processing card payment...
@@ -180,37 +152,41 @@ function CardFieldsSubmitButton({
 
 function HostedCardCheckout({
   clientToken,
-  activeBillingAddress,
   formReady,
   onCreateOrder,
   onCardApproved,
   onError,
+  onCancel,
   loading,
 }: {
   clientToken: string;
-  activeBillingAddress: AddressForm;
   formReady: boolean;
   onCreateOrder: () => Promise<string>;
   onCardApproved: (orderId: string) => Promise<void>;
   onError: (message: string) => void;
+  onCancel: () => void;
   loading: boolean;
 }) {
   return (
     <PayPalScriptProvider
       options={{
         clientId: paypalClientId,
-        components: 'buttons,hosted-fields',
+        components: 'buttons,card-fields',
         currency: 'USD',
         intent: 'capture',
         dataClientToken: clientToken,
       }}
     >
-      <PayPalHostedFieldsProvider
+      <PayPalCardFieldsProvider
         createOrder={onCreateOrder}
-        styles={{
+        onApprove={(data) => onCardApproved(data.orderID)}
+        onCancel={onCancel}
+        onError={(error) => onError((error as { message?: string })?.message || 'Card payment failed. Please review your details and try again.')}
+        style={{
           input: {
             'font-size': '15px',
             color: '#e5eefb',
+            'line-height': '24px',
           },
           ':focus': {
             color: '#ffffff',
@@ -219,47 +195,37 @@ function HostedCardCheckout({
             color: '#f87171',
           },
         }}
-        notEligibleError={<div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-amber-200">Card payments are not eligible for this device or region. Please continue with the PayPal button instead.</div>}
       >
         <div className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4">
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-2 sm:col-span-2">
               <p className="text-sm font-medium text-foreground">Cardholder</p>
               <div className="rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-muted-foreground">
-                {`${activeBillingAddress.firstName} ${activeBillingAddress.lastName}`.trim() || 'Name will be pulled from your billing form'}
+                Name will be taken from the billing form and PayPal verification flow.
               </div>
             </div>
 
             <div className="space-y-2 sm:col-span-2">
               <p className="text-sm font-medium text-foreground">Card Number</p>
-              <PayPalHostedField
-                id="paypal-card-number"
+              <PayPalNumberField
                 className="min-h-[52px] rounded-xl border border-white/10 bg-black/20 px-4 py-3"
-                style={{ minHeight: 52 }}
-                hostedFieldType="number"
-                options={{ selector: '#paypal-card-number', placeholder: '1234 1234 1234 1234' }}
+                placeholder="1234 1234 1234 1234"
               />
             </div>
 
             <div className="space-y-2">
               <p className="text-sm font-medium text-foreground">Expiry</p>
-              <PayPalHostedField
-                id="paypal-card-expiry"
+              <PayPalExpiryField
                 className="min-h-[52px] rounded-xl border border-white/10 bg-black/20 px-4 py-3"
-                style={{ minHeight: 52 }}
-                hostedFieldType="expirationDate"
-                options={{ selector: '#paypal-card-expiry', placeholder: 'MM / YY' }}
+                placeholder="MM / YY"
               />
             </div>
 
             <div className="space-y-2">
               <p className="text-sm font-medium text-foreground">CVV</p>
-              <PayPalHostedField
-                id="paypal-card-cvv"
+              <PayPalCVVField
                 className="min-h-[52px] rounded-xl border border-white/10 bg-black/20 px-4 py-3"
-                style={{ minHeight: 52 }}
-                hostedFieldType="cvv"
-                options={{ selector: '#paypal-card-cvv', placeholder: '123' }}
+                placeholder="123"
               />
             </div>
           </div>
@@ -269,14 +235,12 @@ function HostedCardCheckout({
           </div>
 
           <CardFieldsSubmitButton
-            activeBillingAddress={activeBillingAddress}
-            onSuccess={onCardApproved}
             onError={onError}
             disabled={!formReady}
             loading={loading}
           />
         </div>
-      </PayPalHostedFieldsProvider>
+      </PayPalCardFieldsProvider>
     </PayPalScriptProvider>
   );
 }
@@ -708,11 +672,14 @@ function CheckoutPageContent() {
                         ) : paypalCardClientToken ? (
                           <HostedCardCheckout
                             clientToken={paypalCardClientToken}
-                            activeBillingAddress={activeBillingAddress}
                             formReady={formReady}
                             onCreateOrder={createCardOrder}
                             onCardApproved={handleCardApproval}
                             onError={setError}
+                            onCancel={() => {
+                              setLoadingMethod(null);
+                              setError('Card checkout was canceled. Please try again.');
+                            }}
                             loading={loadingMethod === 'card'}
                           />
                         ) : null
