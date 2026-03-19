@@ -34,16 +34,16 @@ export function Navbar() {
         animate={{ y: 0 }}
         className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-background/80 backdrop-blur-xl"
       >
-        <div className="container mx-auto flex h-16 items-center justify-between px-4">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-purple-600">
+        <div className="page-shell flex h-16 items-center justify-between gap-3">
+          <Link href="/" className="flex min-w-0 items-center gap-2">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500">
               <BarChart3 className="h-5 w-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-gradient">TradeVision AI</span>
+            <span className="truncate text-base font-bold text-gradient sm:text-lg">TradeVision AI</span>
           </Link>
 
           {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-6">
+          <div className="hidden md:flex items-center gap-3 lg:gap-6">
             <Link href="/analyze" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Analyze
             </Link>
@@ -53,14 +53,14 @@ export function Navbar() {
             {user ? (
               <div className="flex items-center gap-3">
                 <Link href="/dashboard">
-                  <Button variant="ghost" size="sm">
+                  <Button variant="ghost" size="sm" className="min-h-11">
                     <LayoutDashboard className="h-4 w-4 mr-2" />
                     Dashboard
                   </Button>
                 </Link>
                 {user.role === 'ADMIN' && (
                   <Link href="/admin">
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size="sm" className="min-h-11">
                       <Shield className="h-4 w-4 mr-2" />
                       Admin
                     </Button>
@@ -89,7 +89,7 @@ export function Navbar() {
           </div>
 
           {/* Mobile Toggle */}
-          <button className="md:hidden" onClick={() => setMobileOpen(!mobileOpen)}>
+          <button className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/5 md:hidden" onClick={() => setMobileOpen(!mobileOpen)}>
             {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
@@ -102,33 +102,33 @@ export function Navbar() {
             exit={{ opacity: 0, height: 0 }}
             className="md:hidden border-t border-white/10 bg-background/95 backdrop-blur-xl"
           >
-            <div className="flex flex-col gap-2 p-4">
-              <Link href="/analyze" className="p-2 text-sm hover:bg-white/5 rounded-lg" onClick={() => setMobileOpen(false)}>
+            <div className="page-shell flex flex-col gap-2 py-4">
+              <Link href="/analyze" className="flex min-h-12 items-center rounded-xl px-4 text-sm hover:bg-white/5" onClick={() => setMobileOpen(false)}>
                 Analyze
               </Link>
-              <Link href="/pricing" className="p-2 text-sm hover:bg-white/5 rounded-lg" onClick={() => setMobileOpen(false)}>
+              <Link href="/pricing" className="flex min-h-12 items-center rounded-xl px-4 text-sm hover:bg-white/5" onClick={() => setMobileOpen(false)}>
                 Pricing
               </Link>
               {user ? (
                 <>
-                  <Link href="/dashboard" className="p-2 text-sm hover:bg-white/5 rounded-lg" onClick={() => setMobileOpen(false)}>
+                  <Link href="/dashboard" className="flex min-h-12 items-center rounded-xl px-4 text-sm hover:bg-white/5" onClick={() => setMobileOpen(false)}>
                     Dashboard
                   </Link>
                   {user.role === 'ADMIN' && (
-                    <Link href="/admin" className="p-2 text-sm hover:bg-white/5 rounded-lg" onClick={() => setMobileOpen(false)}>
+                    <Link href="/admin" className="flex min-h-12 items-center rounded-xl px-4 text-sm hover:bg-white/5" onClick={() => setMobileOpen(false)}>
                       Admin
                     </Link>
                   )}
-                  <button className="p-2 text-sm text-left hover:bg-white/5 rounded-lg text-red-400" onClick={() => { logout(); setMobileOpen(false); }}>
+                  <button className="flex min-h-12 items-center rounded-xl px-4 text-left text-sm text-red-400 hover:bg-white/5" onClick={() => { logout(); setMobileOpen(false); }}>
                     Sign Out
                   </button>
                 </>
               ) : (
                 <>
-                  <Button variant="ghost" size="sm" onClick={() => { openAuth('login'); setMobileOpen(false); }}>
+                  <Button variant="ghost" size="sm" className="w-full" onClick={() => { openAuth('login'); setMobileOpen(false); }}>
                     Sign In
                   </Button>
-                  <Button variant="gradient" size="sm" onClick={() => { openAuth('register'); setMobileOpen(false); }}>
+                  <Button variant="gradient" size="sm" className="w-full" onClick={() => { openAuth('register'); setMobileOpen(false); }}>
                     Get Started
                   </Button>
                 </>

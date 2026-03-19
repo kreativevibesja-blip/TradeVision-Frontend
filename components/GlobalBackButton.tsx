@@ -45,7 +45,7 @@ export function GlobalBackButton() {
   };
 
   return (
-    <div className="fixed top-20 left-4 z-40 lg:left-6">
+    <div className="fixed left-3 top-[4.75rem] z-40 md:left-4 lg:left-6">
       <Button variant="outline" size="sm" className="gap-2 bg-background/85 backdrop-blur-xl border-white/10 shadow-lg" onClick={handleBack}>
         <ArrowLeft className="h-4 w-4" />
         Back

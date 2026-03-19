@@ -156,17 +156,17 @@ export default function StrategyShowcase() {
   const isBuy = s.type === 'BUY';
 
   return (
-    <section className="py-24">
-      <div className="container mx-auto px-4">
+    <section className="py-16 sm:py-20 lg:py-24">
+      <div className="page-shell">
         <motion.div
           className="text-center mb-12"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.28 }}
         >
           <Badge className="mb-4" variant="outline">AI Strategies</Badge>
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
+          <h2 className="mb-4 text-2xl font-bold sm:text-3xl md:text-4xl lg:text-5xl">
             Buy &amp; Sell Setups in <span className="text-gradient">Real Time</span>
           </h2>
           <p className="text-muted-foreground max-w-xl mx-auto">
@@ -175,12 +175,12 @@ export default function StrategyShowcase() {
         </motion.div>
 
         {/* Strategy pill selector */}
-        <div className="flex flex-wrap justify-center gap-3 mb-10">
+        <div className="mb-8 flex flex-wrap justify-center gap-2 sm:gap-3">
           {strategies.map((st, i) => (
             <button
               key={st.name}
               onClick={() => setIdx(i)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 border ${
+              className={`min-h-12 rounded-full border px-4 py-2 text-sm font-medium transition-all duration-200 ${
                 i === idx
                   ? st.type === 'BUY'
                     ? 'bg-green-500/20 border-green-500/60 text-green-400'
@@ -195,13 +195,13 @@ export default function StrategyShowcase() {
         </div>
 
         {/* Main card */}
-        <Card className="max-w-5xl mx-auto overflow-hidden">
+        <Card className="mx-auto max-w-5xl overflow-hidden">
           <CardContent className="p-0">
             <div className="grid grid-cols-1 lg:grid-cols-2">
               {/* ── Chart panel ── */}
-              <div className="relative bg-gradient-to-br from-gray-900 to-gray-800 p-6 md:p-8 min-h-[420px] overflow-hidden select-none">
+              <div className="relative min-h-[320px] overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800 p-4 select-none sm:min-h-[380px] sm:p-6 md:p-8 lg:min-h-[420px]">
                 {/* grid */}
-                <div className="absolute inset-6 md:inset-8 grid grid-cols-9 grid-rows-7 gap-0 pointer-events-none">
+                <div className="pointer-events-none absolute inset-4 grid grid-cols-9 grid-rows-7 gap-0 sm:inset-6 md:inset-8">
                   {Array.from({ length: 63 }).map((_, i) => (
                     <div key={i} className="border border-white/[0.04]" />
                   ))}
@@ -215,7 +215,7 @@ export default function StrategyShowcase() {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.4 }}
-                    className="absolute inset-6 md:inset-8 z-20 pointer-events-none"
+                    className="pointer-events-none absolute inset-4 z-20 sm:inset-6 md:inset-8"
                   >
                     {/* Entry zone band */}
                     <motion.div
@@ -362,20 +362,20 @@ export default function StrategyShowcase() {
                 </AnimatePresence>
 
                 {/* Pair badge */}
-                <div className="absolute top-3 left-3 z-30 flex items-center gap-2">
+                <div className="absolute left-3 top-3 z-30 flex items-center gap-2">
                   <span className="text-xs text-muted-foreground bg-black/40 px-2 py-0.5 rounded">{s.pair}</span>
                 </div>
               </div>
 
               {/* ── Results panel ── */}
-              <div className="p-6 md:p-8 flex flex-col justify-between">
+              <div className="flex flex-col justify-between p-4 sm:p-6 md:p-8">
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={`results-${idx}`}
                     initial={{ opacity: 0, x: 30 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.4 }}
+                    transition={{ duration: 0.28 }}
                     className="space-y-1"
                   >
                     {/* Header */}
@@ -400,7 +400,7 @@ export default function StrategyShowcase() {
                         className="flex justify-between items-center py-2 border-b border-white/5"
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.3 + ri * 0.06 }}
+                        transition={{ delay: 0.18 + ri * 0.04, duration: 0.2 }}
                       >
                         <span className="text-sm text-muted-foreground">{row.label}</span>
                         <span className={`font-semibold text-sm ${row.color}`}>{row.value}</span>
