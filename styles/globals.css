@@ -29,13 +29,28 @@
   * {
     @apply border-border;
   }
+  html {
+    scroll-behavior: smooth;
+  }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground overflow-x-hidden;
     font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  img {
+    @apply max-w-full;
   }
 }
 
 @layer utilities {
+  .page-shell {
+    @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  .page-stack {
+    @apply py-6 sm:py-8 lg:py-10;
+  }
+  .mobile-card {
+    @apply w-full rounded-2xl border border-white/10 bg-white/[0.04] shadow-lg backdrop-blur-xl;
+  }
   .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-500 to-cyan-400;
   }
