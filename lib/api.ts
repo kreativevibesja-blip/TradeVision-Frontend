@@ -48,6 +48,14 @@ export interface AnalysisResult {
   priceSource: 'manual';
   provider: 'gemini-vision+anchor';
   waitConditions?: string | null;
+  setupGuide?: {
+    likelyEntryArea: string;
+    whyThisArea: string;
+    confirmationChecklist: string[];
+    entryTrigger: string;
+    stopGuidance: string;
+    watchOut: string;
+  } | null;
   createdAt?: string;
 }
 
@@ -131,8 +139,13 @@ export const api = {
       apiFetch<any>(`/admin/analyses?page=${page}`, { token }),
     getPayments: (token: string, page = 1) =>
       apiFetch<any>(`/admin/payments?page=${page}`, { token }),
-    getAnalytics: (token: string) =>
-      apiFetch<any>('/admin/analytics', { token }),
+    getAnalytics: (token: string, range?: { from?: string; to?: string }) => {
+      const params = new URLSearchParams();
+      if (range?.from) params.set('from', range.from);
+      if (range?.to) params.set('to', range.to);
+      const query = params.toString();
+      return apiFetch<any>(`/admin/analytics${query ? `?${query}` : ''}`, { token });
+    },
     getPricingPlans: (token: string) =>
       apiFetch<any>('/admin/pricing-plans', { token }),
     updatePricingPlan: (id: string, data: any, token: string) =>
