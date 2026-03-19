@@ -50,15 +50,16 @@ const plans = [
 
 export default function PricingPage() {
   return (
-    <div className="min-h-screen py-16">
-      <div className="container mx-auto px-4">
+    <div className="page-stack min-h-screen">
+      <div className="page-shell">
         <motion.div
           initial={false}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.28 }}
           className="text-center mb-16"
         >
           <Badge className="mb-4" variant="outline">Pricing</Badge>
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+          <h1 className="mb-4 text-2xl font-bold sm:text-3xl md:text-4xl lg:text-5xl">
             Simple, Transparent <span className="text-gradient">Pricing</span>
           </h1>
           <p className="text-lg text-muted-foreground max-w-xl mx-auto">
@@ -66,7 +67,7 @@ export default function PricingPage() {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div className="mx-auto grid max-w-4xl grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:gap-8">
           {plans.map((plan, i) => (
             <motion.div
               key={plan.name}
@@ -74,11 +75,11 @@ export default function PricingPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.15 }}
             >
-              <Card className={`h-full relative overflow-hidden ${plan.popular ? 'border-primary/40' : ''}`}>
+              <Card className={`relative h-full overflow-hidden ${plan.popular ? 'border-primary/40' : ''}`}>
                 {plan.popular && (
                   <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-purple-500" />
                 )}
-                <CardContent className="p-8">
+                <CardContent className="p-5 sm:p-6 lg:p-8">
                   <div className="flex items-center gap-3 mb-4">
                     <div className={`p-2.5 rounded-xl bg-gradient-to-br ${plan.color}`}>
                       <plan.icon className="h-5 w-5 text-white" />
@@ -131,7 +132,7 @@ export default function PricingPage() {
           initial={false}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="max-w-2xl mx-auto mt-24"
+          className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24"
         >
           <h2 className="text-2xl font-bold text-center mb-8">Frequently Asked Questions</h2>
           <div className="space-y-4">
