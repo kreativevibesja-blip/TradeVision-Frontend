@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
-import { api } from '@/lib/api';
 import { BarChart3, Users, CalendarRange, DollarSign } from 'lucide-react';
 import {
   Chart as ChartJS,
@@ -51,6 +50,28 @@ const chartOptions = {
     },
   },
 };
+
+const DEFAULT_API_URL = 'http://localhost:4000/api';
+
+const normalizeApiUrl = (value?: string) => {
+  const rawValue = value?.trim();
+  if (!rawValue) {
+    return DEFAULT_API_URL;
+  }
+
+  try {
+    const parsedUrl = new URL(rawValue);
+    const normalizedPath = parsedUrl.pathname === '/' ? '/api' : parsedUrl.pathname.replace(/\/$/, '');
+    parsedUrl.pathname = normalizedPath.endsWith('/api') ? normalizedPath : `${normalizedPath}/api`;
+    return parsedUrl.toString().replace(/\/$/, '');
+  } catch {
+    return rawValue.replace(/\/$/, '').endsWith('/api')
+      ? rawValue.replace(/\/$/, '')
+      : `${rawValue.replace(/\/$/, '')}/api`;
+  }
+};
+
+const API_URL = normalizeApiUrl(process.env.NEXT_PUBLIC_API_URL);
 
 type RangePreset = 'today' | 'yesterday' | '7d' | '30d' | 'custom';
 
@@ -103,7 +124,21 @@ export default function AdminAnalyticsPage() {
   const loadAnalytics = async () => {
     try {
       setLoading(true);
-      const data = await api.admin.getAnalytics(token!, { from: fromDate, to: toDate });
+      const params = new URLSearchParams();
+      if (fromDate) params.set('from', fromDate);
+      if (toDate) params.set('to', toDate);
+
+      const response = await fetch(`${API_URL}/admin/analytics?${params.toString()}`, {
+        headers: {
+          Authorization: `Bearer ${token!}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to load analytics');
+      }
+
+      const data = await response.json();
       setAnalytics(data);
     } catch {
     } finally {
