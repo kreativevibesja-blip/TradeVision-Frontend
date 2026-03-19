@@ -23,8 +23,8 @@ const plans = [
       { text: 'Priority processing', included: false },
       { text: 'Detailed structure breakdown', included: false },
     ],
-    cta: 'Get Started Free',
-    ctaLink: '/analyze',
+    cta: 'Subscribe Now',
+    ctaLink: '/checkout?plan=FREE',
     popular: false,
   },
   {
@@ -42,8 +42,8 @@ const plans = [
       { text: 'Detailed structure analysis', included: true },
       { text: 'Liquidity zone detection', included: true },
     ],
-    cta: 'Upgrade to Pro',
-    ctaLink: '/checkout',
+    cta: 'Subscribe Now',
+    ctaLink: '/checkout?plan=PRO',
     popular: true,
   },
 ];
