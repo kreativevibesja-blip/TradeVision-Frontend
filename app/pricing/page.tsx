@@ -16,7 +16,7 @@ const plans = [
     icon: Zap,
     color: 'from-gray-500 to-gray-600',
     features: [
-      { text: '3 analyses per day', included: true },
+      { text: '2 analyses per day', included: true },
       { text: 'Basic AI detection', included: true },
       { text: 'Standard processing', included: true },
       { text: 'Advanced SMC analysis', included: false },

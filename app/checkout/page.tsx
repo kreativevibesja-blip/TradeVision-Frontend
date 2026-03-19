@@ -69,7 +69,7 @@ const planCatalog: Record<PlanKey, {
     description: 'Good for trying the app before you upgrade.',
     icon: Zap,
     color: 'from-slate-500 to-slate-600',
-    features: ['3 analyses per day', 'Basic AI detection', 'Standard processing'],
+    features: ['2 analyses per day', 'Basic AI detection', 'Standard processing'],
   },
   PRO: {
     name: 'TradeVision AI Pro',

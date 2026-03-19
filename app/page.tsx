@@ -355,7 +355,7 @@ export default function HomePage() {
                   <h3 className="text-xl font-semibold mb-2">Free</h3>
                   <div className="text-4xl font-bold mb-4">$0<span className="text-lg text-muted-foreground font-normal">/month</span></div>
                   <ul className="space-y-3 mb-8">
-                    {['3 analyses per day', 'Basic AI detection', 'Standard processing'].map((f) => (
+                    {['2 analyses per day', 'Basic AI detection', 'Standard processing'].map((f) => (
                       <li key={f} className="flex items-center gap-2 text-sm text-muted-foreground">
                         <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
                         {f}

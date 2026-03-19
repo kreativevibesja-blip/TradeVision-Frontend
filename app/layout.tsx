@@ -6,6 +6,7 @@ import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { GlobalBackButton } from '@/components/GlobalBackButton';
 import { MobileBottomNav } from '@/components/MobileBottomNav';
+import { WhatsAppSupportButton } from '@/components/WhatsAppSupportButton';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -30,6 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Navbar />
             <GlobalBackButton />
             <main className="flex-1 pt-16 pb-24 md:pb-0">{children}</main>
+            <WhatsAppSupportButton />
             <MobileBottomNav />
           </div>
           <Footer />
