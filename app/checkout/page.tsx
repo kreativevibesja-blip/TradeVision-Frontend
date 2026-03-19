@@ -94,6 +94,16 @@ const planCatalog: Record<PlanKey, {
 
 const requiredAddressFields: Array<keyof AddressForm> = ['firstName', 'lastName', 'email', 'address1', 'city', 'state', 'postalCode', 'country'];
 const paypalClientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || '';
+const hasValidPayPalClientId = (() => {
+  const trimmed = paypalClientId.trim();
+
+  if (!trimmed) {
+    return false;
+  }
+
+  const invalidValues = new Set(['.', 'your-paypal-client-id', 'your_client_id', 'placeholder']);
+  return !invalidValues.has(trimmed.toLowerCase());
+})();
 
 const isAddressComplete = (address: AddressForm) =>
   requiredAddressFields.every((field) => address[field].trim().length > 0);
@@ -331,7 +341,7 @@ function CheckoutPageContent() {
   }, [isSuccess, token]);
 
   useEffect(() => {
-    if (!cardFormOpen || !token || paypalCardClientToken || !paypalClientId) {
+    if (!cardFormOpen || !token || paypalCardClientToken || !hasValidPayPalClientId) {
       return;
     }
 
@@ -663,7 +673,7 @@ function CheckoutPageContent() {
                     </Button>
 
                     {cardFormOpen && (
-                      paypalClientId ? (
+                      hasValidPayPalClientId ? (
                         cardSetupLoading ? (
                           <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-muted-foreground">
                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -685,7 +695,7 @@ function CheckoutPageContent() {
                         ) : null
                       ) : (
                         <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-amber-200">
-                          Card checkout is not configured yet. Set NEXT_PUBLIC_PAYPAL_CLIENT_ID on the frontend to enable inline card payments.
+                          Card checkout is not configured correctly. Set NEXT_PUBLIC_PAYPAL_CLIENT_ID in the frontend environment to your real PayPal client ID, then restart the frontend.
                         </div>
                       )
                     )}
