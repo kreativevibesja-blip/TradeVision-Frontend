@@ -76,9 +76,9 @@ export default function DashboardPage() {
   const usagePercent = user.subscription === 'PRO' ? 0 : ((user.dailyUsage || 0) / 3) * 100;
 
   return (
-    <div className="min-h-screen py-8">
-      <div className="container mx-auto px-4 max-w-6xl">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+    <div className="page-stack min-h-screen">
+      <div className="page-shell max-w-6xl">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.28 }}>
           {/* Header */}
           <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
             <div>
@@ -94,7 +94,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -136,7 +136,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Recent Analyses */}
-          <Card>
+          <Card className="mobile-card">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <BarChart3 className="h-5 w-5 text-primary" />
@@ -155,15 +155,16 @@ export default function DashboardPage() {
                   </Link>
                 </div>
               ) : (
-                <div className="max-h-[32rem] overflow-y-auto pr-1 space-y-3">
+                <div className="max-h-[32rem] space-y-3 overflow-y-auto pr-1">
                   {analyses.map((a) => (
                     <motion.div
                       key={a.id}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="flex items-center justify-between p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-colors"
+                      transition={{ duration: 0.2 }}
+                      className="flex items-start justify-between gap-3 rounded-2xl bg-white/5 p-4 transition-colors hover:bg-white/10"
                     >
-                      <div className="flex items-center gap-4">
+                      <div className="flex min-w-0 items-start gap-3 sm:gap-4">
                         <div className="h-12 w-12 rounded-lg bg-white/5 flex items-center justify-center">
                           {a.bias === 'BULLISH' ? (
                             <TrendingUp className="h-5 w-5 text-green-400" />
@@ -173,14 +174,14 @@ export default function DashboardPage() {
                             <Minus className="h-5 w-5 text-yellow-400" />
                           )}
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           <div className="flex items-center gap-2">
-                            <p className="font-medium">{a.pair}</p>
+                            <p className="truncate font-medium">{a.pair}</p>
                             <Badge variant={a.bias === 'BULLISH' ? 'success' : a.bias === 'BEARISH' ? 'destructive' : 'warning'} className="text-xs">
                               {a.bias}
                             </Badge>
                           </div>
-                          <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                             <span>{a.timeframe}</span>
                             <span className="flex items-center gap-1">
                               <Clock className="h-3 w-3" />
@@ -192,7 +193,7 @@ export default function DashboardPage() {
                           </div>
                         </div>
                       </div>
-                      <Link href={`/analyze?analysisId=${encodeURIComponent(a.id)}`}>
+                      <Link href={`/analyze?analysisId=${encodeURIComponent(a.id)}`} className="shrink-0">
                         <Button variant="ghost" size="sm">
                           <Eye className="h-4 w-4" />
                         </Button>
