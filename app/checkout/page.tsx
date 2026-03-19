@@ -160,6 +160,34 @@ function CardFieldsSubmitButton({
   );
 }
 
+function CardFieldsAvailabilityNotice() {
+  const { cardFieldsForm } = usePayPalCardFields();
+  const [showFallback, setShowFallback] = useState(false);
+
+  useEffect(() => {
+    if (cardFieldsForm) {
+      setShowFallback(false);
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setShowFallback(true);
+    }, 2500);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [cardFieldsForm]);
+
+  if (!showFallback) {
+    return null;
+  }
+
+  return (
+    <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-amber-200">
+      PayPal card fields are unavailable for this environment or merchant account. In sandbox, make sure Advanced Credit and Debit Card Payments is enabled for your PayPal app. If that is already enabled, reload the page and try again.
+    </div>
+  );
+}
+
 function HostedCardCheckout({
   clientToken,
   formReady,
@@ -243,6 +271,8 @@ function HostedCardCheckout({
           <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/5 p-4 text-sm text-muted-foreground">
             Billing address, name, and contact details are preloaded from the form above. Your card is processed by PayPal without requiring a PayPal account login.
           </div>
+
+          <CardFieldsAvailabilityNotice />
 
           <CardFieldsSubmitButton
             onError={onError}
