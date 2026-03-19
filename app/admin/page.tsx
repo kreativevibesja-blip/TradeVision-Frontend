@@ -55,13 +55,13 @@ export default function AdminDashboardPage() {
   ];
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-      <h1 className="text-2xl font-bold mb-6">Dashboard Overview</h1>
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.28 }}>
+      <h1 className="mb-6 text-xl font-bold sm:text-2xl">Dashboard Overview</h1>
 
       {loading ? (
         <div className="text-center py-12 text-muted-foreground">Loading dashboard...</div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4 lg:gap-6">
           {statCards.map((stat, i) => (
             <motion.div
               key={stat.label}
@@ -86,7 +86,7 @@ export default function AdminDashboardPage() {
       )}
 
       {/* Quick Info Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+      <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">

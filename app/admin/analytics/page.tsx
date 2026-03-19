@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,7 +20,8 @@ import {
   Legend,
   Filler,
 } from 'chart.js';
-import { Line, Bar } from 'react-chartjs-2';
+const Line = dynamic(async () => (await import('react-chartjs-2')).Line, { ssr: false });
+const Bar = dynamic(async () => (await import('react-chartjs-2')).Bar, { ssr: false });
 
 ChartJS.register(
   CategoryScale,

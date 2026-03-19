@@ -61,10 +61,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="min-h-screen">
-      <div className="flex">
+    <div className="min-h-screen overflow-x-hidden">
+      <div className="mx-auto flex w-full max-w-7xl flex-col lg:flex-row">
         {/* Sidebar */}
-        <aside className="hidden lg:flex flex-col w-64 min-h-screen border-r border-white/10 bg-background/50 p-4 sticky top-16">
+        <aside className="sticky top-16 hidden min-h-[calc(100vh-4rem)] w-72 shrink-0 border-r border-white/10 bg-background/50 p-4 lg:flex lg:flex-col">
           <div className="flex items-center gap-2 px-3 py-2 mb-6">
             <Shield className="h-5 w-5 text-primary" />
             <span className="font-bold text-lg">Admin Panel</span>
@@ -92,7 +92,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </aside>
 
         {/* Mobile Nav */}
-        <div className="lg:hidden w-full border-b border-white/10 bg-background/50 p-2 overflow-x-auto">
+        <div className="w-full overflow-x-auto border-b border-white/10 bg-background/50 px-4 py-2 lg:hidden">
           <div className="flex gap-1 min-w-max">
             {adminNav.map((item) => {
               const isActive = pathname === item.href;
@@ -113,7 +113,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
 
         {/* Content */}
-        <main className="flex-1 p-6 lg:p-8 min-h-screen">{children}</main>
+        <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:min-h-[calc(100vh-4rem)] lg:px-8 lg:py-8">{children}</main>
       </div>
     </div>
   );
