@@ -59,6 +59,17 @@ export interface AnalysisResult {
   createdAt?: string;
 }
 
+export interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  isActive: boolean;
+  isExpired?: boolean;
+  expiresAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface FetchOptions extends RequestInit {
   token?: string;
 }
@@ -94,6 +105,9 @@ async function apiFetch<T>(endpoint: string, options: FetchOptions = {}): Promis
 export const api = {
   getProfile: (token: string) =>
     apiFetch<{ user: any }>('/auth/profile', { token }),
+
+  getActiveAnnouncements: () =>
+    apiFetch<{ announcements: Announcement[] }>('/admin/public-announcements'),
 
   // Analysis
   analyzeChartUpload: (formData: FormData, token: string) =>
@@ -163,11 +177,16 @@ export const api = {
         token,
       }),
     getAnnouncements: (token: string) =>
-      apiFetch<any>('/admin/announcements', { token }),
-    createAnnouncement: (data: { title: string; content: string }, token: string) =>
-      apiFetch<any>('/admin/announcements', {
+      apiFetch<{ announcements: Announcement[] }>('/admin/announcements', { token }),
+    createAnnouncement: (data: { title: string; content: string; durationValue?: number; durationUnit?: 'hours' | 'days' }, token: string) =>
+      apiFetch<{ announcement: Announcement }>('/admin/announcements', {
         method: 'POST',
         body: JSON.stringify(data),
+        token,
+      }),
+    deleteAnnouncement: (id: string, token: string) =>
+      apiFetch<{ success: boolean }>(`/admin/announcements/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
         token,
       }),
   },
