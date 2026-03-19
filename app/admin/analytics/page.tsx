@@ -3,9 +3,11 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api';
-import { BarChart3, Users, TrendingUp, DollarSign } from 'lucide-react';
+import { BarChart3, Users, CalendarRange, DollarSign } from 'lucide-react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -34,6 +36,7 @@ ChartJS.register(
 
 const chartOptions = {
   responsive: true,
+  maintainAspectRatio: false,
   plugins: {
     legend: { display: false },
   },
@@ -49,23 +52,74 @@ const chartOptions = {
   },
 };
 
+type RangePreset = 'today' | 'yesterday' | '7d' | '30d' | 'custom';
+
+const toDateInputValue = (date: Date) => {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getPresetRange = (preset: Exclude<RangePreset, 'custom'>) => {
+  const now = new Date();
+  const today = new Date(now);
+  today.setHours(0, 0, 0, 0);
+
+  if (preset === 'today') {
+    return { from: toDateInputValue(today), to: toDateInputValue(today) };
+  }
+
+  if (preset === 'yesterday') {
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    return { from: toDateInputValue(yesterday), to: toDateInputValue(yesterday) };
+  }
+
+  if (preset === '7d') {
+    const from = new Date(today);
+    from.setDate(from.getDate() - 6);
+    return { from: toDateInputValue(from), to: toDateInputValue(today) };
+  }
+
+  const from = new Date(today);
+  from.setDate(from.getDate() - 29);
+  return { from: toDateInputValue(from), to: toDateInputValue(today) };
+};
+
 export default function AdminAnalyticsPage() {
   const { token } = useAuth();
   const [analytics, setAnalytics] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [preset, setPreset] = useState<RangePreset>('30d');
+  const initialRange = getPresetRange('30d');
+  const [fromDate, setFromDate] = useState(initialRange.from);
+  const [toDate, setToDate] = useState(initialRange.to);
 
   useEffect(() => {
     if (token) loadAnalytics();
-  }, [token]);
+  }, [token, fromDate, toDate]);
 
   const loadAnalytics = async () => {
     try {
-      const data = await api.admin.getAnalytics(token!);
+      setLoading(true);
+      const data = await api.admin.getAnalytics(token!, { from: fromDate, to: toDate });
       setAnalytics(data);
     } catch {
     } finally {
       setLoading(false);
     }
+  };
+
+  const applyPreset = (nextPreset: RangePreset) => {
+    setPreset(nextPreset);
+    if (nextPreset === 'custom') {
+      return;
+    }
+
+    const range = getPresetRange(nextPreset);
+    setFromDate(range.from);
+    setToDate(range.to);
   };
 
   const processGroupedData = (data: any[], sumKey?: string) => {
@@ -92,7 +146,62 @@ export default function AdminAnalyticsPage() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-      <h1 className="text-2xl font-bold mb-6">Analytics</h1>
+      <div className="flex flex-col gap-4 mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-2xl font-bold">Analytics</h1>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { label: 'Today', value: 'today' },
+              { label: 'Yesterday', value: 'yesterday' },
+              { label: '7 Days', value: '7d' },
+              { label: '1 Month', value: '30d' },
+              { label: 'Custom', value: 'custom' },
+            ].map((option) => (
+              <Button
+                key={option.value}
+                variant={preset === option.value ? 'secondary' : 'outline'}
+                size="sm"
+                onClick={() => applyPreset(option.value as RangePreset)}
+              >
+                {option.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex flex-col md:flex-row md:items-end gap-3">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">From</label>
+                <Input
+                  type="date"
+                  value={fromDate}
+                  onChange={(event) => {
+                    setPreset('custom');
+                    setFromDate(event.target.value);
+                  }}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">To</label>
+                <Input
+                  type="date"
+                  value={toDate}
+                  onChange={(event) => {
+                    setPreset('custom');
+                    setToDate(event.target.value);
+                  }}
+                />
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground pb-1">
+                <CalendarRange className="h-4 w-4" />
+                {analytics?.range ? `${new Date(analytics.range.from).toLocaleDateString()} - ${new Date(analytics.range.to).toLocaleDateString()}` : 'Select a date range'}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
@@ -104,19 +213,21 @@ export default function AdminAnalyticsPage() {
           </CardHeader>
           <CardContent>
             {userGrowth.labels.length > 0 ? (
-              <Line
-                data={{
-                  labels: userGrowth.labels,
-                  datasets: [{
-                    data: userGrowth.values,
-                    borderColor: 'rgb(59, 130, 246)',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    fill: true,
-                    tension: 0.4,
-                  }],
-                }}
-                options={chartOptions}
-              />
+              <div className="h-80">
+                <Line
+                  data={{
+                    labels: userGrowth.labels,
+                    datasets: [{
+                      data: userGrowth.values,
+                      borderColor: 'rgb(59, 130, 246)',
+                      backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                      fill: true,
+                      tension: 0.4,
+                    }],
+                  }}
+                  options={chartOptions}
+                />
+              </div>
             ) : (
               <p className="text-center py-8 text-muted-foreground">No data yet</p>
             )}
@@ -132,19 +243,21 @@ export default function AdminAnalyticsPage() {
           </CardHeader>
           <CardContent>
             {analysesPerDay.labels.length > 0 ? (
-              <Bar
-                data={{
-                  labels: analysesPerDay.labels,
-                  datasets: [{
-                    data: analysesPerDay.values,
-                    backgroundColor: 'rgba(34, 197, 94, 0.5)',
-                    borderColor: 'rgb(34, 197, 94)',
-                    borderWidth: 1,
-                    borderRadius: 4,
-                  }],
-                }}
-                options={chartOptions}
-              />
+              <div className="h-80">
+                <Bar
+                  data={{
+                    labels: analysesPerDay.labels,
+                    datasets: [{
+                      data: analysesPerDay.values,
+                      backgroundColor: 'rgba(34, 197, 94, 0.5)',
+                      borderColor: 'rgb(34, 197, 94)',
+                      borderWidth: 1,
+                      borderRadius: 4,
+                    }],
+                  }}
+                  options={chartOptions}
+                />
+              </div>
             ) : (
               <p className="text-center py-8 text-muted-foreground">No data yet</p>
             )}
@@ -160,19 +273,21 @@ export default function AdminAnalyticsPage() {
           </CardHeader>
           <CardContent>
             {revenue.labels.length > 0 ? (
-              <Line
-                data={{
-                  labels: revenue.labels,
-                  datasets: [{
-                    data: revenue.values,
-                    borderColor: 'rgb(234, 179, 8)',
-                    backgroundColor: 'rgba(234, 179, 8, 0.1)',
-                    fill: true,
-                    tension: 0.4,
-                  }],
-                }}
-                options={chartOptions}
-              />
+              <div className="h-96">
+                <Line
+                  data={{
+                    labels: revenue.labels,
+                    datasets: [{
+                      data: revenue.values,
+                      borderColor: 'rgb(234, 179, 8)',
+                      backgroundColor: 'rgba(234, 179, 8, 0.1)',
+                      fill: true,
+                      tension: 0.4,
+                    }],
+                  }}
+                  options={chartOptions}
+                />
+              </div>
             ) : (
               <p className="text-center py-8 text-muted-foreground">No revenue data yet</p>
             )}

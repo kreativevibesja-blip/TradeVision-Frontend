@@ -74,7 +74,7 @@ export default function AdminUsersPage() {
           {loading ? (
             <div className="text-center py-12 text-muted-foreground">Loading users...</div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="max-h-[70vh] overflow-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-white/10">
