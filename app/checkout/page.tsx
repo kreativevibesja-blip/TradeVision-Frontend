@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useSearchParams } from 'next/navigation';
 import {
@@ -173,6 +173,7 @@ function CardFieldsSubmitButton({
 }
 
 function HostedCardCheckout({
+  clientToken,
   activeBillingAddress,
   formReady,
   onCreateOrder,
@@ -180,6 +181,7 @@ function HostedCardCheckout({
   onError,
   loading,
 }: {
+  clientToken: string;
   activeBillingAddress: AddressForm;
   formReady: boolean;
   onCreateOrder: () => Promise<string>;
@@ -196,6 +198,7 @@ function HostedCardCheckout({
         components: 'buttons,hosted-fields',
         currency: 'USD',
         intent: 'capture',
+        dataClientToken: clientToken,
       }}
     >
       <PayPalHostedFieldsProvider
@@ -320,6 +323,8 @@ function CheckoutPageContent() {
   const [shippingAddress, setShippingAddress] = useState<AddressForm>(emptyAddress);
   const [billingAddress, setBillingAddress] = useState<AddressForm>(emptyAddress);
   const [cardFormOpen, setCardFormOpen] = useState(false);
+  const [paypalCardClientToken, setPaypalCardClientToken] = useState('');
+  const [cardSetupLoading, setCardSetupLoading] = useState(false);
 
   const isSuccess = searchParams.get('success') === 'true';
   const isCanceled = searchParams.get('canceled') === 'true';
@@ -358,6 +363,39 @@ function CheckoutPageContent() {
       }
     }
   }, [isSuccess, token]);
+
+  useEffect(() => {
+    if (!cardFormOpen || !token || paypalCardClientToken || !paypalClientId) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadClientToken = async () => {
+      try {
+        setCardSetupLoading(true);
+        const result = await api.getPayPalClientToken(token);
+        if (!cancelled) {
+          setPaypalCardClientToken(result.clientToken);
+        }
+      } catch (err: any) {
+        if (!cancelled) {
+          setError(err.message || 'Unable to initialize card checkout right now.');
+          setCardFormOpen(false);
+        }
+      } finally {
+        if (!cancelled) {
+          setCardSetupLoading(false);
+        }
+      }
+    };
+
+    loadClientToken();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [cardFormOpen, token, paypalCardClientToken]);
 
   const handlePaymentCapture = async (orderId: string) => {
     try {
@@ -659,20 +697,28 @@ function CheckoutPageContent() {
                       disabled={loadingMethod !== null}
                     >
                       <CreditCard className="h-5 w-5" />
-                      Debit / Credit Card by PayPal
+                      {cardSetupLoading ? 'Preparing Card Checkout...' : 'Debit / Credit Card by PayPal'}
                       {cardFormOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                     </Button>
 
                     {cardFormOpen && (
                       paypalClientId ? (
-                        <HostedCardCheckout
-                          activeBillingAddress={activeBillingAddress}
-                          formReady={formReady}
-                          onCreateOrder={createCardOrder}
-                          onCardApproved={handleCardApproval}
-                          onError={setError}
-                          loading={loadingMethod === 'card'}
-                        />
+                        cardSetupLoading ? (
+                          <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-muted-foreground">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Initializing secure card fields...
+                          </div>
+                        ) : paypalCardClientToken ? (
+                          <HostedCardCheckout
+                            clientToken={paypalCardClientToken}
+                            activeBillingAddress={activeBillingAddress}
+                            formReady={formReady}
+                            onCreateOrder={createCardOrder}
+                            onCardApproved={handleCardApproval}
+                            onError={setError}
+                            loading={loadingMethod === 'card'}
+                          />
+                        ) : null
                       ) : (
                         <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-amber-200">
                           Card checkout is not configured yet. Set NEXT_PUBLIC_PAYPAL_CLIENT_ID on the frontend to enable inline card payments.
