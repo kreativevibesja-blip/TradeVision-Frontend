@@ -121,6 +121,58 @@ function ConfidenceMeter({ score }: { score: number }) {
   );
 }
 
+function SetupGuideCard({ analysis }: { analysis: AnalysisResult }) {
+  if (!analysis.setupGuide) {
+    return null;
+  }
+
+  return (
+    <Card className="mobile-card">
+      <CardHeader>
+        <CardTitle className="text-lg flex items-center gap-2">
+          <Activity className="h-5 w-5 text-primary" />
+          Trade Coaching
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-foreground">Likely Entry Area</p>
+          <p className="text-sm text-muted-foreground leading-relaxed">{analysis.setupGuide.likelyEntryArea}</p>
+        </div>
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-foreground">Why This Area Matters</p>
+          <p className="text-sm text-muted-foreground leading-relaxed">{analysis.setupGuide.whyThisArea}</p>
+        </div>
+        <div className="space-y-3">
+          <p className="text-sm font-medium text-foreground">What To Look For</p>
+          <div className="space-y-2">
+            {analysis.setupGuide.confirmationChecklist.map((item, index) => (
+              <div key={`${item}-${index}`} className="flex items-start gap-2 text-sm text-muted-foreground">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
+                <span>{item}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+            <p className="text-sm font-medium text-foreground mb-2">Entry Trigger</p>
+            <p className="text-sm text-muted-foreground leading-relaxed">{analysis.setupGuide.entryTrigger}</p>
+          </div>
+          <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+            <p className="text-sm font-medium text-foreground mb-2">Stop Placement</p>
+            <p className="text-sm text-muted-foreground leading-relaxed">{analysis.setupGuide.stopGuidance}</p>
+          </div>
+        </div>
+        <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+          <p className="text-sm font-medium text-foreground mb-2">What To Avoid</p>
+          <p className="text-sm text-muted-foreground leading-relaxed">{analysis.setupGuide.watchOut}</p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function AnalyzePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -497,6 +549,8 @@ function AnalyzePageContent() {
                       <p className="text-muted-foreground leading-relaxed">{analysis.reasoning}</p>
                     </CardContent>
                   </Card>
+
+                  <SetupGuideCard analysis={analysis} />
 
                   <Card className="mobile-card">
                     <CardHeader>
