@@ -266,24 +266,25 @@ function AnalyzePageContent() {
 
   return (
     <div className="min-h-screen py-8">
-      <div className="container mx-auto px-4">
+      <div className="page-shell">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.28 }}
           className="max-w-7xl mx-auto"
         >
           <div className="text-center mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold mb-2">
+            <h1 className="mb-2 text-2xl font-bold sm:text-3xl md:text-4xl">
               <span className="text-gradient">Hybrid Signal Engine</span>
             </h1>
-            <p className="text-muted-foreground">
+            <p className="mx-auto max-w-2xl text-sm text-muted-foreground sm:text-base">
               Gemini reads structure only. Trade levels are anchored to your supplied live price to avoid fake precision.
             </p>
           </div>
 
           {!analysis ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
-              <Card>
+            <div className="mx-auto grid max-w-5xl grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
+              <Card className="mobile-card">
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Upload className="h-5 w-5 text-primary" />
@@ -293,7 +294,7 @@ function AnalyzePageContent() {
                 <CardContent>
                   <div
                     {...getRootProps()}
-                    className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-300 ${
+                    className={`cursor-pointer rounded-2xl border-2 border-dashed p-5 text-center transition-all duration-200 sm:p-8 ${
                       isDragActive
                         ? 'border-primary bg-primary/10'
                         : 'border-white/10 hover:border-white/20 hover:bg-white/5'
@@ -302,7 +303,7 @@ function AnalyzePageContent() {
                     <input {...getInputProps()} />
                     {preview ? (
                       <div className="space-y-4">
-                        <img src={preview} alt="Chart preview" className="max-h-64 mx-auto rounded-lg" />
+                        <img src={preview} alt="Chart preview" className="mx-auto h-auto max-h-[400px] w-full rounded-xl object-contain md:max-h-[600px]" />
                         <p className="text-sm text-muted-foreground">Click or drag to replace</p>
                       </div>
                     ) : (
@@ -318,7 +319,7 @@ function AnalyzePageContent() {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="mobile-card">
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
                     <BarChart3 className="h-5 w-5 text-primary" />
@@ -331,7 +332,7 @@ function AnalyzePageContent() {
                     <select
                       value={pair}
                       onChange={(event) => setPair(event.target.value)}
-                      className="w-full h-10 px-3 rounded-lg border border-input bg-background/50 text-sm focus:ring-2 focus:ring-ring"
+                      className="h-12 w-full rounded-xl border border-input bg-background/50 px-3 text-sm focus:ring-2 focus:ring-ring"
                     >
                       <option value="">Select pair or index...</option>
                       {PAIRS.map((option) => (
@@ -342,12 +343,12 @@ function AnalyzePageContent() {
 
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Timeframe</label>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-3">
                       {TIMEFRAMES.map((option) => (
                         <button
                           key={option}
                           onClick={() => setTimeframe(option)}
-                          className={`h-10 rounded-lg border text-sm font-medium transition-all ${
+                          className={`h-12 rounded-xl border px-2 text-sm font-medium transition-all ${
                             timeframe === option
                               ? 'border-primary bg-primary/20 text-primary'
                               : 'border-white/10 hover:border-white/20 text-muted-foreground'
@@ -374,7 +375,7 @@ function AnalyzePageContent() {
                     </p>
                   </div>
 
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-4 space-y-3">
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-3">
                     <div className="flex items-center gap-2 text-sm font-medium">
                       <Activity className="h-4 w-4 text-blue-400" />
                       Analysis Pipeline
@@ -423,9 +424,10 @@ function AnalyzePageContent() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="space-y-8 max-w-6xl mx-auto"
+              transition={{ duration: 0.28 }}
+              className="mx-auto max-w-6xl space-y-6 sm:space-y-8"
             >
-              <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-wrap items-center gap-3">
                   <Badge variant={bias === 'BULLISH' ? 'success' : bias === 'BEARISH' ? 'destructive' : 'warning'} className="text-base px-4 py-1">
                     {bias === 'BULLISH'
@@ -468,10 +470,10 @@ function AnalyzePageContent() {
                 </Button>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6">
                 <div className="lg:col-span-2 space-y-6">
                   {preview && (
-                    <Card>
+                    <Card className="mobile-card">
                       <CardHeader>
                         <CardTitle className="text-lg flex items-center gap-2">
                           <Eye className="h-5 w-5 text-primary" />
@@ -479,12 +481,12 @@ function AnalyzePageContent() {
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <img src={preview} alt="Chart" className="w-full rounded-lg" />
+                        <img src={preview} alt="Chart" className="h-auto max-h-[400px] w-full rounded-xl object-contain md:max-h-[600px]" />
                       </CardContent>
                     </Card>
                   )}
 
-                  <Card>
+                  <Card className="mobile-card">
                     <CardHeader>
                       <CardTitle className="text-lg flex items-center gap-2">
                         <Brain className="h-5 w-5 text-primary" />
@@ -496,7 +498,7 @@ function AnalyzePageContent() {
                     </CardContent>
                   </Card>
 
-                  <Card>
+                  <Card className="mobile-card">
                     <CardHeader>
                       <CardTitle className="text-lg flex items-center gap-2">
                         <BarChart3 className="h-5 w-5 text-primary" />
@@ -540,13 +542,13 @@ function AnalyzePageContent() {
                 </div>
 
                 <div className="space-y-6">
-                  <Card>
+                  <Card className="mobile-card">
                     <CardContent className="p-6">
                       <ConfidenceMeter score={analysis.confidence || 0} />
                     </CardContent>
                   </Card>
 
-                  <Card>
+                  <Card className="mobile-card">
                     <CardHeader>
                       <CardTitle className="text-lg">Trade Levels</CardTitle>
                     </CardHeader>
@@ -586,7 +588,7 @@ function AnalyzePageContent() {
                     </CardContent>
                   </Card>
 
-                  <Card>
+                  <Card className="mobile-card">
                     <CardContent className="p-6 space-y-4">
                       <div>
                         <div className="flex items-center gap-2 mb-2">
@@ -619,7 +621,7 @@ function AnalyzePageContent() {
                     </CardContent>
                   </Card>
 
-                  <Card>
+                  <Card className="mobile-card">
                     <CardContent className="p-6">
                       <div className="flex items-center gap-2 mb-3">
                         <CandlestickChart className="h-4 w-4 text-blue-400" />
@@ -646,7 +648,7 @@ function AnalyzePageContent() {
                 exit={{ opacity: 0 }}
                 className="fixed inset-0 z-50 flex items-center justify-center bg-background/90 backdrop-blur-sm"
               >
-                <div className="text-center space-y-6 max-w-md w-full px-6">
+                  <div className="w-full max-w-md space-y-6 px-6 text-center">
                   <CandlestickWave />
                   <div className="space-y-3">
                     <motion.p
@@ -654,7 +656,8 @@ function AnalyzePageContent() {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
-                      className="text-lg text-muted-foreground"
+                      transition={{ duration: 0.2 }}
+                      className="text-base text-muted-foreground sm:text-lg"
                     >
                       {currentStage}
                     </motion.p>
