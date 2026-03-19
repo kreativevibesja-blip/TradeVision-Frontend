@@ -1,6 +1,7 @@
 'use client';
 
 import { motion, useScroll, useTransform } from 'framer-motion';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -20,7 +21,11 @@ import {
   Star,
   CheckCircle2,
 } from 'lucide-react';
-import StrategyShowcase from '@/components/StrategyShowcase';
+
+const StrategyShowcase = dynamic(() => import('@/components/StrategyShowcase'), {
+  ssr: false,
+  loading: () => <div className="page-shell py-12"><div className="mobile-card h-72 animate-pulse" /></div>,
+});
 
 // Floating candlestick animation component
 function FloatingCandlesticks() {
@@ -95,7 +100,7 @@ const FadeInSection = ({ children, className = '', delay = 0 }: { children: Reac
     initial={{ opacity: 0, y: 40 }}
     whileInView={{ opacity: 1, y: 0 }}
     viewport={{ once: true, margin: '-50px' }}
-    transition={{ duration: 0.7, delay, ease: 'easeOut' }}
+    transition={{ duration: 0.28, delay, ease: 'easeOut' }}
     className={className}
   >
     {children}
@@ -104,9 +109,9 @@ const FadeInSection = ({ children, className = '', delay = 0 }: { children: Reac
 
 export default function HomePage() {
   return (
-    <div className="relative">
+    <div className="relative overflow-x-hidden">
       {/* ═══════ HERO SECTION ═══════ */}
-      <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
+      <section className="relative flex min-h-[90vh] items-center justify-center overflow-hidden py-10 sm:py-12">
         {/* Animated gradient background */}
         <div className="absolute inset-0">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-950/80 via-background to-purple-950/80" />
@@ -123,52 +128,52 @@ export default function HomePage() {
           <FloatingCandlesticks />
         </div>
 
-        <div className="container mx-auto px-4 relative z-10 text-center">
+        <div className="page-shell relative z-10 text-center">
           <motion.div
             initial={false}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 0.28 }}
           >
             <Badge className="mb-6 px-4 py-1.5 text-sm" variant="outline">
               <Zap className="h-3 w-3 mr-1" />
-              Powered by GPT-4 Vision AI
+              Mobile-first AI chart analysis
             </Badge>
           </motion.div>
 
           <motion.h1
-            className="text-5xl md:text-7xl font-bold mb-6 leading-tight"
+            className="mx-auto mb-5 max-w-4xl text-3xl font-bold leading-tight sm:text-4xl md:text-5xl lg:text-6xl"
             initial={false}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.1 }}
+            transition={{ duration: 0.28, delay: 0.06 }}
           >
             AI That Understands{' '}
             <span className="text-gradient">Your Trading Charts</span>
           </motion.h1>
 
           <motion.p
-            className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10"
+            className="mx-auto mb-8 max-w-2xl text-base text-muted-foreground sm:text-lg md:text-xl"
             initial={false}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
+            transition={{ duration: 0.28, delay: 0.12 }}
           >
             Upload any chart screenshot and get professional trading analysis instantly.
             Support for MT5, cTrader, TradingView, and Deriv charts including Boom, Crash, and Volatility indices.
           </motion.p>
 
           <motion.div
-            className="flex flex-col sm:flex-row gap-4 justify-center"
+            className="mx-auto flex w-full max-w-xl flex-col gap-3 sm:flex-row sm:justify-center"
             initial={false}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
+            transition={{ duration: 0.28, delay: 0.16 }}
           >
-            <Link href="/analyze">
-              <Button variant="glow" size="xl" className="gap-2 group">
+            <Link href="/analyze" className="w-full sm:w-auto">
+              <Button variant="glow" size="xl" className="group w-full gap-2 sm:w-auto">
                 Analyze Your Chart
                 <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
-            <a href="#how-it-works">
-              <Button variant="outline" size="xl" className="gap-2">
+            <a href="#how-it-works" className="w-full sm:w-auto">
+              <Button variant="outline" size="xl" className="w-full gap-2 sm:w-auto">
                 See How It Works
                 <ChevronDown className="h-5 w-5" />
               </Button>
@@ -180,7 +185,7 @@ export default function HomePage() {
             className="mt-16 flex justify-center"
             initial={false}
             animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 0.6 }}
+            transition={{ duration: 0.28, delay: 0.2 }}
           >
             <CandlestickLoader />
           </motion.div>
@@ -188,11 +193,11 @@ export default function HomePage() {
       </section>
 
       {/* ═══════ HOW IT WORKS ═══════ */}
-      <section id="how-it-works" className="py-24 relative">
-        <div className="container mx-auto px-4">
+      <section id="how-it-works" className="relative py-16 sm:py-20 lg:py-24">
+        <div className="page-shell">
           <FadeInSection className="text-center mb-16">
             <Badge className="mb-4" variant="outline">How It Works</Badge>
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+            <h2 className="text-2xl font-bold sm:text-3xl md:text-4xl lg:text-5xl mb-4">
               Three Steps to a <span className="text-gradient">Trade Plan</span>
             </h2>
             <p className="text-muted-foreground max-w-xl mx-auto">
@@ -200,7 +205,7 @@ export default function HomePage() {
             </p>
           </FadeInSection>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div className="mx-auto grid max-w-5xl grid-cols-1 gap-4 md:grid-cols-3 md:gap-6 lg:gap-8">
             {[
               {
                 icon: Upload,
@@ -225,8 +230,8 @@ export default function HomePage() {
               },
             ].map((item, i) => (
               <FadeInSection key={item.step} delay={i * 0.15}>
-                <Card className="relative group hover:border-white/20 transition-all duration-300 h-full">
-                  <CardContent className="p-8 text-center">
+                  <Card className="relative h-full overflow-hidden transition-all duration-200 group hover:border-white/20">
+                  <CardContent className="p-5 text-center sm:p-6 lg:p-8">
                     <div className="text-6xl font-bold text-white/5 absolute top-4 right-4">
                       {item.step}
                     </div>
@@ -244,16 +249,16 @@ export default function HomePage() {
       </section>
 
       {/* ═══════ FEATURES ═══════ */}
-      <section className="py-24 relative bg-gradient-to-b from-transparent via-blue-950/20 to-transparent">
-        <div className="container mx-auto px-4">
+      <section className="relative bg-gradient-to-b from-transparent via-blue-950/20 to-transparent py-16 sm:py-20 lg:py-24">
+        <div className="page-shell">
           <FadeInSection className="text-center mb-16">
             <Badge className="mb-4" variant="outline">Features</Badge>
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+            <h2 className="text-2xl font-bold sm:text-3xl md:text-4xl lg:text-5xl mb-4">
               Professional-Grade <span className="text-gradient">Analysis</span>
             </h2>
           </FadeInSection>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+          <div className="mx-auto grid max-w-6xl grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
             {[
               { icon: Eye, title: 'AI Chart Reading', desc: 'Vision AI understands candlesticks, patterns, and indicators visually.' },
               { icon: BarChart3, title: 'Structure Detection', desc: 'Identifies BOS, CHOCH, and market structure shifts automatically.' },
@@ -262,7 +267,7 @@ export default function HomePage() {
             ].map((feature, i) => (
               <FadeInSection key={feature.title} delay={i * 0.1}>
                 <Card className="group hover:border-primary/30 hover:glow-blue transition-all duration-300 h-full">
-                  <CardContent className="p-6">
+                  <CardContent className="p-5 sm:p-6">
                     <div className="p-3 rounded-xl bg-primary/10 w-fit mb-4 group-hover:bg-primary/20 transition-colors">
                       <feature.icon className="h-6 w-6 text-primary" />
                     </div>
@@ -280,16 +285,16 @@ export default function HomePage() {
       <StrategyShowcase />
 
       {/* ═══════ TESTIMONIALS ═══════ */}
-      <section className="py-24 bg-gradient-to-b from-transparent via-purple-950/20 to-transparent">
-        <div className="container mx-auto px-4">
+      <section className="bg-gradient-to-b from-transparent via-purple-950/20 to-transparent py-16 sm:py-20 lg:py-24">
+        <div className="page-shell">
           <FadeInSection className="text-center mb-16">
             <Badge className="mb-4" variant="outline">Testimonials</Badge>
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+            <h2 className="text-2xl font-bold sm:text-3xl md:text-4xl lg:text-5xl mb-4">
               Trusted by <span className="text-gradient">Traders</span>
             </h2>
           </FadeInSection>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          <div className="mx-auto grid max-w-5xl grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
             {[
               {
                 name: 'Alex M.',
@@ -334,16 +339,16 @@ export default function HomePage() {
       </section>
 
       {/* ═══════ PRICING PREVIEW ═══════ */}
-      <section className="py-24">
-        <div className="container mx-auto px-4">
+      <section className="py-16 sm:py-20 lg:py-24">
+        <div className="page-shell">
           <FadeInSection className="text-center mb-16">
             <Badge className="mb-4" variant="outline">Pricing</Badge>
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+            <h2 className="text-2xl font-bold sm:text-3xl md:text-4xl lg:text-5xl mb-4">
               Simple, Transparent <span className="text-gradient">Pricing</span>
             </h2>
           </FadeInSection>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+          <div className="mx-auto grid max-w-3xl grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:gap-8">
             <FadeInSection>
               <Card className="h-full">
                 <CardContent className="p-8">
@@ -398,20 +403,20 @@ export default function HomePage() {
       </section>
 
       {/* ═══════ FINAL CTA ═══════ */}
-      <section className="py-24">
-        <div className="container mx-auto px-4">
+      <section className="py-16 sm:py-20 lg:py-24">
+        <div className="page-shell">
           <FadeInSection>
             <Card className="max-w-4xl mx-auto text-center overflow-hidden relative">
               <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-purple-600/20" />
-              <CardContent className="relative z-10 py-16 px-8">
-                <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              <CardContent className="relative z-10 px-5 py-12 sm:px-8 sm:py-16">
+                <h2 className="mb-4 text-2xl font-bold sm:text-3xl md:text-4xl">
                   Ready to Trade Smarter?
                 </h2>
                 <p className="text-muted-foreground max-w-lg mx-auto mb-8">
                   Join thousands of traders who use AI to validate their chart analysis before entering trades.
                 </p>
-                <Link href="/analyze">
-                  <Button variant="glow" size="xl" className="gap-2">
+                <Link href="/analyze" className="inline-flex w-full sm:w-auto">
+                  <Button variant="glow" size="xl" className="w-full gap-2 sm:w-auto">
                     Start Analyzing Now
                     <ArrowRight className="h-5 w-5" />
                   </Button>
