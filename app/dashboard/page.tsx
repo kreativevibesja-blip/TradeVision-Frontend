@@ -20,6 +20,7 @@ import {
   Eye,
   ArrowRight,
   Zap,
+  CreditCard,
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -72,8 +73,8 @@ export default function DashboardPage() {
     );
   }
 
-  const dailyLimit = user.subscription === 'PRO' ? 'Unlimited' : '3';
-  const usagePercent = user.subscription === 'PRO' ? 0 : ((user.dailyUsage || 0) / 3) * 100;
+  const dailyLimit = user.subscription === 'PRO' ? 'Unlimited' : '2';
+  const usagePercent = user.subscription === 'PRO' ? 0 : ((user.dailyUsage || 0) / 2) * 100;
 
   return (
     <div className="page-stack min-h-screen">
@@ -94,7 +95,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Stats */}
-          <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
+          <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-4 md:gap-6">
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -131,6 +132,22 @@ export default function DashboardPage() {
               <CardContent className="p-6">
                 <span className="text-sm text-muted-foreground">Total Analyses</span>
                 <p className="text-3xl font-bold mt-2">{total}</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm text-muted-foreground">Billing</span>
+                  <CreditCard className="h-4 w-4 text-primary" />
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">View plan status, expiry, and renewal options.</p>
+                <Link href="/dashboard/billing">
+                  <Button variant="outline" size="sm" className="w-full gap-2">
+                    Manage Billing
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
           </div>
