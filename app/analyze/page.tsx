@@ -50,8 +50,8 @@ const TIMEFRAMES = ['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1', 'W1', 'MN'];
 const ANALYSIS_STEPS = [
   'Uploading chart...',
   'Analyzing market structure...',
-  'Extracting structural logic...',
-  'Anchoring trade levels...',
+  'Filtering signal quality...',
+  'Building execution plan...',
   'Preparing final signal...',
 ];
 
@@ -74,6 +74,14 @@ const formatPrice = (value: number | null | undefined, pair: string) => {
   }
 
   return value.toFixed(4);
+};
+
+const formatEntryZone = (entryZone: AnalysisResult['entryZone'], pair: string) => {
+  if (!entryZone) {
+    return 'Not available';
+  }
+
+  return `${formatPrice(entryZone.low, pair)} - ${formatPrice(entryZone.high, pair)}`;
 };
 
 function CandlestickWave() {
@@ -308,6 +316,7 @@ function AnalyzePageContent() {
   };
 
   const bias = analysis?.bias || 'NEUTRAL';
+  const signalType = analysis?.signalType || (analysis?.recommendation === 'wait' ? 'wait' : analysis?.entry ? 'instant' : 'pending');
   const takeProfits = Array.isArray(analysis?.takeProfits)
     ? analysis.takeProfits.filter((value: unknown): value is number => typeof value === 'number' && Number.isFinite(value))
     : [];
@@ -330,7 +339,7 @@ function AnalyzePageContent() {
               <span className="text-gradient">Hybrid Signal Engine</span>
             </h1>
             <p className="mx-auto max-w-2xl text-sm text-muted-foreground sm:text-base">
-              Gemini reads structure only. Trade levels are anchored to your supplied live price to avoid fake precision.
+              Gemini reads structure, a signal filter validates quality, and the price engine only publishes executable levels when the setup justifies them.
             </p>
           </div>
 
@@ -432,7 +441,13 @@ function AnalyzePageContent() {
                       <Activity className="h-4 w-4 text-blue-400" />
                       Analysis Pipeline
                     </div>
-                    {ANALYSIS_STEPS.map((step) => (
+                    {[
+                      'Uploading chart...',
+                      'Analyzing market structure...',
+                      'Filtering signal quality...',
+                      'Building execution plan...',
+                      'Preparing final signal...',
+                    ].map((step) => (
                       <div key={step} className="text-sm text-muted-foreground">{step}</div>
                     ))}
                   </div>
@@ -495,7 +510,7 @@ function AnalyzePageContent() {
                   </Badge>
                   <Badge variant="outline" className="text-sm px-3 py-1 border-purple-500/40 text-purple-300 bg-purple-500/10">
                     <Brain className="h-4 w-4 mr-1" />
-                    {analysis.provider === 'gemini-vision+anchor' ? 'Gemini Vision + Anchor' : 'Gemini'}
+                    {analysis.provider === 'gemini-vision+filter' ? 'Gemini Vision + Filter' : 'Gemini Vision + Anchor'}
                   </Badge>
                   <Badge
                     variant={analysis.recommendation === 'wait' ? 'warning' : 'success'}
@@ -570,6 +585,10 @@ function AnalyzePageContent() {
                           <p className="font-semibold capitalize">{analysis.entryType}</p>
                         </div>
                         <div>
+                          <p className="text-sm text-muted-foreground mb-1">Signal State</p>
+                          <p className="font-semibold capitalize">{signalType}</p>
+                        </div>
+                        <div>
                           <p className="text-sm text-muted-foreground mb-1">Recent High Zone</p>
                           <p className="font-semibold">{analysis.structure?.recentHighZone || 'Not available'}</p>
                         </div>
@@ -584,6 +603,14 @@ function AnalyzePageContent() {
                         <div>
                           <p className="text-sm text-muted-foreground mb-1">Chart Clarity</p>
                           <p className="font-semibold capitalize">{analysis.clarity}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">Current Price Relation</p>
+                          <p className="font-semibold capitalize">{(analysis.currentPriceRelation || 'far_from_zone').replaceAll('_', ' ')}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">AI Entry Area</p>
+                          <p className="font-semibold">{analysis.aiEntryZone?.label || 'Preferred reaction area'}</p>
                         </div>
                       </div>
 
@@ -614,21 +641,37 @@ function AnalyzePageContent() {
                         </div>
                         <p className="text-sm text-muted-foreground pl-6">{formatPrice(analysis.currentPrice, pair)}</p>
                       </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-sm font-medium">
-                          <Target className="h-4 w-4 text-blue-400" />
-                          Entry
+                      {signalType === 'wait' ? (
+                        <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+                          <div className="flex items-center gap-2 text-sm font-medium text-amber-300">
+                            <Clock className="h-4 w-4" />
+                            WAIT - No valid entry yet
+                          </div>
+                          <p className="mt-2 text-sm text-muted-foreground">
+                            {analysis.filterReason || analysis.waitConditions || 'Structure is not ready for execution yet.'}
+                          </p>
                         </div>
-                        <p className="text-sm text-muted-foreground pl-6">{formatPrice(analysis.entry, pair)}</p>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-sm font-medium">
-                          <ShieldAlert className="h-4 w-4 text-red-400" />
-                          Stop Loss
-                        </div>
-                        <p className="text-sm text-muted-foreground pl-6">{formatPrice(analysis.stopLoss, pair)}</p>
-                      </div>
-                      {takeProfits.length > 0 ? takeProfits.map((target: number, index: number) => (
+                      ) : (
+                        <>
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 text-sm font-medium">
+                              <Target className="h-4 w-4 text-blue-400" />
+                              {signalType === 'instant' ? 'Enter Now' : 'Entry Zone'}
+                            </div>
+                            <p className="text-sm text-muted-foreground pl-6">
+                              {signalType === 'instant' ? formatPrice(analysis.entry, pair) : formatEntryZone(analysis.entryZone, pair)}
+                            </p>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 text-sm font-medium">
+                              <ShieldAlert className="h-4 w-4 text-red-400" />
+                              Stop Loss
+                            </div>
+                            <p className="text-sm text-muted-foreground pl-6">{formatPrice(analysis.stopLoss, pair)}</p>
+                          </div>
+                        </>
+                      )}
+                      {signalType !== 'wait' && takeProfits.length > 0 ? takeProfits.map((target: number, index: number) => (
                         <div key={`${target}-${index}`} className="space-y-2">
                           <div className="flex items-center gap-2 text-sm font-medium">
                             <CheckCircle2 className="h-4 w-4 text-green-400" />
@@ -637,7 +680,7 @@ function AnalyzePageContent() {
                           <p className="text-sm text-muted-foreground pl-6">{formatPrice(target, pair)}</p>
                         </div>
                       )) : (
-                        <p className="text-sm text-muted-foreground">No trade levels were returned because the structure is not clean enough yet.</p>
+                        signalType !== 'wait' ? <p className="text-sm text-muted-foreground">No targets were returned for this setup.</p> : null
                       )}
                     </CardContent>
                   </Card>
@@ -649,14 +692,14 @@ function AnalyzePageContent() {
                           <Zap className="h-4 w-4 text-purple-400" />
                           <span className="text-sm font-medium">Signal Type</span>
                         </div>
-                        <p className="text-sm text-purple-400 font-semibold capitalize">{analysis.entryType}</p>
+                        <p className="text-sm text-purple-400 font-semibold capitalize">{signalType}</p>
                       </div>
                       <div>
                         <div className="flex items-center gap-2 mb-2">
                           <Clock className="h-4 w-4 text-yellow-400" />
-                          <span className="text-sm font-medium">Wait Conditions</span>
+                          <span className="text-sm font-medium">Confirmation Logic</span>
                         </div>
-                        <p className="text-sm text-muted-foreground">{analysis.waitConditions || 'Wait for confirmation at the entry zone before execution.'}</p>
+                        <p className="text-sm text-muted-foreground">{analysis.confirmationDetails || analysis.waitConditions || 'Wait for confirmation at the entry zone before execution.'}</p>
                       </div>
                       <div>
                         <div className="flex items-center gap-2 mb-2">
@@ -672,6 +715,13 @@ function AnalyzePageContent() {
                         </div>
                         <p className="text-sm text-muted-foreground">{analysis.riskReward || 'Not available'}</p>
                       </div>
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <AlertTriangle className="h-4 w-4 text-orange-400" />
+                          <span className="text-sm font-medium">Filter Decision</span>
+                        </div>
+                        <p className="text-sm text-muted-foreground">{analysis.filterReason || 'No filter note available.'}</p>
+                      </div>
                     </CardContent>
                   </Card>
 
@@ -679,13 +729,14 @@ function AnalyzePageContent() {
                     <CardContent className="p-6">
                       <div className="flex items-center gap-2 mb-3">
                         <CandlestickChart className="h-4 w-4 text-blue-400" />
-                        <span className="text-sm font-medium">Anchoring Logic</span>
+                        <span className="text-sm font-medium">Price Engine</span>
                       </div>
                       <div className="space-y-2 text-sm text-muted-foreground">
                         <p>Price Source: <span className="text-foreground font-medium capitalize">{analysis.priceSource}</span></p>
                         <p>Working Range: <span className="text-foreground font-medium">{formatPrice(analysis.range, pair)}</span></p>
                         <p>Execution Buffer: <span className="text-foreground font-medium">{formatPrice(analysis.buffer, pair)}</span></p>
-                        <p>Method: <span className="text-foreground font-medium">Deterministic price anchoring from current price</span></p>
+                        <p>Execution Mode: <span className="text-foreground font-medium capitalize">{analysis.executionMode || 'none'}</span></p>
+                        <p>Method: <span className="text-foreground font-medium">Filtered live-price execution model</span></p>
                       </div>
                     </CardContent>
                   </Card>
