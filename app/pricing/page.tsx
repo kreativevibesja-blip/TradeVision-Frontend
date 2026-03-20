@@ -1,54 +1,97 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { api, type PricingPlan } from '@/lib/api';
 import { CheckCircle2, X, Zap, Crown } from 'lucide-react';
 
-const plans = [
-  {
-    name: 'Free',
-    price: 0,
+type DisplayPlan = PricingPlan & {
+  period: string;
+  description: string;
+  icon: typeof Zap;
+  color: string;
+  cta: string;
+  ctaLink: string;
+  popular: boolean;
+};
+
+const fallbackPlanDetails: Record<'FREE' | 'PRO', Omit<DisplayPlan, 'id' | 'name' | 'tier' | 'price' | 'features' | 'dailyLimit' | 'isActive' | 'createdAt' | 'updatedAt'>> = {
+  FREE: {
     period: '/month',
     description: 'Perfect for trying out AI chart analysis',
     icon: Zap,
     color: 'from-gray-500 to-gray-600',
-    features: [
-      { text: '2 analyses per day', included: true },
-      { text: 'Basic AI detection', included: true },
-      { text: 'Standard processing', included: true },
-      { text: 'Advanced SMC analysis', included: false },
-      { text: 'Priority processing', included: false },
-      { text: 'Detailed structure breakdown', included: false },
-    ],
     cta: 'Subscribe Now',
     ctaLink: '/checkout?plan=FREE',
     popular: false,
   },
-  {
-    name: 'Pro',
-    price: 19,
+  PRO: {
     period: '/month',
     description: 'For serious traders who want the best analysis',
     icon: Crown,
     color: 'from-blue-500 to-purple-600',
-    features: [
-      { text: 'Unlimited analyses', included: true },
-      { text: 'Advanced AI detection', included: true },
-      { text: 'Priority processing', included: true },
-      { text: 'Smart Money Concepts', included: true },
-      { text: 'Detailed structure analysis', included: true },
-      { text: 'Liquidity zone detection', included: true },
-    ],
     cta: 'Subscribe Now',
     ctaLink: '/checkout?plan=PRO',
     popular: true,
   },
+};
+
+const defaultFallbackPlans: DisplayPlan[] = [
+  {
+    id: 'fallback-free',
+    name: 'TradeVision AI Free',
+    tier: 'FREE',
+    price: 0,
+    features: ['2 analyses per day', 'Basic AI detection', 'Standard processing'],
+    dailyLimit: 2,
+    isActive: true,
+    createdAt: '',
+    updatedAt: '',
+    ...fallbackPlanDetails.FREE,
+  },
+  {
+    id: 'fallback-pro',
+    name: 'TradeVision AI Pro',
+    tier: 'PRO',
+    price: 19,
+    features: ['Unlimited daily analyses', 'Advanced Smart Money Concepts', 'Priority AI processing'],
+    dailyLimit: 999999,
+    isActive: true,
+    createdAt: '',
+    updatedAt: '',
+    ...fallbackPlanDetails.PRO,
+  },
 ];
 
+const toDisplayPlan = (plan: PricingPlan): DisplayPlan => ({
+  ...plan,
+  ...fallbackPlanDetails[plan.tier],
+});
+
 export default function PricingPage() {
+  const [plans, setPlans] = useState<DisplayPlan[]>(defaultFallbackPlans);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadPricingPlans = async () => {
+      try {
+        const data = await api.getPublicPricingPlans();
+        if (Array.isArray(data.plans) && data.plans.length > 0) {
+          setPlans(data.plans.map(toDisplayPlan));
+        }
+      } catch {
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadPricingPlans();
+  }, []);
+
   return (
     <div className="page-stack min-h-screen">
       <div className="page-shell">
@@ -70,7 +113,7 @@ export default function PricingPage() {
         <div className="mx-auto grid max-w-4xl grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:gap-8">
           {plans.map((plan, i) => (
             <motion.div
-              key={plan.name}
+              key={plan.id}
               initial={false}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.15 }}
@@ -100,14 +143,14 @@ export default function PricingPage() {
                   <p className="text-sm text-muted-foreground mb-8">{plan.description}</p>
 
                   <ul className="space-y-3 mb-8">
-                    {plan.features.map((f) => (
-                      <li key={f.text} className="flex items-center gap-3 text-sm">
-                        {f.included ? (
+                    {plan.features.map((feature) => (
+                      <li key={feature} className="flex items-center gap-3 text-sm">
+                        {true ? (
                           <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
                         ) : (
                           <X className="h-4 w-4 text-muted-foreground/50 flex-shrink-0" />
                         )}
-                        <span className={f.included ? '' : 'text-muted-foreground/50'}>{f.text}</span>
+                        <span>{feature}</span>
                       </li>
                     ))}
                   </ul>
@@ -126,6 +169,12 @@ export default function PricingPage() {
             </motion.div>
           ))}
         </div>
+
+        {!loading && plans.length === 0 ? (
+          <div className="mt-8 text-center text-sm text-muted-foreground">
+            No active pricing plans are available right now.
+          </div>
+        ) : null}
 
         {/* FAQ */}
         <motion.div
