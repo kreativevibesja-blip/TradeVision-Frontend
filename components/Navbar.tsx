@@ -106,6 +106,9 @@ export function Navbar() {
               <Link href="/analyze" className="flex min-h-12 items-center rounded-xl px-4 text-sm hover:bg-white/5" onClick={() => setMobileOpen(false)}>
                 Analyze
               </Link>
+              <Link href="/" className="flex min-h-12 items-center rounded-xl px-4 text-sm hover:bg-white/5" onClick={() => setMobileOpen(false)}>
+                Home
+              </Link>
               <Link href="/pricing" className="flex min-h-12 items-center rounded-xl px-4 text-sm hover:bg-white/5" onClick={() => setMobileOpen(false)}>
                 Pricing
               </Link>
