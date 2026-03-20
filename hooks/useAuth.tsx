@@ -186,11 +186,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error(error.message);
     }
 
-    if (!data.session?.access_token) {
-      throw new Error('Account created. Confirm your email, then sign in.');
+    if (data.session?.access_token) {
+      await syncProfile(data.session.access_token, false);
+      return;
     }
 
-    await syncProfile(data.session.access_token, false);
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      email: normalizedEmail,
+      password,
+    });
+
+    if (signInError) {
+      if (/email not confirmed/i.test(signInError.message)) {
+        throw new Error('Account created, but your Supabase project still requires email confirmation. Disable Confirm email in Supabase Auth settings if you want users to go straight in after sign-up.');
+      }
+
+      throw new Error(signInError.message);
+    }
+
+    if (!signInData.session?.access_token) {
+      throw new Error('Account created, but Supabase did not return a session. Disable Confirm email in Supabase Auth settings if you want instant sign-in after registration.');
+    }
+
+    await syncProfile(signInData.session.access_token, false);
   };
 
   const signInWithGoogle = async () => {
