@@ -28,6 +28,11 @@ export interface AnalysisResult {
   bias: string;
   confidence: number;
   currentPrice: number;
+  signalType?: 'instant' | 'pending' | 'wait';
+  entryZone?: {
+    low: number;
+    high: number;
+  } | null;
   entry: number | null;
   stopLoss: number | null;
   takeProfits: number[];
@@ -43,10 +48,20 @@ export interface AnalysisResult {
   structureSummary: string;
   liquidityContext: string;
   clarity: 'clear' | 'mixed' | 'unclear';
+  currentPriceRelation?: 'at_zone' | 'near_zone' | 'far_from_zone';
+  aiEntryZone?: {
+    label: string;
+    description: string;
+  } | null;
+  confirmationNeeded?: boolean;
+  confirmationDetails?: string | null;
+  invalidationHint?: string | null;
+  filterReason?: string | null;
   range: number;
   buffer: number;
   priceSource: 'manual';
-  provider: 'gemini-vision+anchor';
+  executionMode?: 'market' | 'zone' | 'none';
+  provider: 'gemini-vision+anchor' | 'gemini-vision+filter';
   waitConditions?: string | null;
   setupGuide?: {
     likelyEntryArea: string;
