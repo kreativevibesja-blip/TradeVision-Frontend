@@ -49,10 +49,10 @@ const PAIRS = [
 const TIMEFRAMES = ['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1', 'W1', 'MN'];
 const ANALYSIS_STEPS = [
   'Uploading chart...',
-  'Analyzing market structure...',
-  'Filtering signal quality...',
-  'Building execution plan...',
-  'Preparing final signal...',
+  'Analyzing SMC structure...',
+  'Interpreting liquidity and zones...',
+  'Validating entry conditions...',
+  'Preparing final SMC signal...',
 ];
 
 const formatPrice = (value: number | null | undefined, pair: string) => {
@@ -76,12 +76,15 @@ const formatPrice = (value: number | null | undefined, pair: string) => {
   return value.toFixed(4);
 };
 
-const formatEntryZone = (entryZone: AnalysisResult['entryZone'], pair: string) => {
-  if (!entryZone) {
+const formatStructuredZone = (
+  zone: { min: number | null; max: number | null } | null | undefined,
+  pair: string
+) => {
+  if (!zone || typeof zone.min !== 'number' || typeof zone.max !== 'number') {
     return 'Not available';
   }
 
-  return `${formatPrice(entryZone.low, pair)} - ${formatPrice(entryZone.high, pair)}`;
+  return `${formatPrice(zone.min, pair)} - ${formatPrice(zone.max, pair)}`;
 };
 
 function CandlestickWave() {
@@ -126,58 +129,6 @@ function ConfidenceMeter({ score }: { score: number }) {
         {score >= 80 ? 'High conviction setup' : score >= 60 ? 'Tradable with confirmation' : score >= 40 ? 'Lower-quality setup' : 'Wait for better structure'}
       </p>
     </div>
-  );
-}
-
-function SetupGuideCard({ analysis }: { analysis: AnalysisResult }) {
-  if (!analysis.setupGuide) {
-    return null;
-  }
-
-  return (
-    <Card className="mobile-card">
-      <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Activity className="h-5 w-5 text-primary" />
-          Trade Coaching
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-5">
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-foreground">Likely Entry Area</p>
-          <p className="text-sm text-muted-foreground leading-relaxed">{analysis.setupGuide.likelyEntryArea}</p>
-        </div>
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-foreground">Why This Area Matters</p>
-          <p className="text-sm text-muted-foreground leading-relaxed">{analysis.setupGuide.whyThisArea}</p>
-        </div>
-        <div className="space-y-3">
-          <p className="text-sm font-medium text-foreground">What To Look For</p>
-          <div className="space-y-2">
-            {analysis.setupGuide.confirmationChecklist.map((item, index) => (
-              <div key={`${item}-${index}`} className="flex items-start gap-2 text-sm text-muted-foreground">
-                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
-                <span>{item}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-            <p className="text-sm font-medium text-foreground mb-2">Entry Trigger</p>
-            <p className="text-sm text-muted-foreground leading-relaxed">{analysis.setupGuide.entryTrigger}</p>
-          </div>
-          <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-            <p className="text-sm font-medium text-foreground mb-2">Stop Placement</p>
-            <p className="text-sm text-muted-foreground leading-relaxed">{analysis.setupGuide.stopGuidance}</p>
-          </div>
-        </div>
-        <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
-          <p className="text-sm font-medium text-foreground mb-2">What To Avoid</p>
-          <p className="text-sm text-muted-foreground leading-relaxed">{analysis.setupGuide.watchOut}</p>
-        </div>
-      </CardContent>
-    </Card>
   );
 }
 
@@ -315,11 +266,8 @@ function AnalyzePageContent() {
     }
   };
 
-  const bias = analysis?.bias || 'NEUTRAL';
-  const signalType = analysis?.signalType || (analysis?.recommendation === 'wait' ? 'wait' : analysis?.entry ? 'instant' : 'pending');
-  const takeProfits = Array.isArray(analysis?.takeProfits)
-    ? analysis.takeProfits.filter((value: unknown): value is number => typeof value === 'number' && Number.isFinite(value))
-    : [];
+  const trend = analysis?.trend || 'ranging';
+  const signalType = analysis?.signalType || 'wait';
   const displayedSteps = ANALYSIS_STEPS.map((step, index) => ({
     step,
     complete: progress >= (index + 1) * 20 || currentStage === step,
@@ -336,10 +284,10 @@ function AnalyzePageContent() {
         >
           <div className="text-center mb-8">
             <h1 className="mb-2 text-2xl font-bold sm:text-3xl md:text-4xl">
-              <span className="text-gradient">Hybrid Signal Engine</span>
+              <span className="text-gradient">SMC Signal Engine</span>
             </h1>
             <p className="mx-auto max-w-2xl text-sm text-muted-foreground sm:text-base">
-              Gemini reads structure, a signal filter validates quality, and the price engine only publishes executable levels when the setup justifies them.
+              Gemini now analyzes charts through Smart Money Concepts, prioritizing market structure, liquidity, and confirmation over forced entries.
             </p>
           </div>
 
@@ -469,7 +417,7 @@ function AnalyzePageContent() {
                     {loading ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        Analyzing market structure...
+                        Analyzing SMC structure...
                       </>
                     ) : (
                       <>
@@ -496,13 +444,13 @@ function AnalyzePageContent() {
             >
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-wrap items-center gap-3">
-                  <Badge variant={bias === 'BULLISH' ? 'success' : bias === 'BEARISH' ? 'destructive' : 'warning'} className="text-base px-4 py-1">
-                    {bias === 'BULLISH'
+                  <Badge variant={trend === 'bullish' ? 'success' : trend === 'bearish' ? 'destructive' : 'warning'} className="text-base px-4 py-1">
+                    {trend === 'bullish'
                       ? <TrendingUp className="h-4 w-4 mr-1" />
-                      : bias === 'BEARISH'
+                      : trend === 'bearish'
                         ? <TrendingDown className="h-4 w-4 mr-1" />
                         : <Minus className="h-4 w-4 mr-1" />}
-                    {bias}
+                    {trend}
                   </Badge>
                   <Badge variant="outline" className="text-sm px-3 py-1 border-blue-500/40 text-blue-300 bg-blue-500/10">
                     <CandlestickChart className="h-4 w-4 mr-1" />
@@ -510,14 +458,14 @@ function AnalyzePageContent() {
                   </Badge>
                   <Badge variant="outline" className="text-sm px-3 py-1 border-purple-500/40 text-purple-300 bg-purple-500/10">
                     <Brain className="h-4 w-4 mr-1" />
-                    {analysis.provider === 'gemini-vision+filter' ? 'Gemini Vision + Filter' : 'Gemini Vision + Anchor'}
+                    {analysis.provider === 'gemini-vision+smc' ? 'Gemini Vision + SMC' : 'Gemini'}
                   </Badge>
                   <Badge
                     variant={analysis.recommendation === 'wait' ? 'warning' : 'success'}
                     className="text-sm px-3 py-1"
                   >
                     <Sparkles className="h-4 w-4 mr-1" />
-                    {analysis.recommendation}
+                    {signalType}
                   </Badge>
                   <span className="text-muted-foreground">{pair} · {timeframe}</span>
                 </div>
@@ -557,7 +505,7 @@ function AnalyzePageContent() {
                     <CardHeader>
                       <CardTitle className="text-lg flex items-center gap-2">
                         <Brain className="h-5 w-5 text-primary" />
-                        Signal Reasoning
+                        SMC Reasoning
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -565,58 +513,77 @@ function AnalyzePageContent() {
                     </CardContent>
                   </Card>
 
-                  <SetupGuideCard analysis={analysis} />
-
                   <Card className="mobile-card">
                     <CardHeader>
                       <CardTitle className="text-lg flex items-center gap-2">
                         <BarChart3 className="h-5 w-5 text-primary" />
-                        Vision Structure
+                        Market Structure
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-5">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <p className="text-sm text-muted-foreground mb-1">Trend Strength</p>
-                          <p className="font-semibold capitalize">{analysis.trendStrength}</p>
+                          <p className="text-sm text-muted-foreground mb-1">Trend</p>
+                          <p className="font-semibold capitalize">{analysis.trend}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-muted-foreground mb-1">Entry Type</p>
-                          <p className="font-semibold capitalize">{analysis.entryType}</p>
+                          <p className="text-sm text-muted-foreground mb-1">Current Price Position</p>
+                          <p className="font-semibold capitalize">{analysis.currentPricePosition}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-muted-foreground mb-1">Signal State</p>
+                          <p className="text-sm text-muted-foreground mb-1">BOS</p>
+                          <p className="font-semibold capitalize">{analysis.structure.bos}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">CHoCH</p>
+                          <p className="font-semibold capitalize">{analysis.structure.choch}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">Setup Quality</p>
+                          <p className="font-semibold capitalize">{analysis.setupQuality}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">Signal Type</p>
                           <p className="font-semibold capitalize">{signalType}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-muted-foreground mb-1">Recent High Zone</p>
-                          <p className="font-semibold">{analysis.structure?.recentHighZone || 'Not available'}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground mb-1">Recent Low Zone</p>
-                          <p className="font-semibold">{analysis.structure?.recentLowZone || 'Not available'}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground mb-1">Liquidity Context</p>
-                          <p className="font-semibold capitalize">{analysis.liquidityContext || 'Not available'}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground mb-1">Chart Clarity</p>
-                          <p className="font-semibold capitalize">{analysis.clarity}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground mb-1">Current Price Relation</p>
-                          <p className="font-semibold capitalize">{(analysis.currentPriceRelation || 'far_from_zone').replaceAll('_', ' ')}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground mb-1">AI Entry Area</p>
-                          <p className="font-semibold">{analysis.aiEntryZone?.label || 'Preferred reaction area'}</p>
+                          <p className="text-sm text-muted-foreground mb-1">Entry Logic</p>
+                          <p className="font-semibold capitalize">{analysis.entryLogic.type}</p>
                         </div>
                       </div>
 
                       <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                        <p className="text-sm text-muted-foreground mb-2">Structure Summary</p>
-                        <p className="text-sm leading-relaxed">{analysis.structureSummary}</p>
+                        <p className="text-sm text-muted-foreground mb-2">System Message</p>
+                        <p className="text-sm leading-relaxed">{analysis.message}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="mobile-card">
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Activity className="h-5 w-5 text-primary" />
+                        Liquidity
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-1">Liquidity Sweep</p>
+                        <p className="font-semibold capitalize">{analysis.liquidity.sweep}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-2">Liquidity Zones</p>
+                        {analysis.liquidity.liquidityZones.length > 0 ? (
+                          <div className="space-y-2">
+                            {analysis.liquidity.liquidityZones.map((zone, index) => (
+                              <div key={`${zone}-${index}`} className="rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-muted-foreground">
+                                {zone}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">No clear liquidity zones were identified.</p>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -631,57 +598,30 @@ function AnalyzePageContent() {
 
                   <Card className="mobile-card">
                     <CardHeader>
-                      <CardTitle className="text-lg">Trade Levels</CardTitle>
+                      <CardTitle className="text-lg">Supply And Demand</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="space-y-2">
                         <div className="flex items-center gap-2 text-sm font-medium">
                           <CircleDollarSign className="h-4 w-4 text-emerald-400" />
-                          Current Price Anchor
+                          Current Price
                         </div>
                         <p className="text-sm text-muted-foreground pl-6">{formatPrice(analysis.currentPrice, pair)}</p>
                       </div>
-                      {signalType === 'wait' ? (
-                        <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
-                          <div className="flex items-center gap-2 text-sm font-medium text-amber-300">
-                            <Clock className="h-4 w-4" />
-                            WAIT - No valid entry yet
-                          </div>
-                          <p className="mt-2 text-sm text-muted-foreground">
-                            {analysis.filterReason || analysis.waitConditions || 'Structure is not ready for execution yet.'}
-                          </p>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm font-medium">
+                          <ShieldAlert className="h-4 w-4 text-red-400" />
+                          Supply Zone
                         </div>
-                      ) : (
-                        <>
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2 text-sm font-medium">
-                              <Target className="h-4 w-4 text-blue-400" />
-                              {signalType === 'instant' ? 'Enter Now' : 'Entry Zone'}
-                            </div>
-                            <p className="text-sm text-muted-foreground pl-6">
-                              {signalType === 'instant' ? formatPrice(analysis.entry, pair) : formatEntryZone(analysis.entryZone, pair)}
-                            </p>
-                          </div>
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2 text-sm font-medium">
-                              <ShieldAlert className="h-4 w-4 text-red-400" />
-                              Stop Loss
-                            </div>
-                            <p className="text-sm text-muted-foreground pl-6">{formatPrice(analysis.stopLoss, pair)}</p>
-                          </div>
-                        </>
-                      )}
-                      {signalType !== 'wait' && takeProfits.length > 0 ? takeProfits.map((target: number, index: number) => (
-                        <div key={`${target}-${index}`} className="space-y-2">
-                          <div className="flex items-center gap-2 text-sm font-medium">
-                            <CheckCircle2 className="h-4 w-4 text-green-400" />
-                            {`Take Profit ${index + 1}`}
-                          </div>
-                          <p className="text-sm text-muted-foreground pl-6">{formatPrice(target, pair)}</p>
+                        <p className="text-sm text-muted-foreground pl-6">{formatStructuredZone(analysis.zones.supplyZone, pair)}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm font-medium">
+                          <CheckCircle2 className="h-4 w-4 text-green-400" />
+                          Demand Zone
                         </div>
-                      )) : (
-                        signalType !== 'wait' ? <p className="text-sm text-muted-foreground">No targets were returned for this setup.</p> : null
-                      )}
+                        <p className="text-sm text-muted-foreground pl-6">{formatStructuredZone(analysis.zones.demandZone, pair)}</p>
+                      </div>
                     </CardContent>
                   </Card>
 
@@ -696,31 +636,33 @@ function AnalyzePageContent() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2 mb-2">
-                          <Clock className="h-4 w-4 text-yellow-400" />
-                          <span className="text-sm font-medium">Confirmation Logic</span>
+                          <Target className="h-4 w-4 text-cyan-400" />
+                          <span className="text-sm font-medium">Entry Zone</span>
                         </div>
-                        <p className="text-sm text-muted-foreground">{analysis.confirmationDetails || analysis.waitConditions || 'Wait for confirmation at the entry zone before execution.'}</p>
+                        <p className="text-sm text-muted-foreground">{formatStructuredZone(analysis.entryZone, pair)}</p>
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <Clock className="h-4 w-4 text-yellow-400" />
+                          <span className="text-sm font-medium">Wait For</span>
+                        </div>
+                        <p className="text-sm text-muted-foreground capitalize">
+                          {analysis.confirmation === 'none' ? 'No confirmation yet' : `${analysis.confirmation} confirmation`}
+                        </p>
                       </div>
                       <div>
                         <div className="flex items-center gap-2 mb-2">
                           <Sparkles className="h-4 w-4 text-emerald-400" />
-                          <span className="text-sm font-medium">Recommendation</span>
+                          <span className="text-sm font-medium">Confirmation Needed</span>
                         </div>
-                        <p className="text-sm text-muted-foreground capitalize">{analysis.recommendation || 'wait'}</p>
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <Target className="h-4 w-4 text-cyan-400" />
-                          <span className="text-sm font-medium">Risk / Reward</span>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{analysis.riskReward || 'Not available'}</p>
+                        <p className="text-sm text-muted-foreground">{analysis.confirmationNeeded ? 'Yes' : 'No'}</p>
                       </div>
                       <div>
                         <div className="flex items-center gap-2 mb-2">
                           <AlertTriangle className="h-4 w-4 text-orange-400" />
-                          <span className="text-sm font-medium">Filter Decision</span>
+                          <span className="text-sm font-medium">System Message</span>
                         </div>
-                        <p className="text-sm text-muted-foreground">{analysis.filterReason || 'No filter note available.'}</p>
+                        <p className="text-sm text-muted-foreground">{analysis.message}</p>
                       </div>
                     </CardContent>
                   </Card>
@@ -729,14 +671,14 @@ function AnalyzePageContent() {
                     <CardContent className="p-6">
                       <div className="flex items-center gap-2 mb-3">
                         <CandlestickChart className="h-4 w-4 text-blue-400" />
-                        <span className="text-sm font-medium">Price Engine</span>
+                        <span className="text-sm font-medium">SMC Summary</span>
                       </div>
                       <div className="space-y-2 text-sm text-muted-foreground">
-                        <p>Price Source: <span className="text-foreground font-medium capitalize">{analysis.priceSource}</span></p>
-                        <p>Working Range: <span className="text-foreground font-medium">{formatPrice(analysis.range, pair)}</span></p>
-                        <p>Execution Buffer: <span className="text-foreground font-medium">{formatPrice(analysis.buffer, pair)}</span></p>
-                        <p>Execution Mode: <span className="text-foreground font-medium capitalize">{analysis.executionMode || 'none'}</span></p>
-                        <p>Method: <span className="text-foreground font-medium">Filtered live-price execution model</span></p>
+                        <p>BOS: <span className="text-foreground font-medium capitalize">{analysis.structure.bos}</span></p>
+                        <p>CHoCH: <span className="text-foreground font-medium capitalize">{analysis.structure.choch}</span></p>
+                        <p>Liquidity Sweep: <span className="text-foreground font-medium capitalize">{analysis.liquidity.sweep}</span></p>
+                        <p>Entry Logic: <span className="text-foreground font-medium capitalize">{analysis.entryLogic.type}</span></p>
+                        <p>Provider: <span className="text-foreground font-medium">Gemini Vision + SMC</span></p>
                       </div>
                     </CardContent>
                   </Card>
