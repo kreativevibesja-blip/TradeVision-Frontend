@@ -159,13 +159,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error(missingSupabaseEnvMessage);
     }
 
+    const normalizedEmail = email.trim();
+    const normalizedName = (name?.trim() || normalizedEmail.split('@')[0] || 'Trader').trim();
+    const [firstName, ...restName] = normalizedName.split(/\s+/).filter(Boolean);
+    const lastName = restName.join(' ');
+
     const { data, error } = await supabase.auth.signUp({
-      email,
+      email: normalizedEmail,
       password,
-      options: name ? { data: { name } } : undefined,
+      options: {
+        data: {
+          name: normalizedName,
+          full_name: normalizedName,
+          display_name: normalizedName,
+          first_name: firstName || normalizedName,
+          ...(lastName ? { last_name: lastName } : {}),
+        },
+      },
     });
 
     if (error) {
+      if (/database error saving new user/i.test(error.message)) {
+        throw new Error('Sign-up failed in Supabase Auth while creating your account record. The app now sends the expected profile fields, but if this continues you need to fix the Supabase auth trigger or profile table schema in the project dashboard.');
+      }
+
       throw new Error(error.message);
     }
 
