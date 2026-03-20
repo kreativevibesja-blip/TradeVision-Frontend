@@ -90,6 +90,18 @@ export interface BillingSummary {
   }>;
 }
 
+export interface PricingPlan {
+  id: string;
+  name: string;
+  tier: 'FREE' | 'PRO';
+  price: number;
+  features: string[];
+  dailyLimit: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface FetchOptions extends RequestInit {
   token?: string;
 }
@@ -128,6 +140,9 @@ export const api = {
 
   getActiveAnnouncements: () =>
     apiFetch<{ announcements: Announcement[] }>('/admin/public-announcements'),
+
+  getPublicPricingPlans: () =>
+    apiFetch<{ plans: PricingPlan[] }>('/admin/public-pricing-plans'),
 
   // Analysis
   analyzeChartUpload: (formData: FormData, token: string) =>
