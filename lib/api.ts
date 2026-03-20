@@ -191,10 +191,21 @@ export const api = {
     },
     getPricingPlans: (token: string) =>
       apiFetch<any>('/admin/pricing-plans', { token }),
+    createPricingPlan: (data: any, token: string) =>
+      apiFetch<any>('/admin/pricing-plans', {
+        method: 'POST',
+        body: JSON.stringify(data),
+        token,
+      }),
     updatePricingPlan: (id: string, data: any, token: string) =>
       apiFetch<any>(`/admin/pricing-plans/${encodeURIComponent(id)}`, {
         method: 'PATCH',
         body: JSON.stringify(data),
+        token,
+      }),
+    deletePricingPlan: (id: string, token: string) =>
+      apiFetch<any>(`/admin/pricing-plans/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
         token,
       }),
     getSettings: (token: string) =>
