@@ -25,52 +25,50 @@ export interface AnalysisResult {
   pair: string;
   timeframe: string;
   assetClass?: string | null;
-  bias: string;
+  bias?: string;
   confidence: number;
   currentPrice: number;
-  signalType?: 'instant' | 'pending' | 'wait';
-  entryZone?: {
-    low: number;
-    high: number;
-  } | null;
-  entry: number | null;
-  stopLoss: number | null;
-  takeProfits: number[];
-  riskReward: string | null;
-  entryType: 'breakout' | 'pullback' | 'reversal';
-  recommendation: string;
-  reasoning: string;
-  trendStrength: 'weak' | 'moderate' | 'strong';
+  trend: 'bullish' | 'bearish' | 'ranging';
   structure: {
-    recentHighZone: string;
-    recentLowZone: string;
+    bos: 'bullish' | 'bearish' | 'none';
+    choch: 'bullish' | 'bearish' | 'none';
   };
-  structureSummary: string;
-  liquidityContext: string;
-  clarity: 'clear' | 'mixed' | 'unclear';
-  currentPriceRelation?: 'at_zone' | 'near_zone' | 'far_from_zone';
-  aiEntryZone?: {
-    label: string;
-    description: string;
+  liquidity: {
+    sweep: 'above highs' | 'below lows' | 'none';
+    liquidityZones: string[];
+  };
+  zones: {
+    supplyZone: {
+      min: number | null;
+      max: number | null;
+    } | null;
+    demandZone: {
+      min: number | null;
+      max: number | null;
+    } | null;
+  };
+  currentPricePosition: 'premium' | 'discount' | 'equilibrium';
+  entryLogic: {
+    type: 'reversal' | 'continuation' | 'none';
+    entryZone: {
+      min: number | null;
+      max: number | null;
+    } | null;
+    confirmationRequired: boolean;
+    confirmationType: 'bos' | 'choch' | 'rejection' | 'none';
+  };
+  setupQuality: 'high' | 'medium' | 'low';
+  signalType: 'instant' | 'pending' | 'wait';
+  reasoning: string;
+  entryZone: {
+    min: number | null;
+    max: number | null;
   } | null;
-  confirmationNeeded?: boolean;
-  confirmationDetails?: string | null;
-  invalidationHint?: string | null;
-  filterReason?: string | null;
-  range: number;
-  buffer: number;
-  priceSource: 'manual';
-  executionMode?: 'market' | 'zone' | 'none';
-  provider: 'gemini-vision+anchor' | 'gemini-vision+filter';
-  waitConditions?: string | null;
-  setupGuide?: {
-    likelyEntryArea: string;
-    whyThisArea: string;
-    confirmationChecklist: string[];
-    entryTrigger: string;
-    stopGuidance: string;
-    watchOut: string;
-  } | null;
+  confirmation: 'bos' | 'choch' | 'rejection' | 'none';
+  confirmationNeeded: boolean;
+  message: string;
+  recommendation: 'wait' | 'pending' | 'instant';
+  provider: 'gemini-vision+smc';
   createdAt?: string;
 }
 
