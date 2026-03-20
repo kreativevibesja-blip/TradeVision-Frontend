@@ -43,9 +43,15 @@ export function AuthModal({ open, onOpenChange, mode, onModeChange }: AuthModalP
 
     try {
       if (mode === 'login') {
-        await login(email, password);
+        await login(email.trim(), password);
       } else {
-        await register(email, password, name);
+        const normalizedName = name.trim();
+
+        if (!normalizedName) {
+          throw new Error('Name is required to create your account.');
+        }
+
+        await register(email.trim(), password, normalizedName);
       }
       onOpenChange(false);
       setEmail('');
@@ -140,6 +146,7 @@ export function AuthModal({ open, onOpenChange, mode, onModeChange }: AuthModalP
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Your name"
+                  required
                 />
               </div>
             )}
