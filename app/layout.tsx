@@ -5,7 +5,6 @@ import { AuthProvider } from '@/hooks/useAuth';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { GlobalBackButton } from '@/components/GlobalBackButton';
-import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { GlobalUpdatesModal } from '@/components/GlobalUpdatesModal';
 import { WhatsAppSupportButton } from '@/components/WhatsAppSupportButton';
 
@@ -32,9 +31,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Navbar />
             <GlobalBackButton />
             <GlobalUpdatesModal />
-            <main className="flex-1 pt-16 pb-24 md:pb-0">{children}</main>
+            <main className="flex-1 pt-16 pb-20 md:pb-0">{children}</main>
             <WhatsAppSupportButton />
-            <MobileBottomNav />
           </div>
           <Footer />
         </AuthProvider>
