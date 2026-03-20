@@ -3,14 +3,6 @@
 import { Suspense, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useSearchParams } from 'next/navigation';
-import {
-  PayPalCardFieldsProvider,
-  PayPalCVVField,
-  PayPalExpiryField,
-  PayPalNumberField,
-  PayPalScriptProvider,
-  usePayPalCardFields,
-} from '@paypal/react-paypal-js';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -93,197 +85,9 @@ const planCatalog: Record<PlanKey, {
 };
 
 const requiredAddressFields: Array<keyof AddressForm> = ['firstName', 'lastName', 'email', 'address1', 'city', 'state', 'postalCode', 'country'];
-const paypalClientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || '';
-const hasValidPayPalClientId = (() => {
-  const trimmed = paypalClientId.trim();
-
-  if (!trimmed) {
-    return false;
-  }
-
-  const invalidValues = new Set(['.', 'your-paypal-client-id', 'your_client_id', 'placeholder']);
-  return !invalidValues.has(trimmed.toLowerCase());
-})();
 
 const isAddressComplete = (address: AddressForm) =>
   requiredAddressFields.every((field) => address[field].trim().length > 0);
-
-function CardFieldsSubmitButton({
-  onError,
-  disabled,
-  loading,
-}: {
-  onError: (message: string) => void;
-  disabled: boolean;
-  loading: boolean;
-}) {
-  const { cardFieldsForm } = usePayPalCardFields();
-  const [submitting, setSubmitting] = useState(false);
-
-  const handleSubmit = async () => {
-    if (!cardFieldsForm) {
-      onError('Card fields are not ready yet. Please wait a moment and try again.');
-      return;
-    }
-
-    try {
-      const currentState = await cardFieldsForm.getState();
-
-      if (!currentState.isFormValid) {
-        onError('Please enter a valid card number, expiry date, and CVV before continuing.');
-        return;
-      }
-
-      setSubmitting(true);
-      await cardFieldsForm.submit();
-    } catch (error: any) {
-      onError(error?.message || 'Card payment failed. Please review your details and try again.');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  return (
-    <Button variant="gradient" size="lg" className="w-full" onClick={handleSubmit} disabled={disabled || loading || submitting}>
-      {loading || submitting ? (
-        <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          Processing card payment...
-        </>
-      ) : (
-        <>
-          <CreditCard className="mr-2 h-4 w-4" />
-          Pay $19 with Card
-        </>
-      )}
-    </Button>
-  );
-}
-
-function CardFieldsAvailabilityNotice() {
-  const { cardFieldsForm } = usePayPalCardFields();
-  const [showFallback, setShowFallback] = useState(false);
-
-  useEffect(() => {
-    if (cardFieldsForm) {
-      setShowFallback(false);
-      return;
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      setShowFallback(true);
-    }, 2500);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [cardFieldsForm]);
-
-  if (!showFallback) {
-    return null;
-  }
-
-  return (
-    <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-amber-200">
-      PayPal card fields are unavailable for this environment or merchant account. In sandbox, make sure Advanced Credit and Debit Card Payments is enabled for your PayPal app. If that is already enabled, reload the page and try again.
-    </div>
-  );
-}
-
-function HostedCardCheckout({
-  clientToken,
-  formReady,
-  onCreateOrder,
-  onCardApproved,
-  onError,
-  onCancel,
-  loading,
-}: {
-  clientToken: string;
-  formReady: boolean;
-  onCreateOrder: () => Promise<string>;
-  onCardApproved: (orderId: string) => Promise<void>;
-  onError: (message: string) => void;
-  onCancel: () => void;
-  loading: boolean;
-}) {
-  return (
-    <PayPalScriptProvider
-      options={{
-        clientId: paypalClientId,
-        components: 'buttons,card-fields',
-        currency: 'USD',
-        intent: 'capture',
-        dataClientToken: clientToken,
-      }}
-    >
-      <PayPalCardFieldsProvider
-        createOrder={onCreateOrder}
-        onApprove={(data) => onCardApproved(data.orderID)}
-        onCancel={onCancel}
-        onError={(error) => onError((error as { message?: string })?.message || 'Card payment failed. Please review your details and try again.')}
-        style={{
-          input: {
-            'font-size': '15px',
-            color: '#e5eefb',
-            'line-height': '24px',
-          },
-          ':focus': {
-            color: '#ffffff',
-          },
-          '.invalid': {
-            color: '#f87171',
-          },
-        }}
-      >
-        <div className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-2 sm:col-span-2">
-              <p className="text-sm font-medium text-foreground">Cardholder</p>
-              <div className="rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-muted-foreground">
-                Name will be taken from the billing form and PayPal verification flow.
-              </div>
-            </div>
-
-            <div className="space-y-2 sm:col-span-2">
-              <p className="text-sm font-medium text-foreground">Card Number</p>
-              <PayPalNumberField
-                className="min-h-[52px] rounded-xl border border-white/10 bg-black/20 px-4 py-3"
-                placeholder="1234 1234 1234 1234"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-foreground">Expiry</p>
-              <PayPalExpiryField
-                className="min-h-[52px] rounded-xl border border-white/10 bg-black/20 px-4 py-3"
-                placeholder="MM / YY"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-foreground">CVV</p>
-              <PayPalCVVField
-                className="min-h-[52px] rounded-xl border border-white/10 bg-black/20 px-4 py-3"
-                placeholder="123"
-              />
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/5 p-4 text-sm text-muted-foreground">
-            Billing address, name, and contact details are preloaded from the form above. Your card is processed by PayPal without requiring a PayPal account login.
-          </div>
-
-          <CardFieldsAvailabilityNotice />
-
-          <CardFieldsSubmitButton
-            onError={onError}
-            disabled={!formReady}
-            loading={loading}
-          />
-        </div>
-      </PayPalCardFieldsProvider>
-    </PayPalScriptProvider>
-  );
-}
 
 function AddressFields({
   title,
@@ -328,12 +132,10 @@ function CheckoutPageContent() {
   const [sameAsShipping, setSameAsShipping] = useState(true);
   const [shippingAddress, setShippingAddress] = useState<AddressForm>(emptyAddress);
   const [billingAddress, setBillingAddress] = useState<AddressForm>(emptyAddress);
-  const [cardFormOpen, setCardFormOpen] = useState(false);
-  const [paypalCardClientToken, setPaypalCardClientToken] = useState('');
-  const [cardSetupLoading, setCardSetupLoading] = useState(false);
 
   const isSuccess = searchParams.get('success') === 'true';
   const isCanceled = searchParams.get('canceled') === 'true';
+  const popupOrderId = searchParams.get('token');
   const planKey = (searchParams.get('plan')?.toUpperCase() === 'FREE' ? 'FREE' : 'PRO') as PlanKey;
   const plan = planCatalog[planKey];
   const activeBillingAddress = sameAsShipping ? shippingAddress : billingAddress;
@@ -362,50 +164,61 @@ function CheckoutPageContent() {
   }, [user]);
 
   useEffect(() => {
+    if (typeof window === 'undefined' || !window.opener) {
+      return;
+    }
+
+    if (isSuccess && popupOrderId) {
+      window.opener.postMessage(
+        { type: 'chartmind-paypal-popup-success', orderId: popupOrderId, method: 'card' },
+        window.location.origin
+      );
+      window.close();
+      return;
+    }
+
+    if (isCanceled) {
+      window.opener.postMessage(
+        { type: 'chartmind-paypal-popup-cancel', method: 'card' },
+        window.location.origin
+      );
+      window.close();
+    }
+  }, [isCanceled, isSuccess, popupOrderId]);
+
+  useEffect(() => {
+    const handlePopupMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) {
+        return;
+      }
+
+      if (event.data?.type === 'chartmind-paypal-popup-success' && typeof event.data.orderId === 'string') {
+        handlePaymentCapture(event.data.orderId, 'card');
+        return;
+      }
+
+      if (event.data?.type === 'chartmind-paypal-popup-cancel') {
+        setLoadingMethod(null);
+        setError('Card checkout was canceled. Please try again.');
+      }
+    };
+
+    window.addEventListener('message', handlePopupMessage);
+    return () => window.removeEventListener('message', handlePopupMessage);
+  }, []);
+
+  useEffect(() => {
     if (isSuccess && token) {
-      const orderId = sessionStorage.getItem('tradevision_order_id') || sessionStorage.getItem('chartmind_order_id');
+      const orderId = popupOrderId || sessionStorage.getItem('tradevision_order_id') || sessionStorage.getItem('chartmind_order_id');
       if (orderId) {
         handlePaymentCapture(orderId);
       }
     }
-  }, [isSuccess, token]);
+  }, [isSuccess, popupOrderId, token]);
 
-  useEffect(() => {
-    if (!cardFormOpen || !token || paypalCardClientToken || !hasValidPayPalClientId) {
-      return;
-    }
-
-    let cancelled = false;
-
-    const loadClientToken = async () => {
-      try {
-        setCardSetupLoading(true);
-        const result = await api.getPayPalClientToken(token);
-        if (!cancelled) {
-          setPaypalCardClientToken(result.clientToken);
-        }
-      } catch (err: any) {
-        if (!cancelled) {
-          setError(err.message || 'Unable to initialize card checkout right now.');
-          setCardFormOpen(false);
-        }
-      } finally {
-        if (!cancelled) {
-          setCardSetupLoading(false);
-        }
-      }
-    };
-
-    loadClientToken();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [cardFormOpen, token, paypalCardClientToken]);
-
-  const handlePaymentCapture = async (orderId: string) => {
+  const handlePaymentCapture = async (orderId: string, method: CheckoutMethod = 'paypal') => {
     try {
-      setLoadingMethod('paypal');
+      setLoadingMethod(method);
       await api.paymentSuccess(orderId, token!);
       sessionStorage.removeItem('tradevision_order_id');
       sessionStorage.removeItem('chartmind_order_id');
@@ -417,6 +230,25 @@ function CheckoutPageContent() {
     } finally {
       setLoadingMethod(null);
     }
+  };
+
+  const openPayPalPopup = (approveUrl: string) => {
+    const width = 520;
+    const height = 760;
+    const left = Math.max(window.screenX + (window.outerWidth - width) / 2, 0);
+    const top = Math.max(window.screenY + (window.outerHeight - height) / 2, 0);
+    const popup = window.open(
+      approveUrl,
+      'chartmind-paypal-card-checkout',
+      `popup=yes,width=${width},height=${height},left=${Math.round(left)},top=${Math.round(top)}`
+    );
+
+    if (popup) {
+      popup.focus();
+      return true;
+    }
+
+    return false;
   };
 
   const updateShipping = (field: keyof AddressForm, value: string) => {
@@ -477,16 +309,42 @@ function CheckoutPageContent() {
     return result.orderId;
   };
 
-  const handleCardApproval = async (orderId: string) => {
-    setLoadingMethod('card');
+  const handleCardPopupCheckout = async () => {
+    if (!user || !token) {
+      setAuthOpen(true);
+      return;
+    }
+
+    if (!formReady) {
+      setError('Please complete your shipping and billing details before continuing.');
+      return;
+    }
+
+    if (planKey !== 'PRO') {
+      return;
+    }
 
     try {
-      await api.paymentSuccess(orderId, token!);
-      sessionStorage.removeItem('tradevision_order_id');
-      sessionStorage.removeItem('tradevision_checkout_method');
-      await refreshUser();
-      setSuccess(true);
-    } finally {
+      setLoadingMethod('card');
+      setError('');
+      sessionStorage.setItem('tradevision_checkout_method', 'card');
+      const result = await api.createPayment(planKey, token);
+      sessionStorage.setItem('tradevision_order_id', result.orderId);
+      sessionStorage.removeItem('chartmind_order_id');
+
+      if (!result.approveUrl) {
+        throw new Error('Unable to start PayPal card checkout right now.');
+      }
+
+      const popupOpened = openPayPalPopup(result.approveUrl);
+      if (!popupOpened) {
+        window.location.href = result.approveUrl;
+        return;
+      }
+
+      setLoadingMethod(null);
+    } catch (err: any) {
+      setError(err.message || 'Unable to start card checkout right now.');
       setLoadingMethod(null);
     }
   };
@@ -646,7 +504,7 @@ function CheckoutPageContent() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  Complete your purchase securely through PayPal. PayPal checkout stays available, and the debit/credit card option now opens an inline card form processed by PayPal without requiring a PayPal account.
+                  Complete your purchase securely through PayPal. PayPal checkout stays available, and the debit/credit card option now opens PayPal's secure card popup instead of leaving this page.
                 </p>
 
                 {error && (
@@ -681,54 +539,16 @@ function CheckoutPageContent() {
                       variant="outline"
                       size="xl"
                       className="w-full gap-2"
-                      onClick={() => {
-                        if (!user || !token) {
-                          setAuthOpen(true);
-                          return;
-                        }
-
-                        if (!formReady) {
-                          setError('Please complete your shipping and billing details before continuing.');
-                          return;
-                        }
-
-                        setError('');
-                        setCardFormOpen((current) => !current);
-                      }}
+                      onClick={handleCardPopupCheckout}
                       disabled={loadingMethod !== null}
                     >
                       <CreditCard className="h-5 w-5" />
-                      {cardSetupLoading ? 'Preparing Card Checkout...' : 'Debit / Credit Card by PayPal'}
-                      {cardFormOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      {loadingMethod === 'card' ? 'Opening Card Checkout...' : 'Debit / Credit Card by PayPal'}
                     </Button>
 
-                    {cardFormOpen && (
-                      hasValidPayPalClientId ? (
-                        cardSetupLoading ? (
-                          <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-muted-foreground">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Initializing secure card fields...
-                          </div>
-                        ) : paypalCardClientToken ? (
-                          <HostedCardCheckout
-                            clientToken={paypalCardClientToken}
-                            formReady={formReady}
-                            onCreateOrder={createCardOrder}
-                            onCardApproved={handleCardApproval}
-                            onError={setError}
-                            onCancel={() => {
-                              setLoadingMethod(null);
-                              setError('Card checkout was canceled. Please try again.');
-                            }}
-                            loading={loadingMethod === 'card'}
-                          />
-                        ) : null
-                      ) : (
-                        <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-amber-200">
-                          Card checkout is not configured correctly. Set NEXT_PUBLIC_PAYPAL_CLIENT_ID in the frontend environment to your real PayPal client ID, then restart the frontend.
-                        </div>
-                      )
-                    )}
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-muted-foreground">
+                      Clicking the card button opens PayPal's secure credit/debit card popup. If your browser blocks popups, checkout will continue in the current tab.
+                    </div>
                   </div>
                 ) : (
                   <Button
