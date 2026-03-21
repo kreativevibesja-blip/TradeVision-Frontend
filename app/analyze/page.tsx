@@ -87,6 +87,14 @@ const formatStructuredZone = (
   return `${formatPrice(zone.min, pair)} - ${formatPrice(zone.max, pair)}`;
 };
 
+const formatZoneReason = (reason?: 'order block' | 'imbalance' | 'previous structure') => {
+  if (!reason) {
+    return 'Reason not available';
+  }
+
+  return reason;
+};
+
 function CandlestickWave() {
   return (
     <div className="flex items-end gap-1.5 h-20 justify-center">
@@ -527,6 +535,10 @@ function AnalyzePageContent() {
                           <p className="font-semibold capitalize">{analysis.trend}</p>
                         </div>
                         <div>
+                          <p className="text-sm text-muted-foreground mb-1">Structure State</p>
+                          <p className="font-semibold capitalize">{analysis.structure.state || 'transition'}</p>
+                        </div>
+                        <div>
                           <p className="text-sm text-muted-foreground mb-1">Current Price Position</p>
                           <p className="font-semibold capitalize">{analysis.currentPricePosition}</p>
                         </div>
@@ -550,12 +562,32 @@ function AnalyzePageContent() {
                           <p className="text-sm text-muted-foreground mb-1">Entry Logic</p>
                           <p className="font-semibold capitalize">{analysis.entryLogic.type}</p>
                         </div>
+                        {analysis.entryPlan && (
+                          <div>
+                            <p className="text-sm text-muted-foreground mb-1">Entry Bias</p>
+                            <p className="font-semibold capitalize">{analysis.entryPlan.bias}</p>
+                          </div>
+                        )}
                       </div>
+
+                      {analysis.pricePosition?.explanation && (
+                        <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                          <p className="text-sm text-muted-foreground mb-2">Premium / Discount Explanation</p>
+                          <p className="text-sm leading-relaxed">{analysis.pricePosition.explanation}</p>
+                        </div>
+                      )}
 
                       <div className="rounded-xl border border-white/10 bg-white/5 p-4">
                         <p className="text-sm text-muted-foreground mb-2">System Message</p>
                         <p className="text-sm leading-relaxed">{analysis.message}</p>
                       </div>
+
+                      {analysis.entryPlan?.reason && (
+                        <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                          <p className="text-sm text-muted-foreground mb-2">Entry Plan Reason</p>
+                          <p className="text-sm leading-relaxed">{analysis.entryPlan.reason}</p>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
 
@@ -568,9 +600,19 @@ function AnalyzePageContent() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div>
+                        <p className="text-sm text-muted-foreground mb-1">Liquidity Type</p>
+                        <p className="font-semibold capitalize">{analysis.liquidity.type || 'none'}</p>
+                      </div>
+                      <div>
                         <p className="text-sm text-muted-foreground mb-1">Liquidity Sweep</p>
                         <p className="font-semibold capitalize">{analysis.liquidity.sweep}</p>
                       </div>
+                      {analysis.liquidity.description && (
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-2">Liquidity Explanation</p>
+                          <p className="text-sm leading-relaxed text-muted-foreground">{analysis.liquidity.description}</p>
+                        </div>
+                      )}
                       <div>
                         <p className="text-sm text-muted-foreground mb-2">Liquidity Zones</p>
                         {analysis.liquidity.liquidityZones.length > 0 ? (
@@ -614,6 +656,7 @@ function AnalyzePageContent() {
                           Supply Zone
                         </div>
                         <p className="text-sm text-muted-foreground pl-6">{formatStructuredZone(analysis.zones.supplyZone, pair)}</p>
+                        <p className="text-xs text-muted-foreground pl-6">{formatZoneReason(analysis.zones.supplyZone?.reason)}</p>
                       </div>
                       <div className="space-y-2">
                         <div className="flex items-center gap-2 text-sm font-medium">
@@ -621,6 +664,7 @@ function AnalyzePageContent() {
                           Demand Zone
                         </div>
                         <p className="text-sm text-muted-foreground pl-6">{formatStructuredZone(analysis.zones.demandZone, pair)}</p>
+                        <p className="text-xs text-muted-foreground pl-6">{formatZoneReason(analysis.zones.demandZone?.reason)}</p>
                       </div>
                     </CardContent>
                   </Card>
@@ -664,6 +708,17 @@ function AnalyzePageContent() {
                         </div>
                         <p className="text-sm text-muted-foreground">{analysis.message}</p>
                       </div>
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <ShieldAlert className="h-4 w-4 text-red-400" />
+                          <span className="text-sm font-medium">Invalidation</span>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {typeof analysis.invalidationLevel === 'number'
+                            ? `${formatPrice(analysis.invalidationLevel, pair)} · ${analysis.invalidationReason || 'Invalidation explanation not available'}`
+                            : analysis.invalidationReason || 'Invalidation explanation not available'}
+                        </p>
+                      </div>
                     </CardContent>
                   </Card>
 
@@ -674,8 +729,10 @@ function AnalyzePageContent() {
                         <span className="text-sm font-medium">SMC Summary</span>
                       </div>
                       <div className="space-y-2 text-sm text-muted-foreground">
+                        <p>Structure State: <span className="text-foreground font-medium capitalize">{analysis.structure.state || 'transition'}</span></p>
                         <p>BOS: <span className="text-foreground font-medium capitalize">{analysis.structure.bos}</span></p>
                         <p>CHoCH: <span className="text-foreground font-medium capitalize">{analysis.structure.choch}</span></p>
+                        <p>Verdict: <span className="text-foreground font-medium capitalize">{analysis.finalVerdict?.action || analysis.recommendation}</span></p>
                         <p>Liquidity Sweep: <span className="text-foreground font-medium capitalize">{analysis.liquidity.sweep}</span></p>
                         <p>Entry Logic: <span className="text-foreground font-medium capitalize">{analysis.entryLogic.type}</span></p>
                         <p>Provider: <span className="text-foreground font-medium">Gemini Vision + SMC</span></p>
