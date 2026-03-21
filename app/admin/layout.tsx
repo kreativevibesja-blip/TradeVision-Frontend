@@ -19,6 +19,7 @@ import {
   Shield,
   ChevronRight,
   LifeBuoy,
+  Percent,
 } from 'lucide-react';
 
 const adminNav = [
@@ -27,6 +28,7 @@ const adminNav = [
   { label: 'Analyses', href: '/admin/analyses', icon: FileText },
   { label: 'Payments', href: '/admin/payments', icon: CreditCard },
   { label: 'Pricing Plans', href: '/admin/pricing', icon: Tag },
+  { label: 'Coupons', href: '/admin/coupons', icon: Percent },
   { label: 'Settings', href: '/admin/settings', icon: Settings },
   { label: 'Updates', href: '/admin/updates', icon: Megaphone },
   { label: 'Tickets', href: '/admin/tickets', icon: LifeBuoy, badgeKey: 'tickets' as const },
