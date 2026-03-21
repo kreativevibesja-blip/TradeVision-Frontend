@@ -311,7 +311,7 @@ function AnalyzePageContent() {
               <span className="text-gradient">SMC Signal Engine</span>
             </h1>
             <p className="mx-auto max-w-2xl text-sm text-muted-foreground sm:text-base">
-              Gemini now analyzes charts through Smart Money Concepts, prioritizing market structure, liquidity, and confirmation over forced entries.
+              TradeVision analyzes charts through Smart Money Concepts, prioritizing market structure, liquidity, and confirmation over forced entries.
             </p>
           </div>
 
@@ -507,7 +507,7 @@ function AnalyzePageContent() {
                   </Badge>
                   <Badge variant="outline" className="text-sm px-3 py-1 border-purple-500/40 text-purple-300 bg-purple-500/10">
                     <Brain className="h-4 w-4 mr-1" />
-                    {analysis.provider === 'gemini-vision+smc' ? 'Gemini Vision + SMC' : 'Gemini'}
+                    TradeVision
                   </Badge>
                   <Badge
                     variant={analysis.recommendation === 'wait' ? 'warning' : 'success'}
@@ -799,7 +799,7 @@ function AnalyzePageContent() {
                         <p>Verdict: <span className="text-foreground font-medium capitalize">{analysis.finalVerdict?.action || analysis.recommendation}</span></p>
                         <p>Liquidity Sweep: <span className="text-foreground font-medium capitalize">{analysis.liquidity.sweep}</span></p>
                         <p>Entry Logic: <span className="text-foreground font-medium capitalize">{analysis.entryLogic.type}</span></p>
-                        <p>Provider: <span className="text-foreground font-medium">Gemini Vision + SMC</span></p>
+                        <p>Provider: <span className="text-foreground font-medium">TradeVision</span></p>
                       </div>
                     </CardContent>
                   </Card>
