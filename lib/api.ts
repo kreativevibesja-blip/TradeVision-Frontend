@@ -365,6 +365,8 @@ export const api = {
       const query = params.toString();
       return apiFetch<{ tickets: SupportTicket[]; total: number; page: number; pages: number }>(`/admin/tickets${query ? `?${query}` : ''}`, { token });
     },
+    getOpenTicketCount: (token: string) =>
+      apiFetch<{ count: number }>('/admin/tickets/count', { token }),
     updateTicket: (
       id: string,
       data: { status?: TicketStatus; adminNotes?: string; adminResponse?: string },
