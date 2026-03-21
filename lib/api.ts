@@ -19,9 +19,23 @@ const normalizeApiUrl = (value?: string) => {
 };
 
 const API_URL = normalizeApiUrl(process.env.NEXT_PUBLIC_API_URL);
+const API_ORIGIN = API_URL.replace(/\/api$/, '');
+
+export const resolveAssetUrl = (value?: string | null) => {
+  if (!value) {
+    return null;
+  }
+
+  if (/^https?:\/\//i.test(value)) {
+    return value;
+  }
+
+  return `${API_ORIGIN}${value.startsWith('/') ? value : `/${value}`}`;
+};
 
 export interface AnalysisResult {
   id: string;
+  imageUrl?: string;
   pair: string;
   timeframe: string;
   assetClass?: string | null;
@@ -101,6 +115,14 @@ export interface AnalysisResult {
   recommendation: 'wait' | 'pending' | 'instant';
   invalidationLevel?: number | null;
   invalidationReason?: string;
+  originalImageUrl?: string | null;
+  markedImageUrl?: string | null;
+  hasMarkup?: boolean;
+  chartBounds?: {
+    minPrice: number;
+    maxPrice: number;
+    source: 'input' | 'inferred';
+  } | null;
   provider: 'gemini-vision+smc';
   createdAt?: string;
 }
