@@ -138,6 +138,32 @@ export interface Announcement {
   updatedAt: string;
 }
 
+export type TicketStatus = 'OPEN' | 'IN_PROGRESS' | 'WAITING_ON_USER' | 'RESOLVED' | 'CLOSED';
+export type TicketPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+export type TicketCategory = 'ACCOUNT' | 'BILLING' | 'ANALYSIS' | 'BUG' | 'FEATURE' | 'GENERAL';
+
+export interface SupportTicket {
+  id: string;
+  ticketNumber: string;
+  userId: string;
+  userEmail: string;
+  userName: string | null;
+  whatsappNumber: string | null;
+  subject: string;
+  category: TicketCategory;
+  priority: TicketPriority;
+  status: TicketStatus;
+  message: string;
+  adminNotes: string | null;
+  adminResponse: string | null;
+  respondedAt: string | null;
+  closedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  canReplyByWhatsApp: boolean;
+  canReplyByEmail: boolean;
+}
+
 export interface BillingSummary {
   currentPlan: 'FREE' | 'PRO';
   status: 'free' | 'active' | 'expired' | 'cancelled';
@@ -249,6 +275,25 @@ export const api = {
       token,
     }),
 
+  // Tickets
+  createTicket: (
+    data: {
+      subject: string;
+      category: TicketCategory;
+      priority: TicketPriority;
+      message: string;
+      whatsappNumber?: string;
+    },
+    token: string
+  ) =>
+    apiFetch<{ ticket: SupportTicket }>('/tickets', {
+      method: 'POST',
+      body: JSON.stringify(data),
+      token,
+    }),
+  getMyTickets: (token: string, page = 1) =>
+    apiFetch<{ tickets: SupportTicket[]; total: number; page: number; pages: number }>(`/tickets/mine?page=${page}`, { token }),
+
   // Admin
   admin: {
     getDashboard: (token: string) =>
@@ -304,6 +349,29 @@ export const api = {
     createAnnouncement: (data: { title: string; content: string; durationValue?: number; durationUnit?: 'hours' | 'days' }, token: string) =>
       apiFetch<{ announcement: Announcement }>('/admin/announcements', {
         method: 'POST',
+        body: JSON.stringify(data),
+        token,
+      }),
+    getTickets: (
+      token: string,
+      filters?: { page?: number; search?: string; status?: TicketStatus | 'ALL'; priority?: TicketPriority | 'ALL'; dateRange?: '7d' | '30d' | '90d' | 'all' }
+    ) => {
+      const params = new URLSearchParams();
+      if (filters?.page) params.set('page', String(filters.page));
+      if (filters?.search) params.set('search', filters.search);
+      if (filters?.status && filters.status !== 'ALL') params.set('status', filters.status);
+      if (filters?.priority && filters.priority !== 'ALL') params.set('priority', filters.priority);
+      if (filters?.dateRange) params.set('dateRange', filters.dateRange);
+      const query = params.toString();
+      return apiFetch<{ tickets: SupportTicket[]; total: number; page: number; pages: number }>(`/admin/tickets${query ? `?${query}` : ''}`, { token });
+    },
+    updateTicket: (
+      id: string,
+      data: { status?: TicketStatus; adminNotes?: string; adminResponse?: string },
+      token: string
+    ) =>
+      apiFetch<{ ticket: SupportTicket }>(`/admin/tickets/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
         body: JSON.stringify(data),
         token,
       }),
