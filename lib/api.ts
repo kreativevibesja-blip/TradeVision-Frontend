@@ -255,13 +255,21 @@ export const api = {
   getAnalysis: (id: string, token: string) =>
     apiFetch<{ analysis: AnalysisResult }>(`/analyses/${encodeURIComponent(id)}`, { token }),
 
+  // Coupons
+  validateCoupon: (code: string, token: string) =>
+    apiFetch<{ valid: boolean; discount?: { type: string; value: number }; couponId?: string; message: string }>('/coupons/validate', {
+      method: 'POST',
+      body: JSON.stringify({ code }),
+      token,
+    }),
+
   // Payments
   getPayPalClientToken: (token: string) =>
     apiFetch<{ clientToken: string }>('/paypal-client-token', { token }),
-  createPayment: (plan: string, token: string) =>
-    apiFetch<{ orderId: string; approveUrl: string }>('/create-payment', {
+  createPayment: (plan: string, token: string, couponCode?: string) =>
+    apiFetch<{ orderId: string; approveUrl: string; freeActivation?: boolean }>('/create-payment', {
       method: 'POST',
-      body: JSON.stringify({ plan }),
+      body: JSON.stringify({ plan, ...(couponCode ? { couponCode } : {}) }),
       token,
     }),
 
@@ -383,6 +391,24 @@ export const api = {
       }),
     deleteAnnouncement: (id: string, token: string) =>
       apiFetch<{ success: boolean }>(`/admin/announcements/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        token,
+      }),
+    getCoupons: (token: string) =>
+      apiFetch<{ coupons: any[] }>('/admin/coupons', { token }),
+    createCoupon: (data: { code: string; type: string; value: number; maxUses: number; perUserLimit: number; expiresAt?: string | null }, token: string) =>
+      apiFetch<{ coupon: any }>('/admin/coupons', {
+        method: 'POST',
+        body: JSON.stringify(data),
+        token,
+      }),
+    toggleCoupon: (id: string, token: string) =>
+      apiFetch<{ coupon: any }>(`/admin/coupons/${encodeURIComponent(id)}/toggle`, {
+        method: 'PATCH',
+        token,
+      }),
+    deleteCoupon: (id: string, token: string) =>
+      apiFetch<{ success: boolean }>(`/admin/coupons/${encodeURIComponent(id)}`, {
         method: 'DELETE',
         token,
       }),
