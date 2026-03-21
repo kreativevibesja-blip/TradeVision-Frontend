@@ -149,10 +149,14 @@ function AnalyzePageContent() {
   const isPro = user?.subscription === 'PRO';
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [file2, setFile2] = useState<File | null>(null);
+  const [preview2, setPreview2] = useState<string | null>(null);
   const [pair, setPair] = useState('');
   const [timeframe, setTimeframe] = useState('');
+  const [timeframe2, setTimeframe2] = useState('');
   const [currentPrice, setCurrentPrice] = useState('');
   const [showAiZones, setShowAiZones] = useState(true);
+  const [activeChart, setActiveChart] = useState<'htf' | 'ltf'>('ltf');
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [currentStage, setCurrentStage] = useState(ANALYSIS_STEPS[0]);
@@ -174,12 +178,33 @@ function AnalyzePageContent() {
     setError('');
   }, []);
 
+  const onDrop2 = useCallback((acceptedFiles: File[]) => {
+    const nextFile = acceptedFiles[0];
+    if (!nextFile) {
+      return;
+    }
+
+    setFile2(nextFile);
+    setPreview2(URL.createObjectURL(nextFile));
+    setAnalysis(null);
+    setError('');
+  }, []);
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: { 'image/png': ['.png'], 'image/jpeg': ['.jpg', '.jpeg'], 'image/webp': ['.webp'] },
     maxFiles: 1,
     maxSize: 10 * 1024 * 1024,
   });
+
+  const { getRootProps: getRootProps2, getInputProps: getInputProps2, isDragActive: isDragActive2 } = useDropzone({
+    onDrop: onDrop2,
+    accept: { 'image/png': ['.png'], 'image/jpeg': ['.jpg', '.jpeg'], 'image/webp': ['.webp'] },
+    maxFiles: 1,
+    maxSize: 10 * 1024 * 1024,
+  });
+
+  const isDualChart = Boolean(file2);
 
   useEffect(() => {
     if (!loading) {
@@ -255,6 +280,11 @@ function AnalyzePageContent() {
       return;
     }
 
+    if (file2 && !timeframe2) {
+      setError('Please select a timeframe for the second chart.');
+      return;
+    }
+
     setLoading(true);
     setError('');
     setAnalysis(null);
@@ -267,6 +297,11 @@ function AnalyzePageContent() {
       formData.append('pair', pair);
       formData.append('timeframe', timeframe);
       formData.append('currentPrice', currentPrice.trim());
+
+      if (file2) {
+        formData.append('chart2', file2);
+        formData.append('timeframe2', timeframe2);
+      }
 
       const result = await api.analyzeChartUpload(formData, token);
       setProgress(100);
@@ -314,10 +349,10 @@ function AnalyzePageContent() {
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Upload className="h-5 w-5 text-primary" />
-                    Upload Chart
+                    {isDualChart ? 'Chart 1 — Higher Timeframe' : 'Upload Chart'}
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-4">
                   <div
                     {...getRootProps()}
                     className={`cursor-pointer rounded-2xl border-2 border-dashed p-5 text-center transition-all duration-200 sm:p-8 ${
@@ -342,6 +377,54 @@ function AnalyzePageContent() {
                       </div>
                     )}
                   </div>
+
+                  {isPro && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium flex items-center gap-1.5">
+                        <Crown className="h-3.5 w-3.5 text-yellow-400" />
+                        Chart 2 — Lower Timeframe
+                        <span className="text-xs text-muted-foreground">(Optional)</span>
+                      </label>
+                      {preview2 ? (
+                        <div className="relative">
+                          <div
+                            {...getRootProps2()}
+                            className={`cursor-pointer rounded-2xl border-2 border-dashed p-4 text-center transition-all duration-200 ${
+                              isDragActive2
+                                ? 'border-primary bg-primary/10'
+                                : 'border-white/10 hover:border-white/20 hover:bg-white/5'
+                            }`}
+                          >
+                            <input {...getInputProps2()} />
+                            <img src={preview2} alt="Chart 2 preview" className="mx-auto h-auto max-h-[250px] w-full rounded-xl object-contain" />
+                            <p className="mt-2 text-sm text-muted-foreground">Click or drag to replace</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); setFile2(null); setPreview2(null); setTimeframe2(''); }}
+                            className="absolute top-2 right-2 rounded-full bg-red-500/80 hover:bg-red-500 p-1 text-white text-xs"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ) : (
+                        <div
+                          {...getRootProps2()}
+                          className={`cursor-pointer rounded-2xl border-2 border-dashed p-4 text-center transition-all duration-200 ${
+                            isDragActive2
+                              ? 'border-primary bg-primary/10'
+                              : 'border-white/10 hover:border-white/20 hover:bg-white/5'
+                          }`}
+                        >
+                          <input {...getInputProps2()} />
+                          <div className="space-y-2 py-4">
+                            <ImageIcon className="h-8 w-8 mx-auto text-muted-foreground" />
+                            <p className="text-sm text-muted-foreground">Upload a second chart for multi-timeframe analysis</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -367,24 +450,65 @@ function AnalyzePageContent() {
                     </select>
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Timeframe</label>
-                    <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-3">
-                      {TIMEFRAMES.map((option) => (
-                        <button
-                          key={option}
-                          onClick={() => setTimeframe(option)}
-                          className={`h-12 rounded-xl border px-2 text-sm font-medium transition-all ${
-                            timeframe === option
-                              ? 'border-primary bg-primary/20 text-primary'
-                              : 'border-white/10 hover:border-white/20 text-muted-foreground'
-                          }`}
-                        >
-                          {option}
-                        </button>
-                      ))}
+                  {isDualChart ? (
+                    <>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Chart 1 Timeframe (HTF)</label>
+                        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-3">
+                          {TIMEFRAMES.map((option) => (
+                            <button
+                              key={option}
+                              onClick={() => setTimeframe(option)}
+                              className={`h-10 rounded-xl border px-2 text-sm font-medium transition-all ${
+                                timeframe === option
+                                  ? 'border-primary bg-primary/20 text-primary'
+                                  : 'border-white/10 hover:border-white/20 text-muted-foreground'
+                              }`}
+                            >
+                              {option}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Chart 2 Timeframe (LTF)</label>
+                        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-3">
+                          {TIMEFRAMES.map((option) => (
+                            <button
+                              key={`tf2-${option}`}
+                              onClick={() => setTimeframe2(option)}
+                              className={`h-10 rounded-xl border px-2 text-sm font-medium transition-all ${
+                                timeframe2 === option
+                                  ? 'border-primary bg-primary/20 text-primary'
+                                  : 'border-white/10 hover:border-white/20 text-muted-foreground'
+                              }`}
+                            >
+                              {option}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Timeframe</label>
+                      <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-3">
+                        {TIMEFRAMES.map((option) => (
+                          <button
+                            key={option}
+                            onClick={() => setTimeframe(option)}
+                            className={`h-12 rounded-xl border px-2 text-sm font-medium transition-all ${
+                              timeframe === option
+                                ? 'border-primary bg-primary/20 text-primary'
+                                : 'border-white/10 hover:border-white/20 text-muted-foreground'
+                            }`}
+                          >
+                            {option}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Current Price</label>
@@ -484,7 +608,9 @@ function AnalyzePageContent() {
                     <Sparkles className="h-4 w-4 mr-1" />
                     {signalType}
                   </Badge>
-                  <span className="text-muted-foreground">{pair} · {timeframe}</span>
+                  <span className="text-muted-foreground">
+                    {pair} · {analysis?.isDualChart ? `${timeframe} / ${timeframe2}` : timeframe}
+                  </span>
                 </div>
                 <Button
                   variant="outline"
@@ -493,6 +619,10 @@ function AnalyzePageContent() {
                     setAnalysis(null);
                     setFile(null);
                     setPreview(null);
+                    setFile2(null);
+                    setPreview2(null);
+                    setTimeframe2('');
+                    setActiveChart('ltf');
                     setShowAiZones(true);
                     setProgress(0);
                     setCurrentStage(ANALYSIS_STEPS[0]);
@@ -505,7 +635,78 @@ function AnalyzePageContent() {
 
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6">
                 <div className="lg:col-span-2 space-y-6">
-                  {displayedChartUrl && (
+                  {analysis?.isDualChart ? (
+                    <Card className="mobile-card">
+                      <CardHeader>
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <CardTitle className="text-lg flex items-center gap-2">
+                            <Eye className="h-5 w-5 text-primary" />
+                            {activeChart === 'htf' ? `HTF Chart (${analysis.htfTimeframe || timeframe})` : `LTF Chart (${analysis.ltfTimeframe || timeframe2})`}
+                          </CardTitle>
+                          <div className="flex items-center gap-2">
+                            <div className="flex rounded-lg border border-white/10 overflow-hidden">
+                              <button
+                                onClick={() => setActiveChart('htf')}
+                                className={`px-3 py-1.5 text-sm font-medium transition-all ${
+                                  activeChart === 'htf'
+                                    ? 'bg-primary/20 text-primary'
+                                    : 'text-muted-foreground hover:text-foreground'
+                                }`}
+                              >
+                                HTF
+                              </button>
+                              <button
+                                onClick={() => setActiveChart('ltf')}
+                                className={`px-3 py-1.5 text-sm font-medium transition-all ${
+                                  activeChart === 'ltf'
+                                    ? 'bg-primary/20 text-primary'
+                                    : 'text-muted-foreground hover:text-foreground'
+                                }`}
+                              >
+                                LTF
+                              </button>
+                            </div>
+                            <Button
+                              variant={showAiZones ? 'default' : 'outline'}
+                              size="sm"
+                              onClick={() => setShowAiZones((current) => !current)}
+                            >
+                              Show AI Zones
+                            </Button>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        {activeChart === 'htf' ? (
+                          <>
+                            <img
+                              src={(showAiZones && analysis.htfMarkedImageUrl ? resolveAssetUrl(analysis.htfMarkedImageUrl) : resolveAssetUrl(analysis.htfOriginalImageUrl || null)) || preview || ''}
+                              alt="HTF Chart"
+                              className="h-auto max-h-[400px] w-full rounded-xl object-contain md:max-h-[600px]"
+                            />
+                            {analysis.htfChartBounds && (
+                              <p className="mt-3 text-xs text-muted-foreground">
+                                HTF markup range: {formatPrice(analysis.htfChartBounds.minPrice, pair)} to {formatPrice(analysis.htfChartBounds.maxPrice, pair)}
+                              </p>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <img
+                              src={(showAiZones && analysis.ltfMarkedImageUrl ? resolveAssetUrl(analysis.ltfMarkedImageUrl) : resolveAssetUrl(analysis.ltfOriginalImageUrl || null)) || preview2 || preview || ''}
+                              alt="LTF Chart"
+                              className="h-auto max-h-[400px] w-full rounded-xl object-contain md:max-h-[600px]"
+                            />
+                            {analysis.ltfChartBounds && (
+                              <p className="mt-3 text-xs text-muted-foreground">
+                                LTF markup range: {formatPrice(analysis.ltfChartBounds.minPrice, pair)} to {formatPrice(analysis.ltfChartBounds.maxPrice, pair)}
+                              </p>
+                            )}
+                          </>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ) : displayedChartUrl && (
                     <Card className="mobile-card">
                       <CardHeader>
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
