@@ -170,17 +170,17 @@ export function TicketForm({ open, whatsappUrl }: TicketFormProps) {
   }
 
   return (
-    <div className="grid gap-4 xl:grid-cols-[1.3fr_0.9fr]">
+    <div className="grid gap-3 xl:grid-cols-[1.3fr_0.78fr]">
       <Card className="overflow-hidden border-white/10 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
         <div className="h-1 w-full bg-gradient-to-r from-cyan-400 via-sky-500 to-emerald-400" />
-        <CardContent className="space-y-5 p-6 pt-6">
+        <CardContent className="space-y-4 p-4 pt-4 sm:p-5 sm:pt-5">
           <div className="flex items-start gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-500/15 text-sm font-semibold text-cyan-100">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-cyan-500/15 text-sm font-semibold text-cyan-100">
               {userInitials}
             </div>
             <div>
-              <h3 className="text-lg font-semibold">Create a support ticket</h3>
-              <p className="text-sm text-muted-foreground">Tickets are linked to {user.email} and visible in your admin support queue.</p>
+              <h3 className="text-base font-semibold sm:text-lg">Create a support ticket</h3>
+              <p className="text-sm text-muted-foreground">Tickets are linked to {user.email} and visible in your support queue.</p>
             </div>
           </div>
 
@@ -198,7 +198,7 @@ export function TicketForm({ open, whatsappUrl }: TicketFormProps) {
             </div>
           ) : null}
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-3 md:grid-cols-2">
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Subject</label>
               <Input value={subject} onChange={(event) => setSubject(event.target.value)} placeholder="Describe the issue clearly" />
@@ -209,7 +209,7 @@ export function TicketForm({ open, whatsappUrl }: TicketFormProps) {
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-3 md:grid-cols-2">
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Category</label>
               <select
@@ -245,7 +245,7 @@ export function TicketForm({ open, whatsappUrl }: TicketFormProps) {
             <textarea
               value={message}
               onChange={(event) => setMessage(event.target.value)}
-              rows={7}
+              rows={5}
               className="w-full rounded-2xl border border-input bg-background/50 px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-ring"
               placeholder="Include what happened, where it happened, and what you expected instead."
             />
@@ -273,11 +273,11 @@ export function TicketForm({ open, whatsappUrl }: TicketFormProps) {
         </CardContent>
       </Card>
 
-      <Card className="border-white/10 bg-white/5">
-        <CardContent className="space-y-4 p-6 pt-6">
+      <Card className="self-start border-white/10 bg-white/5 xl:max-h-[540px] xl:overflow-hidden">
+        <CardContent className="space-y-3 p-4 pt-4 sm:p-5 sm:pt-5 xl:max-h-[540px] xl:overflow-y-auto">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-semibold">Recent tickets</h3>
+              <h3 className="text-base font-semibold sm:text-lg">Recent tickets</h3>
               <p className="text-sm text-muted-foreground">Track what support has already seen.</p>
             </div>
             {tickets.length > 0 ? <Badge variant="outline">{tickets.length} recent</Badge> : null}
@@ -289,13 +289,13 @@ export function TicketForm({ open, whatsappUrl }: TicketFormProps) {
               Loading tickets...
             </div>
           ) : tickets.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 p-6 text-sm text-muted-foreground">
+            <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 p-4 text-sm text-muted-foreground">
               Your ticket history will appear here after your first submission.
             </div>
           ) : (
             <div className="space-y-3">
               {tickets.map((ticket) => (
-                <div key={ticket.id} className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
+                <div key={ticket.id} className="rounded-2xl border border-white/10 bg-slate-950/60 p-3.5">
                   <div className="mb-2 flex flex-wrap items-center gap-2">
                     <span className="text-sm font-semibold text-foreground">{ticket.ticketNumber}</span>
                     <Badge variant={statusVariant(ticket.status) as any}>{ticket.status.replace(/_/g, ' ')}</Badge>
