@@ -22,6 +22,7 @@ import {
   Zap,
   Mail,
   User,
+  Tag,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -103,18 +104,22 @@ function PayPalButtonStack({
   token,
   planKey,
   formReady,
+  couponCode,
   onRequireAuth,
   onRequireForm,
   onCapture,
+  onFreeActivation,
   onError,
   onLoadingChange,
 }: {
   token: string;
   planKey: PlanKey;
   formReady: boolean;
+  couponCode: string;
   onRequireAuth: () => void;
   onRequireForm: () => void;
   onCapture: (orderId: string, method: CheckoutMethod) => Promise<void>;
+  onFreeActivation: () => void;
   onError: (message: string) => void;
   onLoadingChange: (method: CheckoutMethod | null) => void;
 }) {
@@ -131,7 +136,13 @@ function PayPalButtonStack({
 
     onLoadingChange(method);
     sessionStorage.setItem('tradevision_checkout_method', method);
-    const result = await api.createPayment(planKey, token);
+    const result = await api.createPayment(planKey, token, couponCode || undefined);
+
+    if (result.freeActivation) {
+      onFreeActivation();
+      throw new Error('__FREE_ACTIVATION__');
+    }
+
     sessionStorage.setItem('tradevision_order_id', result.orderId);
     sessionStorage.removeItem('chartmind_order_id');
     return result.orderId;
@@ -258,12 +269,56 @@ function CheckoutPageContent() {
   const [shippingAddress, setShippingAddress] = useState<AddressForm>(emptyAddress);
   const [billingAddress, setBillingAddress] = useState<AddressForm>(emptyAddress);
 
+  // Coupon state
+  const [couponCode, setCouponCode] = useState('');
+  const [couponApplied, setCouponApplied] = useState<{ type: string; value: number; message: string } | null>(null);
+  const [couponError, setCouponError] = useState('');
+  const [couponLoading, setCouponLoading] = useState(false);
+
   const isSuccess = searchParams.get('success') === 'true';
   const isCanceled = searchParams.get('canceled') === 'true';
   const planKey = (searchParams.get('plan')?.toUpperCase() === 'FREE' ? 'FREE' : 'PRO') as PlanKey;
   const plan = planCatalog[planKey];
   const activeBillingAddress = sameAsShipping ? shippingAddress : billingAddress;
   const formReady = isAddressComplete(shippingAddress) && isAddressComplete(activeBillingAddress);
+
+  const discountAmount = couponApplied
+    ? couponApplied.type === 'percentage'
+      ? plan.price * couponApplied.value / 100
+      : couponApplied.value
+    : 0;
+  const finalPrice = Math.max(0, plan.price - discountAmount);
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    if (!token) { setAuthOpen(true); return; }
+    setCouponError('');
+    setCouponApplied(null);
+    setCouponLoading(true);
+    try {
+      const result = await api.validateCoupon(couponCode.trim(), token);
+      if (result.valid && result.discount) {
+        setCouponApplied({ type: result.discount.type, value: result.discount.value, message: result.message || 'Coupon applied!' });
+      } else {
+        setCouponError(result.message || 'Invalid coupon code');
+      }
+    } catch (err: any) {
+      setCouponError(err.message || 'Failed to validate coupon');
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setCouponCode('');
+    setCouponApplied(null);
+    setCouponError('');
+  };
+
+  const handleFreeActivation = async () => {
+    await refreshUser();
+    setSuccess(true);
+  };
 
   useEffect(() => {
     if (!user) {
@@ -345,9 +400,14 @@ function CheckoutPageContent() {
       setLoadingMethod(method);
       setError('');
       sessionStorage.setItem('tradevision_checkout_method', method);
-      const result = await api.createPayment(planKey, token);
+      const result = await api.createPayment(planKey, token, couponApplied ? couponCode : undefined);
       sessionStorage.setItem('tradevision_order_id', result.orderId);
       sessionStorage.removeItem('chartmind_order_id');
+
+      if (result.freeActivation) {
+        await handleFreeActivation();
+        return;
+      }
 
       if (result.approveUrl) {
         window.location.href = result.approveUrl;
@@ -427,8 +487,13 @@ function CheckoutPageContent() {
                       </div>
                     </div>
                     <p className="text-2xl font-bold">
-                      ${plan.price}
+                      ${couponApplied ? finalPrice.toFixed(2) : plan.price}
                       <span className="text-sm font-normal text-muted-foreground">{plan.period}</span>
+                      {couponApplied && (
+                        <span className="block text-sm font-normal text-muted-foreground line-through">
+                          ${plan.price.toFixed(2)}
+                        </span>
+                      )}
                     </p>
                   </div>
 
@@ -504,6 +569,69 @@ function CheckoutPageContent() {
                 </CardContent>
               </Card>
 
+              {/* Coupon Code Section */}
+              {planKey === 'PRO' && (
+                <Card className="mobile-card">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Tag className="h-5 w-5 text-primary" />
+                      Coupon Code
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {couponApplied ? (
+                      <div className="rounded-2xl border border-green-500/20 bg-green-500/10 p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <CheckCircle2 className="h-4 w-4 text-green-400" />
+                            <span className="text-sm font-medium text-green-400">{couponApplied.message}</span>
+                          </div>
+                          <button onClick={handleRemoveCoupon} className="text-xs text-muted-foreground hover:text-foreground">
+                            Remove
+                          </button>
+                        </div>
+                        <div className="mt-3 space-y-1 text-sm">
+                          <div className="flex justify-between text-muted-foreground">
+                            <span>Original Price</span>
+                            <span>${plan.price.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between text-green-400">
+                            <span>Discount ({couponApplied.type === 'percentage' ? `${couponApplied.value}%` : `$${couponApplied.value.toFixed(2)}`})</span>
+                            <span>-${discountAmount.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between font-semibold pt-1 border-t border-white/10">
+                            <span>Total</span>
+                            <span>${finalPrice.toFixed(2)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Enter coupon code"
+                            value={couponCode}
+                            onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponError(''); }}
+                            className="uppercase"
+                            onKeyDown={(e) => e.key === 'Enter' && handleApplyCoupon()}
+                          />
+                          <Button
+                            variant="outline"
+                            onClick={handleApplyCoupon}
+                            disabled={couponLoading || !couponCode.trim()}
+                          >
+                            {couponLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Apply'}
+                          </Button>
+                        </div>
+                        {couponError && (
+                          <p className="text-sm text-red-400">{couponError}</p>
+                        )}
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
               <Card className="mobile-card">
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -529,9 +657,11 @@ function CheckoutPageContent() {
                         token={token || ''}
                         planKey={planKey}
                         formReady={formReady}
+                        couponCode={couponApplied ? couponCode : ''}
                         onRequireAuth={() => setAuthOpen(true)}
                         onRequireForm={() => setError('Please complete your shipping and billing details before continuing.')}
                         onCapture={handlePaymentCapture}
+                        onFreeActivation={handleFreeActivation}
                         onError={setError}
                         onLoadingChange={setLoadingMethod}
                       />
