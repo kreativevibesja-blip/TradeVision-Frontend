@@ -123,7 +123,7 @@ export interface AnalysisResult {
     maxPrice: number;
     source: 'input' | 'inferred';
   } | null;
-  provider: 'gemini-vision+smc';
+  provider: 'tradevision';
   createdAt?: string;
 }
 
