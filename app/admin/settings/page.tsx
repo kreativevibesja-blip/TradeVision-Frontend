@@ -17,6 +17,8 @@ export default function AdminSettingsPage() {
   const [aiPrompt, setAiPrompt] = useState('');
   const [freeLimit, setFreeLimit] = useState('3');
   const [proLimit, setProLimit] = useState('999999');
+  const [freeMarkupEnabled, setFreeMarkupEnabled] = useState(true);
+  const [proMarkupEnabled, setProMarkupEnabled] = useState(true);
 
   useEffect(() => {
     if (token) loadSettings();
@@ -29,9 +31,13 @@ export default function AdminSettingsPage() {
       const prompt = data.settings.find((s: any) => s.key === 'ai_prompt');
       const free = data.settings.find((s: any) => s.key === 'free_daily_limit');
       const pro = data.settings.find((s: any) => s.key === 'pro_daily_limit');
+      const freeMarkup = data.settings.find((s: any) => s.key === 'chart_markup_free_enabled');
+      const proMarkup = data.settings.find((s: any) => s.key === 'chart_markup_pro_enabled');
       if (prompt) setAiPrompt(prompt.value);
       if (free) setFreeLimit(String(free.value));
       if (pro) setProLimit(String(pro.value));
+      if (freeMarkup) setFreeMarkupEnabled(Boolean(freeMarkup.value));
+      if (proMarkup) setProMarkupEnabled(Boolean(proMarkup.value));
     } catch {
     } finally {
       setLoading(false);
@@ -102,6 +108,57 @@ export default function AdminSettingsPage() {
             >
               {saving ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Save className="h-3 w-3 mr-1" />}
               Save Limits
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Chart Markup By Plan</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="rounded-lg border border-white/10 bg-background/50 p-4 space-y-3">
+                <div>
+                  <label className="text-sm text-muted-foreground">Free Plan Markup</label>
+                  <p className="text-xs text-muted-foreground mt-1">Controls whether Free users receive marked charts with AI zones.</p>
+                </div>
+                <Button
+                  type="button"
+                  variant={freeMarkupEnabled ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setFreeMarkupEnabled((current) => !current)}
+                >
+                  {freeMarkupEnabled ? 'Enabled' : 'Disabled'}
+                </Button>
+              </div>
+
+              <div className="rounded-lg border border-white/10 bg-background/50 p-4 space-y-3">
+                <div>
+                  <label className="text-sm text-muted-foreground">Pro Plan Markup</label>
+                  <p className="text-xs text-muted-foreground mt-1">Controls whether Pro users receive marked charts with AI zones.</p>
+                </div>
+                <Button
+                  type="button"
+                  variant={proMarkupEnabled ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setProMarkupEnabled((current) => !current)}
+                >
+                  {proMarkupEnabled ? 'Enabled' : 'Disabled'}
+                </Button>
+              </div>
+            </div>
+
+            <Button
+              size="sm"
+              onClick={async () => {
+                await saveSetting('chart_markup_free_enabled', freeMarkupEnabled);
+                await saveSetting('chart_markup_pro_enabled', proMarkupEnabled);
+              }}
+              disabled={saving}
+            >
+              {saving ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Save className="h-3 w-3 mr-1" />}
+              Save Markup Settings
             </Button>
           </CardContent>
         </Card>
