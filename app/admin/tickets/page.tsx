@@ -223,7 +223,7 @@ export default function AdminTicketsPage() {
                   </div>
                 </button>
               ))
-            )}}
+            )}
 
             {pages > 1 ? (
               <div className="flex items-center justify-center gap-2 pt-1">
