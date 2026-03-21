@@ -407,6 +407,12 @@ export const api = {
         body: JSON.stringify(data),
         token,
       }),
+    replyToTicket: (id: string, message: string, token: string) =>
+      apiFetch<{ ticket: SupportTicket; emailSent: boolean }>(`/admin/tickets/${encodeURIComponent(id)}/reply`, {
+        method: 'POST',
+        body: JSON.stringify({ message }),
+        token,
+      }),
     deleteAnnouncement: (id: string, token: string) =>
       apiFetch<{ success: boolean }>(`/admin/announcements/${encodeURIComponent(id)}`, {
         method: 'DELETE',
