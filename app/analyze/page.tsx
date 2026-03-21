@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
-import { api, type AnalysisResult } from '@/lib/api';
+import { api, resolveAssetUrl, type AnalysisResult } from '@/lib/api';
 import { AuthModal } from '@/components/AuthModal';
 import {
   Upload,
@@ -149,6 +149,9 @@ function AnalyzePageContent() {
   const [pair, setPair] = useState('');
   const [timeframe, setTimeframe] = useState('');
   const [currentPrice, setCurrentPrice] = useState('');
+  const [chartMinPrice, setChartMinPrice] = useState('');
+  const [chartMaxPrice, setChartMaxPrice] = useState('');
+  const [showAiZones, setShowAiZones] = useState(true);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [currentStage, setCurrentStage] = useState(ANALYSIS_STEPS[0]);
@@ -217,6 +220,9 @@ function AnalyzePageContent() {
         setPair(result.analysis.pair);
         setTimeframe(result.analysis.timeframe);
         setCurrentPrice(String(result.analysis.currentPrice ?? ''));
+        setChartMinPrice(result.analysis.chartBounds?.minPrice ? String(result.analysis.chartBounds.minPrice) : '');
+        setChartMaxPrice(result.analysis.chartBounds?.maxPrice ? String(result.analysis.chartBounds.maxPrice) : '');
+        setShowAiZones(Boolean(result.analysis.markedImageUrl));
         setProgress(100);
       } catch (loadError: any) {
         if (cancelled) {
@@ -262,11 +268,18 @@ function AnalyzePageContent() {
       formData.append('pair', pair);
       formData.append('timeframe', timeframe);
       formData.append('currentPrice', currentPrice.trim());
+      if (chartMinPrice.trim()) {
+        formData.append('chartMinPrice', chartMinPrice.trim());
+      }
+      if (chartMaxPrice.trim()) {
+        formData.append('chartMaxPrice', chartMaxPrice.trim());
+      }
 
       const result = await api.analyzeChartUpload(formData, token);
       setProgress(100);
       setCurrentStage(ANALYSIS_STEPS[ANALYSIS_STEPS.length - 1]);
       setAnalysis(result.analysis);
+      setShowAiZones(Boolean(result.analysis.markedImageUrl));
       setLoading(false);
     } catch (submitError: any) {
       setError(submitError.message || 'Unable to start analysis.');
@@ -276,6 +289,9 @@ function AnalyzePageContent() {
 
   const trend = analysis?.trend || 'ranging';
   const signalType = analysis?.signalType || 'wait';
+  const originalChartUrl = preview || resolveAssetUrl(analysis?.originalImageUrl || analysis?.imageUrl || null);
+  const markedChartUrl = resolveAssetUrl(analysis?.markedImageUrl || null);
+  const displayedChartUrl = showAiZones && markedChartUrl ? markedChartUrl : originalChartUrl;
   const displayedSteps = ANALYSIS_STEPS.map((step, index) => ({
     step,
     complete: progress >= (index + 1) * 20 || currentStage === step,
@@ -392,6 +408,31 @@ function AnalyzePageContent() {
                     </p>
                   </div>
 
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Visible Chart Low</label>
+                      <Input
+                        type="number"
+                        inputMode="decimal"
+                        step="any"
+                        value={chartMinPrice}
+                        onChange={(event) => setChartMinPrice(event.target.value)}
+                        placeholder="Optional for more accurate markup"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Visible Chart High</label>
+                      <Input
+                        type="number"
+                        inputMode="decimal"
+                        step="any"
+                        value={chartMaxPrice}
+                        onChange={(event) => setChartMaxPrice(event.target.value)}
+                        placeholder="Optional for more accurate markup"
+                      />
+                    </div>
+                  </div>
+
                   <div className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-3">
                     <div className="flex items-center gap-2 text-sm font-medium">
                       <Activity className="h-4 w-4 text-blue-400" />
@@ -484,6 +525,9 @@ function AnalyzePageContent() {
                     setAnalysis(null);
                     setFile(null);
                     setPreview(null);
+                    setChartMinPrice('');
+                    setChartMaxPrice('');
+                    setShowAiZones(true);
                     setProgress(0);
                     setCurrentStage(ANALYSIS_STEPS[0]);
                     setError('');
@@ -495,16 +539,36 @@ function AnalyzePageContent() {
 
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6">
                 <div className="lg:col-span-2 space-y-6">
-                  {preview && (
+                  {displayedChartUrl && (
                     <Card className="mobile-card">
                       <CardHeader>
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          <Eye className="h-5 w-5 text-primary" />
-                          Uploaded Chart
-                        </CardTitle>
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <CardTitle className="text-lg flex items-center gap-2">
+                            <Eye className="h-5 w-5 text-primary" />
+                            {showAiZones && markedChartUrl ? 'Marked Chart' : 'Original Chart'}
+                          </CardTitle>
+                          <Button
+                            variant={showAiZones ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setShowAiZones((current) => !current)}
+                            disabled={!markedChartUrl}
+                          >
+                            Show AI Zones
+                          </Button>
+                        </div>
                       </CardHeader>
                       <CardContent>
-                        <img src={preview} alt="Chart" className="h-auto max-h-[400px] w-full rounded-xl object-contain md:max-h-[600px]" />
+                        <img src={displayedChartUrl} alt="Chart" className="h-auto max-h-[400px] w-full rounded-xl object-contain md:max-h-[600px]" />
+                        {!markedChartUrl && (
+                          <p className="mt-3 text-xs text-muted-foreground">
+                            Markup was unavailable for this analysis, so the original chart is shown.
+                          </p>
+                        )}
+                        {analysis?.chartBounds && (
+                          <p className="mt-3 text-xs text-muted-foreground">
+                            Markup mapping range: {formatPrice(analysis.chartBounds.minPrice, pair)} to {formatPrice(analysis.chartBounds.maxPrice, pair)} ({analysis.chartBounds.source})
+                          </p>
+                        )}
                       </CardContent>
                     </Card>
                   )}
