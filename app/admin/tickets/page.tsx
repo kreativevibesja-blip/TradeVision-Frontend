@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { api, type SupportTicket, type TicketPriority, type TicketStatus } from '@/lib/api';
-import { Loader2, Mail, MessageCircle, RefreshCw, Save, Search, Ticket, TimerReset } from 'lucide-react';
+import { Loader2, MessageCircle, RefreshCw, Save, Search, Ticket, TimerReset, Send, CheckCircle2, AlertTriangle, X } from 'lucide-react';
 
 type StatusFilter = TicketStatus | 'ALL';
 type PriorityFilter = TicketPriority | 'ALL';
@@ -33,12 +33,6 @@ const buildWhatsAppUrl = (ticket: SupportTicket) => {
   return `https://wa.me/${number}?text=${message}`;
 };
 
-const buildMailtoUrl = (ticket: SupportTicket) => {
-  const subject = encodeURIComponent(`Re: ${ticket.ticketNumber} - ${ticket.subject}`);
-  const body = encodeURIComponent(`Hi ${ticket.userName || 'there'},\n\nThis is ChartMind AI support regarding ${ticket.ticketNumber}.\n\n`);
-  return `mailto:${ticket.userEmail}?subject=${subject}&body=${body}`;
-};
-
 export default function AdminTicketsPage() {
   const { token } = useAuth();
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
@@ -54,6 +48,10 @@ export default function AdminTicketsPage() {
   const [draftStatus, setDraftStatus] = useState<TicketStatus>('OPEN');
   const [adminNotes, setAdminNotes] = useState('');
   const [adminResponse, setAdminResponse] = useState('');
+  const [replyOpen, setReplyOpen] = useState(false);
+  const [replyMessage, setReplyMessage] = useState('');
+  const [replySending, setReplySending] = useState(false);
+  const [replyFeedback, setReplyFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const deferredSearch = useDeferredValue(search);
 
@@ -138,6 +136,30 @@ export default function AdminTicketsPage() {
     } catch {
     } finally {
       setSaving(false);
+    }
+  };
+
+  const openReplyModal = () => {
+    setReplyMessage(adminResponse || '');
+    setReplyFeedback(null);
+    setReplyOpen(true);
+  };
+
+  const sendEmailReply = async () => {
+    if (!token || !selectedTicket || !replyMessage.trim()) return;
+
+    try {
+      setReplySending(true);
+      setReplyFeedback(null);
+      await api.admin.replyToTicket(selectedTicket.id, replyMessage.trim(), token);
+      setReplyFeedback({ type: 'success', text: 'Email sent successfully' });
+      setAdminResponse(replyMessage.trim());
+      await loadTickets();
+      setTimeout(() => setReplyOpen(false), 1500);
+    } catch (err: any) {
+      setReplyFeedback({ type: 'error', text: err?.message || 'Failed to send email' });
+    } finally {
+      setReplySending(false);
     }
   };
 
@@ -257,10 +279,14 @@ export default function AdminTicketsPage() {
                     <p className="mt-0.5 text-xs text-muted-foreground">Opened by {selectedTicket.userName || 'Unknown user'} on {new Date(selectedTicket.createdAt).toLocaleString()}</p>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
-                    <a href={buildMailtoUrl(selectedTicket)} className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-foreground transition-colors hover:bg-white/10">
-                      <Mail className="h-3.5 w-3.5" />
-                      Email
-                    </a>
+                    <button
+                      type="button"
+                      onClick={openReplyModal}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-blue-400/20 bg-blue-500/10 px-2.5 py-1.5 text-xs text-blue-100 transition-colors hover:bg-blue-500/20"
+                    >
+                      <Send className="h-3.5 w-3.5" />
+                      Reply via Email
+                    </button>
                     {buildWhatsAppUrl(selectedTicket) ? (
                       <a href={buildWhatsAppUrl(selectedTicket)!} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-400/20 bg-emerald-500/10 px-2.5 py-1.5 text-xs text-emerald-100 transition-colors hover:bg-emerald-500/15">
                         <MessageCircle className="h-3.5 w-3.5" />
@@ -333,6 +359,65 @@ export default function AdminTicketsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {replyOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => !replySending && setReplyOpen(false)}>
+          <div className="mx-4 w-full max-w-lg rounded-2xl border border-white/10 bg-slate-900 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+              <div className="flex items-center gap-2">
+                <Send className="h-4 w-4 text-blue-400" />
+                <h3 className="text-sm font-semibold">Reply via Email</h3>
+              </div>
+              <button type="button" onClick={() => !replySending && setReplyOpen(false)} className="rounded-lg p-1 text-muted-foreground hover:bg-white/10 hover:text-foreground transition-colors">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="space-y-4 px-5 py-4">
+              {selectedTicket && (
+                <div className="rounded-lg border border-white/10 bg-white/5 p-3">
+                  <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground mb-1">Sending to</p>
+                  <p className="text-xs font-medium">{selectedTicket.userName || 'User'} &lt;{selectedTicket.userEmail}&gt;</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Re: {selectedTicket.ticketNumber} — {selectedTicket.subject}</p>
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium">Message</label>
+                <textarea
+                  value={replyMessage}
+                  onChange={(e) => setReplyMessage(e.target.value)}
+                  rows={6}
+                  className="w-full rounded-xl border border-input bg-background/50 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring resize-none"
+                  placeholder="Type your reply..."
+                  disabled={replySending}
+                />
+              </div>
+
+              {replyFeedback && (
+                <div className={`flex items-center gap-2 rounded-lg border p-3 text-xs ${
+                  replyFeedback.type === 'success'
+                    ? 'border-emerald-400/20 bg-emerald-500/10 text-emerald-200'
+                    : 'border-red-400/20 bg-red-500/10 text-red-200'
+                }`}>
+                  {replyFeedback.type === 'success' ? <CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0" /> : <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />}
+                  {replyFeedback.text}
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2 border-t border-white/10 px-5 py-3">
+              <Button variant="outline" size="sm" onClick={() => setReplyOpen(false)} disabled={replySending}>
+                Cancel
+              </Button>
+              <Button size="sm" onClick={sendEmailReply} disabled={replySending || !replyMessage.trim()} className="min-w-28">
+                {replySending ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Send className="mr-2 h-3.5 w-3.5" />}
+                Send Email
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }
