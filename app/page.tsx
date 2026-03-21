@@ -375,9 +375,9 @@ export default function HomePage() {
                 <CardContent className="p-8">
                   <div className="flex items-center gap-2 mb-2">
                     <h3 className="text-xl font-semibold">Pro</h3>
-                    <Badge variant="default">Popular</Badge>
+                    <Badge variant="default">Popular 🔥</Badge>
                   </div>
-                  <div className="text-4xl font-bold mb-4">$19<span className="text-lg text-muted-foreground font-normal">/month</span></div>
+                  <div className="text-4xl font-bold mb-4">$19.95<span className="text-lg text-muted-foreground font-normal">/month</span></div>
                   <ul className="space-y-3 mb-8">
                     {[
                       'Unlimited analyses',
