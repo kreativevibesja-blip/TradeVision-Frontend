@@ -33,6 +33,8 @@ import {
   Activity,
   Sparkles,
   CircleDollarSign,
+  Lock,
+  Crown,
 } from 'lucide-react';
 
 const PAIRS = [
@@ -144,6 +146,7 @@ function AnalyzePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, token } = useAuth();
+  const isPro = user?.subscription === 'PRO';
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [pair, setPair] = useState('');
@@ -597,7 +600,7 @@ function AnalyzePageContent() {
                         )}
                       </div>
 
-                      {analysis.pricePosition?.explanation && (
+                      {isPro && analysis.pricePosition?.explanation && (
                         <div className="rounded-xl border border-white/10 bg-white/5 p-4">
                           <p className="text-sm text-muted-foreground mb-2">Premium / Discount Explanation</p>
                           <p className="text-sm leading-relaxed">{analysis.pricePosition.explanation}</p>
@@ -609,7 +612,7 @@ function AnalyzePageContent() {
                         <p className="text-sm leading-relaxed">{analysis.message}</p>
                       </div>
 
-                      {analysis.entryPlan?.reason && (
+                      {isPro && analysis.entryPlan?.reason && (
                         <div className="rounded-xl border border-white/10 bg-white/5 p-4">
                           <p className="text-sm text-muted-foreground mb-2">Entry Plan Reason</p>
                           <p className="text-sm leading-relaxed">{analysis.entryPlan.reason}</p>
@@ -634,26 +637,37 @@ function AnalyzePageContent() {
                         <p className="text-sm text-muted-foreground mb-1">Liquidity Sweep</p>
                         <p className="font-semibold capitalize">{analysis.liquidity.sweep}</p>
                       </div>
-                      {analysis.liquidity.description && (
-                        <div>
-                          <p className="text-sm text-muted-foreground mb-2">Liquidity Explanation</p>
-                          <p className="text-sm leading-relaxed text-muted-foreground">{analysis.liquidity.description}</p>
+                      {isPro ? (
+                        <>
+                          {analysis.liquidity.description && (
+                            <div>
+                              <p className="text-sm text-muted-foreground mb-2">Liquidity Explanation</p>
+                              <p className="text-sm leading-relaxed text-muted-foreground">{analysis.liquidity.description}</p>
+                            </div>
+                          )}
+                          <div>
+                            <p className="text-sm text-muted-foreground mb-2">Liquidity Zones</p>
+                            {analysis.liquidity.liquidityZones.length > 0 ? (
+                              <div className="space-y-2">
+                                {analysis.liquidity.liquidityZones.map((zone, index) => (
+                                  <div key={`${zone}-${index}`} className="rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-muted-foreground">
+                                    {zone}
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-sm text-muted-foreground">No clear liquidity zones were identified.</p>
+                            )}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="rounded-xl border border-purple-500/20 bg-purple-500/5 p-3 flex items-center gap-2">
+                          <Lock className="h-4 w-4 text-purple-400 shrink-0" />
+                          <p className="text-xs text-muted-foreground">
+                            Detailed liquidity analysis available on <Link href="/pricing" className="text-purple-400 underline underline-offset-2">Pro</Link>
+                          </p>
                         </div>
                       )}
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-2">Liquidity Zones</p>
-                        {analysis.liquidity.liquidityZones.length > 0 ? (
-                          <div className="space-y-2">
-                            {analysis.liquidity.liquidityZones.map((zone, index) => (
-                              <div key={`${zone}-${index}`} className="rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-muted-foreground">
-                                {zone}
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-sm text-muted-foreground">No clear liquidity zones were identified.</p>
-                        )}
-                      </div>
                     </CardContent>
                   </Card>
                 </div>
@@ -748,6 +762,78 @@ function AnalyzePageContent() {
                       </div>
                     </CardContent>
                   </Card>
+
+                  {isPro && (analysis.stopLoss || analysis.takeProfit1) ? (
+                    <Card className="mobile-card border-amber-500/30 bg-amber-500/5">
+                      <CardContent className="p-6 space-y-4">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Target className="h-4 w-4 text-amber-400" />
+                          <span className="text-sm font-medium">Risk Management Levels</span>
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-500/40 text-amber-300">
+                            {analysis.finalVerdict?.action === 'enter' ? 'DEFINITIVE' : 'PROJECTED'}
+                          </Badge>
+                        </div>
+                        {analysis.stopLoss != null && (
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <ShieldAlert className="h-3.5 w-3.5 text-red-400" />
+                              <span className="text-xs font-medium text-red-400">Stop Loss</span>
+                            </div>
+                            <p className="text-sm font-semibold pl-5">{formatPrice(analysis.stopLoss, pair)}</p>
+                          </div>
+                        )}
+                        {analysis.takeProfit1 != null && (
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <CheckCircle2 className="h-3.5 w-3.5 text-green-400" />
+                              <span className="text-xs font-medium text-green-400">Take Profit 1</span>
+                            </div>
+                            <p className="text-sm font-semibold pl-5">{formatPrice(analysis.takeProfit1, pair)}</p>
+                          </div>
+                        )}
+                        {analysis.takeProfit2 != null && (
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                              <span className="text-xs font-medium text-emerald-400">Take Profit 2</span>
+                            </div>
+                            <p className="text-sm font-semibold pl-5">{formatPrice(analysis.takeProfit2, pair)}</p>
+                          </div>
+                        )}
+                        {analysis.takeProfit3 != null && (
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <CheckCircle2 className="h-3.5 w-3.5 text-teal-400" />
+                              <span className="text-xs font-medium text-teal-400">Take Profit 3</span>
+                            </div>
+                            <p className="text-sm font-semibold pl-5">{formatPrice(analysis.takeProfit3, pair)}</p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ) : !isPro ? (
+                    <Card className="mobile-card border-purple-500/30 bg-purple-500/5">
+                      <CardContent className="p-6">
+                        <div className="flex flex-col items-center text-center space-y-3">
+                          <div className="rounded-full bg-purple-500/10 p-3">
+                            <Lock className="h-5 w-5 text-purple-400" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium">Stop Loss & Take Profit Levels</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Upgrade to Pro for exact SL/TP levels, deeper analysis, and AI chart markup.
+                            </p>
+                          </div>
+                          <Link href="/pricing">
+                            <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white">
+                              <Crown className="h-3.5 w-3.5 mr-1.5" />
+                              Upgrade to Pro
+                            </Button>
+                          </Link>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ) : null}
 
                   <Card className="mobile-card">
                     <CardContent className="p-6">
