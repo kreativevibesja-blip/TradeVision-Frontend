@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
+import { api } from '@/lib/api';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   LayoutDashboard,
@@ -28,13 +29,24 @@ const adminNav = [
   { label: 'Pricing Plans', href: '/admin/pricing', icon: Tag },
   { label: 'Settings', href: '/admin/settings', icon: Settings },
   { label: 'Updates', href: '/admin/updates', icon: Megaphone },
-  { label: 'Tickets', href: '/admin/tickets', icon: LifeBuoy },
+  { label: 'Tickets', href: '/admin/tickets', icon: LifeBuoy, badgeKey: 'tickets' as const },
   { label: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, token, loading } = useAuth();
   const pathname = usePathname();
+  const [openTicketCount, setOpenTicketCount] = useState(0);
+
+  useEffect(() => {
+    if (!token) return;
+    let active = true;
+    const load = () =>
+      api.admin.getOpenTicketCount(token).then((res) => { if (active) setOpenTicketCount(res.count); }).catch(() => {});
+    load();
+    const interval = setInterval(load, 60_000);
+    return () => { active = false; clearInterval(interval); };
+  }, [token]);
 
   if (loading) {
     return (
@@ -74,6 +86,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <nav className="space-y-1">
             {adminNav.map((item) => {
               const isActive = pathname === item.href;
+              const badgeCount = item.badgeKey === 'tickets' ? openTicketCount : 0;
               return (
                 <Link key={item.href} href={item.href}>
                   <div
@@ -85,7 +98,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   >
                     <item.icon className="h-4 w-4" />
                     {item.label}
-                    {isActive && <ChevronRight className="h-3 w-3 ml-auto" />}
+                    {badgeCount > 0 && (
+                      <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-cyan-500 px-1.5 text-[10px] font-bold text-white">{badgeCount > 99 ? '99+' : badgeCount}</span>
+                    )}
+                    {isActive && !badgeCount && <ChevronRight className="h-3 w-3 ml-auto" />}
                   </div>
                 </Link>
               );
@@ -98,15 +114,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="flex gap-1 min-w-max">
             {adminNav.map((item) => {
               const isActive = pathname === item.href;
+              const badgeCount = item.badgeKey === 'tickets' ? openTicketCount : 0;
               return (
                 <Link key={item.href} href={item.href}>
                   <div
-                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs whitespace-nowrap transition-all ${
+                    className={`relative flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs whitespace-nowrap transition-all ${
                       isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground'
                     }`}
                   >
                     <item.icon className="h-3 w-3" />
                     {item.label}
+                    {badgeCount > 0 && (
+                      <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-cyan-500 px-1 text-[9px] font-bold text-white">{badgeCount > 99 ? '99+' : badgeCount}</span>
+                    )}
                   </div>
                 </Link>
               );
