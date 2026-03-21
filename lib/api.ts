@@ -123,6 +123,10 @@ export interface AnalysisResult {
     maxPrice: number;
     source: 'input' | 'inferred';
   } | null;
+  stopLoss?: number | null;
+  takeProfit1?: number | null;
+  takeProfit2?: number | null;
+  takeProfit3?: number | null;
   provider: 'tradevision';
   createdAt?: string;
 }
