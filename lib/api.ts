@@ -127,6 +127,24 @@ export interface AnalysisResult {
   takeProfit1?: number | null;
   takeProfit2?: number | null;
   takeProfit3?: number | null;
+  // Dual-chart analysis fields
+  isDualChart?: boolean;
+  htfTimeframe?: string;
+  ltfTimeframe?: string;
+  htfOriginalImageUrl?: string | null;
+  ltfOriginalImageUrl?: string | null;
+  htfMarkedImageUrl?: string | null;
+  ltfMarkedImageUrl?: string | null;
+  htfChartBounds?: {
+    minPrice: number;
+    maxPrice: number;
+    source: 'input' | 'inferred';
+  } | null;
+  ltfChartBounds?: {
+    minPrice: number;
+    maxPrice: number;
+    source: 'input' | 'inferred';
+  } | null;
   provider: 'tradevision';
   createdAt?: string;
 }
