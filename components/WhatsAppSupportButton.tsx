@@ -1,42 +1,65 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { TicketForm } from '@/components/TicketForm';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { LifeBuoy, MessageCircle, X } from 'lucide-react';
+import { ChevronUp, LifeBuoy, MessageCircle, PlusCircle, X } from 'lucide-react';
 
 const whatsappUrl = 'https://wa.me/18762797956?text=Hi%20TradeVision%20AI%2C%20I%20need%20support.';
 
 export function WhatsAppSupportButton() {
-  const [open, setOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (!open) {
+    if (!menuOpen && !modalOpen) {
       return;
     }
 
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setOpen(false);
+        setMenuOpen(false);
+        setModalOpen(false);
       }
     };
 
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
-  }, [open]);
+  }, [menuOpen, modalOpen]);
+
+  useEffect(() => {
+    if (!menuOpen) {
+      return;
+    }
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!menuRef.current?.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('mousedown', handlePointerDown);
+    return () => window.removeEventListener('mousedown', handlePointerDown);
+  }, [menuOpen]);
+
+  const openTicketModal = () => {
+    setMenuOpen(false);
+    setModalOpen(true);
+  };
 
   return (
     <>
       <AnimatePresence>
-        {open ? (
+        {modalOpen ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md"
-            onClick={() => setOpen(false)}
+            onClick={() => setModalOpen(false)}
           >
             <motion.div
               initial={{ opacity: 0, y: 24, scale: 0.98 }}
@@ -59,13 +82,13 @@ export function WhatsAppSupportButton() {
                         Create a tracked ticket for account, billing, chart analysis, or bug issues. If it is urgent, jump straight to WhatsApp.
                       </p>
                     </div>
-                    <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setOpen(false)} aria-label="Close support">
+                    <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setModalOpen(false)} aria-label="Close support">
                       <X className="h-5 w-5" />
                     </Button>
                   </div>
 
                   <div className="max-h-[calc(92vh-96px)] overflow-y-auto p-4 sm:p-6">
-                    <TicketForm open={open} whatsappUrl={whatsappUrl} />
+                    <TicketForm open={modalOpen} whatsappUrl={whatsappUrl} />
                   </div>
                 </CardContent>
               </Card>
@@ -74,28 +97,60 @@ export function WhatsAppSupportButton() {
         ) : null}
       </AnimatePresence>
 
-      <div className="fixed bottom-20 right-4 z-40 flex items-center gap-2 md:bottom-6 md:right-6">
-        <a
-          href={whatsappUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Contact support on WhatsApp"
-          className="hidden rounded-full border border-emerald-400/30 bg-emerald-500 px-4 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-white shadow-[0_18px_45px_rgba(16,185,129,0.28)] transition-transform duration-200 hover:scale-[1.02] hover:bg-emerald-400 md:inline-flex md:items-center md:gap-2"
-        >
-          <MessageCircle className="h-4 w-4" />
-          WhatsApp
-        </a>
+      <div ref={menuRef} className="fixed bottom-20 right-4 z-40 md:bottom-6 md:right-6">
+        <AnimatePresence>
+          {menuOpen ? (
+            <motion.div
+              initial={{ opacity: 0, y: 16, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 16, scale: 0.96 }}
+              transition={{ duration: 0.16 }}
+              className="mb-3 w-56 rounded-3xl border border-white/10 bg-slate-950/95 p-2 shadow-[0_24px_80px_rgba(2,6,23,0.55)] backdrop-blur-xl"
+            >
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm text-white transition-colors hover:bg-emerald-500/12"
+              >
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-200">
+                  <MessageCircle className="h-5 w-5" />
+                </span>
+                <span>
+                  <span className="block font-semibold">WhatsApp</span>
+                  <span className="block text-xs text-slate-400">Chat with support now</span>
+                </span>
+              </a>
+
+              <button
+                type="button"
+                onClick={openTicketModal}
+                className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm text-white transition-colors hover:bg-cyan-500/12"
+              >
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-cyan-500/15 text-cyan-200">
+                  <PlusCircle className="h-5 w-5" />
+                </span>
+                <span>
+                  <span className="block font-semibold">Create Ticket</span>
+                  <span className="block text-xs text-slate-400">Open the tracked support form</span>
+                </span>
+              </button>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
 
         <button
           type="button"
-          onClick={() => setOpen(true)}
-          aria-label="Open support center"
-          className="inline-flex h-14 w-14 items-center justify-center rounded-full border border-cyan-400/30 bg-cyan-500 text-white shadow-[0_18px_45px_rgba(6,182,212,0.28)] transition-transform duration-200 hover:scale-[1.02] hover:bg-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:ring-offset-2 focus:ring-offset-background md:h-auto md:w-auto md:gap-2 md:px-4 md:py-3"
+          onClick={() => setMenuOpen((current) => !current)}
+          aria-label="Open help options"
+          className="inline-flex items-center gap-3 rounded-full border border-cyan-400/30 bg-cyan-500 px-4 py-3 text-white shadow-[0_18px_45px_rgba(6,182,212,0.28)] transition-transform duration-200 hover:scale-[1.02] hover:bg-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:ring-offset-2 focus:ring-offset-background"
         >
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-black/10 md:h-7 md:w-7">
-            <LifeBuoy className="h-5 w-5 md:h-4 md:w-4" />
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-black/10">
+            <LifeBuoy className="h-4 w-4" />
           </span>
-          <span className="hidden text-[10px] font-semibold uppercase tracking-[0.08em] md:inline">Support Center</span>
+          <span className="text-sm font-semibold">👋 Help me</span>
+          <ChevronUp className={`h-4 w-4 transition-transform ${menuOpen ? 'rotate-0' : 'rotate-180'}`} />
         </button>
       </div>
     </>
