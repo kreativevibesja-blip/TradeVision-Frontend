@@ -170,17 +170,17 @@ export function TicketForm({ open, whatsappUrl }: TicketFormProps) {
   }
 
   return (
-    <div className="grid gap-3 xl:grid-cols-[1.3fr_0.78fr]">
+    <div className="grid gap-3 2xl:grid-cols-[1.3fr_0.78fr]">
       <Card className="overflow-hidden border-white/10 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
         <div className="h-1 w-full bg-gradient-to-r from-cyan-400 via-sky-500 to-emerald-400" />
-        <CardContent className="space-y-4 p-4 pt-4 sm:p-5 sm:pt-5">
+        <CardContent className="space-y-3 p-4 pt-4 sm:p-5 sm:pt-5">
           <div className="flex items-start gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-cyan-500/15 text-sm font-semibold text-cyan-100">
               {userInitials}
             </div>
             <div>
               <h3 className="text-base font-semibold sm:text-lg">Create a support ticket</h3>
-              <p className="text-sm text-muted-foreground">Tickets are linked to {user.email} and visible in your support queue.</p>
+              <p className="text-xs text-muted-foreground sm:text-sm">Tickets are linked to {user.email} and visible in your support queue.</p>
             </div>
           </div>
 
@@ -245,36 +245,38 @@ export function TicketForm({ open, whatsappUrl }: TicketFormProps) {
             <textarea
               value={message}
               onChange={(event) => setMessage(event.target.value)}
-              rows={5}
+              rows={4}
               className="w-full rounded-2xl border border-input bg-background/50 px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-ring"
               placeholder="Include what happened, where it happened, and what you expected instead."
             />
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <a
-              href={whatsappUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-sm text-emerald-200 transition-colors hover:text-emerald-100"
-            >
-              <MessageCircle className="h-4 w-4" />
-              Need immediate help instead? Open WhatsApp
-            </a>
-            <Button
-              onClick={handleSubmit}
-              disabled={submitting || subject.trim().length < 5 || message.trim().length < 20}
-              className="min-w-40"
-            >
-              {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Ticket className="mr-2 h-4 w-4" />}
-              Submit Ticket
-            </Button>
+          <div className="sticky bottom-0 -mx-4 border-t border-white/10 bg-slate-950/95 px-4 pb-1 pt-3 backdrop-blur-xl sm:-mx-5 sm:px-5">
+            <div className="grid gap-2 sm:grid-cols-2">
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-sm font-medium text-emerald-100 transition-colors hover:bg-emerald-500/15"
+              >
+                <MessageCircle className="h-4 w-4" />
+                Open WhatsApp
+              </a>
+              <Button
+                onClick={handleSubmit}
+                disabled={submitting || subject.trim().length < 5 || message.trim().length < 20}
+                className="min-h-11"
+              >
+                {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Ticket className="mr-2 h-4 w-4" />}
+                Submit Ticket
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="self-start border-white/10 bg-white/5 xl:max-h-[540px] xl:overflow-hidden">
-        <CardContent className="space-y-3 p-4 pt-4 sm:p-5 sm:pt-5 xl:max-h-[540px] xl:overflow-y-auto">
+      <Card className="hidden self-start border-white/10 bg-white/5 2xl:block 2xl:max-h-[540px] 2xl:overflow-hidden">
+        <CardContent className="space-y-3 p-4 pt-4 sm:p-5 sm:pt-5 2xl:max-h-[540px] 2xl:overflow-y-auto">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-base font-semibold sm:text-lg">Recent tickets</h3>
