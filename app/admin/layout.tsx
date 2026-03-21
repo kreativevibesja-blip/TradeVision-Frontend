@@ -17,6 +17,7 @@ import {
   BarChart3,
   Shield,
   ChevronRight,
+  LifeBuoy,
 } from 'lucide-react';
 
 const adminNav = [
@@ -27,6 +28,7 @@ const adminNav = [
   { label: 'Pricing Plans', href: '/admin/pricing', icon: Tag },
   { label: 'Settings', href: '/admin/settings', icon: Settings },
   { label: 'Updates', href: '/admin/updates', icon: Megaphone },
+  { label: 'Tickets', href: '/admin/tickets', icon: LifeBuoy },
   { label: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
 ];
 
