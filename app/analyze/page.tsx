@@ -398,16 +398,6 @@ function AnalyzePageContent() {
                     </p>
                   </div>
 
-                  <div className="rounded-2xl border border-cyan-400/15 bg-cyan-500/5 p-4">
-                    <div className="mb-1 flex items-center gap-2 text-sm font-medium text-cyan-100">
-                      <Eye className="h-4 w-4 text-cyan-300" />
-                      Auto chart mapping
-                    </div>
-                    <p className="text-xs text-cyan-50/80 sm:text-sm">
-                      TradeVision now maps markup positions automatically from your chart and current price. Manual high and low inputs are no longer required.
-                    </p>
-                  </div>
-
                   <div className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-3">
                     <div className="flex items-center gap-2 text-sm font-medium">
                       <Activity className="h-4 w-4 text-blue-400" />
