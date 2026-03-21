@@ -77,7 +77,7 @@ export function WhatsAppSupportButton() {
                         <LifeBuoy className="h-3.5 w-3.5" />
                         Support Desk
                       </div>
-                      <h2 className="text-2xl font-semibold text-white">Need help with ChartMind AI?</h2>
+                      <h2 className="text-2xl font-semibold text-white">How can we help?</h2>
                       <p className="mt-2 max-w-2xl text-sm text-slate-300">
                         Create a tracked ticket for account, billing, chart analysis, or bug issues. If it is urgent, jump straight to WhatsApp.
                       </p>
