@@ -30,10 +30,13 @@ export interface AnalysisResult {
   currentPrice: number;
   trend: 'bullish' | 'bearish' | 'ranging';
   structure: {
+    state?: 'higher highs' | 'lower lows' | 'transition';
     bos: 'bullish' | 'bearish' | 'none';
     choch: 'bullish' | 'bearish' | 'none';
   };
   liquidity: {
+    type?: 'buy-side' | 'sell-side' | 'none';
+    description?: string;
     sweep: 'above highs' | 'below lows' | 'none';
     liquidityZones: string[];
   };
@@ -41,13 +44,29 @@ export interface AnalysisResult {
     supplyZone: {
       min: number | null;
       max: number | null;
+      reason?: 'order block' | 'imbalance' | 'previous structure';
     } | null;
     demandZone: {
       min: number | null;
       max: number | null;
+      reason?: 'order block' | 'imbalance' | 'previous structure';
     } | null;
   };
+  pricePosition?: {
+    location: 'premium' | 'discount' | 'equilibrium';
+    explanation: string;
+  };
   currentPricePosition: 'premium' | 'discount' | 'equilibrium';
+  entryPlan?: {
+    bias: 'buy' | 'sell' | 'none';
+    entryType: 'instant' | 'confirmation' | 'none';
+    entryZone: {
+      min: number | null;
+      max: number | null;
+    } | null;
+    confirmation: 'CHoCH' | 'BOS' | 'rejection' | 'none';
+    reason: string;
+  };
   entryLogic: {
     type: 'reversal' | 'continuation' | 'none';
     entryZone: {
@@ -57,7 +76,19 @@ export interface AnalysisResult {
     confirmationRequired: boolean;
     confirmationType: 'bos' | 'choch' | 'rejection' | 'none';
   };
+  riskManagement?: {
+    invalidationLevel: number | null;
+    invalidationReason: string;
+  };
+  quality?: {
+    setupRating: 'A' | 'B' | 'C' | 'avoid';
+    confidence: number;
+  };
   setupQuality: 'high' | 'medium' | 'low';
+  finalVerdict?: {
+    action: 'enter' | 'wait' | 'avoid';
+    message: string;
+  };
   signalType: 'instant' | 'pending' | 'wait';
   reasoning: string;
   entryZone: {
@@ -68,6 +99,8 @@ export interface AnalysisResult {
   confirmationNeeded: boolean;
   message: string;
   recommendation: 'wait' | 'pending' | 'instant';
+  invalidationLevel?: number | null;
+  invalidationReason?: string;
   provider: 'gemini-vision+smc';
   createdAt?: string;
 }
