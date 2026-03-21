@@ -149,8 +149,6 @@ function AnalyzePageContent() {
   const [pair, setPair] = useState('');
   const [timeframe, setTimeframe] = useState('');
   const [currentPrice, setCurrentPrice] = useState('');
-  const [chartMinPrice, setChartMinPrice] = useState('');
-  const [chartMaxPrice, setChartMaxPrice] = useState('');
   const [showAiZones, setShowAiZones] = useState(true);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -220,8 +218,6 @@ function AnalyzePageContent() {
         setPair(result.analysis.pair);
         setTimeframe(result.analysis.timeframe);
         setCurrentPrice(String(result.analysis.currentPrice ?? ''));
-        setChartMinPrice(result.analysis.chartBounds?.minPrice ? String(result.analysis.chartBounds.minPrice) : '');
-        setChartMaxPrice(result.analysis.chartBounds?.maxPrice ? String(result.analysis.chartBounds.maxPrice) : '');
         setShowAiZones(Boolean(result.analysis.markedImageUrl));
         setProgress(100);
       } catch (loadError: any) {
@@ -268,12 +264,6 @@ function AnalyzePageContent() {
       formData.append('pair', pair);
       formData.append('timeframe', timeframe);
       formData.append('currentPrice', currentPrice.trim());
-      if (chartMinPrice.trim()) {
-        formData.append('chartMinPrice', chartMinPrice.trim());
-      }
-      if (chartMaxPrice.trim()) {
-        formData.append('chartMaxPrice', chartMaxPrice.trim());
-      }
 
       const result = await api.analyzeChartUpload(formData, token);
       setProgress(100);
@@ -408,29 +398,14 @@ function AnalyzePageContent() {
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Visible Chart Low</label>
-                      <Input
-                        type="number"
-                        inputMode="decimal"
-                        step="any"
-                        value={chartMinPrice}
-                        onChange={(event) => setChartMinPrice(event.target.value)}
-                        placeholder="Optional for more accurate markup"
-                      />
+                  <div className="rounded-2xl border border-cyan-400/15 bg-cyan-500/5 p-4">
+                    <div className="mb-1 flex items-center gap-2 text-sm font-medium text-cyan-100">
+                      <Eye className="h-4 w-4 text-cyan-300" />
+                      Auto chart mapping
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Visible Chart High</label>
-                      <Input
-                        type="number"
-                        inputMode="decimal"
-                        step="any"
-                        value={chartMaxPrice}
-                        onChange={(event) => setChartMaxPrice(event.target.value)}
-                        placeholder="Optional for more accurate markup"
-                      />
-                    </div>
+                    <p className="text-xs text-cyan-50/80 sm:text-sm">
+                      TradeVision now maps markup positions automatically from your chart and current price. Manual high and low inputs are no longer required.
+                    </p>
                   </div>
 
                   <div className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-3">
@@ -525,8 +500,6 @@ function AnalyzePageContent() {
                     setAnalysis(null);
                     setFile(null);
                     setPreview(null);
-                    setChartMinPrice('');
-                    setChartMaxPrice('');
                     setShowAiZones(true);
                     setProgress(0);
                     setCurrentStage(ANALYSIS_STEPS[0]);
@@ -566,7 +539,7 @@ function AnalyzePageContent() {
                         )}
                         {analysis?.chartBounds && (
                           <p className="mt-3 text-xs text-muted-foreground">
-                            Markup mapping range: {formatPrice(analysis.chartBounds.minPrice, pair)} to {formatPrice(analysis.chartBounds.maxPrice, pair)} ({analysis.chartBounds.source})
+                            Markup mapping range: {formatPrice(analysis.chartBounds.minPrice, pair)} to {formatPrice(analysis.chartBounds.maxPrice, pair)} ({analysis.chartBounds.source === 'input' ? 'manual' : 'auto-mapped'})
                           </p>
                         )}
                       </CardContent>
