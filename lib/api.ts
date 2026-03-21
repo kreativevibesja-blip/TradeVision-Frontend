@@ -1,3 +1,5 @@
+import { supabase } from '@/lib/supabase';
+
 const DEFAULT_API_URL = 'http://localhost:4000/api';
 
 const normalizeApiUrl = (value?: string) => {
@@ -222,9 +224,42 @@ interface FetchOptions extends RequestInit {
   token?: string;
 }
 
-async function apiFetch<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
-  const { token, ...fetchOptions } = options;
+const ACCESS_TOKEN_REFRESH_BUFFER_MS = 60 * 1000;
 
+const resolveAuthToken = async (token?: string | null) => {
+  if (!supabase) {
+    return token ?? null;
+  }
+
+  try {
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.getSession();
+
+    if (error) {
+      return token ?? null;
+    }
+
+    if (!session) {
+      return token ?? null;
+    }
+
+    const expiresAt = session.expires_at ? session.expires_at * 1000 : null;
+    if (expiresAt && expiresAt <= Date.now() + ACCESS_TOKEN_REFRESH_BUFFER_MS) {
+      const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+      if (!refreshError && refreshed.session?.access_token) {
+        return refreshed.session.access_token;
+      }
+    }
+
+    return session.access_token || token || null;
+  } catch {
+    return token ?? null;
+  }
+};
+
+const sendRequest = async (endpoint: string, fetchOptions: RequestInit, token?: string | null) => {
   const headers: Record<string, string> = {
     ...(fetchOptions.headers as Record<string, string>),
   };
@@ -237,10 +272,28 @@ async function apiFetch<T>(endpoint: string, options: FetchOptions = {}): Promis
     headers['Content-Type'] = 'application/json';
   }
 
-  const response = await fetch(`${API_URL}${endpoint}`, {
+  return fetch(`${API_URL}${endpoint}`, {
     ...fetchOptions,
     headers,
   });
+};
+
+async function apiFetch<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
+  const { token, ...fetchOptions } = options;
+
+  const resolvedToken = await resolveAuthToken(token);
+  let response = await sendRequest(endpoint, fetchOptions, resolvedToken);
+
+  if (response.status === 401 && supabase) {
+    try {
+      const { data, error } = await supabase.auth.refreshSession();
+      if (!error && data.session?.access_token) {
+        response = await sendRequest(endpoint, fetchOptions, data.session.access_token);
+      }
+    } catch {
+      // Let the original 401 handling below surface the failure.
+    }
+  }
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'Request failed' }));
