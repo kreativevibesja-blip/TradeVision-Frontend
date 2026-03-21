@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { api } from '@/lib/api';
 import { hasSupabaseEnv, missingSupabaseEnvMessage, supabase } from '@/lib/supabase';
@@ -31,6 +31,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(hasSupabaseEnv);
+  const userRef = useRef<User | null>(null);
+
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
 
   const clearLegacyTokens = () => {
     localStorage.removeItem('tradevision_token');
@@ -43,7 +48,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearLegacyTokens();
   };
 
-  const syncProfile = async (accessToken: string, shouldSignOutOnFailure = true) => {
+  const syncProfile = async (
+    accessToken: string,
+    options: {
+      shouldSignOutOnFailure?: boolean;
+      preserveUserOnFailure?: boolean;
+    } = {}
+  ) => {
+    const {
+      shouldSignOutOnFailure = true,
+      preserveUserOnFailure = false,
+    } = options;
+
     setToken(accessToken);
     clearLegacyTokens();
 
@@ -52,7 +68,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(data.user);
       return data.user;
     } catch (error) {
-      clearAuthState();
+      if (!preserveUserOnFailure) {
+        clearAuthState();
+      }
 
       if (shouldSignOutOnFailure && supabase) {
         await supabase.auth.signOut();
@@ -104,7 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const {
       data: { subscription },
-    } = supabaseClient.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
+    } = supabaseClient.auth.onAuthStateChange((event: AuthChangeEvent, session: Session | null) => {
       const accessToken = session?.access_token ?? null;
 
       if (!accessToken) {
@@ -113,13 +131,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      setLoading(true);
-      void syncProfile(accessToken)
+      const isBackgroundRefresh = event === 'TOKEN_REFRESHED' || (event === 'SIGNED_IN' && Boolean(userRef.current));
+
+      if (!isBackgroundRefresh) {
+        setLoading(true);
+      }
+
+      void syncProfile(accessToken, {
+        shouldSignOutOnFailure: !isBackgroundRefresh,
+        preserveUserOnFailure: isBackgroundRefresh,
+      })
         .catch(() => {
-          clearAuthStateIfActive();
+          if (!isBackgroundRefresh) {
+            clearAuthStateIfActive();
+          }
         })
         .finally(() => {
-          if (active) {
+          if (active && !isBackgroundRefresh) {
             setLoading(false);
           }
         });
@@ -151,7 +179,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error('Sign in failed. Please try again.');
     }
 
-    await syncProfile(data.session.access_token, false);
+    await syncProfile(data.session.access_token, { shouldSignOutOnFailure: false });
   };
 
   const register = async (email: string, password: string, name?: string) => {
@@ -187,7 +215,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     if (data.session?.access_token) {
-      await syncProfile(data.session.access_token, false);
+      await syncProfile(data.session.access_token, { shouldSignOutOnFailure: false });
       return;
     }
 
@@ -208,7 +236,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error('Account created, but Supabase did not return a session. Disable Confirm email in Supabase Auth settings if you want instant sign-in after registration.');
     }
 
-    await syncProfile(signInData.session.access_token, false);
+    await syncProfile(signInData.session.access_token, { shouldSignOutOnFailure: false });
   };
 
   const signInWithGoogle = async () => {
