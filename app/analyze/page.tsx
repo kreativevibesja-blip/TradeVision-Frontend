@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { api, resolveAssetUrl, type AnalysisResult } from '@/lib/api';
 import { AuthModal } from '@/components/AuthModal';
+import { ChartLightbox } from '@/components/ChartLightbox';
 import {
   Upload,
   Image as ImageIcon,
@@ -164,6 +165,7 @@ function AnalyzePageContent() {
   const [error, setError] = useState('');
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const analysisId = searchParams.get('analysisId');
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -682,7 +684,8 @@ function AnalyzePageContent() {
                             <img
                               src={(showAiZones && analysis.htfMarkedImageUrl ? resolveAssetUrl(analysis.htfMarkedImageUrl) : resolveAssetUrl(analysis.htfOriginalImageUrl || null)) || preview || ''}
                               alt="HTF Chart"
-                              className="h-auto max-h-[400px] w-full rounded-xl object-contain md:max-h-[600px]"
+                              className="h-auto max-h-[400px] w-full rounded-xl object-contain md:max-h-[600px] cursor-pointer hover:opacity-90 transition-opacity"
+                              onClick={() => setLightboxSrc((showAiZones && analysis.htfMarkedImageUrl ? resolveAssetUrl(analysis.htfMarkedImageUrl) : resolveAssetUrl(analysis.htfOriginalImageUrl || null)) || preview || '')}
                             />
                             {analysis.htfChartBounds && (
                               <p className="mt-3 text-xs text-muted-foreground">
@@ -695,7 +698,8 @@ function AnalyzePageContent() {
                             <img
                               src={(showAiZones && analysis.ltfMarkedImageUrl ? resolveAssetUrl(analysis.ltfMarkedImageUrl) : resolveAssetUrl(analysis.ltfOriginalImageUrl || null)) || preview2 || preview || ''}
                               alt="LTF Chart"
-                              className="h-auto max-h-[400px] w-full rounded-xl object-contain md:max-h-[600px]"
+                              className="h-auto max-h-[400px] w-full rounded-xl object-contain md:max-h-[600px] cursor-pointer hover:opacity-90 transition-opacity"
+                              onClick={() => setLightboxSrc((showAiZones && analysis.ltfMarkedImageUrl ? resolveAssetUrl(analysis.ltfMarkedImageUrl) : resolveAssetUrl(analysis.ltfOriginalImageUrl || null)) || preview2 || preview || '')}
                             />
                             {analysis.ltfChartBounds && (
                               <p className="mt-3 text-xs text-muted-foreground">
@@ -725,7 +729,12 @@ function AnalyzePageContent() {
                         </div>
                       </CardHeader>
                       <CardContent>
-                        <img src={displayedChartUrl} alt="Chart" className="h-auto max-h-[400px] w-full rounded-xl object-contain md:max-h-[600px]" />
+                        <img
+                          src={displayedChartUrl}
+                          alt="Chart"
+                          className="h-auto max-h-[400px] w-full rounded-xl object-contain md:max-h-[600px] cursor-pointer hover:opacity-90 transition-opacity"
+                          onClick={() => displayedChartUrl && setLightboxSrc(displayedChartUrl)}
+                        />
                         {!markedChartUrl && (
                           <p className="mt-3 text-xs text-muted-foreground">
                             Markup was unavailable for this analysis, so the original chart is shown.
@@ -1101,6 +1110,12 @@ function AnalyzePageContent() {
             onOpenChange={setAuthOpen}
             mode={authMode}
             onModeChange={setAuthMode}
+          />
+
+          <ChartLightbox
+            src={lightboxSrc || ''}
+            open={Boolean(lightboxSrc)}
+            onClose={() => setLightboxSrc(null)}
           />
         </motion.div>
       </div>
