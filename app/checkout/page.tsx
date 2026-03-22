@@ -350,9 +350,9 @@ function CheckoutPageContent() {
 
   useEffect(() => {
     if (!token || planKey !== 'PRO') return;
-    api.referral.getDashboard(token)
+    api.referral.getMyDiscount(token)
       .then((data) => {
-        if (data.stats.referralDiscount > 0) setReferralDiscount(data.stats.referralDiscount);
+        if (data.discountPercent > 0) setReferralDiscount(data.discountPercent);
       })
       .catch(() => {});
   }, [token, planKey]);
