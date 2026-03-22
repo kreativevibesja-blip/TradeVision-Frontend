@@ -6,23 +6,34 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
-import { api } from '@/lib/api';
+import { api, type AdminPayment, type AdminPaymentDateRangeFilter, type AdminPaymentPlanFilter, type AdminPaymentStatusFilter } from '@/lib/api';
+
+const paymentStatuses: Array<Exclude<AdminPaymentStatusFilter, 'ALL'>> = ['PENDING', 'COMPLETED', 'FAILED', 'REFUNDED'];
+const paymentPlans: Array<Exclude<AdminPaymentPlanFilter, 'ALL'>> = ['FREE', 'PRO'];
 
 export default function AdminPaymentsPage() {
   const { token } = useAuth();
-  const [payments, setPayments] = useState<any[]>([]);
+  const [payments, setPayments] = useState<AdminPayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [status, setStatus] = useState<AdminPaymentStatusFilter>('ALL');
+  const [plan, setPlan] = useState<AdminPaymentPlanFilter>('ALL');
+  const [dateRange, setDateRange] = useState<AdminPaymentDateRangeFilter>('30d');
 
   useEffect(() => {
     if (token) loadPayments();
-  }, [token, page]);
+  }, [token, page, status, plan, dateRange]);
 
   const loadPayments = async () => {
     try {
       setLoading(true);
-      const data = await api.admin.getPayments(token!, page);
+      const data = await api.admin.getPayments(token!, {
+        page,
+        status,
+        plan,
+        dateRange,
+      });
       setPayments(data.payments);
       setTotalPages(data.pages);
     } catch {
@@ -48,6 +59,41 @@ export default function AdminPaymentsPage() {
             <div className="text-center py-12 text-muted-foreground">Loading...</div>
           ) : (
             <div className="space-y-4 p-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <select
+                  value={plan}
+                  onChange={(event) => { setPage(1); setPlan(event.target.value as AdminPaymentPlanFilter); }}
+                  className="h-8 rounded-lg border border-input bg-background/50 px-2 text-xs outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="ALL">All plans</option>
+                  {paymentPlans.map((paymentPlan) => (
+                    <option key={paymentPlan} value={paymentPlan}>{paymentPlan}</option>
+                  ))}
+                </select>
+
+                <select
+                  value={status}
+                  onChange={(event) => { setPage(1); setStatus(event.target.value as AdminPaymentStatusFilter); }}
+                  className="h-8 rounded-lg border border-input bg-background/50 px-2 text-xs outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="ALL">All statuses</option>
+                  {paymentStatuses.map((paymentStatus) => (
+                    <option key={paymentStatus} value={paymentStatus}>{paymentStatus}</option>
+                  ))}
+                </select>
+
+                <select
+                  value={dateRange}
+                  onChange={(event) => { setPage(1); setDateRange(event.target.value as AdminPaymentDateRangeFilter); }}
+                  className="h-8 rounded-lg border border-input bg-background/50 px-2 text-xs outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="7d">Last 7 days</option>
+                  <option value="30d">Last 30 days</option>
+                  <option value="90d">Last 90 days</option>
+                  <option value="all">All time</option>
+                </select>
+              </div>
+
               <div className="max-h-[70vh] overflow-auto rounded-xl border border-white/10">
                 <table className="w-full min-w-[760px] text-sm">
                   <thead className="sticky top-0 bg-background/95 backdrop-blur-xl">
