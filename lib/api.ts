@@ -115,6 +115,7 @@ export interface AnalysisResult {
   confirmationNeeded: boolean;
   message: string;
   recommendation: 'wait' | 'pending' | 'instant';
+  strategy?: string | null;
   invalidationLevel?: number | null;
   invalidationReason?: string;
   originalImageUrl?: string | null;
