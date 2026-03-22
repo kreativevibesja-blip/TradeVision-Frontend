@@ -243,8 +243,11 @@ export default function ReferralDashboardPage() {
               </div>
             </div>
           ) : (
-            <div className="text-center py-4">
-              <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
+            <div className="text-center py-4 space-y-3">
+              <p className="text-sm text-muted-foreground">Your referral code is not available yet.</p>
+              <Button variant="outline" onClick={() => void load()}>
+                Retry
+              </Button>
             </div>
           )}
 
