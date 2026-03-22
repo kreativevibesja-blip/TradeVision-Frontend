@@ -58,7 +58,7 @@ export function WhatsAppSupportButton() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md"
+            className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-slate-950/80 backdrop-blur-md"
             onClick={() => setModalOpen(false)}
           >
             <motion.div
@@ -66,10 +66,10 @@ export function WhatsAppSupportButton() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 24, scale: 0.98 }}
               transition={{ duration: 0.18 }}
-              className="mx-auto flex min-h-full w-full max-w-5xl items-end p-3 sm:items-center sm:p-4"
+              className="mx-auto flex min-h-full w-full max-w-5xl items-start p-3 pt-20 sm:items-center sm:p-4"
               onClick={(event) => event.stopPropagation()}
             >
-              <Card className="max-h-[94vh] w-full overflow-hidden border-white/10 bg-slate-950/95 shadow-[0_35px_120px_rgba(2,6,23,0.65)]">
+              <Card className="my-auto w-full overflow-hidden border-white/10 bg-slate-950/95 shadow-[0_35px_120px_rgba(2,6,23,0.65)] sm:max-h-[94vh]">
                 <CardContent className="p-0">
                   <div className="flex items-start justify-between gap-4 border-b border-white/10 bg-gradient-to-r from-cyan-500/10 via-sky-500/5 to-emerald-500/10 p-4 sm:p-5">
                     <div>
@@ -87,7 +87,7 @@ export function WhatsAppSupportButton() {
                     </Button>
                   </div>
 
-                  <div className="max-h-[calc(94vh-88px)] overflow-y-auto overscroll-contain p-3 sm:p-4">
+                  <div className="max-h-[calc(100dvh-9rem)] overflow-y-auto overscroll-contain p-3 [scrollbar-gutter:stable] sm:max-h-[calc(94vh-88px)] sm:p-4">
                     <TicketForm open={modalOpen} whatsappUrl={whatsappUrl} />
                   </div>
                 </CardContent>
