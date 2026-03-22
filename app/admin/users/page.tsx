@@ -81,6 +81,7 @@ export default function AdminUsersPage() {
                     <th className="text-left p-4 font-medium text-muted-foreground">User</th>
                     <th className="text-left p-4 font-medium text-muted-foreground">Plan</th>
                     <th className="text-left p-4 font-medium text-muted-foreground">Status</th>
+                    <th className="text-left p-4 font-medium text-muted-foreground">Usage</th>
                     <th className="text-left p-4 font-medium text-muted-foreground">Analyses</th>
                     <th className="text-left p-4 font-medium text-muted-foreground">Joined</th>
                     <th className="text-right p-4 font-medium text-muted-foreground">Actions</th>
@@ -107,6 +108,14 @@ export default function AdminUsersPage() {
                         ) : (
                           <Badge variant="success">Active</Badge>
                         )}
+                      </td>
+                      <td className="p-4">
+                        <div className="text-sm font-medium text-foreground">
+                          {u.usage?.current ?? 0}/{u.usage?.limit ?? (u.subscription === 'PRO' ? 300 : 2)}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {u.subscription === 'PRO' ? 'Current month' : 'Today'}
+                        </p>
                       </td>
                       <td className="p-4 text-muted-foreground">{u._count?.analyses || 0}</td>
                       <td className="p-4 text-muted-foreground text-xs">
