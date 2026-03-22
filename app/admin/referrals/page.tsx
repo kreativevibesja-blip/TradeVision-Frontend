@@ -662,7 +662,7 @@ export default function AdminReferralsPage() {
               </div>
             )}
 
-            <Button onClick={handleSaveSettings} disabled={settingsLoading}>
+            <Button onClick={() => void handleSaveSettings()} disabled={settingsLoading}>
               {settingsLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
               Save Settings
             </Button>
