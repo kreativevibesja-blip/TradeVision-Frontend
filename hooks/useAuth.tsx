@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useEffect, useRef, ReactNode } fro
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { api } from '@/lib/api';
 import { hasSupabaseEnv, missingSupabaseEnvMessage, supabase } from '@/lib/supabase';
+import { getReferralCode, clearReferralCode } from '@/components/ReferralCapture';
 
 interface User {
   id: string;
@@ -182,6 +183,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await syncProfile(data.session.access_token, { shouldSignOutOnFailure: false });
   };
 
+  const applyStoredReferralCode = async (accessToken: string) => {
+    const code = getReferralCode();
+    if (!code) return;
+    try {
+      await api.referral.applyCode(code, accessToken);
+    } catch { /* silent - referral is optional */ }
+    clearReferralCode();
+  };
+
   const register = async (email: string, password: string, name?: string) => {
     if (!supabase) {
       throw new Error(missingSupabaseEnvMessage);
@@ -216,6 +226,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (data.session?.access_token) {
       await syncProfile(data.session.access_token, { shouldSignOutOnFailure: false });
+      await applyStoredReferralCode(data.session.access_token);
       return;
     }
 
@@ -237,6 +248,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     await syncProfile(signInData.session.access_token, { shouldSignOutOnFailure: false });
+    await applyStoredReferralCode(signInData.session.access_token);
   };
 
   const signInWithGoogle = async () => {
