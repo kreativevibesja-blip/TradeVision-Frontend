@@ -547,5 +547,179 @@ export const api = {
         method: 'DELETE',
         token,
       }),
+
+    // ── Admin Referrals ──
+    getReferralDashboard: (token: string) =>
+      apiFetch<AdminReferralDashboard>('/admin/referrals/dashboard', { token }),
+    getReferrals: (token: string, page = 1) =>
+      apiFetch<{ referrals: AdminReferral[]; total: number; page: number; pages: number }>(
+        `/admin/referrals/list?page=${page}`,
+        { token }
+      ),
+    getCommissions: (token: string, page = 1, status?: string) => {
+      const params = new URLSearchParams({ page: String(page) });
+      if (status) params.set('status', status);
+      return apiFetch<{ commissions: AdminCommission[]; total: number; page: number; pages: number }>(
+        `/admin/referrals/commissions?${params.toString()}`,
+        { token }
+      );
+    },
+    updateCommission: (id: string, status: string, token: string) =>
+      apiFetch<{ commission: AdminCommission }>(`/admin/referrals/commissions/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+        token,
+      }),
+    getPayouts: (token: string, page = 1, status?: string) => {
+      const params = new URLSearchParams({ page: String(page) });
+      if (status) params.set('status', status);
+      return apiFetch<{ payouts: AdminPayout[]; total: number; page: number; pages: number }>(
+        `/admin/referrals/payouts?${params.toString()}`,
+        { token }
+      );
+    },
+    updatePayout: (id: string, status: string, token: string) =>
+      apiFetch<{ payout: AdminPayout }>(`/admin/referrals/payouts/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+        token,
+      }),
+    updateReferralSettings: (data: Partial<ReferralSettings>, token: string) =>
+      apiFetch<{ success: boolean }>('/admin/referrals/settings', {
+        method: 'POST',
+        body: JSON.stringify(data),
+        token,
+      }),
+  },
+
+  // ── Referral (User) ──
+  referral: {
+    getMyCode: (token: string) =>
+      apiFetch<{ referralCode: ReferralCode; discountPercent: number }>('/referrals/my-code', { token }),
+    updateMyCode: (code: string, token: string) =>
+      apiFetch<{ referralCode: ReferralCode }>('/referrals/my-code', {
+        method: 'PATCH',
+        body: JSON.stringify({ code }),
+        token,
+      }),
+    getDashboard: (token: string) =>
+      apiFetch<UserReferralDashboard>('/referrals/dashboard', { token }),
+    requestPayout: (paypalEmail: string, token: string) =>
+      apiFetch<{ payout: PayoutRecord }>('/referrals/request-payout', {
+        method: 'POST',
+        body: JSON.stringify({ paypalEmail }),
+        token,
+      }),
+    validateCode: (code: string, token: string) =>
+      apiFetch<{ valid: boolean; discountPercent?: number; message: string }>('/referrals/validate-code', {
+        method: 'POST',
+        body: JSON.stringify({ code }),
+        token,
+      }),
+    applyCode: (code: string, token: string) =>
+      apiFetch<{ applied: boolean; discountPercent?: number; message: string }>('/referrals/apply-code', {
+        method: 'POST',
+        body: JSON.stringify({ code }),
+        token,
+      }),
   },
 };
+
+// ── Referral Types ──
+
+export interface ReferralCode {
+  id: string;
+  userId: string;
+  code: string;
+  totalEarnings: number;
+  totalReferrals: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ReferralRecord {
+  id: string;
+  referrerId: string;
+  referredUserId: string;
+  referralCode: string;
+  status: 'pending' | 'qualified' | 'paid';
+  createdAt: string;
+  qualifiedAt: string | null;
+}
+
+export interface CommissionRecord {
+  id: string;
+  referrerId: string;
+  referredUserId: string;
+  referralId: string;
+  amount: number;
+  status: 'pending' | 'approved' | 'paid' | 'rejected';
+  createdAt: string;
+  paidAt: string | null;
+}
+
+export interface PayoutRecord {
+  id: string;
+  userId: string;
+  paypalEmail: string;
+  amount: number;
+  status: 'pending' | 'processing' | 'paid' | 'rejected';
+  createdAt: string;
+  processedAt: string | null;
+}
+
+export interface ReferralStats {
+  totalEarnings: number;
+  pendingBalance: number;
+  approvedBalance: number;
+  paidBalance: number;
+  totalReferrals: number;
+  qualifiedReferrals: number;
+  conversionRate: number;
+}
+
+export interface EnrichedCommission extends CommissionRecord {
+  referredUser: { email: string; name: string | null } | null;
+}
+
+export interface UserReferralDashboard {
+  referralCode: ReferralCode | null;
+  stats: ReferralStats;
+  commissions: EnrichedCommission[];
+  payouts: PayoutRecord[];
+  discountPercent: number;
+}
+
+export interface AdminReferralDashboard {
+  stats: {
+    totalReferrals: number;
+    pendingReferrals: number;
+    qualifiedReferrals: number;
+    commissionsOwed: number;
+    commissionsPaid: number;
+  };
+  settings: ReferralSettings;
+}
+
+export interface ReferralSettings {
+  discountPercent: number;
+  commissionPercent: number;
+  minPayout: number;
+  enabled: boolean;
+  commissionDelayDays: number;
+}
+
+export interface AdminReferral extends ReferralRecord {
+  referrer: { email: string; name: string | null; subscription: string } | null;
+  referredUser: { email: string; name: string | null; subscription: string } | null;
+}
+
+export interface AdminCommission extends CommissionRecord {
+  referrer: { email: string; name: string | null } | null;
+  referredUser: { email: string; name: string | null } | null;
+}
+
+export interface AdminPayout extends PayoutRecord {
+  user: { email: string; name: string | null } | null;
+}
