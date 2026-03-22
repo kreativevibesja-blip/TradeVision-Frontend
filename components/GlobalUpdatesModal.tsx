@@ -6,22 +6,6 @@ import { usePathname } from 'next/navigation';
 import { api, type Announcement } from '@/lib/api';
 import { Megaphone, Sparkles, X, Clock3 } from 'lucide-react';
 
-const DISMISSED_KEY = 'tradevision-dismissed-updates';
-
-const getDismissedIds = () => {
-  if (typeof window === 'undefined') {
-    return [] as string[];
-  }
-
-  try {
-    const rawValue = window.localStorage.getItem(DISMISSED_KEY);
-    const parsed = rawValue ? (JSON.parse(rawValue) as string[]) : [];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-};
-
 export function GlobalUpdatesModal() {
   const pathname = usePathname();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -33,8 +17,6 @@ export function GlobalUpdatesModal() {
       setOpen(false);
       return;
     }
-
-    setDismissedIds(getDismissedIds());
 
     let cancelled = false;
     api.getActiveAnnouncements()
@@ -51,6 +33,30 @@ export function GlobalUpdatesModal() {
 
     return () => {
       cancelled = true;
+    };
+  }, [pathname]);
+
+  useEffect(() => {
+    if (pathname.startsWith('/admin') || typeof window === 'undefined') {
+      return;
+    }
+
+    const resetDismissedUpdates = () => {
+      setDismissedIds([]);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        resetDismissedUpdates();
+      }
+    };
+
+    window.addEventListener('blur', resetDismissedUpdates);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('blur', resetDismissedUpdates);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [pathname]);
 
@@ -71,7 +77,6 @@ export function GlobalUpdatesModal() {
 
     const nextDismissed = [...dismissedIds, nextAnnouncement.id];
     setDismissedIds(nextDismissed);
-    window.localStorage.setItem(DISMISSED_KEY, JSON.stringify(nextDismissed));
     setOpen(false);
   };
 
