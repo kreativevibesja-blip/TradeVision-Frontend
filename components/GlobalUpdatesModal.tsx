@@ -6,11 +6,33 @@ import { usePathname } from 'next/navigation';
 import { api, type Announcement } from '@/lib/api';
 import { Megaphone, Sparkles, X, Clock3 } from 'lucide-react';
 
+const DISMISSED_UPDATES_KEY = 'tradevision_dismissed_updates';
+
 export function GlobalUpdatesModal() {
   const pathname = usePathname();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [dismissedIds, setDismissedIds] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    try {
+      const stored = sessionStorage.getItem(DISMISSED_UPDATES_KEY);
+      if (!stored) {
+        return;
+      }
+
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) {
+        setDismissedIds(parsed.filter((value): value is string => typeof value === 'string'));
+      }
+    } catch {
+      sessionStorage.removeItem(DISMISSED_UPDATES_KEY);
+    }
+  }, []);
 
   useEffect(() => {
     if (pathname.startsWith('/admin')) {
@@ -36,30 +58,6 @@ export function GlobalUpdatesModal() {
     };
   }, [pathname]);
 
-  useEffect(() => {
-    if (pathname.startsWith('/admin') || typeof window === 'undefined') {
-      return;
-    }
-
-    const resetDismissedUpdates = () => {
-      setDismissedIds([]);
-    };
-
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        resetDismissedUpdates();
-      }
-    };
-
-    window.addEventListener('blur', resetDismissedUpdates);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      window.removeEventListener('blur', resetDismissedUpdates);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [pathname]);
-
   const nextAnnouncement = useMemo(
     () => announcements.find((announcement) => !dismissedIds.includes(announcement.id)),
     [announcements, dismissedIds]
@@ -77,6 +75,9 @@ export function GlobalUpdatesModal() {
 
     const nextDismissed = [...dismissedIds, nextAnnouncement.id];
     setDismissedIds(nextDismissed);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem(DISMISSED_UPDATES_KEY, JSON.stringify(nextDismissed));
+    }
     setOpen(false);
   };
 
