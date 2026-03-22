@@ -74,8 +74,8 @@ export default function DashboardPage() {
     );
   }
 
-  const usageLabel = user.subscription === 'PRO' ? 'Access' : 'Daily Usage';
-  const usageValue = user.subscription === 'PRO' ? 'Unlimited (fair use policy)' : '2';
+  const usageLabel = user.subscription === 'PRO' ? 'Monthly Usage' : 'Daily Usage';
+  const usageValue = user.subscription === 'PRO' ? '300 analyses per month' : '2';
   const usagePercent = user.subscription === 'PRO' ? 0 : ((user.dailyUsage || 0) / 2) * 100;
 
   return (
@@ -124,10 +124,7 @@ export default function DashboardPage() {
                   <Progress value={usagePercent} className="h-2 mt-2" indicatorClassName={usagePercent >= 100 ? 'bg-red-500' : 'bg-primary'} />
                 )}
                 {user.subscription === 'PRO' && (
-                  <p className="text-2xl font-bold text-green-400 mt-2">Unlimited</p>
-                )}
-                {user.subscription === 'PRO' && (
-                  <p className="text-xs text-muted-foreground mt-2">Fair use policy applies. Pro access is capped at 300 analyses per month.</p>
+                  <p className="text-2xl font-bold text-green-400 mt-2">300 / month</p>
                 )}
               </CardContent>
             </Card>

@@ -58,7 +58,7 @@ const defaultFallbackPlans: DisplayPlan[] = [
     name: 'TradeVision AI Pro',
     tier: 'PRO',
     price: 19,
-    features: ['Unlimited daily analyses', 'Advanced Smart Money Concepts', 'Priority AI processing'],
+    features: ['300 analyses per month', 'Advanced Smart Money Concepts', 'Priority AI processing'],
     dailyLimit: 999999,
     isActive: true,
     createdAt: '',
@@ -69,6 +69,13 @@ const defaultFallbackPlans: DisplayPlan[] = [
 
 const toDisplayPlan = (plan: PricingPlan): DisplayPlan => ({
   ...plan,
+  ...(plan.tier === 'PRO'
+    ? {
+        features: plan.features.map((feature) =>
+          /unlimited|fair use|300 analyses per month/i.test(feature) ? '300 analyses per month' : feature
+        ),
+      }
+    : {}),
   ...fallbackPlanDetails[plan.tier],
 });
 

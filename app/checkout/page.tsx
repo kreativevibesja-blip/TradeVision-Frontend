@@ -77,10 +77,10 @@ const planCatalog: Record<PlanKey, {
     name: 'TradeVision AI Pro',
     price: 19,
     period: '/month',
-    description: 'Unlimited chart analysis with a fair use policy and premium structure logic.',
+    description: '300 analyses per month with premium structure logic.',
     icon: Crown,
     color: 'from-blue-500 to-purple-600',
-    features: ['Unlimited analyses (fair use policy)', 'Advanced Smart Money Concepts', 'Priority AI processing'],
+    features: ['300 analyses per month', 'Advanced Smart Money Concepts', 'Priority AI processing'],
   },
 };
 
