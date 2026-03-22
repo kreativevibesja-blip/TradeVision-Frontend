@@ -151,6 +151,27 @@ export interface AnalysisResult {
   createdAt?: string;
 }
 
+export interface AdminAnalysisLog {
+  id: string;
+  pair: string;
+  timeframe: string;
+  status: 'QUEUED' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+  outcome: 'SUCCESS' | 'FAILED' | 'IN_PROGRESS';
+  bias: string | null;
+  confidence: number | null;
+  strategy: string | null;
+  errorMessage: string | null;
+  failureReason: string | null;
+  modelUsed: string | null;
+  usedFallback: boolean;
+  createdAt: string;
+  user: {
+    email: string | null;
+    name: string | null;
+    subscription: 'FREE' | 'PRO';
+  } | null;
+}
+
 export interface Announcement {
   id: string;
   title: string;
@@ -390,7 +411,7 @@ export const api = {
         token,
       }),
     getAnalyses: (token: string, page = 1) =>
-      apiFetch<any>(`/admin/analyses?page=${page}`, { token }),
+      apiFetch<{ analyses: AdminAnalysisLog[]; total: number; page: number; pages: number }>(`/admin/analyses?page=${page}`, { token }),
     getPayments: (token: string, page = 1) =>
       apiFetch<any>(`/admin/payments?page=${page}`, { token }),
     getAnalytics: (token: string, range?: { from?: string; to?: string }) => {
