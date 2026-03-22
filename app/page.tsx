@@ -380,7 +380,7 @@ export default function HomePage() {
                   <div className="text-4xl font-bold mb-4">$19.95<span className="text-lg text-muted-foreground font-normal">/month</span></div>
                   <ul className="space-y-3 mb-8">
                     {[
-                      'Unlimited analyses',
+                      'Unlimited analyses (fair use policy)',
                       'Advanced AI detection',
                       'Priority processing',
                       'Smart Money Concepts',

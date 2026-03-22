@@ -74,7 +74,8 @@ export default function DashboardPage() {
     );
   }
 
-  const dailyLimit = user.subscription === 'PRO' ? 'Unlimited' : '2';
+  const usageLabel = user.subscription === 'PRO' ? 'Access' : 'Daily Usage';
+  const usageValue = user.subscription === 'PRO' ? 'Unlimited (fair use policy)' : '2';
   const usagePercent = user.subscription === 'PRO' ? 0 : ((user.dailyUsage || 0) / 2) * 100;
 
   return (
@@ -116,14 +117,17 @@ export default function DashboardPage() {
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-muted-foreground">Daily Usage</span>
-                  <span className="text-sm font-medium">{user.dailyUsage || 0} / {dailyLimit}</span>
+                  <span className="text-sm text-muted-foreground">{usageLabel}</span>
+                  <span className="text-sm font-medium">{user.subscription === 'PRO' ? usageValue : `${user.dailyUsage || 0} / ${usageValue}`}</span>
                 </div>
                 {user.subscription !== 'PRO' && (
                   <Progress value={usagePercent} className="h-2 mt-2" indicatorClassName={usagePercent >= 100 ? 'bg-red-500' : 'bg-primary'} />
                 )}
                 {user.subscription === 'PRO' && (
                   <p className="text-2xl font-bold text-green-400 mt-2">Unlimited</p>
+                )}
+                {user.subscription === 'PRO' && (
+                  <p className="text-xs text-muted-foreground mt-2">Fair use policy applies. Pro access is capped at 300 analyses per month.</p>
                 )}
               </CardContent>
             </Card>
