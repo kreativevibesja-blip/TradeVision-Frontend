@@ -20,6 +20,7 @@ import {
   ChevronRight,
   LifeBuoy,
   Percent,
+  Gift,
 } from 'lucide-react';
 
 const adminNav = [
@@ -27,6 +28,7 @@ const adminNav = [
   { label: 'Users', href: '/admin/users', icon: Users },
   { label: 'Analyses', href: '/admin/analyses', icon: FileText },
   { label: 'Payments', href: '/admin/payments', icon: CreditCard },
+  { label: 'Referrals', href: '/admin/referrals', icon: Gift },
   { label: 'Pricing Plans', href: '/admin/pricing', icon: Tag },
   { label: 'Coupons', href: '/admin/coupons', icon: Percent },
   { label: 'Settings', href: '/admin/settings', icon: Settings },

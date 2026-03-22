@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { Suspense } from 'react';
 import { Inter } from 'next/font/google';
 import '@/styles/globals.css';
 import { AuthProvider } from '@/hooks/useAuth';
@@ -7,6 +8,7 @@ import { Footer } from '@/components/Footer';
 import { GlobalBackButton } from '@/components/GlobalBackButton';
 import { GlobalUpdatesModal } from '@/components/GlobalUpdatesModal';
 import { WhatsAppSupportButton } from '@/components/WhatsAppSupportButton';
+import { ReferralCapture } from '@/components/ReferralCapture';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -27,6 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className="dark">
       <body className={`${inter.className} min-h-screen bg-background antialiased overflow-x-hidden`}>
         <AuthProvider>
+          <Suspense><ReferralCapture /></Suspense>
           <div className="relative flex min-h-screen flex-col overflow-x-hidden">
             <Navbar />
             <GlobalBackButton />

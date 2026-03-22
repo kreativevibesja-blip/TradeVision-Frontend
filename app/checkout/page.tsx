@@ -23,6 +23,7 @@ import {
   Mail,
   User,
   Tag,
+  Gift,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -275,6 +276,9 @@ function CheckoutPageContent() {
   const [couponError, setCouponError] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
 
+  // Referral discount state
+  const [referralDiscount, setReferralDiscount] = useState<number>(0);
+
   const isSuccess = searchParams.get('success') === 'true';
   const isCanceled = searchParams.get('canceled') === 'true';
   const planKey = (searchParams.get('plan')?.toUpperCase() === 'FREE' ? 'FREE' : 'PRO') as PlanKey;
@@ -282,12 +286,14 @@ function CheckoutPageContent() {
   const activeBillingAddress = sameAsShipping ? shippingAddress : billingAddress;
   const formReady = isAddressComplete(shippingAddress) && isAddressComplete(activeBillingAddress);
 
+  const referralDiscountAmount = plan.price * referralDiscount / 100;
+  const priceAfterReferral = Math.max(0, plan.price - referralDiscountAmount);
   const discountAmount = couponApplied
     ? couponApplied.type === 'percentage'
-      ? plan.price * couponApplied.value / 100
+      ? priceAfterReferral * couponApplied.value / 100
       : couponApplied.value
     : 0;
-  const finalPrice = Math.max(0, plan.price - discountAmount);
+  const finalPrice = Math.max(0, priceAfterReferral - discountAmount);
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return;
@@ -341,6 +347,15 @@ function CheckoutPageContent() {
       email: current.email || user.email || '',
     }));
   }, [user]);
+
+  useEffect(() => {
+    if (!token || planKey !== 'PRO') return;
+    api.referral.getDashboard(token)
+      .then((data) => {
+        if (data.stats.referralDiscount > 0) setReferralDiscount(data.stats.referralDiscount);
+      })
+      .catch(() => {});
+  }, [token, planKey]);
 
   useEffect(() => {
     if (isSuccess && token) {
@@ -487,9 +502,9 @@ function CheckoutPageContent() {
                       </div>
                     </div>
                     <p className="text-2xl font-bold">
-                      ${couponApplied ? finalPrice.toFixed(2) : plan.price}
+                      ${(couponApplied || referralDiscount > 0) ? finalPrice.toFixed(2) : plan.price}
                       <span className="text-sm font-normal text-muted-foreground">{plan.period}</span>
-                      {couponApplied && (
+                      {(couponApplied || referralDiscount > 0) && (
                         <span className="block text-sm font-normal text-muted-foreground line-through">
                           ${plan.price.toFixed(2)}
                         </span>
@@ -579,6 +594,14 @@ function CheckoutPageContent() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
+                    {referralDiscount > 0 && (
+                      <div className="rounded-2xl border border-purple-500/20 bg-purple-500/10 p-4 mb-3">
+                        <div className="flex items-center gap-2 text-sm font-medium text-purple-300">
+                          <Gift className="h-4 w-4" />
+                          Referral discount of {referralDiscount}% will be applied automatically
+                        </div>
+                      </div>
+                    )}
                     {couponApplied ? (
                       <div className="rounded-2xl border border-green-500/20 bg-green-500/10 p-4">
                         <div className="flex items-center justify-between">
@@ -595,8 +618,14 @@ function CheckoutPageContent() {
                             <span>Original Price</span>
                             <span>${plan.price.toFixed(2)}</span>
                           </div>
+                          {referralDiscount > 0 && (
+                            <div className="flex justify-between text-purple-300">
+                              <span>Referral ({referralDiscount}%)</span>
+                              <span>-${referralDiscountAmount.toFixed(2)}</span>
+                            </div>
+                          )}
                           <div className="flex justify-between text-green-400">
-                            <span>Discount ({couponApplied.type === 'percentage' ? `${couponApplied.value}%` : `$${couponApplied.value.toFixed(2)}`})</span>
+                            <span>Coupon ({couponApplied.type === 'percentage' ? `${couponApplied.value}%` : `$${couponApplied.value.toFixed(2)}`})</span>
                             <span>-${discountAmount.toFixed(2)}</span>
                           </div>
                           <div className="flex justify-between font-semibold pt-1 border-t border-white/10">

@@ -3,6 +3,8 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { missingSupabaseEnvMessage, supabase } from '@/lib/supabase';
+import { getReferralCode, clearReferralCode } from '@/components/ReferralCapture';
+import { api } from '@/lib/api';
 
 export default function Callback() {
   const router = useRouter();
@@ -13,7 +15,20 @@ export default function Callback() {
         throw new Error(missingSupabaseEnvMessage);
       }
 
-      await supabase.auth.exchangeCodeForSession(window.location.href);
+      const result = await supabase.auth.exchangeCodeForSession(window.location.href);
+
+      // Apply stored referral code for new Google sign-ups
+      const accessToken = result.data?.session?.access_token;
+      if (accessToken) {
+        const code = getReferralCode();
+        if (code) {
+          try {
+            await api.referral.applyCode(code, accessToken);
+          } catch { /* silent */ }
+          clearReferralCode();
+        }
+      }
+
       router.push('/dashboard');
     };
 

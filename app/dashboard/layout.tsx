@@ -3,11 +3,12 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
-import { CreditCard, LayoutDashboard } from 'lucide-react';
+import { CreditCard, LayoutDashboard, Users } from 'lucide-react';
 
 const dashboardNav = [
   { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
   { href: '/dashboard/billing', label: 'Billing', icon: CreditCard },
+  { href: '/dashboard/referrals', label: 'Referrals', icon: Users },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
