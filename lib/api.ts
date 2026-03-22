@@ -412,6 +412,8 @@ export const api = {
       }),
     getAnalyses: (token: string, page = 1) =>
       apiFetch<{ analyses: AdminAnalysisLog[]; total: number; page: number; pages: number }>(`/admin/analyses?page=${page}`, { token }),
+    getAnalysisById: (token: string, id: string) =>
+      apiFetch<{ analysis: AnalysisResult }>(`/admin/analyses/${encodeURIComponent(id)}`, { token }),
     getPayments: (token: string, page = 1) =>
       apiFetch<any>(`/admin/payments?page=${page}`, { token }),
     getAnalytics: (token: string, range?: { from?: string; to?: string }) => {
