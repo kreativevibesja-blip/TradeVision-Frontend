@@ -199,7 +199,7 @@ export default function PricingPage() {
               },
               {
                 q: 'How accurate is the AI analysis?',
-                a: 'Our AI provides a confidence score with each analysis. It uses GPT-4 Vision to analyze price structure, but always use the analysis as one input in your trading decision, not as financial advice.',
+                a: 'Each analysis includes a confidence score based on market structure, liquidity behavior, and technical context identified from your chart. Treat the output as a decision-support tool to complement your own judgment, not as financial advice.',
               },
               {
                 q: 'Can I cancel anytime?',
