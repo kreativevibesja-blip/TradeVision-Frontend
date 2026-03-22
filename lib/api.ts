@@ -230,6 +230,26 @@ export interface BillingSummary {
   }>;
 }
 
+export interface AdminPayment {
+  id: string;
+  userId: string;
+  paypalOrderId: string;
+  amount: number;
+  currency: string;
+  status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
+  plan: 'FREE' | 'PRO';
+  createdAt: string;
+  updatedAt: string;
+  user: {
+    email: string | null;
+    name: string | null;
+  } | null;
+}
+
+export type AdminPaymentStatusFilter = AdminPayment['status'] | 'ALL';
+export type AdminPaymentPlanFilter = AdminPayment['plan'] | 'ALL';
+export type AdminPaymentDateRangeFilter = '7d' | '30d' | '90d' | 'all';
+
 export interface PricingPlan {
   id: string;
   name: string;
@@ -415,8 +435,22 @@ export const api = {
       apiFetch<{ analyses: AdminAnalysisLog[]; total: number; page: number; pages: number }>(`/admin/analyses?page=${page}`, { token }),
     getAnalysisById: (token: string, id: string) =>
       apiFetch<{ analysis: AnalysisResult }>(`/admin/analyses/${encodeURIComponent(id)}`, { token }),
-    getPayments: (token: string, page = 1) =>
-      apiFetch<any>(`/admin/payments?page=${page}`, { token }),
+    getPayments: (
+      token: string,
+      options: {
+        page?: number;
+        plan?: AdminPaymentPlanFilter;
+        status?: AdminPaymentStatusFilter;
+        dateRange?: AdminPaymentDateRangeFilter;
+      } = {}
+    ) => {
+      const params = new URLSearchParams();
+      params.set('page', String(options.page ?? 1));
+      if (options.plan && options.plan !== 'ALL') params.set('plan', options.plan);
+      if (options.status && options.status !== 'ALL') params.set('status', options.status);
+      if (options.dateRange) params.set('dateRange', options.dateRange);
+      return apiFetch<{ payments: AdminPayment[]; total: number; page: number; pages: number }>(`/admin/payments?${params.toString()}`, { token });
+    },
     getAnalytics: (token: string, range?: { from?: string; to?: string }) => {
       const params = new URLSearchParams();
       if (range?.from) params.set('from', range.from);
