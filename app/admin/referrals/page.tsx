@@ -152,12 +152,15 @@ export default function AdminReferralsPage() {
     }
   };
 
-  const handleSaveSettings = async () => {
+  const handleSaveSettings = async (nextSettings?: ReferralSettings) => {
     if (!token) return;
     setSettingsLoading(true);
     setSettingsMessage('');
     try {
-      await api.admin.updateReferralSettings(settings, token);
+      const payload = nextSettings ?? settings;
+      await api.admin.updateReferralSettings(payload, token);
+      setSettings(payload);
+      await loadDashboard();
       setSettingsMessage('Settings saved successfully');
       setTimeout(() => setSettingsMessage(''), 3000);
     } catch (err: any) {
@@ -578,7 +581,12 @@ export default function AdminReferralsPage() {
               </div>
               <Button
                 variant={settings.enabled ? 'default' : 'outline'}
-                onClick={() => setSettings({ ...settings, enabled: !settings.enabled })}
+                disabled={settingsLoading}
+                onClick={() => {
+                  const nextSettings = { ...settings, enabled: !settings.enabled };
+                  setSettings(nextSettings);
+                  void handleSaveSettings(nextSettings);
+                }}
               >
                 <Power className="h-4 w-4 mr-2" />
                 {settings.enabled ? 'Enabled' : 'Disabled'}
