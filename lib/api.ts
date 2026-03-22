@@ -596,6 +596,8 @@ export const api = {
   referral: {
     getMyCode: (token: string) =>
       apiFetch<{ referralCode: ReferralCode; discountPercent: number }>('/referrals/my-code', { token }),
+    getMyDiscount: (token: string) =>
+      apiFetch<{ discountPercent: number }>('/referrals/my-discount', { token }),
     updateMyCode: (code: string, token: string) =>
       apiFetch<{ referralCode: ReferralCode }>('/referrals/my-code', {
         method: 'PATCH',
