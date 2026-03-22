@@ -146,7 +146,7 @@ function ConfidenceMeter({ score }: { score: number }) {
 function AnalyzePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, token } = useAuth();
+  const { user, token, refreshUser } = useAuth();
   const isPro = user?.subscription === 'PRO';
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -310,8 +310,12 @@ function AnalyzePageContent() {
       setCurrentStage(ANALYSIS_STEPS[ANALYSIS_STEPS.length - 1]);
       setAnalysis(result.analysis);
       setShowAiZones(Boolean(result.analysis.markedImageUrl));
+      await refreshUser().catch(() => {});
       setLoading(false);
     } catch (submitError: any) {
+      if (/daily analysis limit reached/i.test(submitError?.message || '')) {
+        await refreshUser().catch(() => {});
+      }
       setError(submitError.message || 'Unable to start analysis.');
       setLoading(false);
     }
