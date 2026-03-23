@@ -1049,23 +1049,6 @@ function AnalyzePageContent() {
                     </Card>
                   ) : null}
 
-                  <Card className="mobile-card">
-                    <CardContent className="p-6">
-                      <div className="flex items-center gap-2 mb-3">
-                        <CandlestickChart className="h-4 w-4 text-blue-400" />
-                        <span className="text-sm font-medium">SMC Summary</span>
-                      </div>
-                      <div className="space-y-2 text-sm text-muted-foreground">
-                        <p>Structure State: <span className="text-foreground font-medium capitalize">{analysis.structure.state || 'transition'}</span></p>
-                        <p>BOS: <span className="text-foreground font-medium capitalize">{analysis.structure.bos}</span></p>
-                        <p>CHoCH: <span className="text-foreground font-medium capitalize">{analysis.structure.choch}</span></p>
-                        <p>Verdict: <span className="text-foreground font-medium capitalize">{analysis.finalVerdict?.action || analysis.recommendation}</span></p>
-                        <p>Liquidity Sweep: <span className="text-foreground font-medium capitalize">{analysis.liquidity.sweep}</span></p>
-                        <p>Entry Logic: <span className="text-foreground font-medium capitalize">{analysis.entryLogic.type}</span></p>
-                        <p>Provider: <span className="text-foreground font-medium">TradeVision</span></p>
-                      </div>
-                    </CardContent>
-                  </Card>
                 </div>
               </div>
             </motion.div>
