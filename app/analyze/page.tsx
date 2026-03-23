@@ -761,17 +761,7 @@ function AnalyzePageContent() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {analysis.reasoning.includes(' | ') ? (
-                        <div className="space-y-2">
-                          {analysis.reasoning.split(' | ').map((segment, index) => (
-                            <div key={`${segment}-${index}`} className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-muted-foreground">
-                              {segment}
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-muted-foreground leading-relaxed">{analysis.reasoning}</p>
-                      )}
+                      <p className="text-muted-foreground leading-relaxed">{analysis.reasoning}</p>
                     </CardContent>
                   </Card>
 
