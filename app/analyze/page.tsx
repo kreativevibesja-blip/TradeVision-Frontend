@@ -306,11 +306,21 @@ function AnalyzePageContent() {
       }
 
       const result = await api.analyzeChartUpload(formData, token);
-      setProgress(100);
-      setCurrentStage(ANALYSIS_STEPS[ANALYSIS_STEPS.length - 1]);
-      setAnalysis(result.analysis);
-      setShowAiZones(Boolean(result.analysis.markedImageUrl));
-      await refreshUser().catch(() => {});
+
+      // Free users get queued — redirect to queue waiting page
+      if (result.queued && result.jobId) {
+        router.push(`/analyze/queue?jobId=${result.jobId}&analysisId=${result.analysisId || ''}`);
+        return;
+      }
+
+      // Pro users get instant result
+      if (result.analysis) {
+        setProgress(100);
+        setCurrentStage(ANALYSIS_STEPS[ANALYSIS_STEPS.length - 1]);
+        setAnalysis(result.analysis);
+        setShowAiZones(Boolean(result.analysis.markedImageUrl));
+        await refreshUser().catch(() => {});
+      }
       setLoading(false);
     } catch (submitError: any) {
       if (/daily analysis limit reached/i.test(submitError?.message || '')) {
