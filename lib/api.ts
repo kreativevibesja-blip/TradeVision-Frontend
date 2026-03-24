@@ -357,7 +357,7 @@ export const api = {
 
   // Analysis
   analyzeChartUpload: (formData: FormData, token: string) =>
-    apiFetch<{ analysis: AnalysisResult }>('/analyze-chart', { method: 'POST', body: formData, token }),
+    apiFetch<{ analysis?: AnalysisResult; queued?: boolean; jobId?: string; analysisId?: string; message?: string }>('/analyze-chart', { method: 'POST', body: formData, token }),
 
   getAnalyses: (token: string, page = 1) =>
     apiFetch<{ analyses: AnalysisResult[]; total: number; page: number; pages: number }>(
@@ -367,6 +367,19 @@ export const api = {
 
   getAnalysis: (id: string, token: string) =>
     apiFetch<{ analysis: AnalysisResult }>(`/analyses/${encodeURIComponent(id)}`, { token }),
+
+  // Queue
+  getQueueStatus: (jobId: string, token: string) =>
+    apiFetch<{
+      jobId: string;
+      analysisId: string | null;
+      status: 'queued' | 'processing' | 'completed' | 'failed';
+      position: number;
+      estimatedWait: number;
+      result: AnalysisResult | null;
+      error: string | null;
+      createdAt: string;
+    }>(`/queue-status?id=${encodeURIComponent(jobId)}`, { token }),
 
   // Coupons
   validateCoupon: (code: string, token: string) =>
