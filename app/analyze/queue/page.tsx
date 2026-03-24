@@ -273,12 +273,13 @@ function QueuePageContent() {
                 <span className="text-sm font-medium text-red-400">Analysis Failed</span>
               </div>
               <p className="text-xs text-muted-foreground">{GENERIC_FAILURE_MESSAGE}</p>
-              <Link
-                href="/analyze"
+              <button
+                type="button"
+                onClick={() => router.push('/analyze?retry=1')}
                 className="inline-block px-4 py-2 rounded-lg bg-primary/20 text-primary text-sm hover:bg-primary/30 transition-colors"
               >
                 Try Again
-              </Link>
+              </button>
             </motion.div>
           )}
 

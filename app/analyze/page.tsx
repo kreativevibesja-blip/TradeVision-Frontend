@@ -58,6 +58,78 @@ const ANALYSIS_STEPS = [
   'Preparing final SMC signal...',
 ];
 
+const ANALYZE_RETRY_DRAFT_KEY = 'analyze_retry_draft';
+
+interface StoredAnalyzeFile {
+  name: string;
+  type: string;
+  dataUrl: string;
+}
+
+interface StoredAnalyzeDraft {
+  pair: string;
+  timeframe: string;
+  timeframe2: string;
+  currentPrice: string;
+  primaryChart: StoredAnalyzeFile | null;
+  secondaryChart: StoredAnalyzeFile | null;
+}
+
+const fileToDataUrl = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result);
+        return;
+      }
+
+      reject(new Error('Could not read chart file'));
+    };
+    reader.onerror = () => reject(new Error('Could not read chart file'));
+    reader.readAsDataURL(file);
+  });
+
+const dataUrlToFile = async ({ name, type, dataUrl }: StoredAnalyzeFile) => {
+  const response = await fetch(dataUrl);
+  const blob = await response.blob();
+  return new File([blob], name, { type: type || blob.type || 'image/jpeg' });
+};
+
+const saveAnalyzeDraft = async (draft: {
+  pair: string;
+  timeframe: string;
+  timeframe2: string;
+  currentPrice: string;
+  file: File;
+  file2: File | null;
+}) => {
+  const payload: StoredAnalyzeDraft = {
+    pair: draft.pair,
+    timeframe: draft.timeframe,
+    timeframe2: draft.timeframe2,
+    currentPrice: draft.currentPrice,
+    primaryChart: {
+      name: draft.file.name,
+      type: draft.file.type,
+      dataUrl: await fileToDataUrl(draft.file),
+    },
+    secondaryChart: draft.file2
+      ? {
+          name: draft.file2.name,
+          type: draft.file2.type,
+          dataUrl: await fileToDataUrl(draft.file2),
+        }
+      : null,
+  };
+
+  window.sessionStorage.setItem(ANALYZE_RETRY_DRAFT_KEY, JSON.stringify(payload));
+};
+
+const clearAnalyzeDraft = () => {
+  window.sessionStorage.removeItem(ANALYZE_RETRY_DRAFT_KEY);
+};
+
 const formatPrice = (value: number | null | undefined, pair: string) => {
   if (typeof value !== 'number' || Number.isNaN(value)) {
     return 'N/A';
@@ -148,6 +220,7 @@ function AnalyzePageContent() {
   const searchParams = useSearchParams();
   const { user, token, refreshUser } = useAuth();
   const isPro = user?.subscription === 'PRO';
+  const retryMode = searchParams.get('retry') === '1';
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [file2, setFile2] = useState<File | null>(null);
@@ -207,6 +280,56 @@ function AnalyzePageContent() {
   });
 
   const isDualChart = Boolean(file2);
+
+  useEffect(() => {
+    if (!retryMode || file || analysis) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const restoreDraft = async () => {
+      const rawDraft = window.sessionStorage.getItem(ANALYZE_RETRY_DRAFT_KEY);
+      if (!rawDraft) {
+        return;
+      }
+
+      try {
+        const draft = JSON.parse(rawDraft) as StoredAnalyzeDraft;
+        if (!draft.primaryChart) {
+          return;
+        }
+
+        const restoredPrimary = await dataUrlToFile(draft.primaryChart);
+        const restoredSecondary = draft.secondaryChart ? await dataUrlToFile(draft.secondaryChart) : null;
+
+        if (cancelled) {
+          return;
+        }
+
+        setFile(restoredPrimary);
+        setPreview(draft.primaryChart.dataUrl);
+        setFile2(restoredSecondary);
+        setPreview2(draft.secondaryChart?.dataUrl || null);
+        setPair(draft.pair || '');
+        setTimeframe(draft.timeframe || '');
+        setTimeframe2(draft.timeframe2 || '');
+        setCurrentPrice(draft.currentPrice || '');
+        setAnalysis(null);
+        setError('');
+
+        router.replace('/analyze');
+      } catch {
+        clearAnalyzeDraft();
+      }
+    };
+
+    void restoreDraft();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [retryMode, file, analysis, router]);
 
   useEffect(() => {
     if (!loading) {
@@ -294,6 +417,15 @@ function AnalyzePageContent() {
     setCurrentStage(ANALYSIS_STEPS[0]);
 
     try {
+      await saveAnalyzeDraft({
+        pair,
+        timeframe,
+        timeframe2,
+        currentPrice: currentPrice.trim(),
+        file,
+        file2,
+      });
+
       const formData = new FormData();
       formData.append('chart', file);
       formData.append('pair', pair);
@@ -631,6 +763,7 @@ function AnalyzePageContent() {
                 <Button
                   variant="outline"
                   onClick={() => {
+                    clearAnalyzeDraft();
                     router.replace('/analyze');
                     setAnalysis(null);
                     setFile(null);
