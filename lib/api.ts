@@ -373,13 +373,20 @@ export const api = {
     apiFetch<{
       jobId: string;
       analysisId: string | null;
-      status: 'queued' | 'processing' | 'completed' | 'failed';
+      status: 'queued' | 'processing' | 'completed' | 'failed' | 'cancelled';
       position: number;
       estimatedWait: number;
       result: AnalysisResult | null;
       error: string | null;
       createdAt: string;
     }>(`/queue-status?id=${encodeURIComponent(jobId)}`, { token }),
+
+  cancelQueueJob: (jobId: string, token: string) =>
+    apiFetch<{ success: boolean; status: 'cancelled' }>('/queue-cancel', {
+      method: 'POST',
+      body: JSON.stringify({ id: jobId }),
+      token,
+    }),
 
   // Coupons
   validateCoupon: (code: string, token: string) =>
