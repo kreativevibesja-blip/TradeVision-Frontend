@@ -18,6 +18,7 @@ import {
   Sparkles,
   AlertTriangle,
   Crown,
+  XCircle,
 } from 'lucide-react';
 
 const ROTATING_MESSAGES = [
@@ -41,12 +42,13 @@ function QueuePageContent() {
   const jobId = searchParams.get('jobId');
   const analysisId = searchParams.get('analysisId');
 
-  const [status, setStatus] = useState<'queued' | 'processing' | 'completed' | 'failed'>('queued');
+  const [status, setStatus] = useState<'queued' | 'processing' | 'completed' | 'failed' | 'cancelled'>('queued');
   const [position, setPosition] = useState(0);
   const [estimatedWait, setEstimatedWait] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [messageIndex, setMessageIndex] = useState(0);
   const [simulatedProgress, setSimulatedProgress] = useState(0);
+  const [cancelling, setCancelling] = useState(false);
 
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const messageRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -98,10 +100,32 @@ function QueuePageContent() {
       if (data.status === 'failed') {
         setError(data.error || GENERIC_FAILURE_MESSAGE);
       }
+
+      if (data.status === 'cancelled') {
+        setTimeout(() => {
+          router.push('/analyze?retry=1');
+        }, 300);
+      }
     } catch {
       // Silently retry on network errors
     }
   }, [jobId, token, router, analysisId]);
+
+  const handleCancel = useCallback(async () => {
+    if (!jobId || !token || cancelling) {
+      return;
+    }
+
+    try {
+      setCancelling(true);
+      await api.cancelQueueJob(jobId, token);
+      router.push('/analyze?retry=1');
+    } catch {
+      setError('Analysis failed');
+    } finally {
+      setCancelling(false);
+    }
+  }, [jobId, token, cancelling, router]);
 
   useEffect(() => {
     if (!jobId || !token) return;
@@ -131,27 +155,27 @@ function QueuePageContent() {
   const MessageIcon = currentMessage.icon;
 
   return (
-    <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center px-4">
+    <div className="min-h-[calc(100svh-5rem)] flex items-center justify-center px-4 py-4 sm:px-6 sm:py-6">
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-lg"
+        className="w-full max-w-md lg:max-w-lg"
       >
-        <div className="mobile-card p-6 sm:p-10 space-y-8">
+        <div className="mobile-card p-5 sm:p-8 space-y-6 sm:space-y-8">
           {/* Header */}
           <div className="text-center space-y-2">
-            <h1 className="text-2xl font-bold sm:text-3xl">
+            <h1 className="text-2xl font-bold leading-tight sm:text-3xl">
               <span className="text-gradient">Analyzing Your Chart</span>
             </h1>
-            <p className="text-sm text-muted-foreground">
+            <p className="mx-auto max-w-sm text-sm text-muted-foreground">
               Our AI is processing your chart with Smart Money Concepts
             </p>
           </div>
 
           {/* Animated Radar / Pulse */}
           <div className="flex justify-center">
-            <div className="relative w-28 h-28 sm:w-32 sm:h-32">
+            <div className="relative w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32">
               {/* Outer pulse rings */}
               <motion.div
                 className="absolute inset-0 rounded-full border-2 border-primary/30"
@@ -176,14 +200,14 @@ function QueuePageContent() {
                   animate={{ rotate: 360 }}
                   transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
                 >
-                  <Brain className="h-8 w-8 sm:h-10 sm:w-10 text-primary" />
+                  <Brain className="h-7 w-7 sm:h-8 sm:w-8 md:h-10 md:w-10 text-primary" />
                 </motion.div>
               </div>
             </div>
           </div>
 
           {/* Rotating status text */}
-          <div className="text-center h-8">
+          <div className="text-center min-h-[2rem] sm:min-h-[2.25rem]">
             <AnimatePresence mode="wait">
               <motion.div
                 key={messageIndex}
@@ -191,7 +215,7 @@ function QueuePageContent() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.3 }}
-                className="flex items-center justify-center gap-2 text-sm sm:text-base font-medium text-foreground"
+                className="flex items-center justify-center gap-2 px-2 text-sm sm:text-base font-medium text-foreground"
               >
                 <MessageIcon className="h-4 w-4 text-primary" />
                 {currentMessage.text}
@@ -221,6 +245,20 @@ function QueuePageContent() {
             </div>
           </div>
 
+          {(status === 'queued' || status === 'processing') && (
+            <div className="flex justify-center">
+              <button
+                type="button"
+                onClick={handleCancel}
+                disabled={cancelling}
+                className="inline-flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-300 transition-colors hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <XCircle className={`h-4 w-4 ${cancelling ? 'animate-pulse' : ''}`} />
+                {cancelling ? 'Cancelling...' : 'Cancel Analysis'}
+              </button>
+            </div>
+          )}
+
           {/* Queue position */}
           {status === 'queued' && position > 0 && (
             <motion.div
@@ -232,7 +270,7 @@ function QueuePageContent() {
                 <Clock className="h-4 w-4 text-yellow-400" />
                 <span className="text-sm font-medium">Queue Position</span>
               </div>
-              <p className="text-3xl font-bold text-gradient">#{position}</p>
+              <p className="text-2xl font-bold text-gradient sm:text-3xl">#{position}</p>
               {estimatedWait > 0 && (
                 <p className="text-xs text-muted-foreground">
                   Estimated wait: ~{estimatedWait < 60 ? `${estimatedWait}s` : `${Math.ceil(estimatedWait / 60)}m`}
@@ -315,7 +353,7 @@ function QueuePageContent() {
           )}
 
           {/* "AI thinking steps" animation */}
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
             {['Structure', 'Liquidity', 'Entry', 'Signal'].map((step, i) => {
               const isActive = status === 'processing'
                 ? simulatedProgress > (i + 1) * 15

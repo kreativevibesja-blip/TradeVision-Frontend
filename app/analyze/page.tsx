@@ -58,6 +58,12 @@ const ANALYSIS_STEPS = [
   'Preparing final SMC signal...',
 ];
 
+const QUEUE_TRANSITION_MESSAGES = [
+  'Preparing your chart for the queue...',
+  'Securing your place in line...',
+  'Sending your chart to the analysis worker...',
+];
+
 const ANALYZE_RETRY_DRAFT_KEY = 'analyze_retry_draft';
 
 interface StoredAnalyzeFile {
@@ -215,6 +221,91 @@ function ConfidenceMeter({ score }: { score: number }) {
   );
 }
 
+function QueueTransitionScreen() {
+  const [messageIndex, setMessageIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setMessageIndex((current) => (current + 1) % QUEUE_TRANSITION_MESSAGES.length);
+    }, 1800);
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, []);
+
+  return (
+    <div className="min-h-[calc(100svh-5rem)] px-4 py-4 sm:px-6 sm:py-6 flex items-center justify-center">
+      <motion.div
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+        className="w-full max-w-md"
+      >
+        <div className="mobile-card p-6 sm:p-8 space-y-6 text-center">
+          <div className="space-y-2">
+            <h1 className="text-2xl font-bold sm:text-3xl">
+              <span className="text-gradient">Preparing Your Queue Spot</span>
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Your chart is being uploaded and your analysis job is being created.
+            </p>
+          </div>
+
+          <div className="flex justify-center">
+            <div className="relative h-24 w-24 sm:h-28 sm:w-28">
+              <motion.div
+                className="absolute inset-0 rounded-full border-2 border-primary/30"
+                animate={{ scale: [1, 1.45], opacity: [0.7, 0] }}
+                transition={{ duration: 1.8, repeat: Infinity, ease: 'easeOut' }}
+              />
+              <motion.div
+                className="absolute inset-0 rounded-full border-2 border-cyan-500/30"
+                animate={{ scale: [1, 1.25], opacity: [0.5, 0] }}
+                transition={{ duration: 1.8, repeat: Infinity, ease: 'easeOut', delay: 0.45 }}
+              />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <motion.div
+                  className="flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-full border border-white/10 bg-gradient-to-br from-blue-500/20 via-purple-500/20 to-cyan-500/20"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
+                >
+                  <Brain className="h-7 w-7 sm:h-8 sm:w-8 text-primary" />
+                </motion.div>
+              </div>
+            </div>
+          </div>
+
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={messageIndex}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.25 }}
+              className="flex items-center justify-center gap-2 text-sm sm:text-base font-medium"
+            >
+              <Loader2 className="h-4 w-4 animate-spin text-primary" />
+              <span>{QUEUE_TRANSITION_MESSAGES[messageIndex]}</span>
+            </motion.div>
+          </AnimatePresence>
+
+          <div className="space-y-2">
+            <div className="relative h-2 overflow-hidden rounded-full bg-white/10">
+              <motion.div
+                className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-cyan-500"
+                animate={{ width: ['12%', '78%', '42%'] }}
+                transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">You’ll be taken to the waiting screen in a moment.</p>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 function AnalyzePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -239,6 +330,7 @@ function AnalyzePageContent() {
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+  const [queueStarting, setQueueStarting] = useState(false);
   const analysisId = searchParams.get('analysisId');
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -411,6 +503,7 @@ function AnalyzePageContent() {
     }
 
     setLoading(true);
+    setQueueStarting(!isPro);
     setError('');
     setAnalysis(null);
     setProgress(8);
@@ -454,14 +547,20 @@ function AnalyzePageContent() {
         await refreshUser().catch(() => {});
       }
       setLoading(false);
+      setQueueStarting(false);
     } catch (submitError: any) {
       if (/daily analysis limit reached/i.test(submitError?.message || '')) {
         await refreshUser().catch(() => {});
       }
       setError(submitError.message || 'Unable to start analysis.');
       setLoading(false);
+      setQueueStarting(false);
     }
   };
+
+  if (queueStarting && !isPro) {
+    return <QueueTransitionScreen />;
+  }
 
   const trend = analysis?.trend || 'ranging';
   const signalType = analysis?.signalType || 'wait';
