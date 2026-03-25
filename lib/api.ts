@@ -45,6 +45,9 @@ export interface AnalysisResult {
   confidence: number;
   currentPrice: number;
   trend: 'bullish' | 'bearish' | 'ranging';
+  marketCondition?: 'trending' | 'ranging' | 'breakout' | 'consolidation';
+  primaryStrategy?: 'SMC' | 'Supply & Demand' | 'S&R' | 'Pattern' | null;
+  confirmations?: string[];
   structure: {
     state?: 'higher highs' | 'lower lows' | 'transition';
     bos: 'bullish' | 'bearish' | 'none';
