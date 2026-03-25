@@ -3,10 +3,11 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
-import { CreditCard, LayoutDashboard, Users } from 'lucide-react';
+import { CandlestickChart, CreditCard, LayoutDashboard, Users } from 'lucide-react';
 
 const dashboardNav = [
   { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
+  { href: '/dashboard/tradingview', label: 'Live Chart', icon: CandlestickChart },
   { href: '/dashboard/billing', label: 'Billing', icon: CreditCard },
   { href: '/dashboard/referrals', label: 'Referrals', icon: Users },
 ];

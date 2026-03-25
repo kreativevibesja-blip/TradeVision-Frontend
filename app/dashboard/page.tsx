@@ -21,6 +21,7 @@ import {
   ArrowRight,
   Zap,
   CreditCard,
+  CandlestickChart,
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -154,6 +155,56 @@ export default function DashboardPage() {
           </div>
 
           {/* Recent Analyses */}
+          <div className="mb-8 grid grid-cols-1 gap-4 lg:grid-cols-[1.25fr_0.75fr]">
+            <Card className="mobile-card overflow-hidden">
+              <CardContent className="flex h-full flex-col justify-between gap-5 p-6">
+                <div className="space-y-3">
+                  <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-cyan-400/20 bg-cyan-400/10 text-cyan-300">
+                    <CandlestickChart className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold">TradingView Live Chart Analysis</h2>
+                    <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+                      Open a live TradingView chart, pick a symbol and timeframe, and run a Pro-only AI analysis backed by real OHLC market data.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  {user.subscription === 'PRO' ? (
+                    <Link href="/dashboard/tradingview">
+                      <Button variant="gradient" className="gap-2">
+                        <CandlestickChart className="h-4 w-4" />
+                        Open Live Chart
+                      </Button>
+                    </Link>
+                  ) : (
+                    <>
+                      <Link href="/pricing">
+                        <Button className="gap-2 bg-cyan-600 text-white hover:bg-cyan-500">
+                          <Crown className="h-4 w-4" />
+                          Unlock Pro Access
+                        </Button>
+                      </Link>
+                      <p className="text-xs text-muted-foreground">Live TradingView analysis is available for Pro only.</p>
+                    </>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="mobile-card">
+              <CardContent className="p-6">
+                <p className="text-sm font-medium text-foreground">Why this is different</p>
+                <div className="mt-4 space-y-3 text-sm text-muted-foreground">
+                  <p>Uses live TradingView chart context inside the dashboard.</p>
+                  <p>Fetches fresh candles from a market data provider before analysis.</p>
+                  <p>Stores the result in your normal analysis history for later review.</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
           <Card className="mobile-card">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
