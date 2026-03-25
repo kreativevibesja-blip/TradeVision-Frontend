@@ -1021,8 +1021,16 @@ function AnalyzePageContent() {
                           <p className="font-semibold capitalize">{analysis.trend}</p>
                         </div>
                         <div>
+                          <p className="text-sm text-muted-foreground mb-1">Market Condition</p>
+                          <p className="font-semibold capitalize">{analysis.marketCondition || 'Not identified'}</p>
+                        </div>
+                        <div>
                           <p className="text-sm text-muted-foreground mb-1">Structure State</p>
                           <p className="font-semibold capitalize">{analysis.structure.state || 'transition'}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">Primary Strategy</p>
+                          <p className="font-semibold">{analysis.primaryStrategy || 'Not selected'}</p>
                         </div>
                         <div>
                           <p className="text-sm text-muted-foreground mb-1">Current Price Position</p>
@@ -1053,6 +1061,25 @@ function AnalyzePageContent() {
                             <p className="text-sm text-muted-foreground mb-1">Entry Bias</p>
                             <p className="font-semibold capitalize">{analysis.entryPlan.bias}</p>
                           </div>
+                        )}
+                      </div>
+
+                      <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                        <p className="text-sm text-muted-foreground mb-2">Confirmations</p>
+                        {analysis.confirmations && analysis.confirmations.length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {analysis.confirmations.map((confirmationItem, index) => (
+                              <Badge
+                                key={`${confirmationItem}-${index}`}
+                                variant="outline"
+                                className="border-cyan-500/30 bg-cyan-500/10 text-cyan-200"
+                              >
+                                {confirmationItem}
+                              </Badge>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm leading-relaxed text-muted-foreground">No explicit confirmations were returned for this setup.</p>
                         )}
                       </div>
 
