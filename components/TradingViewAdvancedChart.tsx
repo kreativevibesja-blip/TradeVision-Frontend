@@ -25,7 +25,7 @@ export function TradingViewAdvancedChart({ symbol, interval }: TradingViewAdvanc
     containerRef.current.innerHTML = '';
 
     const widgetContainer = document.createElement('div');
-    widgetContainer.className = 'tradingview-widget-container__widget h-full w-full';
+    widgetContainer.className = 'tradingview-widget-container__widget absolute inset-0';
     widgetContainer.id = containerId;
 
     const copyright = document.createElement('div');
@@ -63,5 +63,5 @@ export function TradingViewAdvancedChart({ symbol, interval }: TradingViewAdvanc
     };
   }, [symbol, interval, containerId]);
 
-  return <div ref={containerRef} className="h-full min-h-[420px] w-full" />;
+  return <div ref={containerRef} className="tradingview-widget-container relative h-full min-h-[460px] w-full" />;
 }
