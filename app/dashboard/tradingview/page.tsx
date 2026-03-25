@@ -199,8 +199,8 @@ export default function TradingViewDashboardPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1.4fr_0.6fr]">
-        <Card className="mobile-card overflow-hidden">
+      <div className="grid items-start gap-6 xl:grid-cols-[1.4fr_0.6fr]">
+        <Card className="mobile-card overflow-hidden xl:self-start">
           <CardHeader className="space-y-4 border-b border-white/10">
             <CardTitle className="flex items-center gap-2 text-lg">
               <CandlestickChart className="h-5 w-5 text-cyan-300" />
@@ -247,7 +247,7 @@ export default function TradingViewDashboardPage() {
           </CardHeader>
 
           <CardContent className="p-0">
-            <div className="h-[420px] w-full md:h-[560px]">
+            <div className="h-[62vh] min-h-[460px] w-full md:h-[68vh] md:min-h-[620px] xl:max-h-[820px]">
               <TradingViewAdvancedChart symbol={selectedSymbol.tvSymbol} interval={selectedTimeframe.tvInterval} />
             </div>
           </CardContent>
