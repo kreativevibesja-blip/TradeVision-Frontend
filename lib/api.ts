@@ -362,7 +362,15 @@ export const api = {
   analyzeChartUpload: (formData: FormData, token: string) =>
     apiFetch<{ analysis?: AnalysisResult; queued?: boolean; jobId?: string; analysisId?: string; message?: string }>('/analyze-chart', { method: 'POST', body: formData, token }),
 
-  analyzeLiveChart: (payload: { source: 'tradingview-live'; symbol: string; timeframe: string }, token: string) =>
+  analyzeLiveChart: (
+    payload: {
+      source: 'tradingview-live' | 'deriv-live';
+      symbol: string;
+      timeframe: string;
+      candles?: Array<{ time: number; open: number; high: number; low: number; close: number }>;
+    },
+    token: string
+  ) =>
     apiFetch<{ analysis: AnalysisResult }>('/analyze-chart', {
       method: 'POST',
       body: JSON.stringify(payload),
