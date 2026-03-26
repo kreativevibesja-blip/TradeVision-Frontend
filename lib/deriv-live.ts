@@ -1,8 +1,8 @@
 import type { AnalysisResult } from '@/lib/api';
 
 export type DerivSymbol = string;
-export type DerivTimeframe = '1m' | '5m' | '15m' | '1H';
-export const DERIV_ANALYSIS_CANDLE_COUNT = 500;
+export type DerivTimeframe = '1m' | '5m' | '15m' | '30m' | '1H' | '4H' | '1D';
+export const DERIV_ANALYSIS_CANDLE_COUNT = 2000;
 
 export interface DerivSymbolOption {
   value: DerivSymbol;
@@ -91,7 +91,10 @@ export const DERIV_TIMEFRAMES: DerivTimeframeOption[] = [
   { value: '1m', label: '1m', granularity: 60 },
   { value: '5m', label: '5m', granularity: 300 },
   { value: '15m', label: '15m', granularity: 900 },
+  { value: '30m', label: '30m', granularity: 1800 },
   { value: '1H', label: '1H', granularity: 3600 },
+  { value: '4H', label: '4H', granularity: 14400 },
+  { value: '1D', label: 'Daily', granularity: 86400 },
 ];
 
 export const getDerivTimeframe = (value: string) =>
