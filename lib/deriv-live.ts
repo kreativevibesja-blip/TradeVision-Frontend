@@ -1,12 +1,14 @@
 import type { AnalysisResult } from '@/lib/api';
 
-export type DerivSymbol = 'R_75' | 'R_100' | 'BOOM1000' | 'CRASH1000';
+export type DerivSymbol = string;
 export type DerivTimeframe = '1m' | '5m' | '15m' | '1H';
+export const DERIV_ANALYSIS_CANDLE_COUNT = 500;
 
 export interface DerivSymbolOption {
   value: DerivSymbol;
   label: string;
   description: string;
+  category: 'volatility' | 'volatility-1s' | 'jump' | 'step' | 'boom-crash';
 }
 
 export interface DerivTimeframeOption {
@@ -46,10 +48,43 @@ export interface DerivAnalysisResult {
 }
 
 export const DERIV_SYMBOLS: DerivSymbolOption[] = [
-  { value: 'R_75', label: 'Volatility 75', description: 'Synthetic index with high volatility' },
-  { value: 'R_100', label: 'Volatility 100', description: 'Synthetic index with higher volatility' },
-  { value: 'BOOM1000', label: 'Boom 1000', description: 'Upward spikes on a synthetic index' },
-  { value: 'CRASH1000', label: 'Crash 1000', description: 'Downward spikes on a synthetic index' },
+  { value: 'R_10', label: 'Volatility 10', description: 'Lower-volatility synthetic index.', category: 'volatility' },
+  { value: 'R_25', label: 'Volatility 25', description: 'Moderate-volatility synthetic index.', category: 'volatility' },
+  { value: 'R_50', label: 'Volatility 50', description: 'Balanced synthetic volatility index.', category: 'volatility' },
+  { value: 'R_75', label: 'Volatility 75', description: 'High-volatility synthetic index.', category: 'volatility' },
+  { value: 'R_100', label: 'Volatility 100', description: 'Higher-volatility synthetic index.', category: 'volatility' },
+  { value: '1HZ10V', label: 'Volatility 10 (1s)', description: '1-second synthetic volatility feed.', category: 'volatility-1s' },
+  { value: '1HZ15V', label: 'Volatility 15 (1s)', description: '1-second synthetic volatility feed.', category: 'volatility-1s' },
+  { value: '1HZ25V', label: 'Volatility 25 (1s)', description: '1-second synthetic volatility feed.', category: 'volatility-1s' },
+  { value: '1HZ30V', label: 'Volatility 30 (1s)', description: '1-second synthetic volatility feed.', category: 'volatility-1s' },
+  { value: '1HZ50V', label: 'Volatility 50 (1s)', description: '1-second synthetic volatility feed.', category: 'volatility-1s' },
+  { value: '1HZ75V', label: 'Volatility 75 (1s)', description: '1-second synthetic volatility feed.', category: 'volatility-1s' },
+  { value: '1HZ90V', label: 'Volatility 90 (1s)', description: '1-second synthetic volatility feed.', category: 'volatility-1s' },
+  { value: '1HZ100V', label: 'Volatility 100 (1s)', description: '1-second synthetic volatility feed.', category: 'volatility-1s' },
+  { value: 'JD10', label: 'Jump 10', description: 'Synthetic jump index with lower jump intensity.', category: 'jump' },
+  { value: 'JD25', label: 'Jump 25', description: 'Synthetic jump index with moderate jump intensity.', category: 'jump' },
+  { value: 'JD50', label: 'Jump 50', description: 'Synthetic jump index with balanced jump intensity.', category: 'jump' },
+  { value: 'JD75', label: 'Jump 75', description: 'Synthetic jump index with high jump intensity.', category: 'jump' },
+  { value: 'JD100', label: 'Jump 100', description: 'Synthetic jump index with higher jump intensity.', category: 'jump' },
+  { value: 'stpRNG', label: 'Step Index 100', description: 'Step index with 100-step structure.', category: 'step' },
+  { value: 'stpRNG2', label: 'Step Index 200', description: 'Step index with 200-step structure.', category: 'step' },
+  { value: 'stpRNG3', label: 'Step Index 300', description: 'Step index with 300-step structure.', category: 'step' },
+  { value: 'stpRNG4', label: 'Step Index 400', description: 'Step index with 400-step structure.', category: 'step' },
+  { value: 'stpRNG5', label: 'Step Index 500', description: 'Step index with 500-step structure.', category: 'step' },
+  { value: 'BOOM50', label: 'Boom 50', description: 'Frequent upward spike synthetic index.', category: 'boom-crash' },
+  { value: 'BOOM150N', label: 'Boom 150', description: 'Upward spike synthetic index.', category: 'boom-crash' },
+  { value: 'BOOM300N', label: 'Boom 300', description: 'Upward spike synthetic index.', category: 'boom-crash' },
+  { value: 'BOOM500', label: 'Boom 500', description: 'Upward spike synthetic index.', category: 'boom-crash' },
+  { value: 'BOOM600', label: 'Boom 600', description: 'Upward spike synthetic index.', category: 'boom-crash' },
+  { value: 'BOOM900', label: 'Boom 900', description: 'Upward spike synthetic index.', category: 'boom-crash' },
+  { value: 'BOOM1000', label: 'Boom 1000', description: 'Upward spike synthetic index.', category: 'boom-crash' },
+  { value: 'CRASH50', label: 'Crash 50', description: 'Frequent downward spike synthetic index.', category: 'boom-crash' },
+  { value: 'CRASH150N', label: 'Crash 150', description: 'Downward spike synthetic index.', category: 'boom-crash' },
+  { value: 'CRASH300N', label: 'Crash 300', description: 'Downward spike synthetic index.', category: 'boom-crash' },
+  { value: 'CRASH500', label: 'Crash 500', description: 'Downward spike synthetic index.', category: 'boom-crash' },
+  { value: 'CRASH600', label: 'Crash 600', description: 'Downward spike synthetic index.', category: 'boom-crash' },
+  { value: 'CRASH900', label: 'Crash 900', description: 'Downward spike synthetic index.', category: 'boom-crash' },
+  { value: 'CRASH1000', label: 'Crash 1000', description: 'Downward spike synthetic index.', category: 'boom-crash' },
 ];
 
 export const DERIV_TIMEFRAMES: DerivTimeframeOption[] = [
