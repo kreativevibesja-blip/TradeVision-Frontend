@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { CandlestickSeries, ColorType, createChart } from 'lightweight-charts';
 import { Activity, Loader2, Wifi, WifiOff } from 'lucide-react';
-import { type DerivAnalysisResult, type DerivCandle, getDerivCacheKey } from '@/lib/deriv-live';
+import { DERIV_ANALYSIS_CANDLE_COUNT, type DerivAnalysisResult, type DerivCandle, getDerivCacheKey } from '@/lib/deriv-live';
 
 interface LiveChartProps {
   symbol: string;
@@ -30,7 +30,7 @@ const CHART_BG = '#0f172a';
 const GRID = '#1e293b';
 const TEXT = '#e2e8f0';
 const CACHE_TTL_MS = 30_000;
-const MAX_CANDLES = 200;
+const MAX_CANDLES = DERIV_ANALYSIS_CANDLE_COUNT;
 
 const readCachedCandles = (symbol: string, granularity: number): DerivCandle[] | null => {
   if (typeof window === 'undefined') {
@@ -269,7 +269,7 @@ export function LiveChart({ symbol, granularity, analysis, onCandlesChange, onEr
       candlesRef.current = cachedCandles;
       candleSeriesRef.current?.setData(cachedCandles);
       chart.timeScale().fitContent();
-      onCandlesChange?.(cachedCandles.slice(-150));
+      onCandlesChange?.(cachedCandles.slice(-MAX_CANDLES));
       setLoadingHistory(false);
     } else {
       setLoadingHistory(true);
@@ -332,7 +332,7 @@ export function LiveChart({ symbol, granularity, analysis, onCandlesChange, onEr
           candleSeriesRef.current?.setData(mapped);
           chart.timeScale().fitContent();
           storeCachedCandles(symbol, granularity, mapped);
-          onCandlesChange?.(mapped.slice(-150));
+          onCandlesChange?.(mapped.slice(-MAX_CANDLES));
           setLoadingHistory(false);
           queueOverlayCalculation();
           subscribeTicks();
@@ -377,7 +377,7 @@ export function LiveChart({ symbol, granularity, analysis, onCandlesChange, onEr
 
           candlesRef.current = nextCandles;
           storeCachedCandles(symbol, granularity, nextCandles);
-          onCandlesChange?.(nextCandles.slice(-150));
+          onCandlesChange?.(nextCandles.slice(-MAX_CANDLES));
           queueOverlayCalculation();
         }
       } catch {
