@@ -100,7 +100,7 @@ export interface AnalysisResult {
     invalidationReason: string;
   };
   quality?: {
-    setupRating: 'A' | 'B' | 'C' | 'avoid';
+    setupRating: 'A+' | 'B' | 'avoid';
     confidence: number;
   };
   setupQuality: 'high' | 'medium' | 'low';
