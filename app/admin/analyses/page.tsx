@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { api, resolveAssetUrl, type AdminAnalysisLog, type AnalysisResult } from '@/lib/api';
-import { TrendingUp, TrendingDown, Minus, Eye, X } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Eye, X, Search } from 'lucide-react';
 
 const getStatusBadge = (analysis: AdminAnalysisLog) => {
   if (analysis.status === 'COMPLETED') {
@@ -42,15 +42,26 @@ export default function AdminAnalysesPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [searchInput, setSearchInput] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (token) loadAnalyses();
-  }, [token, page]);
+  }, [token, page, searchQuery]);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setPage(1);
+      setSearchQuery(searchInput.trim());
+    }, 350);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [searchInput]);
 
   const loadAnalyses = async () => {
     try {
       setLoading(true);
-      const data = await api.admin.getAnalyses(token!, page);
+      const data = await api.admin.getAnalyses(token!, page, searchQuery || undefined);
       setAnalyses(data.analyses);
       setTotalPages(data.pages);
     } catch {
@@ -100,6 +111,18 @@ export default function AdminAnalysesPage() {
 
         <Card>
           <CardContent className="p-0">
+            <div className="border-b border-white/10 p-4">
+              <div className="relative max-w-md">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  type="text"
+                  value={searchInput}
+                  onChange={(event) => setSearchInput(event.target.value)}
+                  placeholder="Search by user email or name"
+                  className="w-full rounded-lg border border-white/10 bg-background/60 py-2 pl-10 pr-3 text-sm outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary/40"
+                />
+              </div>
+            </div>
             {loading ? (
               <div className="text-center py-12 text-muted-foreground">Loading...</div>
             ) : (
@@ -120,7 +143,13 @@ export default function AdminAnalysesPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {analyses.map((a) => {
+                    {analyses.length === 0 ? (
+                      <tr>
+                        <td colSpan={10} className="p-8 text-center text-sm text-muted-foreground">
+                          {searchQuery ? 'No analysis logs found for that user.' : 'No analysis logs found.'}
+                        </td>
+                      </tr>
+                    ) : analyses.map((a) => {
                       const statusBadge = getStatusBadge(a);
                       const biasBadge = getBiasBadge(a.bias);
 
