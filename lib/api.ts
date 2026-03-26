@@ -461,8 +461,11 @@ export const api = {
         body: JSON.stringify(data),
         token,
       }),
-    getAnalyses: (token: string, page = 1) =>
-      apiFetch<{ analyses: AdminAnalysisLog[]; total: number; page: number; pages: number }>(`/admin/analyses?page=${page}`, { token }),
+    getAnalyses: (token: string, page = 1, search?: string) =>
+      apiFetch<{ analyses: AdminAnalysisLog[]; total: number; page: number; pages: number }>(
+        `/admin/analyses?page=${page}${search ? `&search=${encodeURIComponent(search)}` : ''}`,
+        { token }
+      ),
     getAnalysisById: (token: string, id: string) =>
       apiFetch<{ analysis: AnalysisResult }>(`/admin/analyses/${encodeURIComponent(id)}`, { token }),
     getPayments: (
