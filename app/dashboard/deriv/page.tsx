@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LiveChart } from '@/components/LiveChart';
 import { useAuth } from '@/hooks/useAuth';
-import { DERIV_SYMBOLS, DERIV_TIMEFRAMES, type DerivAnalysisResult, type DerivCandle, getDerivSymbol, getDerivTimeframe } from '@/lib/deriv-live';
+import { mapPersistedAnalysisToDerivResult, DERIV_SYMBOLS, DERIV_TIMEFRAMES, type DerivAnalysisResult, type DerivCandle, getDerivSymbol, getDerivTimeframe } from '@/lib/deriv-live';
 
 const STORAGE_KEY = 'dashboard_deriv_chart_state';
 const ANALYSIS_CACHE_KEY = 'dashboard_deriv_chart_analysis_cache';
@@ -25,6 +25,7 @@ interface CachedAnalysis {
   symbol: string;
   timeframe: string;
   savedAt: string;
+  analysisId: string;
   result: DerivAnalysisResult;
 }
 
@@ -153,15 +154,22 @@ export default function DerivDashboardPage() {
         throw new Error(data.error || 'Analysis failed.');
       }
 
+      if (!data.analysis?.id) {
+        throw new Error('Persisted analysis was not returned by the server.');
+      }
+
+      const mappedResult = mapPersistedAnalysisToDerivResult(data.analysis, candles.slice(-150));
+
       const nextCache: CachedAnalysis = {
         symbol,
         timeframe,
         savedAt: new Date().toISOString(),
-        result: data as DerivAnalysisResult,
+        analysisId: data.analysis.id,
+        result: mappedResult,
       };
 
       window.localStorage.setItem(ANALYSIS_CACHE_KEY, JSON.stringify(nextCache));
-      setAnalysis(data as DerivAnalysisResult);
+      setAnalysis(mappedResult);
       showToast('success', 'Deriv chart analyzed successfully.');
     } catch (error: any) {
       const message = error?.message || 'Unable to analyze this Deriv chart right now.';
@@ -317,6 +325,14 @@ export default function DerivDashboardPage() {
                     <Badge variant="outline" className="capitalize">{analysis.verdict}</Badge>
                   </div>
 
+                  {analysis.analysisId ? (
+                    <div className="flex flex-wrap gap-3">
+                      <Link href={`/analyze?analysisId=${encodeURIComponent(analysis.analysisId)}`}>
+                        <Button variant="outline">Open Full Result</Button>
+                      </Link>
+                    </div>
+                  ) : null}
+
                   <div className="grid gap-3 sm:grid-cols-3">
                     <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                       <p className="text-xs uppercase tracking-wide text-muted-foreground">Entry</p>
@@ -370,7 +386,7 @@ export default function DerivDashboardPage() {
             <CardContent className="space-y-4 text-sm text-muted-foreground">
               <div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
                 <Bot className="mt-0.5 h-4 w-4 shrink-0 text-cyan-300" />
-                <p>The AI reads the last 150 Deriv candles directly, then returns only high-probability setups using the stricter filtering prompt.</p>
+                <p>The backend reads the last 150 Deriv candles, persists the analysis into your normal history, and returns only high-probability setups using the stricter filtering prompt.</p>
               </div>
               <div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
                 <Radar className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" />
