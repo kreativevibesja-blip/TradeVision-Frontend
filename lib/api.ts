@@ -620,6 +620,55 @@ export const api = {
         body: JSON.stringify(data),
         token,
       }),
+
+    // ── Email Campaigns ──
+    getEmailCampaigns: (token: string, page = 1) =>
+      apiFetch<{ campaigns: EmailCampaign[]; total: number; page: number; pages: number }>(
+        `/admin/email-campaigns?page=${page}`,
+        { token }
+      ),
+    getEmailCampaignById: (id: string, token: string) =>
+      apiFetch<{ campaign: EmailCampaign; logs: EmailLog[] }>(
+        `/admin/email-campaigns/${encodeURIComponent(id)}`,
+        { token }
+      ),
+    createEmailCampaign: (
+      data: { name: string; subject: string; htmlContent: string; audience: string; singleEmail?: string; templateKey?: string },
+      token: string
+    ) =>
+      apiFetch<{ campaign: EmailCampaign }>('/admin/email-campaigns', {
+        method: 'POST',
+        body: JSON.stringify(data),
+        token,
+      }),
+    sendEmailCampaign: (id: string, token: string) =>
+      apiFetch<{ success: boolean; sentCount: number; failedCount: number }>(
+        `/admin/email-campaigns/${encodeURIComponent(id)}/send`,
+        { method: 'POST', token }
+      ),
+    sendTestCampaignEmail: (data: { subject: string; htmlContent: string }, token: string) =>
+      apiFetch<{ success: boolean; sentTo: string }>('/admin/email-campaigns/test', {
+        method: 'POST',
+        body: JSON.stringify(data),
+        token,
+      }),
+    retryFailedEmails: (id: string, token: string) =>
+      apiFetch<{ success: boolean; retriedOk: number; retriedFail: number }>(
+        `/admin/email-campaigns/${encodeURIComponent(id)}/retry`,
+        { method: 'POST', token }
+      ),
+    getEmailTemplates: (token: string) =>
+      apiFetch<{ templates: EmailTemplateMeta[] }>('/admin/email-templates', { token }),
+    previewEmailTemplate: (key: string, token: string) =>
+      apiFetch<{ subject: string; html: string }>(
+        `/admin/email-templates/${encodeURIComponent(key)}/preview`,
+        { token }
+      ),
+    searchUsers: (query: string, token: string) =>
+      apiFetch<{ users: SearchedUser[] }>(
+        `/admin/users/search?query=${encodeURIComponent(query)}`,
+        { token }
+      ),
   },
 
   // ── Referral (User) ──
@@ -754,4 +803,43 @@ export interface AdminCommission extends CommissionRecord {
 
 export interface AdminPayout extends PayoutRecord {
   user: { email: string; name: string | null } | null;
+}
+
+// ── Email Campaign Types ──
+
+export interface EmailCampaign {
+  id: string;
+  name: string;
+  subject: string;
+  htmlContent: string;
+  audience: 'all' | 'free' | 'pro' | 'single';
+  singleEmail: string | null;
+  templateKey: string | null;
+  status: 'draft' | 'sent' | 'sending';
+  sentCount: number;
+  failedCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EmailLog {
+  id: string;
+  campaignId: string;
+  userEmail: string;
+  status: 'sent' | 'failed';
+  errorMessage: string | null;
+  sentAt: string;
+}
+
+export interface EmailTemplateMeta {
+  key: string;
+  label: string;
+  subject: string;
+}
+
+export interface SearchedUser {
+  id: string;
+  email: string;
+  name: string | null;
+  subscription: string;
 }
