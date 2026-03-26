@@ -284,7 +284,7 @@ export default function DerivDashboardPage() {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">Timeframe</label>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 xl:grid-cols-3 2xl:grid-cols-4">
                   {DERIV_TIMEFRAMES.map((option) => {
                     const isActive = timeframe === option.value;
                     return (
