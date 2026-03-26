@@ -3,13 +3,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { AlertTriangle, Bot, CandlestickChart, Crown, Gauge, Loader2, Radar, RefreshCcw, Sparkles, Zap } from 'lucide-react';
+import { AlertTriangle, CandlestickChart, Crown, Loader2, RefreshCcw, Sparkles, Zap } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LiveChart } from '@/components/LiveChart';
 import { useAuth } from '@/hooks/useAuth';
-import { mapPersistedAnalysisToDerivResult, DERIV_SYMBOLS, DERIV_TIMEFRAMES, type DerivAnalysisResult, type DerivCandle, getDerivSymbol, getDerivTimeframe } from '@/lib/deriv-live';
+import { DERIV_ANALYSIS_CANDLE_COUNT, mapPersistedAnalysisToDerivResult, DERIV_SYMBOLS, DERIV_TIMEFRAMES, type DerivAnalysisResult, type DerivCandle, getDerivSymbol, getDerivTimeframe } from '@/lib/deriv-live';
 
 const STORAGE_KEY = 'dashboard_deriv_chart_state';
 const ANALYSIS_CACHE_KEY = 'dashboard_deriv_chart_analysis_cache';
@@ -41,6 +41,14 @@ const readStoredState = (): StoredState | null => {
     return null;
   }
 };
+
+const DERIV_SYMBOL_GROUPS = [
+  { label: 'Volatility', value: 'volatility' },
+  { label: 'Volatility (1s)', value: 'volatility-1s' },
+  { label: 'Jump', value: 'jump' },
+  { label: 'Step', value: 'step' },
+  { label: 'Boom & Crash', value: 'boom-crash' },
+] as const;
 
 const readCachedAnalysis = (): CachedAnalysis | null => {
   if (typeof window === 'undefined') {
@@ -145,7 +153,7 @@ export default function DerivDashboardPage() {
         body: JSON.stringify({
           symbol,
           timeframe,
-          candles: candles.slice(-150),
+          candles: candles.slice(-DERIV_ANALYSIS_CANDLE_COUNT),
         }),
       });
 
@@ -158,7 +166,7 @@ export default function DerivDashboardPage() {
         throw new Error('Persisted analysis was not returned by the server.');
       }
 
-      const mappedResult = mapPersistedAnalysisToDerivResult(data.analysis, candles.slice(-150));
+      const mappedResult = mapPersistedAnalysisToDerivResult(data.analysis, candles.slice(-DERIV_ANALYSIS_CANDLE_COUNT));
 
       const nextCache: CachedAnalysis = {
         symbol,
@@ -263,8 +271,12 @@ export default function DerivDashboardPage() {
                   onChange={(event) => setSymbol(event.target.value)}
                   className="h-12 w-full rounded-xl border border-white/10 bg-background/60 px-3 text-sm outline-none transition focus:border-cyan-400/50"
                 >
-                  {DERIV_SYMBOLS.map((option) => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
+                  {DERIV_SYMBOL_GROUPS.map((group) => (
+                    <optgroup key={group.value} label={group.label}>
+                      {DERIV_SYMBOLS.filter((option) => option.category === group.value).map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </optgroup>
                   ))}
                 </select>
                 <p className="text-xs text-muted-foreground">{selectedSymbol.description}</p>
@@ -376,26 +388,6 @@ export default function DerivDashboardPage() {
                   <p>The overlay will be drawn directly on the Deriv chart once a valid setup is returned.</p>
                 </div>
               )}
-            </CardContent>
-          </Card>
-
-          <Card className="mobile-card">
-            <CardHeader>
-              <CardTitle className="text-lg">Workspace Notes</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 text-sm text-muted-foreground">
-              <div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
-                <Bot className="mt-0.5 h-4 w-4 shrink-0 text-cyan-300" />
-                <p>The backend reads the last 150 Deriv candles, persists the analysis into your normal history, and returns only high-probability setups using the stricter filtering prompt.</p>
-              </div>
-              <div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
-                <Radar className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" />
-                <p>Demand and supply zones render as chart overlays. Entry, stop loss, and take profit render as horizontal guide lines.</p>
-              </div>
-              <div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
-                <Gauge className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
-                <p>Candles are cached briefly, and analyze clicks are debounced to avoid unnecessary API churn.</p>
-              </div>
             </CardContent>
           </Card>
 

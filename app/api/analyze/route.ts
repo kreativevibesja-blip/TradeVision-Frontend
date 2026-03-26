@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { DERIV_ANALYSIS_CANDLE_COUNT } from '@/lib/deriv-live';
 
 export const runtime = 'nodejs';
 
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
     const body = (await request.json()) as AnalyzeRequestBody;
     const symbol = typeof body.symbol === 'string' ? body.symbol.trim() : '';
     const timeframe = typeof body.timeframe === 'string' ? body.timeframe.trim() : '';
-    const candles = Array.isArray(body.candles) ? body.candles.slice(-150) : [];
+    const candles = Array.isArray(body.candles) ? body.candles.slice(-DERIV_ANALYSIS_CANDLE_COUNT) : [];
 
     if (!symbol || !timeframe || candles.length < 50) {
       return NextResponse.json({ error: 'Symbol, timeframe, and at least 50 candles are required.' }, { status: 400 });
