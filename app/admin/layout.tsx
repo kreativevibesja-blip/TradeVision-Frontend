@@ -21,6 +21,7 @@ import {
   LifeBuoy,
   Percent,
   Gift,
+  Mail,
 } from 'lucide-react';
 
 const adminNav = [
@@ -34,6 +35,7 @@ const adminNav = [
   { label: 'Settings', href: '/admin/settings', icon: Settings },
   { label: 'Updates', href: '/admin/updates', icon: Megaphone },
   { label: 'Tickets', href: '/admin/tickets', icon: LifeBuoy, badgeKey: 'tickets' as const },
+  { label: 'Email Campaigns', href: '/admin/emails', icon: Mail },
   { label: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
 ];
 
