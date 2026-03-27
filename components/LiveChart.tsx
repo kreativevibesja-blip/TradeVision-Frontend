@@ -441,7 +441,7 @@ export function LiveChart({
   const StatusIcon = statusMeta.icon;
 
   return (
-    <div ref={hostRef} className={cn('relative h-full min-h-0 overflow-hidden rounded-[1rem] bg-slate-950', className)}>
+    <div ref={hostRef} className={cn('relative h-full w-full min-h-0 overflow-hidden rounded-[1rem] bg-slate-950', className)}>
       <div className="absolute left-4 top-4 z-10 inline-flex items-center gap-2 rounded-full border border-white/10 bg-slate-900/80 px-3 py-1.5 text-xs text-slate-200 backdrop-blur">
         <StatusIcon className={`h-3.5 w-3.5 ${statusMeta.className} ${loadingHistory ? 'animate-spin' : ''}`} />
         {statusMeta.label}
