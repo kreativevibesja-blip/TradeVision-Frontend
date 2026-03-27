@@ -15,6 +15,11 @@ const dashboardNav = [
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const isLiveWorkspace = pathname === '/dashboard/tradingview' || pathname === '/dashboard/deriv';
+
+  if (isLiveWorkspace) {
+    return <div className="h-[calc(100svh-9rem)] overflow-hidden md:h-[calc(100svh-4rem)]">{children}</div>;
+  }
 
   return (
     <div className="page-stack min-h-screen">
