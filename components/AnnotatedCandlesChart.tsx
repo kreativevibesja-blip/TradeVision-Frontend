@@ -72,8 +72,21 @@ export function AnnotatedCandlesChart({
       },
       width: chartContainerRef.current.clientWidth,
       height: getChartHeight(),
+      leftPriceScale: {
+        visible: false,
+      },
       rightPriceScale: {
+        visible: true,
         borderColor: GRID,
+        borderVisible: true,
+        ticksVisible: true,
+        entireTextOnly: false,
+        minimumWidth: 76,
+        autoScale: true,
+        scaleMargins: {
+          top: 0.12,
+          bottom: 0.12,
+        },
       },
       timeScale: {
         borderColor: GRID,
