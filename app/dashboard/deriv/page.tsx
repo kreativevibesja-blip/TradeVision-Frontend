@@ -103,6 +103,7 @@ export default function DerivDashboardPage() {
   const { user, token, loading: authLoading } = useAuth();
   const [symbol, setSymbol] = useState('R_75');
   const [timeframe, setTimeframe] = useState('15m');
+  const [workspaceReady, setWorkspaceReady] = useState(false);
   const [candles, setCandles] = useState<DerivCandle[]>([]);
   const [analysis, setAnalysis] = useState<DerivAnalysisResult | null>(null);
   const [chartError, setChartError] = useState('');
@@ -123,6 +124,7 @@ export default function DerivDashboardPage() {
     }
 
     setRecentSymbols(readRecentSymbols());
+    setWorkspaceReady(true);
   }, []);
 
   useEffect(() => {
@@ -214,7 +216,7 @@ export default function DerivDashboardPage() {
     }
   };
 
-  if (authLoading) {
+  if (authLoading || !workspaceReady) {
     return (
       <div className="flex h-full items-center justify-center p-4">
         <Card className="mobile-card max-w-md">
@@ -474,15 +476,17 @@ export default function DerivDashboardPage() {
               </div>
             ) : null}
 
-            <LiveChart
-              symbol={symbol}
-              granularity={selectedTimeframe.granularity}
-              analysis={analysis}
-              onCandlesChange={setCandles}
-              onError={setChartError}
-              onStatusChange={setLiveStatus}
-              className="rounded-none"
-            />
+            {workspaceReady ? (
+              <LiveChart
+                symbol={symbol}
+                granularity={selectedTimeframe.granularity}
+                analysis={analysis}
+                onCandlesChange={setCandles}
+                onError={setChartError}
+                onStatusChange={setLiveStatus}
+                className="rounded-none"
+              />
+            ) : null}
           </motion.div>
         </div>
 
