@@ -28,9 +28,11 @@
 @layer base {
   * {
     @apply border-border;
+    min-width: 0;
   }
   html {
     scroll-behavior: smooth;
+    overflow-x: clip;
   }
   body {
     @apply bg-background text-foreground overflow-x-hidden;
@@ -43,7 +45,8 @@
 
 @layer utilities {
   .page-shell {
-    @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+    max-width: min(100%, 80rem);
   }
   .page-stack {
     @apply py-6 sm:py-8 lg:py-10;
