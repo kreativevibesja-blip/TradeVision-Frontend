@@ -242,7 +242,10 @@ export interface BillingSummary {
     amount: number;
     currency: string;
     status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
+    paymentMethod: 'PAYPAL' | 'CARD' | 'BANK_TRANSFER' | 'COUPON';
+    bankTransferBank: 'SCOTIABANK' | 'NCB' | null;
     plan: 'FREE' | 'PRO';
+    verifiedAt: string | null;
     createdAt: string;
     updatedAt: string;
   }>;
@@ -255,7 +258,10 @@ export interface AdminPayment {
   amount: number;
   currency: string;
   status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
+  paymentMethod: 'PAYPAL' | 'CARD' | 'BANK_TRANSFER' | 'COUPON';
+  bankTransferBank: 'SCOTIABANK' | 'NCB' | null;
   plan: 'FREE' | 'PRO';
+  verifiedAt: string | null;
   createdAt: string;
   updatedAt: string;
   user: {
@@ -266,6 +272,7 @@ export interface AdminPayment {
 
 export type AdminPaymentStatusFilter = AdminPayment['status'] | 'ALL';
 export type AdminPaymentPlanFilter = AdminPayment['plan'] | 'ALL';
+export type AdminPaymentMethodFilter = AdminPayment['paymentMethod'] | 'ALL';
 export type AdminPaymentDateRangeFilter = '7d' | '30d' | '90d' | 'all';
 
 export interface PricingPlan {
@@ -438,10 +445,26 @@ export const api = {
   // Payments
   getPayPalClientToken: (token: string) =>
     apiFetch<{ clientToken: string }>('/paypal-client-token', { token }),
-  createPayment: (plan: string, token: string, couponCode?: string) =>
-    apiFetch<{ orderId: string; approveUrl: string; freeActivation?: boolean }>('/create-payment', {
+  createPayment: (plan: string, token: string, couponCode?: string, method: 'PAYPAL' | 'CARD' = 'PAYPAL') =>
+    apiFetch<{ orderId: string | null; approveUrl: string | null; freeActivation?: boolean }>('/create-payment', {
       method: 'POST',
-      body: JSON.stringify({ plan, ...(couponCode ? { couponCode } : {}) }),
+      body: JSON.stringify({ plan, method, ...(couponCode ? { couponCode } : {}) }),
+      token,
+    }),
+  createBankTransferRequest: (plan: string, bank: 'SCOTIABANK' | 'NCB', token: string, couponCode?: string) =>
+    apiFetch<{
+      success: boolean;
+      payment: {
+        id: string;
+        referenceId: string;
+        bankTransferBank: 'SCOTIABANK' | 'NCB';
+        createdAt: string;
+        amount: number;
+        currency: string;
+      };
+    }>('/bank-transfer-request', {
+      method: 'POST',
+      body: JSON.stringify({ plan, bank, ...(couponCode ? { couponCode } : {}) }),
       token,
     }),
 
@@ -503,6 +526,7 @@ export const api = {
         page?: number;
         plan?: AdminPaymentPlanFilter;
         status?: AdminPaymentStatusFilter;
+        paymentMethod?: AdminPaymentMethodFilter;
         dateRange?: AdminPaymentDateRangeFilter;
       } = {}
     ) => {
@@ -510,9 +534,16 @@ export const api = {
       params.set('page', String(options.page ?? 1));
       if (options.plan && options.plan !== 'ALL') params.set('plan', options.plan);
       if (options.status && options.status !== 'ALL') params.set('status', options.status);
+      if (options.paymentMethod && options.paymentMethod !== 'ALL') params.set('paymentMethod', options.paymentMethod);
       if (options.dateRange) params.set('dateRange', options.dateRange);
       return apiFetch<{ payments: AdminPayment[]; total: number; page: number; pages: number }>(`/admin/payments?${params.toString()}`, { token });
     },
+    updatePaymentStatus: (id: string, status: 'COMPLETED' | 'FAILED', token: string) =>
+      apiFetch<{ payment: AdminPayment }>(`/admin/payments/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+        token,
+      }),
     getAnalytics: (token: string, range?: { from?: string; to?: string }) => {
       const params = new URLSearchParams();
       if (range?.from) params.set('from', range.from);
