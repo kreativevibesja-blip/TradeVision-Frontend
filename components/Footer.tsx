@@ -15,14 +15,14 @@ export function Footer() {
   return (
     <footer>
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-white/10 bg-background/92 backdrop-blur-xl md:hidden">
-        <div className="page-shell flex min-h-14 items-center justify-between gap-3 py-2 text-[11px] text-muted-foreground">
+        <div className="page-shell flex min-h-14 items-center gap-3 py-2 text-[11px] text-muted-foreground">
           <div className="flex min-w-0 items-center gap-2">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500">
               <BarChart3 className="h-4 w-4 text-white" />
             </div>
             <span className="truncate font-semibold text-foreground">TradeVision AI</span>
           </div>
-          <p className="max-w-[12rem] text-right leading-tight">AI analysis is not financial advice.</p>
+          <p className="min-w-0 flex-1 text-right leading-tight">AI analysis is not financial advice.</p>
         </div>
       </div>
 
