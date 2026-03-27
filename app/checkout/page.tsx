@@ -12,11 +12,14 @@ import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api';
 import { AuthModal } from '@/components/AuthModal';
 import {
+  ArrowRight,
+  Building2,
   CreditCard,
   CheckCircle2,
   Shield,
   Loader2,
   Crown,
+  Landmark,
   MapPin,
   Wallet,
   Zap,
@@ -24,11 +27,13 @@ import {
   User,
   Tag,
   Gift,
+  X,
 } from 'lucide-react';
 import Link from 'next/link';
 
 type PlanKey = 'FREE' | 'PRO';
-type CheckoutMethod = 'paypal' | 'card';
+type CheckoutMethod = 'paypal' | 'card' | 'bank-transfer';
+type BankTransferBank = 'SCOTIABANK' | 'NCB';
 
 type AddressForm = {
   firstName: string;
@@ -101,6 +106,35 @@ const hasValidPayPalClientId = (() => {
 const isAddressComplete = (address: AddressForm) =>
   requiredAddressFields.every((field) => address[field].trim().length > 0);
 
+const bankTransferOptions: Record<BankTransferBank, {
+  name: string;
+  shortName: string;
+  accentClass: string;
+  cardClass: string;
+  accountType: string;
+  accountNumber: string;
+  branch: string;
+}> = {
+  SCOTIABANK: {
+    name: 'ScotiaBank',
+    shortName: 'ScotiaBank',
+    accentClass: 'border-red-500/40 bg-gradient-to-br from-red-600 via-red-500 to-white text-white',
+    cardClass: 'border-red-500/20 bg-red-500/10',
+    accountType: 'Chequing',
+    accountNumber: '303306',
+    branch: 'Junction',
+  },
+  NCB: {
+    name: 'National Commercial Bank (N.C.B)',
+    shortName: 'N.C.B',
+    accentClass: 'border-blue-500/40 bg-gradient-to-br from-blue-700 via-blue-600 to-amber-400 text-white',
+    cardClass: 'border-blue-500/20 bg-blue-500/10',
+    accountType: 'Savings',
+    accountNumber: '884291801',
+    branch: 'Junction',
+  },
+};
+
 function PayPalButtonStack({
   token,
   planKey,
@@ -137,11 +171,17 @@ function PayPalButtonStack({
 
     onLoadingChange(method);
     sessionStorage.setItem('tradevision_checkout_method', method);
-    const result = await api.createPayment(planKey, token, couponCode || undefined);
+    const result = await api.createPayment(planKey, token, couponCode || undefined, method === 'card' ? 'CARD' : 'PAYPAL');
 
     if (result.freeActivation) {
+      sessionStorage.removeItem('tradevision_order_id');
+      sessionStorage.removeItem('chartmind_order_id');
       onFreeActivation();
       throw new Error('__FREE_ACTIVATION__');
+    }
+
+    if (!result.orderId) {
+      throw new Error('PayPal did not return an order ID.');
     }
 
     sessionStorage.setItem('tradevision_order_id', result.orderId);
@@ -275,6 +315,18 @@ function CheckoutPageContent() {
   const [couponApplied, setCouponApplied] = useState<{ type: string; value: number; message: string } | null>(null);
   const [couponError, setCouponError] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
+  const [bankTransferOpen, setBankTransferOpen] = useState(false);
+  const [bankTransferConfirmOpen, setBankTransferConfirmOpen] = useState(false);
+  const [selectedTransferBank, setSelectedTransferBank] = useState<BankTransferBank | null>(null);
+  const [bankTransferSubmitting, setBankTransferSubmitting] = useState(false);
+  const [submittedTransfer, setSubmittedTransfer] = useState<{
+    id: string;
+    referenceId: string;
+    bankTransferBank: BankTransferBank;
+    createdAt: string;
+    amount: number;
+    currency: string;
+  } | null>(null);
 
   // Referral discount state
   const [referralDiscount, setReferralDiscount] = useState<number>(0);
@@ -382,6 +434,45 @@ function CheckoutPageContent() {
     }
   };
 
+  const openBankTransferFlow = () => {
+    if (!user || !token) {
+      setAuthOpen(true);
+      return;
+    }
+
+    if (planKey === 'PRO' && user.subscription === 'PRO') {
+      setError('You already have a Pro subscription');
+      return;
+    }
+
+    if (!formReady) {
+      setError('Please complete your shipping and billing details before continuing.');
+      return;
+    }
+
+    setError('');
+    setSelectedTransferBank(null);
+    setBankTransferOpen(true);
+  };
+
+  const submitBankTransferRequest = async () => {
+    if (!token || !selectedTransferBank) {
+      return;
+    }
+
+    try {
+      setBankTransferSubmitting(true);
+      const result = await api.createBankTransferRequest(planKey, selectedTransferBank, token, couponApplied ? couponCode : undefined);
+      setSubmittedTransfer(result.payment);
+      setBankTransferOpen(false);
+      setBankTransferConfirmOpen(true);
+    } catch (err: any) {
+      setError(err.message || 'Unable to submit your bank transfer request right now.');
+    } finally {
+      setBankTransferSubmitting(false);
+    }
+  };
+
   const updateShipping = (field: keyof AddressForm, value: string) => {
     setShippingAddress((current) => ({ ...current, [field]: value }));
   };
@@ -415,13 +506,18 @@ function CheckoutPageContent() {
       setLoadingMethod(method);
       setError('');
       sessionStorage.setItem('tradevision_checkout_method', method);
-      const result = await api.createPayment(planKey, token, couponApplied ? couponCode : undefined);
-      sessionStorage.setItem('tradevision_order_id', result.orderId);
-      sessionStorage.removeItem('chartmind_order_id');
+      const result = await api.createPayment(planKey, token, couponApplied ? couponCode : undefined, method === 'card' ? 'CARD' : 'PAYPAL');
 
       if (result.freeActivation) {
+        sessionStorage.removeItem('tradevision_order_id');
+        sessionStorage.removeItem('chartmind_order_id');
         await handleFreeActivation();
         return;
+      }
+
+      if (result.orderId) {
+        sessionStorage.setItem('tradevision_order_id', result.orderId);
+        sessionStorage.removeItem('chartmind_order_id');
       }
 
       if (result.approveUrl) {
@@ -670,7 +766,7 @@ function CheckoutPageContent() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  Complete your purchase securely through PayPal using PayPal's official checkout buttons.
+                  Choose the payment route that works best for you. PayPal and card payments activate automatically, while bank transfers are reviewed by the team after you send your receipt.
                 </p>
 
                 {error && (
@@ -695,9 +791,32 @@ function CheckoutPageContent() {
                         onLoadingChange={setLoadingMethod}
                       />
 
+                      <button
+                        type="button"
+                        onClick={openBankTransferFlow}
+                        className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-left transition hover:border-primary/40 hover:bg-white/10"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-2.5 text-emerald-300">
+                            <Landmark className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <div className="font-medium">Bank Transfer</div>
+                            <div className="text-sm text-muted-foreground">Submit a manual transfer and send your receipt to WhatsApp for verification.</div>
+                          </div>
+                        </div>
+                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                      </button>
+
                       {!formReady ? (
                         <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-amber-200">
                           Complete your shipping and billing details above to enable checkout.
+                        </div>
+                      ) : null}
+
+                      {submittedTransfer ? (
+                        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm text-emerald-100">
+                          Bank transfer request submitted for {bankTransferOptions[submittedTransfer.bankTransferBank].name}. Reference: <span className="font-mono">{submittedTransfer.referenceId}</span>.
                         </div>
                       ) : null}
                     </div>
@@ -720,7 +839,7 @@ function CheckoutPageContent() {
 
                 <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
                   <Shield className="h-3 w-3" />
-                  Secured by PayPal. Cancel anytime.
+                  Secure checkout with PayPal or manual verification for bank transfers.
                 </div>
               </CardContent>
               </Card>
@@ -728,6 +847,125 @@ function CheckoutPageContent() {
           </div>
         </motion.div>
       </div>
+
+      {bankTransferOpen ? (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" onClick={() => !bankTransferSubmitting && setBankTransferOpen(false)}>
+          <div className="relative flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-[28px] border border-white/10 bg-slate-950 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-white/10 px-6 py-5">
+              <div>
+                <h3 className="text-lg font-semibold">Bank Transfer</h3>
+                <p className="text-sm text-muted-foreground">Select your bank, review the transfer instructions, then confirm after you have completed the payment.</p>
+              </div>
+              <button type="button" onClick={() => !bankTransferSubmitting && setBankTransferOpen(false)} className="rounded-full p-2 transition hover:bg-white/10" aria-label="Close bank transfer modal">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-6 py-6">
+              <div className="grid gap-3 sm:grid-cols-2">
+                {Object.entries(bankTransferOptions).map(([bankKey, bank]) => {
+                  const isSelected = selectedTransferBank === bankKey;
+
+                  return (
+                    <button
+                      key={bankKey}
+                      type="button"
+                      onClick={() => setSelectedTransferBank(bankKey as BankTransferBank)}
+                      className={`rounded-[24px] border p-5 text-left transition ${isSelected ? bank.accentClass : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'}`}
+                    >
+                      <div className="mb-4 flex items-center justify-between">
+                        <div className="rounded-2xl border border-current/20 bg-black/10 p-2">
+                          <Building2 className="h-5 w-5" />
+                        </div>
+                        <Badge variant={isSelected ? 'secondary' : 'outline'}>{isSelected ? 'Selected' : 'Choose'}</Badge>
+                      </div>
+                      <div className="text-lg font-semibold">{bank.name}</div>
+                      <div className={`mt-2 text-sm ${isSelected ? 'text-white/85' : 'text-muted-foreground'}`}>
+                        Manual transfer verified by the TradeVision AI billing team.
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {selectedTransferBank ? (
+                <div className={`mt-6 rounded-[28px] border p-6 ${bankTransferOptions[selectedTransferBank].cardClass}`}>
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <div className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Transfer destination</div>
+                      <h4 className="mt-2 text-xl font-semibold">{bankTransferOptions[selectedTransferBank].name}</h4>
+                      <p className="mt-1 text-sm text-muted-foreground">Send the exact subscription amount, then share your receipt for review.</p>
+                    </div>
+                    <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-right">
+                      <div className="text-xs uppercase tracking-[0.2em] text-white/60">Amount due</div>
+                      <div className="mt-1 text-2xl font-semibold">${finalPrice.toFixed(2)}</div>
+                      <div className="text-xs text-white/70">{plan.period.replace('/', 'per ')}</div>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-2xl border border-white/10 bg-black/15 p-4">
+                      <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Account Name</div>
+                      <div className="mt-1 font-medium">Jadyne Stephenson</div>
+                    </div>
+                    <div className="rounded-2xl border border-white/10 bg-black/15 p-4">
+                      <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Account Number</div>
+                      <div className="mt-1 font-medium">{bankTransferOptions[selectedTransferBank].accountNumber}</div>
+                    </div>
+                    <div className="rounded-2xl border border-white/10 bg-black/15 p-4">
+                      <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Bank Branch</div>
+                      <div className="mt-1 font-medium">{bankTransferOptions[selectedTransferBank].branch}</div>
+                    </div>
+                    <div className="rounded-2xl border border-white/10 bg-black/15 p-4">
+                      <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Account Type</div>
+                      <div className="mt-1 font-medium">{bankTransferOptions[selectedTransferBank].accountType}</div>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 rounded-2xl border border-white/10 bg-black/15 p-4 text-sm text-slate-200">
+                    After making payment, please share an image of the transfer receipt to our WhatsApp <a href="https://wa.me/18762797956" target="_blank" rel="noreferrer" className="font-semibold text-white underline underline-offset-4">+1-876-2797956</a> along with your registered email address.
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="flex items-center justify-end gap-3 border-t border-white/10 px-6 py-5">
+              <Button variant="outline" onClick={() => setBankTransferOpen(false)} disabled={bankTransferSubmitting}>Cancel</Button>
+              <Button variant="gradient" onClick={submitBankTransferRequest} disabled={!selectedTransferBank || bankTransferSubmitting}>
+                {bankTransferSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Done
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {bankTransferConfirmOpen && submittedTransfer ? (
+        <div className="fixed inset-0 z-[121] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm" onClick={() => setBankTransferConfirmOpen(false)}>
+          <div className="w-full max-w-lg rounded-[28px] border border-white/10 bg-slate-950 p-8 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-emerald-400/20 bg-emerald-500/10 text-emerald-300">
+              <CheckCircle2 className="h-8 w-8" />
+            </div>
+            <h3 className="mt-6 text-center text-2xl font-semibold">Thank you. Your transfer is under review.</h3>
+            <p className="mt-3 text-center text-sm leading-6 text-muted-foreground">
+              We have recorded your {bankTransferOptions[submittedTransfer.bankTransferBank].shortName} bank transfer request. Once the payment is verified, your account will be upgraded to TradeVision AI Pro immediately.
+            </p>
+            <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-muted-foreground">Reference</span>
+                <span className="font-mono text-xs text-white">{submittedTransfer.referenceId}</span>
+              </div>
+              <div className="mt-2 flex items-center justify-between gap-3">
+                <span className="text-muted-foreground">Submitted</span>
+                <span>{new Date(submittedTransfer.createdAt).toLocaleString()}</span>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-center">
+              <Button variant="gradient" onClick={() => setBankTransferConfirmOpen(false)}>Close</Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <AuthModal open={authOpen} onOpenChange={setAuthOpen} mode={authMode} onModeChange={setAuthMode} />
     </div>
