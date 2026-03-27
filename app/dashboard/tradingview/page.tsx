@@ -135,16 +135,20 @@ export default function TradingViewDashboardPage() {
     }
     lastAnalyzeAtRef.current = now;
 
-    if (!forceFresh && cacheMatchesSelection && cachedAnalysis) {
-      router.push(`/analyze?analysisId=${encodeURIComponent(cachedAnalysis.analysisId)}`);
-      return;
-    }
-
     setAnalyzing(true);
     setError('');
 
     try {
       const result = await api.analyzeLiveChart({ source: 'tradingview-live', symbol, timeframe }, token);
+      if (result.queued && result.jobId) {
+        router.push(`/analyze/queue?jobId=${encodeURIComponent(result.jobId)}&analysisId=${encodeURIComponent(result.analysisId || '')}&returnTo=${encodeURIComponent('/dashboard/tradingview')}`);
+        return;
+      }
+
+      if (!result.analysis) {
+        throw new Error('Analysis result was not returned by the server.');
+      }
+
       const nextCache: CachedAnalysis = {
         symbol,
         timeframe,

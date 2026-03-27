@@ -41,6 +41,7 @@ function QueuePageContent() {
 
   const jobId = searchParams.get('jobId');
   const analysisId = searchParams.get('analysisId');
+  const returnTo = searchParams.get('returnTo') || '/analyze?retry=1';
 
   const [status, setStatus] = useState<'queued' | 'processing' | 'completed' | 'failed' | 'cancelled'>('queued');
   const [position, setPosition] = useState(0);
@@ -103,13 +104,13 @@ function QueuePageContent() {
 
       if (data.status === 'cancelled') {
         setTimeout(() => {
-          router.push('/analyze?retry=1');
+          router.push(returnTo);
         }, 300);
       }
     } catch {
       // Silently retry on network errors
     }
-  }, [jobId, token, router, analysisId]);
+  }, [jobId, token, router, analysisId, returnTo]);
 
   const handleCancel = useCallback(async () => {
     if (!jobId || !token || cancelling) {
@@ -119,13 +120,13 @@ function QueuePageContent() {
     try {
       setCancelling(true);
       await api.cancelQueueJob(jobId, token);
-      router.push('/analyze?retry=1');
+      router.push(returnTo);
     } catch {
       setError('Analysis failed');
     } finally {
       setCancelling(false);
     }
-  }, [jobId, token, cancelling, router]);
+  }, [jobId, token, cancelling, router, returnTo]);
 
   useEffect(() => {
     if (!jobId || !token) return;
@@ -143,8 +144,8 @@ function QueuePageContent() {
         <div className="text-center space-y-4">
           <AlertTriangle className="h-12 w-12 text-yellow-400 mx-auto" />
           <p className="text-muted-foreground">No job ID provided.</p>
-          <Link href="/analyze" className="text-primary hover:underline">
-            Go to Analysis
+          <Link href={returnTo} className="text-primary hover:underline">
+            Go Back
           </Link>
         </div>
       </div>

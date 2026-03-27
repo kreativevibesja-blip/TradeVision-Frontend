@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { AlertTriangle, Crown, Info, Loader2, PanelRightOpen, RefreshCcw, Wifi, WifiOff, X, Zap } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -100,6 +101,7 @@ const rememberRecentSymbol = (nextSymbol: string) => {
 };
 
 export default function DerivDashboardPage() {
+  const router = useRouter();
   const { user, token, loading: authLoading } = useAuth();
   const [symbol, setSymbol] = useState('R_75');
   const [timeframe, setTimeframe] = useState('15m');
@@ -163,14 +165,6 @@ export default function DerivDashboardPage() {
     }
     lastAnalyzeAtRef.current = now;
 
-    if (!forceFresh) {
-      const cached = readCachedAnalysis();
-      if (cached && cached.symbol === symbol && cached.timeframe === timeframe) {
-        setAnalysis(cached.result);
-        return;
-      }
-    }
-
     try {
       setAnalyzing(true);
       setAnalysisError('');
@@ -191,6 +185,11 @@ export default function DerivDashboardPage() {
       const data = await response.json();
       if (!response.ok) {
         throw new Error(data.error || 'Analysis failed.');
+      }
+
+      if (data.queued && data.jobId) {
+        router.push(`/analyze/queue?jobId=${encodeURIComponent(data.jobId)}&analysisId=${encodeURIComponent(data.analysisId || '')}&returnTo=${encodeURIComponent('/dashboard/deriv')}`);
+        return;
       }
 
       if (!data.analysis?.id) {
