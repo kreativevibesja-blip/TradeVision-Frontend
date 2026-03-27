@@ -1,9 +1,17 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { BarChart3 } from 'lucide-react';
 
 export function Footer() {
+  const pathname = usePathname();
+  const isLiveWorkspace = pathname === '/dashboard/tradingview' || pathname === '/dashboard/deriv';
+
+  if (isLiveWorkspace) {
+    return null;
+  }
+
   return (
     <footer>
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-white/10 bg-background/92 backdrop-blur-xl md:hidden">

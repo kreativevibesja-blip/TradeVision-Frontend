@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { CandlestickSeries, ColorType, createChart } from 'lightweight-charts';
 import { Activity, Loader2, Wifi, WifiOff } from 'lucide-react';
 import { DERIV_ANALYSIS_CANDLE_COUNT, type DerivAnalysisResult, type DerivCandle, getDerivCacheKey } from '@/lib/deriv-live';
+import { cn } from '@/lib/utils';
 
 interface LiveChartProps {
   symbol: string;
@@ -11,10 +12,18 @@ interface LiveChartProps {
   analysis: DerivAnalysisResult | null;
   onCandlesChange?: (candles: DerivCandle[]) => void;
   onError?: (message: string) => void;
+  onStatusChange?: (status: LiveChartStatus) => void;
+  className?: string;
   height?: number;
 }
 
-type ConnectionState = 'connecting' | 'connected' | 'disconnected';
+export type ConnectionState = 'connecting' | 'connected' | 'disconnected';
+
+export interface LiveChartStatus {
+  connectionState: ConnectionState;
+  loadingHistory: boolean;
+  candleCount: number;
+}
 
 interface OverlayRect {
   key: string;
@@ -72,7 +81,16 @@ const storeCachedCandles = (symbol: string, granularity: number, candles: DerivC
 
 const sortZoneBounds = (start: number, end: number) => ({ low: Math.min(start, end), high: Math.max(start, end) });
 
-export function LiveChart({ symbol, granularity, analysis, onCandlesChange, onError, height = 520 }: LiveChartProps) {
+export function LiveChart({
+  symbol,
+  granularity,
+  analysis,
+  onCandlesChange,
+  onError,
+  onStatusChange,
+  className,
+  height,
+}: LiveChartProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<any>(null);
@@ -85,6 +103,7 @@ export function LiveChart({ symbol, granularity, analysis, onCandlesChange, onEr
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [connectionState, setConnectionState] = useState<ConnectionState>('connecting');
   const [overlayRects, setOverlayRects] = useState<OverlayRect[]>([]);
+  const [candleCount, setCandleCount] = useState(0);
 
   const statusMeta = useMemo(() => {
     if (loadingHistory) {
@@ -100,9 +119,21 @@ export function LiveChart({ symbol, granularity, analysis, onCandlesChange, onEr
   }, [connectionState, loadingHistory]);
 
   useEffect(() => {
+    onStatusChange?.({ connectionState, loadingHistory, candleCount });
+  }, [candleCount, connectionState, loadingHistory, onStatusChange]);
+
+  useEffect(() => {
     if (!chartContainerRef.current) {
       return;
     }
+
+    const getChartHeight = () => {
+      if (!chartContainerRef.current) {
+        return height ?? 520;
+      }
+
+      return chartContainerRef.current.clientHeight || height || 520;
+    };
 
     const chart = createChart(chartContainerRef.current, {
       layout: {
@@ -114,7 +145,7 @@ export function LiveChart({ symbol, granularity, analysis, onCandlesChange, onEr
         horzLines: { color: GRID },
       },
       width: chartContainerRef.current.clientWidth,
-      height,
+      height: getChartHeight(),
       rightPriceScale: {
         borderColor: GRID,
       },
@@ -144,7 +175,7 @@ export function LiveChart({ symbol, granularity, analysis, onCandlesChange, onEr
       if (!chartContainerRef.current || !chartRef.current) {
         return;
       }
-      chartRef.current.applyOptions({ width: chartContainerRef.current.clientWidth, height });
+      chartRef.current.applyOptions({ width: chartContainerRef.current.clientWidth, height: getChartHeight() });
       queueOverlayCalculation();
     };
 
@@ -267,6 +298,7 @@ export function LiveChart({ symbol, granularity, analysis, onCandlesChange, onEr
     const cachedCandles = readCachedCandles(symbol, granularity);
     if (cachedCandles?.length) {
       candlesRef.current = cachedCandles;
+      setCandleCount(cachedCandles.length);
       candleSeriesRef.current?.setData(cachedCandles);
       chart.timeScale().fitContent();
       onCandlesChange?.(cachedCandles.slice(-MAX_CANDLES));
@@ -329,6 +361,7 @@ export function LiveChart({ symbol, granularity, analysis, onCandlesChange, onEr
             .filter((candle: DerivCandle) => [candle.time, candle.open, candle.high, candle.low, candle.close].every(Number.isFinite));
 
           candlesRef.current = mapped;
+          setCandleCount(mapped.length);
           candleSeriesRef.current?.setData(mapped);
           chart.timeScale().fitContent();
           storeCachedCandles(symbol, granularity, mapped);
@@ -376,6 +409,7 @@ export function LiveChart({ symbol, granularity, analysis, onCandlesChange, onEr
           }
 
           candlesRef.current = nextCandles;
+          setCandleCount(nextCandles.length);
           storeCachedCandles(symbol, granularity, nextCandles);
           onCandlesChange?.(nextCandles.slice(-MAX_CANDLES));
           queueOverlayCalculation();
@@ -407,7 +441,7 @@ export function LiveChart({ symbol, granularity, analysis, onCandlesChange, onEr
   const StatusIcon = statusMeta.icon;
 
   return (
-    <div ref={hostRef} className="relative h-full min-h-[520px] overflow-hidden rounded-[1.5rem] bg-slate-950">
+    <div ref={hostRef} className={cn('relative h-full min-h-0 overflow-hidden rounded-[1rem] bg-slate-950', className)}>
       <div className="absolute left-4 top-4 z-10 inline-flex items-center gap-2 rounded-full border border-white/10 bg-slate-900/80 px-3 py-1.5 text-xs text-slate-200 backdrop-blur">
         <StatusIcon className={`h-3.5 w-3.5 ${statusMeta.className} ${loadingHistory ? 'animate-spin' : ''}`} />
         {statusMeta.label}

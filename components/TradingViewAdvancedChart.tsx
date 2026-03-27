@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useId, useRef } from 'react';
+import { cn } from '@/lib/utils';
 
 interface TradingViewAdvancedChartProps {
   symbol: string;
   interval: string;
+  className?: string;
 }
 
 declare global {
@@ -13,7 +15,7 @@ declare global {
   }
 }
 
-export function TradingViewAdvancedChart({ symbol, interval }: TradingViewAdvancedChartProps) {
+export function TradingViewAdvancedChart({ symbol, interval, className }: TradingViewAdvancedChartProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const containerId = useId().replace(/:/g, '_');
 
@@ -63,5 +65,5 @@ export function TradingViewAdvancedChart({ symbol, interval }: TradingViewAdvanc
     };
   }, [symbol, interval, containerId]);
 
-  return <div ref={containerRef} className="tradingview-widget-container relative h-full min-h-[460px] w-full" />;
+  return <div ref={containerRef} className={cn('tradingview-widget-container relative h-full w-full overflow-hidden', className)} />;
 }

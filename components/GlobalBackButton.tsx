@@ -28,10 +28,11 @@ function getFallbackRoute(pathname: string): string | null {
 export function GlobalBackButton() {
   const router = useRouter();
   const pathname = usePathname();
+  const isLiveWorkspace = pathname === '/dashboard/tradingview' || pathname === '/dashboard/deriv';
 
   const fallbackRoute = useMemo(() => getFallbackRoute(pathname), [pathname]);
 
-  if (!fallbackRoute) {
+  if (!fallbackRoute || isLiveWorkspace) {
     return null;
   }
 
