@@ -109,7 +109,7 @@ export default function DashboardPage() {
                   </Badge>
                 </div>
                 {user.subscription !== 'PRO' && (
-                  <Link href="/pricing">
+                  <Link href="/pricing" className="block">
                     <Button variant="outline" size="sm" className="w-full mt-2">Upgrade to Pro</Button>
                   </Link>
                 )}
@@ -145,7 +145,7 @@ export default function DashboardPage() {
                   <CreditCard className="h-4 w-4 text-primary" />
                 </div>
                 <p className="text-sm text-muted-foreground mb-4">View plan status, expiry, and renewal options.</p>
-                <Link href="/dashboard/billing">
+                <Link href="/dashboard/billing" className="block">
                   <Button variant="outline" size="sm" className="w-full gap-2">
                     Manage Billing
                     <ArrowRight className="h-4 w-4" />

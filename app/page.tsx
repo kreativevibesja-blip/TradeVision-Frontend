@@ -362,7 +362,7 @@ export default function HomePage() {
                       </li>
                     ))}
                   </ul>
-                  <Link href="/analyze">
+                  <Link href="/analyze" className="block">
                     <Button variant="outline" size="lg" className="w-full">Get Started Free</Button>
                   </Link>
                 </CardContent>
@@ -392,7 +392,7 @@ export default function HomePage() {
                       </li>
                     ))}
                   </ul>
-                  <Link href="/checkout">
+                  <Link href="/checkout" className="block">
                     <Button variant="gradient" size="lg" className="w-full">Upgrade to Pro</Button>
                   </Link>
                 </CardContent>
