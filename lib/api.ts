@@ -371,7 +371,7 @@ export const api = {
     },
     token: string
   ) =>
-    apiFetch<{ analysis: AnalysisResult }>('/analyze-chart', {
+    apiFetch<{ analysis?: AnalysisResult; queued?: boolean; jobId?: string; analysisId?: string; message?: string }>('/analyze-chart', {
       method: 'POST',
       body: JSON.stringify(payload),
       token,
