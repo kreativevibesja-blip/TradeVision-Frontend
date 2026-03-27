@@ -35,6 +35,14 @@ type PlanKey = 'FREE' | 'PRO';
 type CheckoutMethod = 'paypal' | 'card' | 'bank-transfer';
 type BankTransferBank = 'SCOTIABANK' | 'NCB';
 
+const BANK_TRANSFER_JMD_RATE = 158;
+const formatJmdCurrency = new Intl.NumberFormat('en-JM', {
+  style: 'currency',
+  currency: 'JMD',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
 type AddressForm = {
   firstName: string;
   lastName: string;
@@ -81,7 +89,7 @@ const planCatalog: Record<PlanKey, {
   },
   PRO: {
     name: 'TradeVision AI Pro',
-    price: 19,
+    price: 19.95,
     period: '/month',
     description: '300 analyses per month with premium structure logic.',
     icon: Crown,
@@ -346,6 +354,7 @@ function CheckoutPageContent() {
       : couponApplied.value
     : 0;
   const finalPrice = Math.max(0, priceAfterReferral - discountAmount);
+  const bankTransferAmountJmd = finalPrice * BANK_TRANSFER_JMD_RATE;
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return;
@@ -899,8 +908,19 @@ function CheckoutPageContent() {
                     <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-right">
                       <div className="text-xs uppercase tracking-[0.2em] text-white/60">Amount due</div>
                       <div className="mt-1 text-2xl font-semibold">${finalPrice.toFixed(2)}</div>
+                      <div className="mt-1 text-sm font-medium text-emerald-200">{formatJmdCurrency.format(bankTransferAmountJmd)}</div>
                       <div className="text-xs text-white/70">{plan.period.replace('/', 'per ')}</div>
                     </div>
+                  </div>
+
+                  <div className="mt-4 rounded-2xl border border-emerald-400/15 bg-emerald-500/10 p-4">
+                    <div className="flex items-center justify-between gap-3 text-sm">
+                      <span className="text-emerald-100/80">Local transfer amount</span>
+                      <span className="text-lg font-semibold text-emerald-100">{formatJmdCurrency.format(bankTransferAmountJmd)}</span>
+                    </div>
+                    <p className="mt-2 text-xs text-emerald-100/75">
+                      Based on the current internal conversion rate of J${BANK_TRANSFER_JMD_RATE.toFixed(2)} per US$1.00.
+                    </p>
                   </div>
 
                   <div className="mt-6 grid gap-3 sm:grid-cols-2">
