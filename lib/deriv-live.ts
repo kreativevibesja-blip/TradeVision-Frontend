@@ -2,7 +2,7 @@ import type { AnalysisResult } from '@/lib/api';
 
 export type DerivSymbol = string;
 export type DerivTimeframe = '1m' | '5m' | '15m' | '30m' | '1H' | '4H' | '1D';
-export const DERIV_ANALYSIS_CANDLE_COUNT = 2000;
+export const DERIV_ANALYSIS_CANDLE_COUNT = 5000;
 
 export interface DerivSymbolOption {
   value: DerivSymbol;
