@@ -155,6 +155,21 @@ export interface AnalysisResult {
   createdAt?: string;
 }
 
+export interface LiveChartMarketCandle {
+  timestamp: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+}
+
+export interface LiveChartMarketData {
+  symbol: string;
+  timeframe: string;
+  candles: LiveChartMarketCandle[];
+  currentPrice: number;
+}
+
 export interface AdminAnalysisLog {
   id: string;
   pair: string;
@@ -376,6 +391,12 @@ export const api = {
       body: JSON.stringify(payload),
       token,
     }),
+
+  getLiveChartMarketData: (symbol: string, timeframe: string, token: string) =>
+    apiFetch<{ marketData: LiveChartMarketData }>(
+      `/live-chart-market-data?symbol=${encodeURIComponent(symbol)}&timeframe=${encodeURIComponent(timeframe)}`,
+      { token }
+    ),
 
   getAnalyses: (token: string, page = 1) =>
     apiFetch<{ analyses: AnalysisResult[]; total: number; page: number; pages: number }>(
