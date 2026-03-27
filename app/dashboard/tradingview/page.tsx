@@ -11,7 +11,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { AnnotatedCandlesChart } from '@/components/AnnotatedCandlesChart';
 import { useAuth } from '@/hooks/useAuth';
 import { api, type AnalysisResult } from '@/lib/api';
-import { LIVE_CHART_SYMBOLS, LIVE_CHART_TIMEFRAMES, getLiveChartSymbol, getLiveChartTimeframe } from '@/lib/live-chart';
+import { LIVE_CHART_SYMBOL_GROUPS, LIVE_CHART_SYMBOLS, LIVE_CHART_TIMEFRAMES, getLiveChartSymbol, getLiveChartTimeframe } from '@/lib/live-chart';
 import { mapAnalysisResultToChartOverlay, type ChartCandle } from '@/lib/live-chart-drawings';
 
 const STORAGE_KEY = 'dashboard_live_chart_state';
@@ -422,8 +422,12 @@ export default function TradingViewDashboardPage() {
                         onChange={(event) => setSymbol(event.target.value)}
                         className="h-11 w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm text-slate-100 outline-none transition focus:border-blue-400"
                       >
-                        {LIVE_CHART_SYMBOLS.map((option) => (
-                          <option key={option.value} value={option.value}>{option.label}</option>
+                        {LIVE_CHART_SYMBOL_GROUPS.map((group) => (
+                          <optgroup key={group.value} label={group.label}>
+                            {LIVE_CHART_SYMBOLS.filter((option) => option.category === group.value).map((option) => (
+                              <option key={option.value} value={option.value}>{option.label}</option>
+                            ))}
+                          </optgroup>
                         ))}
                       </select>
                     </div>
