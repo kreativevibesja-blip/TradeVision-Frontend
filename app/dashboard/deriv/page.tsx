@@ -10,7 +10,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { LiveChart, type LiveChartStatus } from '@/components/LiveChart';
 import { useAuth } from '@/hooks/useAuth';
+import { api, type AnalysisResult } from '@/lib/api';
 import { DERIV_ANALYSIS_CANDLE_COUNT, DERIV_SYMBOLS, DERIV_TIMEFRAMES, mapPersistedAnalysisToDerivResult, type DerivAnalysisResult, type DerivCandle, getDerivSymbol, getDerivTimeframe } from '@/lib/deriv-live';
+import { mapAnalysisResultToChartOverlay, mapDerivAnalysisToChartOverlay, toChartCandles } from '@/lib/live-chart-drawings';
 
 const STORAGE_KEY = 'dashboard_deriv_chart_state';
 const ANALYSIS_CACHE_KEY = 'dashboard_deriv_chart_analysis_cache';
@@ -108,6 +110,7 @@ export default function DerivDashboardPage() {
   const [workspaceReady, setWorkspaceReady] = useState(false);
   const [candles, setCandles] = useState<DerivCandle[]>([]);
   const [analysis, setAnalysis] = useState<DerivAnalysisResult | null>(null);
+  const [persistedAnalysis, setPersistedAnalysis] = useState<AnalysisResult | null>(null);
   const [chartError, setChartError] = useState('');
   const [analysisError, setAnalysisError] = useState('');
   const [analyzing, setAnalyzing] = useState(false);
@@ -149,10 +152,36 @@ export default function DerivDashboardPage() {
 
   const selectedTimeframe = useMemo(() => getDerivTimeframe(timeframe), [timeframe]);
   const selectedSymbol = useMemo(() => getDerivSymbol(symbol), [symbol]);
-  const cacheMatchesSelection = useMemo(() => {
-    const cached = readCachedAnalysis();
-    return Boolean(cached && cached.symbol === symbol && cached.timeframe === timeframe);
-  }, [symbol, timeframe, analysis]);
+  const chartOverlay = useMemo(
+    () => (persistedAnalysis ? mapAnalysisResultToChartOverlay(persistedAnalysis, toChartCandles(candles)) : mapDerivAnalysisToChartOverlay(analysis, toChartCandles(candles))),
+    [analysis, candles, persistedAnalysis]
+  );
+
+  useEffect(() => {
+    if (!token || !analysis?.analysisId) {
+      setPersistedAnalysis(null);
+      return;
+    }
+
+    let active = true;
+
+    void api
+      .getAnalysis(analysis.analysisId, token)
+      .then(({ analysis: persisted }) => {
+        if (active) {
+          setPersistedAnalysis(persisted);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setPersistedAnalysis(null);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [analysis?.analysisId, token]);
 
   const analyzeChart = async (forceFresh = false) => {
     if (analyzing || candles.length < 50) {
@@ -188,6 +217,28 @@ export default function DerivDashboardPage() {
       }
 
       if (data.queued && data.jobId) {
+        const queuedCache: CachedAnalysis = {
+          symbol,
+          timeframe,
+          savedAt: new Date().toISOString(),
+          analysisId: data.analysisId || data.jobId,
+          result: {
+            analysisId: data.analysisId || data.jobId,
+            bias: 'none',
+            entry: null,
+            stopLoss: null,
+            takeProfit: null,
+            confidence: 0,
+            setupRating: 'avoid',
+            marketCondition: 'loading',
+            verdict: 'wait',
+            reasoning: 'Queued live analysis is in progress.',
+            zones: [],
+          },
+        };
+
+        window.localStorage.setItem(ANALYSIS_CACHE_KEY, JSON.stringify(queuedCache));
+        setAnalysis(queuedCache.result);
         router.push(`/analyze/queue?jobId=${encodeURIComponent(data.jobId)}&analysisId=${encodeURIComponent(data.analysisId || '')}&returnTo=${encodeURIComponent('/dashboard/deriv')}`);
         return;
       }
@@ -479,7 +530,7 @@ export default function DerivDashboardPage() {
               <LiveChart
                 symbol={symbol}
                 granularity={selectedTimeframe.granularity}
-                analysis={analysis}
+                overlay={chartOverlay}
                 onCandlesChange={setCandles}
                 onError={setChartError}
                 onStatusChange={setLiveStatus}

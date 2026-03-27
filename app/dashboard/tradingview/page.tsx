@@ -8,10 +8,11 @@ import { AlertTriangle, Crown, Info, Loader2, PanelRightOpen, RefreshCcw, Wifi, 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { TradingViewAdvancedChart } from '@/components/TradingViewAdvancedChart';
+import { AnnotatedCandlesChart } from '@/components/AnnotatedCandlesChart';
 import { useAuth } from '@/hooks/useAuth';
 import { api, type AnalysisResult } from '@/lib/api';
 import { LIVE_CHART_SYMBOLS, LIVE_CHART_TIMEFRAMES, getLiveChartSymbol, getLiveChartTimeframe } from '@/lib/live-chart';
+import { mapAnalysisResultToChartOverlay, type ChartCandle } from '@/lib/live-chart-drawings';
 
 const STORAGE_KEY = 'dashboard_live_chart_state';
 const CACHE_KEY = 'dashboard_live_chart_analysis_cache';
@@ -93,6 +94,8 @@ export default function TradingViewDashboardPage() {
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState('');
   const [cachedAnalysis, setCachedAnalysis] = useState<CachedAnalysis | null>(null);
+  const [analysisDetails, setAnalysisDetails] = useState<AnalysisResult | null>(null);
+  const [candles, setCandles] = useState<ChartCandle[]>([]);
   const [recentSymbols, setRecentSymbols] = useState<string[]>([]);
   const [panelOpen, setPanelOpen] = useState(false);
   const [chartLoading, setChartLoading] = useState(true);
@@ -106,23 +109,97 @@ export default function TradingViewDashboardPage() {
     if (stored?.timeframe) {
       setTimeframe(stored.timeframe);
     }
-
-    setCachedAnalysis(readCachedAnalysis());
     setRecentSymbols(readRecentSymbols());
   }, []);
 
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ symbol, timeframe }));
     setRecentSymbols(rememberRecentSymbol(symbol));
-    setChartLoading(true);
-
-    const timer = window.setTimeout(() => setChartLoading(false), 1100);
-    return () => window.clearTimeout(timer);
   }, [symbol, timeframe]);
+
+  useEffect(() => {
+    const cached = readCachedAnalysis();
+    if (cached && cached.symbol === symbol && cached.timeframe === timeframe) {
+      setCachedAnalysis(cached);
+    } else {
+      setCachedAnalysis(null);
+      setAnalysisDetails(null);
+    }
+  }, [symbol, timeframe]);
+
+  useEffect(() => {
+    if (!token || !user || user.subscription !== 'PRO') {
+      return;
+    }
+
+    let active = true;
+    setChartLoading(true);
+    setError('');
+    setCandles([]);
+
+    void api
+      .getLiveChartMarketData(symbol, timeframe, token)
+      .then(({ marketData }) => {
+        if (!active) {
+          return;
+        }
+
+        setCandles(
+          marketData.candles.map((candle) => ({
+            time: Math.floor(new Date(candle.timestamp).getTime() / 1000),
+            open: candle.open,
+            high: candle.high,
+            low: candle.low,
+            close: candle.close,
+          }))
+        );
+      })
+      .catch((marketDataError: any) => {
+        if (active) {
+          setError(marketDataError?.message || 'Unable to load live market data right now.');
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setChartLoading(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [symbol, timeframe, token, user]);
+
+  useEffect(() => {
+    if (!token || !cachedAnalysis?.analysisId || cachedAnalysis.symbol !== symbol || cachedAnalysis.timeframe !== timeframe) {
+      setAnalysisDetails(null);
+      return;
+    }
+
+    let active = true;
+
+    void api
+      .getAnalysis(cachedAnalysis.analysisId, token)
+      .then(({ analysis }) => {
+        if (active) {
+          setAnalysisDetails(analysis);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setAnalysisDetails(null);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [cachedAnalysis, symbol, timeframe, token]);
 
   const selectedSymbol = useMemo(() => getLiveChartSymbol(symbol), [symbol]);
   const selectedTimeframe = useMemo(() => getLiveChartTimeframe(timeframe), [timeframe]);
   const cacheMatchesSelection = cachedAnalysis?.symbol === symbol && cachedAnalysis?.timeframe === timeframe;
+  const chartOverlay = useMemo(() => mapAnalysisResultToChartOverlay(analysisDetails, candles), [analysisDetails, candles]);
 
   const startAnalysis = async (forceFresh = false) => {
     if (!token || !user || user.subscription !== 'PRO' || analyzing) {
@@ -141,6 +218,18 @@ export default function TradingViewDashboardPage() {
     try {
       const result = await api.analyzeLiveChart({ source: 'tradingview-live', symbol, timeframe }, token);
       if (result.queued && result.jobId) {
+        const queuedCache: CachedAnalysis = {
+          symbol,
+          timeframe,
+          analysisId: result.analysisId || result.jobId,
+          createdAt: new Date().toISOString(),
+          pair: selectedSymbol.label,
+          confidence: 0,
+          signalType: 'wait',
+        };
+
+        window.localStorage.setItem(CACHE_KEY, JSON.stringify(queuedCache));
+        setCachedAnalysis(queuedCache);
         router.push(`/analyze/queue?jobId=${encodeURIComponent(result.jobId)}&analysisId=${encodeURIComponent(result.analysisId || '')}&returnTo=${encodeURIComponent('/dashboard/tradingview')}`);
         return;
       }
@@ -252,7 +341,7 @@ export default function TradingViewDashboardPage() {
             </div>
             <div className="flex items-center justify-between gap-3">
               <span>Server analysis</span>
-              <span className="font-medium text-slate-100">{analyzing ? 'Running' : cacheMatchesSelection ? 'Ready' : 'Idle'}</span>
+              <span className="font-medium text-slate-100">{analyzing ? 'Running' : analysisDetails ? 'Ready' : cacheMatchesSelection ? 'Saved' : 'Idle'}</span>
             </div>
           </div>
         </div>
@@ -411,7 +500,14 @@ export default function TradingViewDashboardPage() {
               </div>
             ) : null}
 
-            <TradingViewAdvancedChart symbol={selectedSymbol.tvSymbol} interval={selectedTimeframe.tvInterval} className="h-full w-full" />
+            <AnnotatedCandlesChart
+              candles={candles}
+              overlay={chartOverlay}
+              className="h-full w-full rounded-none"
+              loading={chartLoading}
+              loadingMessage="Loading live market data..."
+              resetKey={`${symbol}:${timeframe}`}
+            />
           </motion.div>
         </div>
 
