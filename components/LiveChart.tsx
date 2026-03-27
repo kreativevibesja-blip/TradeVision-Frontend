@@ -1,15 +1,16 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { CandlestickSeries, ColorType, createChart } from 'lightweight-charts';
 import { Activity, Loader2, Wifi, WifiOff } from 'lucide-react';
-import { DERIV_ANALYSIS_CANDLE_COUNT, type DerivAnalysisResult, type DerivCandle, getDerivCacheKey } from '@/lib/deriv-live';
+import { DERIV_ANALYSIS_CANDLE_COUNT, type DerivCandle, getDerivCacheKey } from '@/lib/deriv-live';
+import { AnnotatedCandlesChart } from '@/components/AnnotatedCandlesChart';
+import type { ChartOverlaySet } from '@/lib/live-chart-drawings';
 import { cn } from '@/lib/utils';
 
 interface LiveChartProps {
   symbol: string;
   granularity: number;
-  analysis: DerivAnalysisResult | null;
+  overlay: ChartOverlaySet | null;
   onCandlesChange?: (candles: DerivCandle[]) => void;
   onError?: (message: string) => void;
   onStatusChange?: (status: LiveChartStatus) => void;
@@ -25,19 +26,6 @@ export interface LiveChartStatus {
   candleCount: number;
 }
 
-interface OverlayRect {
-  key: string;
-  left: number;
-  width: number;
-  top: number;
-  height: number;
-  color: string;
-  label: string;
-}
-
-const CHART_BG = '#0f172a';
-const GRID = '#1e293b';
-const TEXT = '#e2e8f0';
 const CACHE_TTL_MS = 30_000;
 const MAX_CANDLES = DERIV_ANALYSIS_CANDLE_COUNT;
 
@@ -79,12 +67,10 @@ const storeCachedCandles = (symbol: string, granularity: number, candles: DerivC
   }
 };
 
-const sortZoneBounds = (start: number, end: number) => ({ low: Math.min(start, end), high: Math.max(start, end) });
-
 export function LiveChart({
   symbol,
   granularity,
-  analysis,
+  overlay,
   onCandlesChange,
   onError,
   onStatusChange,
@@ -92,18 +78,12 @@ export function LiveChart({
   height,
 }: LiveChartProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
-  const chartContainerRef = useRef<HTMLDivElement | null>(null);
-  const chartRef = useRef<any>(null);
-  const candleSeriesRef = useRef<any>(null);
   const wsRef = useRef<WebSocket | null>(null);
-  const resizeObserverRef = useRef<ResizeObserver | null>(null);
-  const overlayFrameRef = useRef<number | null>(null);
-  const priceLinesRef = useRef<any[]>([]);
   const candlesRef = useRef<DerivCandle[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [connectionState, setConnectionState] = useState<ConnectionState>('connecting');
-  const [overlayRects, setOverlayRects] = useState<OverlayRect[]>([]);
   const [candleCount, setCandleCount] = useState(0);
+  const [candles, setCandles] = useState<DerivCandle[]>([]);
 
   const statusMeta = useMemo(() => {
     if (loadingHistory) {
@@ -123,187 +103,15 @@ export function LiveChart({
   }, [candleCount, connectionState, loadingHistory, onStatusChange]);
 
   useEffect(() => {
-    if (!chartContainerRef.current) {
-      return;
-    }
-
-    const getChartHeight = () => {
-      if (!chartContainerRef.current) {
-        return height ?? 520;
-      }
-
-      return chartContainerRef.current.clientHeight || height || 520;
-    };
-
-    const chart = createChart(chartContainerRef.current, {
-      layout: {
-        background: { type: ColorType.Solid, color: CHART_BG },
-        textColor: TEXT,
-      },
-      grid: {
-        vertLines: { color: GRID },
-        horzLines: { color: GRID },
-      },
-      width: chartContainerRef.current.clientWidth,
-      height: getChartHeight(),
-      rightPriceScale: {
-        borderColor: GRID,
-      },
-      timeScale: {
-        borderColor: GRID,
-        timeVisible: true,
-        secondsVisible: false,
-      },
-      crosshair: {
-        vertLine: { color: '#334155' },
-        horzLine: { color: '#334155' },
-      },
-    });
-
-    const candleSeries = chart.addSeries(CandlestickSeries, {
-      upColor: '#22c55e',
-      downColor: '#ef4444',
-      borderVisible: false,
-      wickUpColor: '#22c55e',
-      wickDownColor: '#ef4444',
-    });
-
-    chartRef.current = chart;
-    candleSeriesRef.current = candleSeries;
-
-    const resize = () => {
-      if (!chartContainerRef.current || !chartRef.current) {
-        return;
-      }
-      chartRef.current.applyOptions({ width: chartContainerRef.current.clientWidth, height: getChartHeight() });
-      queueOverlayCalculation();
-    };
-
-    resizeObserverRef.current = new ResizeObserver(resize);
-    resizeObserverRef.current.observe(chartContainerRef.current);
-
-    return () => {
-      if (overlayFrameRef.current) {
-        window.cancelAnimationFrame(overlayFrameRef.current);
-      }
-      resizeObserverRef.current?.disconnect();
-      resizeObserverRef.current = null;
-      chart.remove();
-      chartRef.current = null;
-      candleSeriesRef.current = null;
-    };
-  }, [height]);
-
-  const queueOverlayCalculation = () => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    if (overlayFrameRef.current) {
-      window.cancelAnimationFrame(overlayFrameRef.current);
-    }
-
-    overlayFrameRef.current = window.requestAnimationFrame(() => {
-      const chart = chartRef.current;
-      const candleSeries = candleSeriesRef.current;
-      const container = chartContainerRef.current;
-
-      if (!chart || !candleSeries || !container || !analysis?.zones?.length) {
-        setOverlayRects([]);
-        return;
-      }
-
-      const nextRects: OverlayRect[] = [];
-
-      for (const zone of analysis.zones) {
-        if (zone.fromTime == null || zone.toTime == null) {
-          continue;
-        }
-
-        const leftCoord = chart.timeScale().timeToCoordinate(zone.fromTime);
-        const rightCoord = chart.timeScale().timeToCoordinate(zone.toTime);
-        const bounds = sortZoneBounds(zone.start, zone.end);
-        const topCoord = candleSeries.priceToCoordinate(bounds.high);
-        const bottomCoord = candleSeries.priceToCoordinate(bounds.low);
-
-        if ([leftCoord, rightCoord, topCoord, bottomCoord].some((value) => value == null)) {
-          continue;
-        }
-
-        const left = Math.min(leftCoord, rightCoord);
-        const width = Math.max(Math.abs(rightCoord - leftCoord), 8);
-        const top = Math.min(topCoord, bottomCoord);
-        const heightValue = Math.max(Math.abs(bottomCoord - topCoord), 8);
-
-        nextRects.push({
-          key: `${zone.type}-${zone.fromTime}-${zone.toTime}-${zone.start}-${zone.end}`,
-          left,
-          width,
-          top,
-          height: heightValue,
-          color: zone.type === 'demand' ? 'rgba(34, 197, 94, 0.18)' : 'rgba(239, 68, 68, 0.18)',
-          label: zone.type === 'demand' ? 'Demand' : 'Supply',
-        });
-      }
-
-      setOverlayRects(nextRects);
-    });
-  };
-
-  useEffect(() => {
-    const candleSeries = candleSeriesRef.current;
-    if (!candleSeries) {
-      return;
-    }
-
-    for (const priceLine of priceLinesRef.current) {
-      candleSeries.removePriceLine(priceLine);
-    }
-    priceLinesRef.current = [];
-
-    if (!analysis) {
-      queueOverlayCalculation();
-      return;
-    }
-
-    const createLine = (price: number | null, color: string, title: string) => {
-      if (price == null) {
-        return;
-      }
-
-      const line = candleSeries.createPriceLine({
-        price,
-        color,
-        lineWidth: 2,
-        lineStyle: 0,
-        axisLabelVisible: true,
-        title,
-      });
-
-      priceLinesRef.current.push(line);
-    };
-
-    createLine(analysis.entry, '#38bdf8', 'Entry');
-    createLine(analysis.stopLoss, '#ef4444', 'SL');
-    createLine(analysis.takeProfit, '#22c55e', 'TP');
-    queueOverlayCalculation();
-  }, [analysis]);
-
-  useEffect(() => {
-    const chart = chartRef.current;
-    if (!chart) {
-      return;
-    }
-
     const cachedCandles = readCachedCandles(symbol, granularity);
     if (cachedCandles?.length) {
       candlesRef.current = cachedCandles;
+      setCandles(cachedCandles);
       setCandleCount(cachedCandles.length);
-      candleSeriesRef.current?.setData(cachedCandles);
-      chart.timeScale().fitContent();
       onCandlesChange?.(cachedCandles.slice(-MAX_CANDLES));
       setLoadingHistory(false);
     } else {
+      setCandles([]);
       setLoadingHistory(true);
     }
 
@@ -361,13 +169,11 @@ export function LiveChart({
             .filter((candle: DerivCandle) => [candle.time, candle.open, candle.high, candle.low, candle.close].every(Number.isFinite));
 
           candlesRef.current = mapped;
+          setCandles(mapped);
           setCandleCount(mapped.length);
-          candleSeriesRef.current?.setData(mapped);
-          chart.timeScale().fitContent();
           storeCachedCandles(symbol, granularity, mapped);
           onCandlesChange?.(mapped.slice(-MAX_CANDLES));
           setLoadingHistory(false);
-          queueOverlayCalculation();
           subscribeTicks();
           return;
         }
@@ -391,7 +197,6 @@ export function LiveChart({
               close: quote,
             };
             nextCandles[nextCandles.length - 1] = updated;
-            candleSeriesRef.current?.update(updated);
           } else {
             const open = lastCandle?.close ?? quote;
             const created = {
@@ -405,14 +210,13 @@ export function LiveChart({
             if (nextCandles.length > MAX_CANDLES) {
               nextCandles.splice(0, nextCandles.length - MAX_CANDLES);
             }
-            candleSeriesRef.current?.update(created);
           }
 
           candlesRef.current = nextCandles;
+          setCandles(nextCandles);
           setCandleCount(nextCandles.length);
           storeCachedCandles(symbol, granularity, nextCandles);
           onCandlesChange?.(nextCandles.slice(-MAX_CANDLES));
-          queueOverlayCalculation();
         }
       } catch {
         onError?.('Failed to parse Deriv data feed.');
@@ -434,10 +238,6 @@ export function LiveChart({
     };
   }, [symbol, granularity, onCandlesChange, onError]);
 
-  useEffect(() => {
-    queueOverlayCalculation();
-  }, [analysis, symbol, granularity]);
-
   const StatusIcon = statusMeta.icon;
 
   return (
@@ -447,34 +247,14 @@ export function LiveChart({
         {statusMeta.label}
       </div>
 
-      <div ref={chartContainerRef} className="h-full w-full" />
-
-      <div className="pointer-events-none absolute inset-0 z-[5] overflow-hidden">
-        {overlayRects.map((rect) => (
-          <div
-            key={rect.key}
-            className="absolute rounded-lg border"
-            style={{
-              left: rect.left,
-              width: rect.width,
-              top: rect.top,
-              height: rect.height,
-              backgroundColor: rect.color,
-              borderColor: rect.color.replace('0.18', '0.45'),
-            }}
-          >
-            <span className="absolute left-2 top-1 rounded bg-slate-950/70 px-1.5 py-0.5 text-[10px] font-medium text-slate-100">
-              {rect.label}
-            </span>
-          </div>
-        ))}
-      </div>
-
-      {loadingHistory && candlesRef.current.length === 0 ? (
-        <div className="absolute inset-0 z-20 animate-pulse bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
-          <div className="flex h-full items-center justify-center text-sm text-slate-400">Loading Deriv candles...</div>
-        </div>
-      ) : null}
+      <AnnotatedCandlesChart
+        candles={candles}
+        overlay={overlay}
+        height={height}
+        loading={loadingHistory && candles.length === 0}
+        loadingMessage="Loading Deriv candles..."
+        resetKey={`${symbol}:${granularity}`}
+      />
     </div>
   );
 }
