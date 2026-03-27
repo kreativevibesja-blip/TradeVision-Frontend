@@ -17,10 +17,6 @@ export function WhatsAppSupportButton() {
   const menuRef = useRef<HTMLDivElement | null>(null);
   const isLiveWorkspace = pathname === '/dashboard/tradingview' || pathname === '/dashboard/deriv';
 
-  if (isLiveWorkspace) {
-    return null;
-  }
-
   useEffect(() => {
     if (!menuOpen && !modalOpen) {
       return;
@@ -56,6 +52,10 @@ export function WhatsAppSupportButton() {
     setMenuOpen(false);
     setModalOpen(true);
   };
+
+  if (isLiveWorkspace) {
+    return null;
+  }
 
   return (
     <>
