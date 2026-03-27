@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { AlertTriangle, Crown, Info, Loader2, PanelRightOpen, RefreshCcw, Sparkles, Wifi, WifiOff, X, Zap } from 'lucide-react';
+import { AlertTriangle, Crown, Info, Loader2, PanelRightOpen, RefreshCcw, Wifi, WifiOff, X, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -424,11 +424,6 @@ export default function TradingViewDashboardPage() {
         </div>
         <div className="h-[calc(58svh-3rem)]">{panelContent}</div>
       </motion.div>
-
-      <Button onClick={() => void startAnalysis(false)} disabled={analyzing} className="fixed bottom-6 right-4 z-40 h-12 rounded-full bg-blue-500 px-5 text-white shadow-[0_20px_45px_rgba(59,130,246,0.35)] hover:bg-blue-600 md:bottom-6 md:right-6 lg:bottom-8 lg:right-8">
-        {analyzing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-        {analyzing ? 'Analyzing...' : cacheMatchesSelection && cachedAnalysis ? 'Open Analysis' : 'Analyze'}
-      </Button>
     </motion.section>
   );
 }
