@@ -231,6 +231,32 @@ export interface AdminUserListItem {
   };
 }
 
+export interface LivePlatformMetrics {
+  currentVisitors: number;
+  totalVisitorsToday: number;
+  activeAnalyses: number;
+  totalAnalysesToday: number;
+}
+
+export interface AdminDashboardStats {
+  totalUsers: number;
+  activeSubscribers: number;
+  totalAnalyses: number;
+  totalRevenue: number;
+  liveMetrics: LivePlatformMetrics;
+}
+
+export interface AdminAnalyticsResponse {
+  userGrowth: Array<{ createdAt: string; _count?: number }>;
+  analysesPerDay: Array<{ createdAt: string; _count?: number }>;
+  revenueData: Array<{ createdAt: string; _sum?: { amount?: number } }>;
+  liveMetrics: LivePlatformMetrics;
+  range: {
+    from: string;
+    to: string;
+  };
+}
+
 export interface Announcement {
   id: string;
   title: string;
@@ -411,6 +437,13 @@ async function apiFetch<T>(endpoint: string, options: FetchOptions = {}): Promis
 }
 
 export const api = {
+  heartbeatVisitor: (data: { sessionId: string; currentPath?: string }) =>
+    apiFetch<{ success: boolean }>('/visitors/heartbeat', {
+      method: 'POST',
+      body: JSON.stringify(data),
+      keepalive: true,
+    }),
+
   getProfile: (token: string) =>
     apiFetch<{ user: any }>('/auth/profile', { token }),
 
@@ -544,7 +577,7 @@ export const api = {
   // Admin
   admin: {
     getDashboard: (token: string) =>
-      apiFetch<any>('/admin/dashboard', { token }),
+      apiFetch<AdminDashboardStats>('/admin/dashboard', { token }),
     getUsers: (
       token: string,
       options?: {
@@ -614,7 +647,7 @@ export const api = {
       if (range?.from) params.set('from', range.from);
       if (range?.to) params.set('to', range.to);
       const query = params.toString();
-      return apiFetch<any>(`/admin/analytics${query ? `?${query}` : ''}`, { token });
+      return apiFetch<AdminAnalyticsResponse>(`/admin/analytics${query ? `?${query}` : ''}`, { token });
     },
     getPricingPlans: (token: string) =>
       apiFetch<any>('/admin/pricing-plans', { token }),
