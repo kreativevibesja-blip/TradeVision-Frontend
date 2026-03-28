@@ -34,22 +34,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
     }
 
-    const profileResponse = await fetch(`${normalizeApiUrl(process.env.NEXT_PUBLIC_API_URL)}/auth/profile`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      cache: 'no-store',
-    });
-
-    if (!profileResponse.ok) {
-      return NextResponse.json({ error: 'Unable to validate user session.' }, { status: 401 });
-    }
-
-    const profilePayload = await profileResponse.json() as { user?: { subscription?: string } };
-    if (profilePayload.user?.subscription !== 'PRO') {
-      return NextResponse.json({ error: 'Pro subscription required.' }, { status: 403 });
-    }
-
     const body = (await request.json()) as AnalyzeRequestBody;
     const symbol = typeof body.symbol === 'string' ? body.symbol.trim() : '';
     const timeframe = typeof body.timeframe === 'string' ? body.timeframe.trim() : '';
