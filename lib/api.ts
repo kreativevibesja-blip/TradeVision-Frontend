@@ -210,6 +210,27 @@ export interface AdminAnalysisLog {
   } | null;
 }
 
+export interface AdminUserListItem {
+  id: string;
+  email: string;
+  name: string | null;
+  role: string;
+  subscription: 'FREE' | 'PRO';
+  banned: boolean;
+  dailyUsage?: number | null;
+  lastUsageReset?: string | null;
+  createdAt: string;
+  usage?: {
+    current: number;
+    limit: number;
+    period: 'day' | 'month';
+  };
+  _count?: {
+    analyses: number;
+    payments: number;
+  };
+}
+
 export interface Announcement {
   id: string;
   title: string;
@@ -524,8 +545,33 @@ export const api = {
   admin: {
     getDashboard: (token: string) =>
       apiFetch<any>('/admin/dashboard', { token }),
-    getUsers: (token: string, search?: string, page = 1) =>
-      apiFetch<any>(`/admin/users?page=${page}${search ? `&search=${encodeURIComponent(search)}` : ''}`, { token }),
+    getUsers: (
+      token: string,
+      options?: {
+        search?: string;
+        page?: number;
+        subscription?: 'FREE' | 'PRO';
+        createdFrom?: string;
+        createdTo?: string;
+      }
+    ) => {
+      const params = new URLSearchParams();
+      params.set('page', String(options?.page ?? 1));
+      if (options?.search) {
+        params.set('search', options.search);
+      }
+      if (options?.subscription) {
+        params.set('subscription', options.subscription);
+      }
+      if (options?.createdFrom) {
+        params.set('createdFrom', options.createdFrom);
+      }
+      if (options?.createdTo) {
+        params.set('createdTo', options.createdTo);
+      }
+
+      return apiFetch<{ users: AdminUserListItem[]; total: number; page: number; pages: number }>(`/admin/users?${params.toString()}`, { token });
+    },
     updateUser: (id: string, data: any, token: string) =>
       apiFetch<any>(`/admin/users/${encodeURIComponent(id)}`, {
         method: 'PATCH',
