@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 import { api, type Announcement } from '@/lib/api';
+import { formatJamaicaDateTime } from '@/lib/jamaica-time';
 import { Megaphone, Sparkles, X, Clock3 } from 'lucide-react';
 
 const DISMISSED_UPDATES_KEY = 'tradevision_dismissed_updates';
@@ -126,7 +127,7 @@ export function GlobalUpdatesModal() {
                     {nextAnnouncement.expiresAt && (
                       <span className="inline-flex items-center gap-1 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-200">
                         <Clock3 className="h-3.5 w-3.5" />
-                        Live Until {new Date(nextAnnouncement.expiresAt).toLocaleString()}
+                        Live Until {formatJamaicaDateTime(nextAnnouncement.expiresAt)}
                       </span>
                     )}
                   </div>

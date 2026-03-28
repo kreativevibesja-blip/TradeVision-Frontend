@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { api, type SupportTicket, type TicketCategory, type TicketPriority } from '@/lib/api';
+import { formatJamaicaDateTime } from '@/lib/jamaica-time';
 import { AlertCircle, CheckCircle2, Loader2, Mail, MessageCircle, ShieldCheck, Ticket } from 'lucide-react';
 
 const categories: Array<{ value: TicketCategory; label: string }> = [
@@ -306,7 +307,7 @@ export function TicketForm({ open, whatsappUrl }: TicketFormProps) {
                   <p className="text-sm font-medium text-foreground">{ticket.subject}</p>
                   <p className="mt-1 line-clamp-3 text-sm text-muted-foreground">{ticket.message}</p>
                   <div className="mt-3 flex items-center justify-between gap-3 text-xs text-muted-foreground">
-                    <span>{new Date(ticket.createdAt).toLocaleString()}</span>
+                    <span>{formatJamaicaDateTime(ticket.createdAt)}</span>
                     <span>{ticket.category}</span>
                   </div>
                 </div>
