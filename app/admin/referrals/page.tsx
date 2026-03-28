@@ -11,6 +11,7 @@ import {
   type AdminPayout,
   type ReferralSettings,
 } from '@/lib/api';
+import { formatJamaicaDate } from '@/lib/jamaica-time';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -327,7 +328,7 @@ export default function AdminReferralsPage() {
                             <Badge variant="outline">{r.referredUser?.subscription || '-'}</Badge>
                           </td>
                           <td className="py-3 px-2 text-right text-muted-foreground">
-                            {new Date(r.createdAt).toLocaleDateString()}
+                            {formatJamaicaDate(r.createdAt)}
                           </td>
                         </tr>
                       ))}
@@ -508,7 +509,7 @@ export default function AdminReferralsPage() {
                             <Badge variant="outline" className={statusColors[p.status] || ''}>{p.status}</Badge>
                           </td>
                           <td className="py-3 px-2 text-right text-muted-foreground">
-                            {new Date(p.createdAt).toLocaleDateString()}
+                            {formatJamaicaDate(p.createdAt)}
                           </td>
                           <td className="py-3 px-2 text-right">
                             <div className="flex gap-1 justify-end">

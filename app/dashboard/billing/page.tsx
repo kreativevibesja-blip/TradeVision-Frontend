@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { api, type BillingSummary } from '@/lib/api';
+import { formatJamaicaDateTime } from '@/lib/jamaica-time';
 import { AlertTriangle, CalendarClock, CheckCircle2, CreditCard, Crown, Loader2, RefreshCcw, ShieldAlert, X, Zap } from 'lucide-react';
 
 const statusTone = {
@@ -161,7 +162,7 @@ export default function BillingPage() {
                   <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                     <p className="text-sm text-muted-foreground mb-2">Plan Expiry</p>
                     <p className="text-lg font-semibold">
-                      {billing?.expiresAt ? new Date(billing.expiresAt).toLocaleString() : 'No active billing period'}
+                      {billing?.expiresAt ? formatJamaicaDateTime(billing.expiresAt) : 'No active billing period'}
                     </p>
                   </div>
                 </div>
@@ -221,7 +222,7 @@ export default function BillingPage() {
                           <span className="text-sm font-medium">${payment.amount} {payment.currency}</span>
                         </div>
                         <p className="text-sm text-muted-foreground">{payment.plan} plan</p>
-                        <p className="mt-1 text-xs text-muted-foreground">{new Date(payment.createdAt).toLocaleString()}</p>
+                        <p className="mt-1 text-xs text-muted-foreground">{formatJamaicaDateTime(payment.createdAt)}</p>
                       </div>
                     ))}
                   </div>

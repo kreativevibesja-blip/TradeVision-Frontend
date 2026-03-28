@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { api, type SearchedUser, type SupportTicket, type TicketCategory, type TicketPriority, type TicketStatus } from '@/lib/api';
+import { formatJamaicaDate, formatJamaicaDateTime } from '@/lib/jamaica-time';
 import { Loader2, MessageCircle, RefreshCw, Save, Search, Ticket, TimerReset, Send, CheckCircle2, AlertTriangle, X, Plus, UserRound } from 'lucide-react';
 
 type StatusFilter = TicketStatus | 'ALL';
@@ -388,7 +389,7 @@ export default function AdminTicketsPage() {
                   <p className="mt-0.5 line-clamp-1 text-[11px] text-muted-foreground">{ticket.message}</p>
                   <div className="mt-2 flex items-center justify-between gap-2 text-[10px] text-muted-foreground">
                     <span className="truncate">{ticket.userName || ticket.userEmail}</span>
-                    <span className="flex-shrink-0">{new Date(ticket.createdAt).toLocaleDateString()}</span>
+                    <span className="flex-shrink-0">{formatJamaicaDate(ticket.createdAt)}</span>
                   </div>
                 </button>
               ))
@@ -423,7 +424,7 @@ export default function AdminTicketsPage() {
                       <Badge variant="outline" className="text-[10px] px-1.5 py-0">{selectedTicket.category}</Badge>
                     </div>
                     <h2 className="text-base font-semibold">{selectedTicket.subject}</h2>
-                    <p className="mt-0.5 text-xs text-muted-foreground">Opened by {selectedTicket.userName || 'Unknown user'} on {new Date(selectedTicket.createdAt).toLocaleString()}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">Opened by {selectedTicket.userName || 'Unknown user'} on {formatJamaicaDateTime(selectedTicket.createdAt)}</p>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     <button
@@ -456,7 +457,7 @@ export default function AdminTicketsPage() {
                   </div>
                   <div className="rounded-xl border border-white/10 bg-white/5 p-3">
                     <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Activity</p>
-                    <p className="mt-1 text-xs font-medium">{selectedTicket.updatedAt ? new Date(selectedTicket.updatedAt).toLocaleString() : 'N/A'}</p>
+                    <p className="mt-1 text-xs font-medium">{selectedTicket.updatedAt ? formatJamaicaDateTime(selectedTicket.updatedAt) : 'N/A'}</p>
                     <p className="mt-0.5 text-[11px] text-muted-foreground">{selectedTicket.respondedAt ? `Responded` : 'No response yet'}</p>
                   </div>
                 </div>

@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api';
+import { formatJamaicaDate } from '@/lib/jamaica-time';
 import {
   Percent,
   Plus,
@@ -308,7 +309,7 @@ export default function AdminCouponsPage() {
                         <td className="p-4 text-muted-foreground">{coupon.perUserLimit}</td>
                         <td className="p-4 text-muted-foreground text-xs">
                           {coupon.expiresAt
-                            ? new Date(coupon.expiresAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+                            ? formatJamaicaDate(coupon.expiresAt, { month: 'short', day: 'numeric', year: 'numeric' })
                             : 'Never'}
                         </td>
                         <td className="p-4">

@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
+import { addDaysToDateInputValue, formatJamaicaDate, getJamaicaDateInputValue } from '@/lib/jamaica-time';
 import { BarChart3, Users, CalendarRange, DollarSign } from 'lucide-react';
 import {
   Chart as ChartJS,
@@ -77,37 +78,23 @@ const API_URL = normalizeApiUrl(process.env.NEXT_PUBLIC_API_URL);
 
 type RangePreset = 'today' | 'yesterday' | '7d' | '30d' | 'custom';
 
-const toDateInputValue = (date: Date) => {
-  const year = date.getFullYear();
-  const month = `${date.getMonth() + 1}`.padStart(2, '0');
-  const day = `${date.getDate()}`.padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
 const getPresetRange = (preset: Exclude<RangePreset, 'custom'>) => {
-  const now = new Date();
-  const today = new Date(now);
-  today.setHours(0, 0, 0, 0);
+  const today = getJamaicaDateInputValue();
 
   if (preset === 'today') {
-    return { from: toDateInputValue(today), to: toDateInputValue(today) };
+    return { from: today, to: today };
   }
 
   if (preset === 'yesterday') {
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    return { from: toDateInputValue(yesterday), to: toDateInputValue(yesterday) };
+    const yesterday = addDaysToDateInputValue(today, -1);
+    return { from: yesterday, to: yesterday };
   }
 
   if (preset === '7d') {
-    const from = new Date(today);
-    from.setDate(from.getDate() - 6);
-    return { from: toDateInputValue(from), to: toDateInputValue(today) };
+    return { from: addDaysToDateInputValue(today, -6), to: today };
   }
 
-  const from = new Date(today);
-  from.setDate(from.getDate() - 29);
-  return { from: toDateInputValue(from), to: toDateInputValue(today) };
+  return { from: addDaysToDateInputValue(today, -29), to: today };
 };
 
 export default function AdminAnalyticsPage() {
@@ -162,7 +149,7 @@ export default function AdminAnalyticsPage() {
   const processGroupedData = (data: any[], sumKey?: string) => {
     const byDate: Record<string, number> = {};
     (data || []).forEach((item: any) => {
-      const date = new Date(item.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const date = formatJamaicaDate(item.createdAt, { month: 'short', day: 'numeric' });
       byDate[date] = (byDate[date] || 0) + (sumKey ? (item._sum?.[sumKey] || 0) : (item._count || 1));
     });
     return {
@@ -233,7 +220,7 @@ export default function AdminAnalyticsPage() {
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground pb-1">
                 <CalendarRange className="h-4 w-4" />
-                {analytics?.range ? `${new Date(analytics.range.from).toLocaleDateString()} - ${new Date(analytics.range.to).toLocaleDateString()}` : 'Select a date range'}
+                {analytics?.range ? `${formatJamaicaDate(analytics.range.from)} - ${formatJamaicaDate(analytics.range.to)}` : 'Select a date range'}
               </div>
             </div>
           </CardContent>

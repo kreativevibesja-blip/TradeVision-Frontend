@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api';
+import { formatJamaicaDateTime } from '@/lib/jamaica-time';
 import { AuthModal } from '@/components/AuthModal';
 import {
   ArrowRight,
@@ -977,7 +978,7 @@ function CheckoutPageContent() {
               </div>
               <div className="mt-2 flex items-center justify-between gap-3">
                 <span className="text-muted-foreground">Submitted</span>
-                <span>{new Date(submittedTransfer.createdAt).toLocaleString()}</span>
+                <span>{formatJamaicaDateTime(submittedTransfer.createdAt)}</span>
               </div>
             </div>
             <div className="mt-6 flex justify-center">

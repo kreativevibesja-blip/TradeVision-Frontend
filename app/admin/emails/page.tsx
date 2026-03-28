@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { api, EmailCampaign } from '@/lib/api';
+import { formatJamaicaDate } from '@/lib/jamaica-time';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -196,7 +197,7 @@ export default function EmailCampaignsPage() {
                         )}
                       </td>
                       <td className="px-4 py-3 text-right text-muted-foreground text-xs hidden lg:table-cell">
-                        {new Date(c.createdAt).toLocaleDateString()}
+                        {formatJamaicaDate(c.createdAt)}
                       </td>
                     </tr>
                   );

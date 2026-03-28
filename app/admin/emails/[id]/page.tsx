@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { api, EmailCampaign, EmailLog } from '@/lib/api';
+import { formatJamaicaDate, formatJamaicaDateTime } from '@/lib/jamaica-time';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -226,7 +227,7 @@ export default function CampaignDetailPage() {
             </div>
             <div>
               <p className="text-[11px] text-muted-foreground">Created</p>
-              <p className="text-sm font-semibold">{new Date(campaign.createdAt).toLocaleDateString()}</p>
+              <p className="text-sm font-semibold">{formatJamaicaDate(campaign.createdAt)}</p>
             </div>
           </CardContent>
         </Card>
@@ -336,7 +337,7 @@ export default function CampaignDetailPage() {
                       )}
                     </td>
                     <td className="px-4 py-2.5 text-right text-xs text-muted-foreground whitespace-nowrap">
-                      {new Date(log.sentAt).toLocaleString()}
+                      {formatJamaicaDateTime(log.sentAt)}
                     </td>
                   </tr>
                 ))

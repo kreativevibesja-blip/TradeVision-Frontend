@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { api, resolveAssetUrl, type AdminAnalysisLog, type AnalysisResult } from '@/lib/api';
+import { formatJamaicaDateTime } from '@/lib/jamaica-time';
 import { TrendingUp, TrendingDown, Minus, Eye, X, Search } from 'lucide-react';
 
 const getStatusBadge = (analysis: AdminAnalysisLog) => {
@@ -184,7 +185,7 @@ export default function AdminAnalysesPage() {
                           </td>
                           <td className="p-4 text-muted-foreground">{a.confidence ?? '-'}{a.confidence !== null ? '/100' : ''}</td>
                           <td className="p-4 max-w-[320px] text-xs text-muted-foreground whitespace-normal break-words">{a.failureReason || '-'}</td>
-                          <td className="p-4 text-xs text-muted-foreground whitespace-nowrap">{new Date(a.createdAt).toLocaleString()}</td>
+                          <td className="p-4 text-xs text-muted-foreground whitespace-nowrap">{formatJamaicaDateTime(a.createdAt)}</td>
                           <td className="p-4">
                             <Button variant="outline" size="sm" onClick={() => openAnalysisViewer(a.id)} aria-label={`View analysis ${a.id}`}>
                               <Eye className="h-4 w-4" />

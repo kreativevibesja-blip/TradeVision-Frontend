@@ -11,6 +11,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { TradingViewAdvancedChart } from '@/components/TradingViewAdvancedChart';
 import { useAuth } from '@/hooks/useAuth';
 import { api, type AnalysisResult } from '@/lib/api';
+import { formatJamaicaDateTime } from '@/lib/jamaica-time';
 import { LIVE_CHART_SYMBOL_GROUPS, LIVE_CHART_SYMBOLS, LIVE_CHART_TIMEFRAMES, getLiveChartSymbol, getLiveChartTimeframe } from '@/lib/live-chart';
 
 const STORAGE_KEY = 'dashboard_live_chart_state';
@@ -280,7 +281,7 @@ export default function TradingViewDashboardPage() {
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <span>Updated</span>
-                  <span className="text-right font-medium text-slate-100">{new Date(cachedAnalysis.createdAt).toLocaleString()}</span>
+                  <span className="text-right font-medium text-slate-100">{formatJamaicaDateTime(cachedAnalysis.createdAt)}</span>
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">

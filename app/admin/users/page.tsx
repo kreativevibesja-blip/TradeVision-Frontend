@@ -8,32 +8,29 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { api, type AdminUserListItem } from '@/lib/api';
+import { addDaysToDateInputValue, formatJamaicaDate, formatJamaicaDateTime, getEndOfJamaicaDayIso, getJamaicaDateInputValue, getStartOfJamaicaDayIso } from '@/lib/jamaica-time';
 import { Users, Search, Crown, Ban, ShieldCheck, Zap, X, CalendarRange } from 'lucide-react';
 
 type SubscriptionFilter = 'ALL' | 'FREE' | 'PRO';
 type DateFilter = 'ALL' | 'TODAY' | 'LAST_7_DAYS' | 'LAST_30_DAYS' | 'CUSTOM';
 
-const toStartOfDayIso = (value: string) => new Date(`${value}T00:00:00.000Z`).toISOString();
-const toEndOfDayIso = (value: string) => new Date(`${value}T23:59:59.999Z`).toISOString();
-
 const buildDateRange = (filter: DateFilter, customFrom: string, customTo: string) => {
-  const now = new Date();
+  const today = getJamaicaDateInputValue();
 
   if (filter === 'TODAY') {
-    const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
-    const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
-    return { createdFrom: start.toISOString(), createdTo: end.toISOString() };
+    return { createdFrom: getStartOfJamaicaDayIso(today), createdTo: getEndOfJamaicaDayIso(today) };
   }
 
   if (filter === 'LAST_7_DAYS' || filter === 'LAST_30_DAYS') {
     const days = filter === 'LAST_7_DAYS' ? 7 : 30;
-    const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - (days - 1), 0, 0, 0, 0));
-    const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
-    return { createdFrom: start.toISOString(), createdTo: end.toISOString() };
+    return {
+      createdFrom: getStartOfJamaicaDayIso(addDaysToDateInputValue(today, -(days - 1))),
+      createdTo: getEndOfJamaicaDayIso(today),
+    };
   }
 
   if (filter === 'CUSTOM' && customFrom && customTo) {
-    return { createdFrom: toStartOfDayIso(customFrom), createdTo: toEndOfDayIso(customTo) };
+    return { createdFrom: getStartOfJamaicaDayIso(customFrom), createdTo: getEndOfJamaicaDayIso(customTo) };
   }
 
   return { createdFrom: undefined, createdTo: undefined };
@@ -240,7 +237,7 @@ export default function AdminUsersPage() {
                       </td>
                       <td className="p-4 text-muted-foreground">{u._count?.analyses || 0}</td>
                       <td className="p-4 text-muted-foreground text-xs">
-                        {new Date(u.createdAt).toLocaleDateString()}
+                        {formatJamaicaDate(u.createdAt)}
                       </td>
                       <td className="p-4 text-right">
                         <div className="flex gap-1 justify-end">
@@ -343,7 +340,7 @@ export default function AdminUsersPage() {
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Joined</p>
-                    <p className="mt-1 text-sm font-medium">{new Date(selectedUser.createdAt).toLocaleString()}</p>
+                    <p className="mt-1 text-sm font-medium">{formatJamaicaDateTime(selectedUser.createdAt)}</p>
                   </div>
                 </div>
               </div>
@@ -373,7 +370,7 @@ export default function AdminUsersPage() {
                 <div>
                   <p className="text-xs text-muted-foreground">Last Usage Reset</p>
                   <p className="mt-1 text-sm font-medium">
-                    {selectedUser.lastUsageReset ? new Date(selectedUser.lastUsageReset).toLocaleString() : 'Not available'}
+                    {selectedUser.lastUsageReset ? formatJamaicaDateTime(selectedUser.lastUsageReset) : 'Not available'}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2 pt-2">

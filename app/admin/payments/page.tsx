@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { api, type AdminPayment, type AdminPaymentDateRangeFilter, type AdminPaymentPlanFilter, type AdminPaymentStatusFilter } from '@/lib/api';
+import { formatJamaicaDateTime } from '@/lib/jamaica-time';
 import { Building2, CheckCircle2, CreditCard, Landmark, Loader2, Wallet, XCircle } from 'lucide-react';
 
 const paymentStatuses: Array<Exclude<AdminPaymentStatusFilter, 'ALL'>> = ['PENDING', 'COMPLETED', 'FAILED', 'REFUNDED'];
@@ -203,7 +204,7 @@ export default function AdminPaymentsPage() {
                           <td className="p-4 font-medium">${payment.amount.toFixed(2)}</td>
                           <td className="p-4"><Badge>{payment.plan}</Badge></td>
                           <td className="p-4"><Badge variant={statusVariant(payment.status) as any}>{payment.status}</Badge></td>
-                          <td className="p-4 text-xs text-muted-foreground">{new Date(payment.createdAt).toLocaleString()}</td>
+                          <td className="p-4 text-xs text-muted-foreground">{formatJamaicaDateTime(payment.createdAt)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -250,13 +251,13 @@ export default function AdminPaymentsPage() {
                             </td>
                             <td className="p-4 font-mono text-xs text-muted-foreground">{payment.paypalOrderId}</td>
                             <td className="p-4 font-medium">${payment.amount.toFixed(2)}</td>
-                            <td className="p-4 text-xs text-muted-foreground">{new Date(payment.createdAt).toLocaleString()}</td>
+                            <td className="p-4 text-xs text-muted-foreground">{formatJamaicaDateTime(payment.createdAt)}</td>
                             <td className="p-4">
                               <div className="flex flex-col gap-2">
                                 <Badge variant={statusVariant(payment.status) as any}>
                                   {payment.status === 'FAILED' ? 'DIDN\'T RECEIVE' : payment.status}
                                 </Badge>
-                                {payment.verifiedAt ? <span className="text-xs text-muted-foreground">Verified {new Date(payment.verifiedAt).toLocaleString()}</span> : null}
+                                {payment.verifiedAt ? <span className="text-xs text-muted-foreground">Verified {formatJamaicaDateTime(payment.verifiedAt)}</span> : null}
                               </div>
                             </td>
                             <td className="p-4">

@@ -8,6 +8,7 @@ import {
   type UserReferralDashboard,
   type ReferralCode,
 } from '@/lib/api';
+import { formatJamaicaDate } from '@/lib/jamaica-time';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -298,7 +299,7 @@ export default function ReferralDashboardPage() {
                       </td>
                       <td className="py-3 px-2 text-right font-medium">${Number(c.amount).toFixed(2)}</td>
                       <td className="py-3 px-2 text-right text-muted-foreground">
-                        {new Date(c.createdAt).toLocaleDateString()}
+                        {formatJamaicaDate(c.createdAt)}
                       </td>
                     </tr>
                   ))}
@@ -381,7 +382,7 @@ export default function ReferralDashboardPage() {
                         {p.status}
                       </Badge>
                       <span className="text-xs text-muted-foreground">
-                        {new Date(p.createdAt).toLocaleDateString()}
+                        {formatJamaicaDate(p.createdAt)}
                       </span>
                     </div>
                   </div>

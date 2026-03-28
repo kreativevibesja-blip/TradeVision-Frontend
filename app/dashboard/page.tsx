@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api';
+import { formatJamaicaDate } from '@/lib/jamaica-time';
 import {
   BarChart3,
   Upload,
@@ -281,7 +282,7 @@ export default function DashboardPage() {
                             <span>{a.timeframe}</span>
                             <span className="flex items-center gap-1">
                               <Clock className="h-3 w-3" />
-                              {new Date(a.createdAt).toLocaleDateString()}
+                              {formatJamaicaDate(a.createdAt)}
                             </span>
                             {a.confidence && (
                               <span>Score: {a.confidence}/100</span>

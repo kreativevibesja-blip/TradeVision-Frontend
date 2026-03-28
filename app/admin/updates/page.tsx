@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { api, type Announcement } from '@/lib/api';
+import { formatJamaicaDateTime } from '@/lib/jamaica-time';
 import { Megaphone, Plus, Loader2, Trash2, Clock3, Sparkles } from 'lucide-react';
 
 export default function AdminUpdatesPage() {
@@ -139,7 +140,7 @@ export default function AdminUpdatesPage() {
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <Badge variant={a.isActive ? 'success' : 'secondary'}>{a.isActive ? 'Active' : 'Hidden'}</Badge>
-                      <Badge variant="outline">{a.expiresAt ? `Expires ${new Date(a.expiresAt).toLocaleString()}` : 'No expiry'}</Badge>
+                      <Badge variant="outline">{a.expiresAt ? `Expires ${formatJamaicaDateTime(a.expiresAt)}` : 'No expiry'}</Badge>
                     </div>
                   </div>
                   <Button
@@ -154,7 +155,7 @@ export default function AdminUpdatesPage() {
                   </Button>
                 </div>
                 <p className="mb-3 text-sm leading-relaxed text-muted-foreground">{a.content}</p>
-                <p className="text-xs text-muted-foreground">Published {new Date(a.createdAt).toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">Published {formatJamaicaDateTime(a.createdAt)}</p>
               </CardContent>
             </Card>
           ))
