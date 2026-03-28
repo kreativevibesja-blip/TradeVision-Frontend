@@ -1164,7 +1164,7 @@ function AnalyzePageContent() {
 
                   <Card className="mobile-card">
                     <CardHeader>
-                      <CardTitle className="text-lg">Supply And Demand</CardTitle>
+                      <CardTitle className="text-lg">Support And Resistance</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="space-y-2">
@@ -1177,7 +1177,7 @@ function AnalyzePageContent() {
                       <div className="space-y-2">
                         <div className="flex items-center gap-2 text-sm font-medium">
                           <ShieldAlert className="h-4 w-4 text-red-400" />
-                          Supply Zone
+                          Resistance Zone
                         </div>
                         <p className="text-sm text-muted-foreground pl-6">{formatStructuredZone(analysis.zones.supplyZone, pair)}</p>
                         <p className="text-xs text-muted-foreground pl-6">{formatZoneReason(analysis.zones.supplyZone?.reason)}</p>
@@ -1185,7 +1185,7 @@ function AnalyzePageContent() {
                       <div className="space-y-2">
                         <div className="flex items-center gap-2 text-sm font-medium">
                           <CheckCircle2 className="h-4 w-4 text-green-400" />
-                          Demand Zone
+                          Support Zone
                         </div>
                         <p className="text-sm text-muted-foreground pl-6">{formatStructuredZone(analysis.zones.demandZone, pair)}</p>
                         <p className="text-xs text-muted-foreground pl-6">{formatZoneReason(analysis.zones.demandZone?.reason)}</p>
