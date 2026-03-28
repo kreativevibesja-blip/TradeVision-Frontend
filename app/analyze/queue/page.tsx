@@ -42,6 +42,7 @@ function QueuePageContent() {
   const jobId = searchParams.get('jobId');
   const analysisId = searchParams.get('analysisId');
   const returnTo = searchParams.get('returnTo') || '/analyze?retry=1';
+  const resultBackTo = returnTo.startsWith('/dashboard/') ? returnTo : '/analyze';
 
   const [status, setStatus] = useState<'queued' | 'processing' | 'completed' | 'failed' | 'cancelled'>('queued');
   const [position, setPosition] = useState(0);
@@ -94,7 +95,9 @@ function QueuePageContent() {
         setSimulatedProgress(100);
         // Redirect to the analysis page after a short delay for the animation
         setTimeout(() => {
-          router.push(`/analyze?analysisId=${data.analysisId || analysisId}`);
+          const nextAnalysisId = encodeURIComponent(data.analysisId || analysisId || '');
+          const nextReturnTo = encodeURIComponent(resultBackTo);
+          router.replace(`/analyze?analysisId=${nextAnalysisId}&returnTo=${nextReturnTo}`);
         }, 800);
       }
 

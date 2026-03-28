@@ -187,7 +187,7 @@ export default function TradingViewDashboardPage() {
 
       window.localStorage.setItem(CACHE_KEY, JSON.stringify(nextCache));
       setCachedAnalysis(nextCache);
-      router.push(`/analyze?analysisId=${encodeURIComponent(result.analysis.id)}`);
+      router.push(`/analyze?analysisId=${encodeURIComponent(result.analysis.id)}&returnTo=${encodeURIComponent('/dashboard/tradingview')}`);
     } catch (submitError: any) {
       setError(submitError?.message || 'Unable to analyze the live chart right now.');
     } finally {

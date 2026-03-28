@@ -32,7 +32,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Suspense><ReferralCapture /></Suspense>
           <div className="relative flex min-h-screen flex-col overflow-x-hidden">
             <Navbar />
-            <GlobalBackButton />
+            <Suspense fallback={null}>
+              <GlobalBackButton />
+            </Suspense>
             <GlobalUpdatesModal />
             <main className="flex-1 pt-16 pb-20 md:pb-0">{children}</main>
             <WhatsAppSupportButton />
