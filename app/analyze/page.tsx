@@ -1294,7 +1294,85 @@ function AnalyzePageContent() {
                         )}
                       </CardContent>
                     </Card>
-                  ) : !isPro ? (
+                  ) : null}
+
+                  {analysis.counterTrendPlan?.bias && analysis.counterTrendPlan.bias !== 'none' ? (
+                    <Card className="mobile-card border-rose-500/30 bg-rose-500/5">
+                      <CardContent className="p-6 space-y-4">
+                        <div className="flex items-center gap-2 mb-1">
+                          <AlertTriangle className="h-4 w-4 text-rose-300" />
+                          <span className="text-sm font-medium">Counter-Trend Idea</span>
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-rose-400/40 text-rose-200">
+                            AGGRESSIVE
+                          </Badge>
+                        </div>
+                        <p className="text-xs leading-relaxed text-rose-100/90">{analysis.counterTrendPlan.warning}</p>
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <Zap className="h-3.5 w-3.5 text-rose-300" />
+                            <span className="text-xs font-medium text-rose-200">Bias / Action</span>
+                          </div>
+                          <p className="text-sm font-semibold pl-5 capitalize">
+                            {analysis.counterTrendPlan.bias} · {analysis.counterTrendPlan.action}
+                          </p>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <Target className="h-3.5 w-3.5 text-cyan-300" />
+                            <span className="text-xs font-medium text-cyan-200">Counter Entry Zone</span>
+                          </div>
+                          <p className="text-sm pl-5 text-muted-foreground">{formatStructuredZone(analysis.counterTrendPlan.entryZone, pair)}</p>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <Clock className="h-3.5 w-3.5 text-amber-300" />
+                            <span className="text-xs font-medium text-amber-200">Wait For</span>
+                          </div>
+                          <p className="text-sm pl-5 text-muted-foreground capitalize">
+                            {analysis.counterTrendPlan.confirmation === 'none'
+                              ? 'Support or resistance rejection'
+                              : analysis.counterTrendPlan.confirmation}
+                          </p>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <Sparkles className="h-3.5 w-3.5 text-purple-300" />
+                            <span className="text-xs font-medium text-purple-200">Reason</span>
+                          </div>
+                          <p className="text-sm pl-5 text-muted-foreground">{analysis.counterTrendPlan.reason}</p>
+                        </div>
+                        {analysis.counterTrendPlan.stopLoss != null ? (
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <ShieldAlert className="h-3.5 w-3.5 text-red-300" />
+                              <span className="text-xs font-medium text-red-200">Stop Loss</span>
+                            </div>
+                            <p className="text-sm font-semibold pl-5">{formatPrice(analysis.counterTrendPlan.stopLoss, pair)}</p>
+                          </div>
+                        ) : null}
+                        {analysis.counterTrendPlan.takeProfit1 != null ? (
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-300" />
+                              <span className="text-xs font-medium text-emerald-200">Take Profit 1</span>
+                            </div>
+                            <p className="text-sm font-semibold pl-5">{formatPrice(analysis.counterTrendPlan.takeProfit1, pair)}</p>
+                          </div>
+                        ) : null}
+                        {analysis.counterTrendPlan.takeProfit2 != null ? (
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <CheckCircle2 className="h-3.5 w-3.5 text-teal-300" />
+                              <span className="text-xs font-medium text-teal-200">Take Profit 2</span>
+                            </div>
+                            <p className="text-sm font-semibold pl-5">{formatPrice(analysis.counterTrendPlan.takeProfit2, pair)}</p>
+                          </div>
+                        ) : null}
+                      </CardContent>
+                    </Card>
+                  ) : null}
+
+                  {!isPro ? (
                     <Card className="mobile-card border-purple-500/30 bg-purple-500/5">
                       <CardContent className="p-6">
                         <div className="flex flex-col items-center text-center space-y-3">
