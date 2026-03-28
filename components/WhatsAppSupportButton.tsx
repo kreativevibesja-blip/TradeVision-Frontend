@@ -151,12 +151,13 @@ export function WhatsAppSupportButton() {
           type="button"
           onClick={() => setMenuOpen((current) => !current)}
           aria-label="Open help options"
-          className="inline-flex items-center gap-3 rounded-full border border-cyan-400/30 bg-cyan-500 px-4 py-3 text-white shadow-[0_18px_45px_rgba(6,182,212,0.28)] transition-transform duration-200 hover:scale-[1.02] hover:bg-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:ring-offset-2 focus:ring-offset-background"
+          className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-500 px-3 py-3 text-white shadow-[0_18px_45px_rgba(6,182,212,0.28)] transition-transform duration-200 hover:scale-[1.02] hover:bg-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:ring-offset-2 focus:ring-offset-background md:gap-3 md:px-4"
         >
           <span className="flex h-9 w-9 items-center justify-center rounded-full bg-black/10">
             <LifeBuoy className="h-4 w-4" />
           </span>
-          <span className="text-sm font-semibold">👋 Help me</span>
+          <span className="text-base font-semibold md:hidden">👋</span>
+          <span className="hidden text-sm font-semibold md:inline">👋 Help me</span>
           <ChevronUp className={`h-4 w-4 transition-transform ${menuOpen ? 'rotate-0' : 'rotate-180'}`} />
         </button>
       </div>
