@@ -71,6 +71,45 @@ const addLegendItem = (items: ChartOverlayLegendItem[], key: string, label: stri
   }
 };
 
+const pushZone = (
+  zones: ChartOverlayZone[],
+  legendItems: ChartOverlayLegendItem[],
+  zone: {
+    key: string;
+    kind: ChartOverlayZone['kind'];
+    start: number;
+    end: number;
+    fromTime?: number;
+    toTime?: number;
+    label: string;
+    color: string;
+    borderColor: string;
+  },
+  candles: ChartCandle[]
+) => {
+  if (!Number.isFinite(zone.start) || !Number.isFinite(zone.end)) {
+    return;
+  }
+
+  const window =
+    zone.fromTime != null && zone.toTime != null
+      ? { fromTime: zone.fromTime, toTime: zone.toTime }
+      : deriveZoneWindow(zone.start, zone.end, candles);
+
+  zones.push({
+    key: zone.key,
+    kind: zone.kind,
+    start: zone.start,
+    end: zone.end,
+    fromTime: window.fromTime,
+    toTime: window.toTime,
+    label: zone.label,
+    color: zone.color,
+    borderColor: zone.borderColor,
+  });
+  addLegendItem(legendItems, zone.key, zone.label, zone.borderColor);
+};
+
 const toLowerBound = (first: number, second: number) => Math.min(first, second);
 const toUpperBound = (first: number, second: number) => Math.max(first, second);
 
@@ -87,7 +126,11 @@ const findNearestLevel = (prices: number[], referencePrice: number, direction: '
 
 export const toChartCandles = (candles: DerivCandle[]): ChartCandle[] => candles;
 
-export const mapAnalysisResultToChartOverlay = (analysis: AnalysisResult | null, candles: ChartCandle[]): ChartOverlaySet | null => {
+export const mapAnalysisResultToChartOverlay = (
+  analysis: AnalysisResult | null,
+  candles: ChartCandle[],
+  options?: { useZoneBoxes?: boolean }
+): ChartOverlaySet | null => {
   if (!analysis || candles.length === 0) {
     return null;
   }
@@ -95,6 +138,7 @@ export const mapAnalysisResultToChartOverlay = (analysis: AnalysisResult | null,
   const zones: ChartOverlayZone[] = [];
   const levels: ChartOverlayLevel[] = [];
   const legendItems: ChartOverlayLegendItem[] = [];
+  const useZoneBoxes = options?.useZoneBoxes ?? false;
 
   const pushLevel = (
     key: string,
@@ -114,11 +158,45 @@ export const mapAnalysisResultToChartOverlay = (analysis: AnalysisResult | null,
   const entryZone = analysis.entryPlan?.entryZone ?? analysis.entryZone ?? analysis.entryLogic?.entryZone ?? null;
 
   if (analysis.zones?.demandZone?.min != null && analysis.zones?.demandZone?.max != null) {
-    pushLevel('support', 'Support', toUpperBound(analysis.zones.demandZone.min, analysis.zones.demandZone.max), '#4ade80');
+    if (useZoneBoxes) {
+      pushZone(
+        zones,
+        legendItems,
+        {
+          key: 'demand-zone',
+          kind: 'demand',
+          start: analysis.zones.demandZone.min,
+          end: analysis.zones.demandZone.max,
+          label: 'Support Zone',
+          color: 'rgba(74, 222, 128, 0.14)',
+          borderColor: '#4ade80',
+        },
+        candles
+      );
+    } else {
+      pushLevel('support', 'Support', toUpperBound(analysis.zones.demandZone.min, analysis.zones.demandZone.max), '#4ade80');
+    }
   }
 
   if (analysis.zones?.supplyZone?.min != null && analysis.zones?.supplyZone?.max != null) {
-    pushLevel('resistance', 'Resistance', toLowerBound(analysis.zones.supplyZone.min, analysis.zones.supplyZone.max), '#f59e0b');
+    if (useZoneBoxes) {
+      pushZone(
+        zones,
+        legendItems,
+        {
+          key: 'supply-zone',
+          kind: 'supply',
+          start: analysis.zones.supplyZone.min,
+          end: analysis.zones.supplyZone.max,
+          label: 'Resistance Zone',
+          color: 'rgba(245, 158, 11, 0.14)',
+          borderColor: '#f59e0b',
+        },
+        candles
+      );
+    } else {
+      pushLevel('resistance', 'Resistance', toLowerBound(analysis.zones.supplyZone.min, analysis.zones.supplyZone.max), '#f59e0b');
+    }
   }
 
   pushLevel('entry', 'Entry', midpoint(entryZone?.min, entryZone?.max), '#60a5fa');
@@ -141,28 +219,33 @@ export const mapDerivAnalysisToChartOverlay = (analysis: DerivAnalysisResult | n
   }
 
   const zones: ChartOverlayZone[] = [];
-  const currentPrice = candles[candles.length - 1]?.close ?? 0;
-  const supportCandidates = analysis.zones
-    .filter((zone) => zone.type === 'demand' && Number.isFinite(zone.start) && Number.isFinite(zone.end))
-    .map((zone) => toUpperBound(zone.start, zone.end));
-  const resistanceCandidates = analysis.zones
-    .filter((zone) => zone.type === 'supply' && Number.isFinite(zone.start) && Number.isFinite(zone.end))
-    .map((zone) => toLowerBound(zone.start, zone.end));
-  const support = findNearestLevel(supportCandidates, currentPrice, 'support');
-  const resistance = findNearestLevel(resistanceCandidates, currentPrice, 'resistance');
+  const legendItems: ChartOverlayLegendItem[] = [];
+
+  analysis.zones.forEach((zone, index) => {
+    pushZone(
+      zones,
+      legendItems,
+      {
+        key: `${zone.type}-${index}`,
+        kind: zone.type,
+        start: zone.start,
+        end: zone.end,
+        fromTime: zone.fromTime,
+        toTime: zone.toTime,
+        label: zone.type === 'demand' ? 'Support Zone' : 'Resistance Zone',
+        color: zone.type === 'demand' ? 'rgba(74, 222, 128, 0.14)' : 'rgba(245, 158, 11, 0.14)',
+        borderColor: zone.type === 'demand' ? '#4ade80' : '#f59e0b',
+      },
+      candles
+    );
+  });
 
   const levels: ChartOverlayLevel[] = [
-    support != null ? { key: 'support', label: 'Support', price: support, color: '#4ade80' } : null,
-    resistance != null ? { key: 'resistance', label: 'Resistance', price: resistance, color: '#f59e0b' } : null,
     analysis.entry != null ? { key: 'entry', label: 'Entry', price: analysis.entry, color: '#60a5fa' } : null,
     analysis.stopLoss != null ? { key: 'stop-loss', label: 'Stop Loss', price: analysis.stopLoss, color: '#f87171' } : null,
     analysis.takeProfit != null ? { key: 'tp1', label: 'TP1', price: analysis.takeProfit, color: '#4ade80' } : null,
   ].filter((level): level is ChartOverlayLevel => level !== null);
 
-  const legendItems: ChartOverlayLegendItem[] = [];
-  for (const zone of zones) {
-    addLegendItem(legendItems, zone.kind, zone.label, zone.borderColor);
-  }
   for (const level of levels) {
     addLegendItem(legendItems, level.key, level.label, level.color);
   }
