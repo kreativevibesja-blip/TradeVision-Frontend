@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -28,7 +28,10 @@ function getFallbackRoute(pathname: string): string | null {
 export function GlobalBackButton() {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const isLiveWorkspace = pathname === '/dashboard/tradingview' || pathname === '/dashboard/deriv';
+  const analysisId = searchParams.get('analysisId');
+  const returnTo = searchParams.get('returnTo');
 
   const fallbackRoute = useMemo(() => getFallbackRoute(pathname), [pathname]);
 
@@ -37,6 +40,11 @@ export function GlobalBackButton() {
   }
 
   const handleBack = () => {
+    if (pathname === '/analyze' && analysisId) {
+      router.replace(returnTo || '/analyze');
+      return;
+    }
+
     if (typeof window !== 'undefined' && window.history.length > 1) {
       router.back();
       return;
