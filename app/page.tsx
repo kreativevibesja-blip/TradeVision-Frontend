@@ -109,6 +109,25 @@ const FadeInSection = ({ children, className = '', delay = 0 }: { children: Reac
   </motion.div>
 );
 
+const strategyTags = [
+  'Smart Money Concepts',
+  'Supply & Demand',
+  'Liquidity Sweeps',
+  'Fair Value Gaps (FVG)',
+  'Break of Structure (BOS)',
+  'Change of Character (CHoCH)',
+  'Market Structure',
+  'Trend Continuation',
+  'Reversals',
+  'Support & Resistance',
+  'Order Blocks',
+  'Momentum Analysis',
+  'Multi-Timeframe Confluence',
+  'Entry Precision',
+  'Risk Management',
+  'Institutional Trading Concepts',
+];
+
 declare global {
   interface Window {
     Trustpilot?: {
@@ -216,6 +235,26 @@ export default function HomePage() {
           >
             <CandlestickLoader />
           </motion.div>
+        </div>
+      </section>
+
+      <section className="relative overflow-hidden border-y border-slate-700 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 py-3">
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-slate-950 to-transparent sm:w-24" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-slate-950 to-transparent sm:w-24" />
+
+        <div className="group relative flex w-full overflow-hidden">
+          <div className="marquee-track flex w-max min-w-max items-center gap-8 whitespace-nowrap pr-8 text-sm tracking-wide text-slate-300 sm:gap-10 sm:pr-10 sm:text-base [will-change:transform] group-hover:[animation-play-state:paused]">
+            {[0, 1].map((copyIndex) => (
+              <div key={copyIndex} className="flex items-center gap-8 sm:gap-10">
+                {strategyTags.map((tag) => (
+                  <div key={`${copyIndex}-${tag}`} className="flex items-center gap-8 sm:gap-10">
+                    <span className="transition-colors duration-200 hover:text-white">{tag}</span>
+                    <span className="text-slate-500">•</span>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -489,6 +528,22 @@ export default function HomePage() {
           </FadeInSection>
         </div>
       </section>
+
+      <style jsx>{`
+        .marquee-track {
+          animation: landing-marquee 26s linear infinite;
+        }
+
+        @keyframes landing-marquee {
+          0% {
+            transform: translateX(0);
+          }
+
+          100% {
+            transform: translateX(-50%);
+          }
+        }
+      `}</style>
     </div>
   );
 }
