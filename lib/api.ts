@@ -601,6 +601,23 @@ export const api = {
     },
     getOpenTicketCount: (token: string) =>
       apiFetch<{ count: number }>('/admin/tickets/count', { token }),
+    createTicket: (
+      data: {
+        userId: string;
+        whatsappNumber?: string;
+        subject: string;
+        category: TicketCategory;
+        priority: TicketPriority;
+        message: string;
+        adminNotes?: string;
+      },
+      token: string
+    ) =>
+      apiFetch<{ ticket: SupportTicket }>('/admin/tickets', {
+        method: 'POST',
+        body: JSON.stringify(data),
+        token,
+      }),
     updateTicket: (
       id: string,
       data: { status?: TicketStatus; adminNotes?: string; adminResponse?: string },
