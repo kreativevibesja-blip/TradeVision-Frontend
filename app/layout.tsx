@@ -7,6 +7,7 @@ import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { GlobalBackButton } from '@/components/GlobalBackButton';
 import { GlobalUpdatesModal } from '@/components/GlobalUpdatesModal';
+import { VisitorHeartbeat } from '@/components/VisitorHeartbeat';
 import { WhatsAppSupportButton } from '@/components/WhatsAppSupportButton';
 import { ReferralCapture } from '@/components/ReferralCapture';
 
@@ -35,6 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Suspense fallback={null}>
               <GlobalBackButton />
             </Suspense>
+            <VisitorHeartbeat />
             <GlobalUpdatesModal />
             <main className="flex-1 pt-16 pb-20 md:pb-0">{children}</main>
             <WhatsAppSupportButton />

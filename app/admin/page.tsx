@@ -4,26 +4,42 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
-import { api } from '@/lib/api';
-import { Users, Crown, FileText, DollarSign, TrendingUp, Activity } from 'lucide-react';
+import { api, type AdminDashboardStats } from '@/lib/api';
+import { Users, Crown, FileText, DollarSign, TrendingUp, Activity, RadioTower, PlayCircle } from 'lucide-react';
+
+const REFRESH_INTERVAL_MS = 30_000;
 
 export default function AdminDashboardPage() {
   const { token } = useAuth();
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<AdminDashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (token) loadStats();
+    if (!token) {
+      return;
+    }
+
+    void loadStats();
+    const intervalId = window.setInterval(() => {
+      void loadStats(false);
+    }, REFRESH_INTERVAL_MS);
+
+    return () => window.clearInterval(intervalId);
   }, [token]);
 
-  const loadStats = async () => {
+  const loadStats = async (showLoader = true) => {
     try {
+      if (showLoader) {
+        setLoading(true);
+      }
       const data = await api.admin.getDashboard(token!);
       setStats(data);
     } catch {
       // silently fail
     } finally {
-      setLoading(false);
+      if (showLoader) {
+        setLoading(false);
+      }
     }
   };
 
@@ -52,7 +68,24 @@ export default function AdminDashboardPage() {
       icon: DollarSign,
       color: 'from-yellow-500 to-orange-500',
     },
+    {
+      label: 'Live Visitors',
+      value: stats?.liveMetrics.currentVisitors || 0,
+      icon: RadioTower,
+      color: 'from-cyan-500 to-sky-500',
+    },
+    {
+      label: 'Running Analyses',
+      value: stats?.liveMetrics.activeAnalyses || 0,
+      icon: PlayCircle,
+      color: 'from-rose-500 to-orange-500',
+    },
   ];
+
+  const totalUsers = stats?.totalUsers ?? 0;
+  const activeSubscribers = stats?.activeSubscribers ?? 0;
+  const totalAnalyses = stats?.totalAnalyses ?? 0;
+  const totalRevenue = stats?.totalRevenue ?? 0;
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.28 }}>
@@ -61,7 +94,7 @@ export default function AdminDashboardPage() {
       {loading ? (
         <div className="text-center py-12 text-muted-foreground">Loading dashboard...</div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4 lg:gap-6">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 lg:gap-6">
           {statCards.map((stat, i) => (
             <motion.div
               key={stat.label}
@@ -133,26 +166,59 @@ export default function AdminDashboardPage() {
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Conversion Rate</span>
                 <span className="text-sm font-medium">
-                  {stats?.totalUsers > 0
-                    ? `${((stats.activeSubscribers / stats.totalUsers) * 100).toFixed(1)}%`
+                  {totalUsers > 0
+                    ? `${((activeSubscribers / totalUsers) * 100).toFixed(1)}%`
                     : '0%'}
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Avg Revenue/User</span>
                 <span className="text-sm font-medium">
-                  ${stats?.activeSubscribers > 0
-                    ? (stats.totalRevenue / stats.activeSubscribers).toFixed(2)
+                  ${activeSubscribers > 0
+                    ? (totalRevenue / activeSubscribers).toFixed(2)
                     : '0.00'}
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Analyses/User</span>
                 <span className="text-sm font-medium">
-                  {stats?.totalUsers > 0
-                    ? (stats.totalAnalyses / stats.totalUsers).toFixed(1)
+                  {totalUsers > 0
+                    ? (totalAnalyses / totalUsers).toFixed(1)
                     : '0'}
                 </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <RadioTower className="h-5 w-5 text-cyan-400" />
+              Live Pulse
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Visitors Live</p>
+                <p className="mt-3 text-2xl font-semibold">{stats?.liveMetrics.currentVisitors || 0}</p>
+                <p className="mt-1 text-xs text-muted-foreground">Seen in the last 5 minutes</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Visitors Today</p>
+                <p className="mt-3 text-2xl font-semibold">{stats?.liveMetrics.totalVisitorsToday || 0}</p>
+                <p className="mt-1 text-xs text-muted-foreground">Unique visitor sessions today</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Analyses Running</p>
+                <p className="mt-3 text-2xl font-semibold">{stats?.liveMetrics.activeAnalyses || 0}</p>
+                <p className="mt-1 text-xs text-muted-foreground">Queued or processing right now</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Analyses Today</p>
+                <p className="mt-3 text-2xl font-semibold">{stats?.liveMetrics.totalAnalysesToday || 0}</p>
+                <p className="mt-1 text-xs text-muted-foreground">Total analysis jobs created today</p>
               </div>
             </div>
           </CardContent>

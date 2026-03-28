@@ -7,8 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
+import { type AdminAnalyticsResponse } from '@/lib/api';
 import { addDaysToDateInputValue, formatJamaicaDate, getJamaicaDateInputValue } from '@/lib/jamaica-time';
-import { BarChart3, Users, CalendarRange, DollarSign } from 'lucide-react';
+import { BarChart3, Users, CalendarRange, DollarSign, RadioTower, PlayCircle } from 'lucide-react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -75,6 +76,7 @@ const normalizeApiUrl = (value?: string) => {
 };
 
 const API_URL = normalizeApiUrl(process.env.NEXT_PUBLIC_API_URL);
+const REFRESH_INTERVAL_MS = 30_000;
 
 type RangePreset = 'today' | 'yesterday' | '7d' | '30d' | 'custom';
 
@@ -99,7 +101,7 @@ const getPresetRange = (preset: Exclude<RangePreset, 'custom'>) => {
 
 export default function AdminAnalyticsPage() {
   const { token } = useAuth();
-  const [analytics, setAnalytics] = useState<any>(null);
+  const [analytics, setAnalytics] = useState<AdminAnalyticsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [preset, setPreset] = useState<RangePreset>('30d');
   const initialRange = getPresetRange('30d');
@@ -107,12 +109,23 @@ export default function AdminAnalyticsPage() {
   const [toDate, setToDate] = useState(initialRange.to);
 
   useEffect(() => {
-    if (token) loadAnalytics();
+    if (!token) {
+      return;
+    }
+
+    void loadAnalytics();
+    const intervalId = window.setInterval(() => {
+      void loadAnalytics(false);
+    }, REFRESH_INTERVAL_MS);
+
+    return () => window.clearInterval(intervalId);
   }, [token, fromDate, toDate]);
 
-  const loadAnalytics = async () => {
+  const loadAnalytics = async (showLoader = true) => {
     try {
-      setLoading(true);
+      if (showLoader) {
+        setLoading(true);
+      }
       const params = new URLSearchParams();
       if (fromDate) params.set('from', fromDate);
       if (toDate) params.set('to', toDate);
@@ -131,7 +144,9 @@ export default function AdminAnalyticsPage() {
       setAnalytics(data);
     } catch {
     } finally {
-      setLoading(false);
+      if (showLoader) {
+        setLoading(false);
+      }
     }
   };
 
@@ -146,7 +161,7 @@ export default function AdminAnalyticsPage() {
     setToDate(range.to);
   };
 
-  const processGroupedData = (data: any[], sumKey?: string) => {
+  const processGroupedData = (data?: any[], sumKey?: string) => {
     const byDate: Record<string, number> = {};
     (data || []).forEach((item: any) => {
       const date = formatJamaicaDate(item.createdAt, { month: 'short', day: 'numeric' });
@@ -225,6 +240,68 @@ export default function AdminAnalyticsPage() {
             </div>
           </CardContent>
         </Card>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <Card>
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Current Live Visitors</p>
+                  <p className="mt-3 text-3xl font-bold">{analytics?.liveMetrics.currentVisitors || 0}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Seen in the last 5 minutes</p>
+                </div>
+                <div className="rounded-2xl bg-cyan-500/10 p-3 text-cyan-300">
+                  <RadioTower className="h-5 w-5" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Visitors Today</p>
+                  <p className="mt-3 text-3xl font-bold">{analytics?.liveMetrics.totalVisitorsToday || 0}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Unique sessions tracked today</p>
+                </div>
+                <div className="rounded-2xl bg-blue-500/10 p-3 text-blue-300">
+                  <Users className="h-5 w-5" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Analyses Running</p>
+                  <p className="mt-3 text-3xl font-bold">{analytics?.liveMetrics.activeAnalyses || 0}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Queued or processing right now</p>
+                </div>
+                <div className="rounded-2xl bg-rose-500/10 p-3 text-rose-300">
+                  <PlayCircle className="h-5 w-5" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Analyses Today</p>
+                  <p className="mt-3 text-3xl font-bold">{analytics?.liveMetrics.totalAnalysesToday || 0}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Total analysis jobs created today</p>
+                </div>
+                <div className="rounded-2xl bg-emerald-500/10 p-3 text-emerald-300">
+                  <BarChart3 className="h-5 w-5" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
