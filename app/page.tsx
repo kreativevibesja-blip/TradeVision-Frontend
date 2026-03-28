@@ -1,8 +1,10 @@
 'use client';
 
+import { useEffect, useRef, useState } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import Script from 'next/script';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -107,9 +109,34 @@ const FadeInSection = ({ children, className = '', delay = 0 }: { children: Reac
   </motion.div>
 );
 
+declare global {
+  interface Window {
+    Trustpilot?: {
+      loadFromElement: (element: Element, forceReload?: boolean) => void;
+    };
+  }
+}
+
 export default function HomePage() {
+  const trustpilotRef = useRef<HTMLDivElement | null>(null);
+  const [isTrustpilotReady, setIsTrustpilotReady] = useState(false);
+
+  useEffect(() => {
+    if (!isTrustpilotReady || !trustpilotRef.current || !window.Trustpilot) {
+      return;
+    }
+
+    window.Trustpilot.loadFromElement(trustpilotRef.current, true);
+  }, [isTrustpilotReady]);
+
   return (
     <div className="relative overflow-x-hidden">
+      <Script
+        src="//widget.trustpilot.com/bootstrap/v5/tp.widget.bootstrap.min.js"
+        strategy="afterInteractive"
+        onLoad={() => setIsTrustpilotReady(true)}
+      />
+
       {/* ═══════ HERO SECTION ═══════ */}
       <section className="relative flex min-h-[90vh] items-center justify-center overflow-hidden py-10 sm:py-12">
         {/* Animated gradient background */}
@@ -335,6 +362,42 @@ export default function HomePage() {
               </FadeInSection>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ═══════ TRUSTPILOT ═══════ */}
+      <section className="py-16 sm:py-20 lg:py-24">
+        <div className="page-shell">
+          <FadeInSection>
+            <Card className="mx-auto max-w-4xl overflow-hidden border-white/10 bg-gradient-to-br from-[#0b1f3a] via-slate-950 to-[#133b2c]">
+              <CardContent className="grid gap-8 px-5 py-8 sm:px-8 sm:py-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-center lg:px-10">
+                <div>
+                  <Badge className="mb-4" variant="outline">Trustpilot</Badge>
+                  <h2 className="text-2xl font-bold sm:text-3xl">Review us on Trustpilot</h2>
+                  <p className="mt-3 max-w-md text-sm leading-6 text-white/70 sm:text-base">
+                    If TradeVision AI has helped your chart analysis, leave a public review so other traders can see your experience.
+                  </p>
+                </div>
+
+                <div className="rounded-3xl border border-white/10 bg-white/95 p-4 shadow-2xl shadow-black/20">
+                  <div
+                    ref={trustpilotRef}
+                    className="trustpilot-widget"
+                    data-locale="en-US"
+                    data-template-id="56278e9abfbbba0bdcd568bc"
+                    data-businessunit-id="69c7fb278c2ccae1dd2d6d52"
+                    data-style-height="52px"
+                    data-style-width="100%"
+                    data-token="b44c0529-4e65-4de9-a545-e63c92140fe7"
+                  >
+                    <a href="https://www.trustpilot.com/review/mytradevision.online" target="_blank" rel="noopener noreferrer">
+                      Trustpilot
+                    </a>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </FadeInSection>
         </div>
       </section>
 
