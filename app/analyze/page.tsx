@@ -1104,55 +1104,6 @@ function AnalyzePageContent() {
                     </CardContent>
                   </Card>
 
-                  <Card className="mobile-card">
-                    <CardHeader>
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        <Activity className="h-5 w-5 text-primary" />
-                        Liquidity
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-1">Liquidity Type</p>
-                        <p className="font-semibold capitalize">{analysis.liquidity.type || 'none'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-1">Liquidity Sweep</p>
-                        <p className="font-semibold capitalize">{analysis.liquidity.sweep}</p>
-                      </div>
-                      {isPro ? (
-                        <>
-                          {analysis.liquidity.description && (
-                            <div>
-                              <p className="text-sm text-muted-foreground mb-2">Liquidity Explanation</p>
-                              <p className="text-sm leading-relaxed text-muted-foreground">{analysis.liquidity.description}</p>
-                            </div>
-                          )}
-                          <div>
-                            <p className="text-sm text-muted-foreground mb-2">Liquidity Zones</p>
-                            {analysis.liquidity.liquidityZones.length > 0 ? (
-                              <div className="space-y-2">
-                                {analysis.liquidity.liquidityZones.map((zone, index) => (
-                                  <div key={`${zone}-${index}`} className="rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-muted-foreground">
-                                    {zone}
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <p className="text-sm text-muted-foreground">No clear liquidity zones were identified.</p>
-                            )}
-                          </div>
-                        </>
-                      ) : (
-                        <div className="rounded-xl border border-purple-500/20 bg-purple-500/5 p-3 flex items-center gap-2">
-                          <Lock className="h-4 w-4 text-purple-400 shrink-0" />
-                          <p className="text-xs text-muted-foreground">
-                            Detailed liquidity analysis available on <Link href="/pricing" className="text-purple-400 underline underline-offset-2">Pro</Link>
-                          </p>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
                 </div>
 
                 <div className="space-y-6">
