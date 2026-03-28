@@ -15,10 +15,8 @@ import { LIVE_CHART_SYMBOL_GROUPS, LIVE_CHART_SYMBOLS, LIVE_CHART_TIMEFRAMES, ge
 
 const STORAGE_KEY = 'dashboard_live_chart_state';
 const CACHE_KEY = 'dashboard_live_chart_analysis_cache';
-const RECENT_SYMBOLS_KEY = 'dashboard_live_chart_recent_pairs';
 const CACHE_TTL_MS = 5 * 60 * 1000;
 const ANALYZE_DEBOUNCE_MS = 1200;
-const MAX_RECENT_SYMBOLS = 8;
 
 interface StoredState {
   symbol: string;
@@ -65,26 +63,6 @@ const readCachedAnalysis = (): CachedAnalysis | null => {
   }
 };
 
-const readRecentSymbols = (): string[] => {
-  try {
-    const raw = window.localStorage.getItem(RECENT_SYMBOLS_KEY);
-    if (!raw) {
-      return [];
-    }
-
-    const parsed = JSON.parse(raw) as string[];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-};
-
-const rememberRecentSymbol = (nextSymbol: string) => {
-  const nextRecent = [nextSymbol, ...readRecentSymbols().filter((value) => value !== nextSymbol)].slice(0, MAX_RECENT_SYMBOLS);
-  window.localStorage.setItem(RECENT_SYMBOLS_KEY, JSON.stringify(nextRecent));
-  return nextRecent;
-};
-
 export default function TradingViewDashboardPage() {
   const router = useRouter();
   const { user, token, loading: authLoading } = useAuth();
@@ -93,7 +71,6 @@ export default function TradingViewDashboardPage() {
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState('');
   const [cachedAnalysis, setCachedAnalysis] = useState<CachedAnalysis | null>(null);
-  const [recentSymbols, setRecentSymbols] = useState<string[]>([]);
   const [panelOpen, setPanelOpen] = useState(false);
   const [chartLoading, setChartLoading] = useState(true);
   const lastAnalyzeAtRef = useRef(0);
@@ -106,12 +83,10 @@ export default function TradingViewDashboardPage() {
     if (stored?.timeframe) {
       setTimeframe(stored.timeframe);
     }
-    setRecentSymbols(readRecentSymbols());
   }, []);
 
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ symbol, timeframe }));
-    setRecentSymbols(rememberRecentSymbol(symbol));
   }, [symbol, timeframe]);
 
   useEffect(() => {
@@ -402,23 +377,6 @@ export default function TradingViewDashboardPage() {
               </div>
             </div>
 
-            <div className="mt-3 flex items-center gap-2 overflow-x-auto pb-1">
-              <span className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Recent</span>
-              {recentSymbols.length > 0 ? recentSymbols.map((pair) => {
-                const pairMeta = getLiveChartSymbol(pair);
-                const isActive = pair === symbol;
-                return (
-                  <button
-                    key={pair}
-                    type="button"
-                    onClick={() => setSymbol(pair)}
-                    className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition ${isActive ? 'border-blue-400/50 bg-blue-500/15 text-blue-100' : 'border-slate-700 bg-slate-800/80 text-slate-300 hover:border-slate-600 hover:text-slate-100'}`}
-                  >
-                    {pairMeta.label}
-                  </button>
-                );
-              }) : <span className="text-xs text-slate-500">Your recent pairs will appear here.</span>}
-            </div>
           </div>
 
           <motion.div layout className="relative flex min-h-[56svh] flex-1 overflow-hidden rounded-2xl border border-slate-800/90 bg-slate-950 shadow-[0_30px_100px_rgba(2,6,23,0.45)] lg:min-h-0">
