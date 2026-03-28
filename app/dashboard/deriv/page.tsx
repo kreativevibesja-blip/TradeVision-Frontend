@@ -42,6 +42,27 @@ const DERIV_SYMBOL_GROUPS = [
   { label: 'Boom & Crash', value: 'boom-crash' },
 ] as const;
 
+const formatTradingPrice = (value: number | null) => {
+  if (value == null || !Number.isFinite(value)) {
+    return '-';
+  }
+
+  return Number(value).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 4,
+  });
+};
+
+const deriveKeyLevels = (zones: DerivAnalysisResult['zones']) => {
+  const supportCandidates = zones.filter((zone) => zone.type === 'demand').map((zone) => Math.max(zone.start, zone.end));
+  const resistanceCandidates = zones.filter((zone) => zone.type === 'supply').map((zone) => Math.min(zone.start, zone.end));
+
+  return {
+    support: supportCandidates.length > 0 ? supportCandidates[0] : null,
+    resistance: resistanceCandidates.length > 0 ? resistanceCandidates[0] : null,
+  };
+};
+
 const readStoredState = (): StoredState | null => {
   if (typeof window === 'undefined') {
     return null;
@@ -156,6 +177,7 @@ export default function DerivDashboardPage() {
     () => (persistedAnalysis ? mapAnalysisResultToChartOverlay(persistedAnalysis, toChartCandles(candles)) : mapDerivAnalysisToChartOverlay(analysis, toChartCandles(candles))),
     [analysis, candles, persistedAnalysis]
   );
+  const keyLevels = useMemo(() => deriveKeyLevels(analysis?.zones ?? []), [analysis?.zones]);
 
   useEffect(() => {
     if (!token || !analysis?.analysisId) {
@@ -369,18 +391,18 @@ export default function DerivDashboardPage() {
                 <Badge variant="outline" className="capitalize">{analysis.verdict}</Badge>
               </div>
 
-              <div className="mt-4 grid grid-cols-3 gap-3">
+              <div className="mt-4 grid grid-cols-1 gap-2">
                 <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-3">
                   <p className="text-[11px] uppercase tracking-[0.14em] text-slate-500">Entry</p>
-                  <p className="mt-2 text-base font-semibold text-slate-100">{analysis.entry ?? '-'}</p>
+                  <p className="mt-2 break-words text-base font-semibold tabular-nums text-slate-100">{formatTradingPrice(analysis.entry)}</p>
                 </div>
                 <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3">
                   <p className="text-[11px] uppercase tracking-[0.14em] text-red-200/70">Stop</p>
-                  <p className="mt-2 text-base font-semibold text-red-100">{analysis.stopLoss ?? '-'}</p>
+                  <p className="mt-2 break-words text-base font-semibold tabular-nums text-red-100">{formatTradingPrice(analysis.stopLoss)}</p>
                 </div>
                 <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3">
                   <p className="text-[11px] uppercase tracking-[0.14em] text-emerald-200/70">Target</p>
-                  <p className="mt-2 text-base font-semibold text-emerald-100">{analysis.takeProfit ?? '-'}</p>
+                  <p className="mt-2 break-words text-base font-semibold tabular-nums text-emerald-100">{formatTradingPrice(analysis.takeProfit)}</p>
                 </div>
               </div>
 
@@ -399,20 +421,30 @@ export default function DerivDashboardPage() {
             </div>
 
             <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Detected zones</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Key levels</p>
               <div className="mt-3 space-y-2">
-                {analysis.zones.length > 0 ? analysis.zones.map((zone, index) => (
-                  <div key={`${zone.type}-${index}`} className="flex items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-900/70 px-3 py-2">
-                    <Badge className={zone.type === 'demand' ? 'bg-emerald-500/10 text-emerald-200' : 'bg-red-500/10 text-red-200'}>{zone.type}</Badge>
-                    <span className="text-xs text-slate-400">{Math.min(zone.start, zone.end)} - {Math.max(zone.start, zone.end)}</span>
-                  </div>
-                )) : <p className="text-slate-400">No valid supply or demand zones returned.</p>}
+                {keyLevels.support != null || keyLevels.resistance != null ? (
+                  <>
+                    {keyLevels.support != null ? (
+                      <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-900/70 px-3 py-2">
+                        <Badge className="bg-emerald-500/10 text-emerald-200">Support</Badge>
+                        <span className="text-xs tabular-nums text-slate-300">{formatTradingPrice(keyLevels.support)}</span>
+                      </div>
+                    ) : null}
+                    {keyLevels.resistance != null ? (
+                      <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-900/70 px-3 py-2">
+                        <Badge className="bg-amber-500/10 text-amber-200">Resistance</Badge>
+                        <span className="text-xs tabular-nums text-slate-300">{formatTradingPrice(keyLevels.resistance)}</span>
+                      </div>
+                    ) : null}
+                  </>
+                ) : <p className="text-slate-400">No valid support or resistance levels were returned.</p>}
               </div>
             </div>
           </>
         ) : (
           <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 text-slate-400">
-            Run Analyze to generate AI zones, entry levels, and a persisted Deriv result.
+            Run Analyze to generate support and resistance levels, entry levels, and a persisted Deriv result.
           </div>
         )}
 
