@@ -71,6 +71,20 @@ const addLegendItem = (items: ChartOverlayLegendItem[], key: string, label: stri
   }
 };
 
+const toLowerBound = (first: number, second: number) => Math.min(first, second);
+const toUpperBound = (first: number, second: number) => Math.max(first, second);
+
+const findNearestLevel = (prices: number[], referencePrice: number, direction: 'support' | 'resistance') => {
+  if (prices.length === 0) {
+    return null;
+  }
+
+  const directional = prices.filter((price) => (direction === 'support' ? price <= referencePrice : price >= referencePrice));
+  const source = directional.length > 0 ? directional : prices;
+
+  return source.sort((left, right) => Math.abs(left - referencePrice) - Math.abs(right - referencePrice))[0] ?? null;
+};
+
 export const toChartCandles = (candles: DerivCandle[]): ChartCandle[] => candles;
 
 export const mapAnalysisResultToChartOverlay = (analysis: AnalysisResult | null, candles: ChartCandle[]): ChartOverlaySet | null => {
@@ -81,32 +95,6 @@ export const mapAnalysisResultToChartOverlay = (analysis: AnalysisResult | null,
   const zones: ChartOverlayZone[] = [];
   const levels: ChartOverlayLevel[] = [];
   const legendItems: ChartOverlayLegendItem[] = [];
-
-  const pushZone = (
-    kind: ChartOverlayZone['kind'],
-    label: string,
-    start: number | null | undefined,
-    end: number | null | undefined,
-    color: string,
-    borderColor: string
-  ) => {
-    if (start == null || end == null) {
-      return;
-    }
-
-    const window = deriveZoneWindow(start, end, candles);
-    zones.push({
-      key: `${kind}-${start}-${end}`,
-      kind,
-      start,
-      end,
-      label,
-      color,
-      borderColor,
-      ...window,
-    });
-    addLegendItem(legendItems, kind, label, borderColor);
-  };
 
   const pushLevel = (
     key: string,
@@ -123,11 +111,15 @@ export const mapAnalysisResultToChartOverlay = (analysis: AnalysisResult | null,
     addLegendItem(legendItems, key, label, color);
   };
 
-  pushZone('supply', 'Supply zone', analysis.zones?.supplyZone?.min, analysis.zones?.supplyZone?.max, 'rgba(239, 68, 68, 0.16)', 'rgba(248, 113, 113, 0.72)');
-  pushZone('demand', 'Demand zone', analysis.zones?.demandZone?.min, analysis.zones?.demandZone?.max, 'rgba(34, 197, 94, 0.16)', 'rgba(74, 222, 128, 0.72)');
-
   const entryZone = analysis.entryPlan?.entryZone ?? analysis.entryZone ?? analysis.entryLogic?.entryZone ?? null;
-  pushZone('entry', 'Entry zone', entryZone?.min, entryZone?.max, 'rgba(59, 130, 246, 0.14)', 'rgba(96, 165, 250, 0.78)');
+
+  if (analysis.zones?.demandZone?.min != null && analysis.zones?.demandZone?.max != null) {
+    pushLevel('support', 'Support', toUpperBound(analysis.zones.demandZone.min, analysis.zones.demandZone.max), '#4ade80');
+  }
+
+  if (analysis.zones?.supplyZone?.min != null && analysis.zones?.supplyZone?.max != null) {
+    pushLevel('resistance', 'Resistance', toLowerBound(analysis.zones.supplyZone.min, analysis.zones.supplyZone.max), '#f59e0b');
+  }
 
   pushLevel('entry', 'Entry', midpoint(entryZone?.min, entryZone?.max), '#60a5fa');
   pushLevel('stop-loss', 'Stop Loss', analysis.stopLoss ?? analysis.invalidationLevel, '#f87171');
@@ -148,26 +140,20 @@ export const mapDerivAnalysisToChartOverlay = (analysis: DerivAnalysisResult | n
     return null;
   }
 
-  const zones: ChartOverlayZone[] = analysis.zones
-    .filter((zone) => Number.isFinite(zone.start) && Number.isFinite(zone.end))
-    .map((zone, index) => {
-      const window = zone.fromTime != null && zone.toTime != null
-        ? { fromTime: zone.fromTime, toTime: zone.toTime }
-        : deriveZoneWindow(zone.start, zone.end, candles);
-
-      return {
-        key: `${zone.type}-${zone.start}-${zone.end}-${index}`,
-        kind: zone.type,
-        start: zone.start,
-        end: zone.end,
-        label: zone.type === 'demand' ? 'Demand zone' : 'Supply zone',
-        color: zone.type === 'demand' ? 'rgba(34, 197, 94, 0.16)' : 'rgba(239, 68, 68, 0.16)',
-        borderColor: zone.type === 'demand' ? 'rgba(74, 222, 128, 0.72)' : 'rgba(248, 113, 113, 0.72)',
-        ...window,
-      };
-    });
+  const zones: ChartOverlayZone[] = [];
+  const currentPrice = candles[candles.length - 1]?.close ?? 0;
+  const supportCandidates = analysis.zones
+    .filter((zone) => zone.type === 'demand' && Number.isFinite(zone.start) && Number.isFinite(zone.end))
+    .map((zone) => toUpperBound(zone.start, zone.end));
+  const resistanceCandidates = analysis.zones
+    .filter((zone) => zone.type === 'supply' && Number.isFinite(zone.start) && Number.isFinite(zone.end))
+    .map((zone) => toLowerBound(zone.start, zone.end));
+  const support = findNearestLevel(supportCandidates, currentPrice, 'support');
+  const resistance = findNearestLevel(resistanceCandidates, currentPrice, 'resistance');
 
   const levels: ChartOverlayLevel[] = [
+    support != null ? { key: 'support', label: 'Support', price: support, color: '#4ade80' } : null,
+    resistance != null ? { key: 'resistance', label: 'Resistance', price: resistance, color: '#f59e0b' } : null,
     analysis.entry != null ? { key: 'entry', label: 'Entry', price: analysis.entry, color: '#60a5fa' } : null,
     analysis.stopLoss != null ? { key: 'stop-loss', label: 'Stop Loss', price: analysis.stopLoss, color: '#f87171' } : null,
     analysis.takeProfit != null ? { key: 'tp1', label: 'TP1', price: analysis.takeProfit, color: '#4ade80' } : null,
