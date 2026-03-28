@@ -45,6 +45,16 @@ export interface DerivAnalysisResult {
   verdict: 'enter' | 'wait' | 'avoid';
   reasoning: string;
   zones: DerivZone[];
+  counterTrendPlan?: {
+    action: 'enter' | 'wait' | 'avoid';
+    bias: 'buy' | 'sell' | 'none';
+    entry: number | null;
+    stopLoss: number | null;
+    takeProfit: number | null;
+    warning: string;
+    reason: string;
+    confidence: number;
+  } | null;
 }
 
 export const DERIV_SYMBOLS: DerivSymbolOption[] = [
@@ -160,5 +170,19 @@ export const mapPersistedAnalysisToDerivResult = (
     verdict: analysis.finalVerdict?.action ?? 'wait',
     reasoning: analysis.reasoning || analysis.message || 'No high-probability setup found.',
     zones,
+    counterTrendPlan: analysis.counterTrendPlan
+      ? {
+          action: analysis.counterTrendPlan.action,
+          bias: analysis.counterTrendPlan.bias,
+          entry: analysis.counterTrendPlan.entryZone?.min != null && analysis.counterTrendPlan.entryZone?.max != null
+            ? (analysis.counterTrendPlan.entryZone.min + analysis.counterTrendPlan.entryZone.max) / 2
+            : null,
+          stopLoss: analysis.counterTrendPlan.stopLoss,
+          takeProfit: analysis.counterTrendPlan.takeProfit1,
+          warning: analysis.counterTrendPlan.warning,
+          reason: analysis.counterTrendPlan.reason,
+          confidence: analysis.counterTrendPlan.confidence,
+        }
+      : null,
   };
 };
