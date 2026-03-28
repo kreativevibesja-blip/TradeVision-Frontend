@@ -144,7 +144,10 @@ export default function DerivDashboardPage() {
   const selectedTimeframe = useMemo(() => getDerivTimeframe(timeframe), [timeframe]);
   const selectedSymbol = useMemo(() => getDerivSymbol(symbol), [symbol]);
   const chartOverlay = useMemo(
-    () => (persistedAnalysis ? mapAnalysisResultToChartOverlay(persistedAnalysis, toChartCandles(candles)) : mapDerivAnalysisToChartOverlay(analysis, toChartCandles(candles))),
+    () =>
+      persistedAnalysis
+        ? mapAnalysisResultToChartOverlay(persistedAnalysis, toChartCandles(candles), { useZoneBoxes: true })
+        : mapDerivAnalysisToChartOverlay(analysis, toChartCandles(candles)),
     [analysis, candles, persistedAnalysis]
   );
   const keyLevels = useMemo(() => deriveKeyLevels(analysis?.zones ?? []), [analysis?.zones]);
