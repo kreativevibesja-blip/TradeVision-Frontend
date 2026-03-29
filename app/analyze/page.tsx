@@ -12,6 +12,7 @@ import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { api, resolveAssetUrl, type AnalysisResult } from '@/lib/api';
+import { buildAutoTraderSignalFromAnalysis } from '@/lib/autotrader-signal';
 import { AuthModal } from '@/components/AuthModal';
 import { ChartLightbox } from '@/components/ChartLightbox';
 import {
@@ -36,6 +37,7 @@ import {
   CircleDollarSign,
   Lock,
   Crown,
+  Bot,
 } from 'lucide-react';
 
 const PAIRS = [
@@ -331,6 +333,8 @@ function AnalyzePageContent() {
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [queueStarting, setQueueStarting] = useState(false);
+  const [sendingToAutotrader, setSendingToAutotrader] = useState(false);
+  const [autotraderNotice, setAutotraderNotice] = useState('');
   const analysisId = searchParams.get('analysisId');
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -343,6 +347,7 @@ function AnalyzePageContent() {
     setPreview(URL.createObjectURL(nextFile));
     setAnalysis(null);
     setError('');
+    setAutotraderNotice('');
   }, []);
 
   const onDrop2 = useCallback((acceptedFiles: File[]) => {
@@ -355,6 +360,7 @@ function AnalyzePageContent() {
     setPreview2(URL.createObjectURL(nextFile));
     setAnalysis(null);
     setError('');
+    setAutotraderNotice('');
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -564,6 +570,7 @@ function AnalyzePageContent() {
 
   const trend = analysis?.trend || 'ranging';
   const signalType = analysis?.signalType || 'wait';
+  const autoTraderDraft = analysis ? buildAutoTraderSignalFromAnalysis(analysis) : null;
   const originalChartUrl = preview || resolveAssetUrl(analysis?.originalImageUrl || analysis?.imageUrl || null);
   const markedChartUrl = resolveAssetUrl(analysis?.markedImageUrl || null);
   const displayedChartUrl = showAiZones && markedChartUrl ? markedChartUrl : originalChartUrl;
@@ -571,6 +578,24 @@ function AnalyzePageContent() {
     step,
     complete: progress >= (index + 1) * 20 || currentStage === step,
   }));
+
+  const handleSendToAutotrader = async () => {
+    if (!token || !analysis || !autoTraderDraft) {
+      setAutotraderNotice('This analysis does not include a complete entry, stop loss, and take profit for AutoTrader yet.');
+      return;
+    }
+
+    try {
+      setSendingToAutotrader(true);
+      setAutotraderNotice('');
+      await api.autotrader.createSignal(autoTraderDraft, token);
+      setAutotraderNotice('Signal sent to AutoTrader. Review it from the AutoTrader dashboard before execution.');
+    } catch (sendError: any) {
+      setAutotraderNotice(sendError?.message || 'Unable to send this setup to AutoTrader.');
+    } finally {
+      setSendingToAutotrader(false);
+    }
+  };
 
   return (
     <div className="min-h-screen py-8">
@@ -859,27 +884,59 @@ function AnalyzePageContent() {
                     {pair} · {analysis?.isDualChart ? `${timeframe} / ${timeframe2}` : timeframe}
                   </span>
                 </div>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    clearAnalyzeDraft();
-                    router.replace('/analyze');
-                    setAnalysis(null);
-                    setFile(null);
-                    setPreview(null);
-                    setFile2(null);
-                    setPreview2(null);
-                    setTimeframe2('');
-                    setActiveChart('ltf');
-                    setShowAiZones(true);
-                    setProgress(0);
-                    setCurrentStage(ANALYSIS_STEPS[0]);
-                    setError('');
-                  }}
-                >
-                  New Analysis
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  {user?.subscription === 'TOP_TIER' ? (
+                    <Button
+                      onClick={handleSendToAutotrader}
+                      disabled={sendingToAutotrader || !autoTraderDraft}
+                      className="gap-2 bg-emerald-600 text-white hover:bg-emerald-500 disabled:bg-emerald-600/50"
+                    >
+                      {sendingToAutotrader ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bot className="h-4 w-4" />}
+                      Send to AutoTrader
+                    </Button>
+                  ) : null}
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      clearAnalyzeDraft();
+                      router.replace('/analyze');
+                      setAnalysis(null);
+                      setFile(null);
+                      setPreview(null);
+                      setFile2(null);
+                      setPreview2(null);
+                      setTimeframe2('');
+                      setActiveChart('ltf');
+                      setShowAiZones(true);
+                      setProgress(0);
+                      setCurrentStage(ANALYSIS_STEPS[0]);
+                      setError('');
+                      setAutotraderNotice('');
+                    }}
+                  >
+                    New Analysis
+                  </Button>
+                </div>
               </div>
+
+              {user?.subscription === 'TOP_TIER' ? (
+                <Card className="mobile-card border-emerald-500/20 bg-emerald-500/5">
+                  <CardContent className="flex flex-col gap-3 p-5 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-emerald-100">AutoTrader handoff</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        This button creates a pending MT5 signal with the current entry, stop loss, and first take profit so you can review or execute it from AutoTrader.
+                      </p>
+                      {autotraderNotice ? <p className="mt-2 text-xs text-muted-foreground">{autotraderNotice}</p> : null}
+                    </div>
+                    <div className="rounded-2xl border border-emerald-500/20 bg-black/20 px-4 py-3 text-sm text-emerald-100">
+                      {autoTraderDraft
+                        ? `${autoTraderDraft.direction.toUpperCase()} ${autoTraderDraft.symbol} at ${formatPrice(autoTraderDraft.entryPrice, pair)}`
+                        : 'This result is informational only and cannot be auto-traded yet.'}
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : null}
 
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6">
                 <div className="lg:col-span-2 space-y-6">

@@ -11,6 +11,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { TradingViewAdvancedChart } from '@/components/TradingViewAdvancedChart';
 import { useAuth } from '@/hooks/useAuth';
 import { api, type AnalysisResult } from '@/lib/api';
+import { buildAutoTraderSignalFromAnalysis } from '@/lib/autotrader-signal';
 import { formatJamaicaDateTime } from '@/lib/jamaica-time';
 import { LIVE_CHART_SYMBOL_GROUPS, LIVE_CHART_SYMBOLS, LIVE_CHART_TIMEFRAMES, getLiveChartSymbol, getLiveChartTimeframe } from '@/lib/live-chart';
 
@@ -74,6 +75,8 @@ export default function TradingViewDashboardPage() {
   const [cachedAnalysis, setCachedAnalysis] = useState<CachedAnalysis | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
   const [chartLoading, setChartLoading] = useState(true);
+  const [autotraderMessage, setAutotraderMessage] = useState('');
+  const [sendingToAutotrader, setSendingToAutotrader] = useState(false);
   const lastAnalyzeAtRef = useRef(0);
 
   useEffect(() => {
@@ -111,6 +114,28 @@ export default function TradingViewDashboardPage() {
   const selectedSymbol = useMemo(() => getLiveChartSymbol(symbol), [symbol]);
   const selectedTimeframe = useMemo(() => getLiveChartTimeframe(timeframe), [timeframe]);
   const cacheMatchesSelection = cachedAnalysis?.symbol === symbol && cachedAnalysis?.timeframe === timeframe;
+
+  const handleSendToAutotrader = async () => {
+    if (!token || !cachedAnalysis?.analysisId) {
+      return;
+    }
+
+    try {
+      setSendingToAutotrader(true);
+      setAutotraderMessage('');
+      const { analysis } = await api.getAnalysis(cachedAnalysis.analysisId, token);
+      const draft = buildAutoTraderSignalFromAnalysis(analysis);
+      if (!draft) {
+        throw new Error('The current live result does not include a complete execution plan yet.');
+      }
+      await api.autotrader.createSignal(draft, token);
+      setAutotraderMessage('Live chart signal sent to AutoTrader.');
+    } catch (sendError: any) {
+      setAutotraderMessage(sendError?.message || 'Unable to send this live chart setup to AutoTrader.');
+    } finally {
+      setSendingToAutotrader(false);
+    }
+  };
 
   const startAnalysis = async (forceFresh = false) => {
     if (!token || !user || user.subscription === 'FREE' || analyzing) {
@@ -288,11 +313,18 @@ export default function TradingViewDashboardPage() {
                 <Link href={`/analyze?analysisId=${encodeURIComponent(cachedAnalysis.analysisId)}`}>
                   <Button variant="outline" className="h-10 border-slate-700 bg-slate-900/70 px-4">Open Result</Button>
                 </Link>
+                {user?.subscription === 'TOP_TIER' ? (
+                  <Button onClick={() => void handleSendToAutotrader()} disabled={sendingToAutotrader} className="h-10 bg-emerald-600 px-4 text-white hover:bg-emerald-500">
+                    {sendingToAutotrader ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Zap className="mr-2 h-4 w-4" />}
+                    Send to AutoTrader
+                  </Button>
+                ) : null}
                 <Button onClick={() => void startAnalysis(true)} disabled={analyzing} className="h-10 bg-blue-500 px-4 text-white hover:bg-blue-600">
                   <RefreshCcw className={`mr-2 h-4 w-4 ${analyzing ? 'animate-spin' : ''}`} />
                   Re-analyze
                 </Button>
               </div>
+              {autotraderMessage ? <p className="text-xs text-slate-400">{autotraderMessage}</p> : null}
             </div>
           ) : (
             <p className="mt-3 text-slate-400">No cached result yet. Run the chart to save a fresh live analysis.</p>

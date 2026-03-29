@@ -11,6 +11,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { LiveChart, type LiveChartStatus } from '@/components/LiveChart';
 import { useAuth } from '@/hooks/useAuth';
 import { api, type AnalysisResult } from '@/lib/api';
+import { buildAutoTraderSignalFromAnalysis, buildAutoTraderSignalFromDerivAnalysis } from '@/lib/autotrader-signal';
 import { DERIV_ANALYSIS_CANDLE_COUNT, DERIV_SYMBOLS, DERIV_TIMEFRAMES, mapPersistedAnalysisToDerivResult, type DerivAnalysisResult, type DerivCandle, getDerivSymbol, getDerivTimeframe } from '@/lib/deriv-live';
 import { mapAnalysisResultToChartOverlay, mapDerivAnalysisToChartOverlay, toChartCandles } from '@/lib/live-chart-drawings';
 
@@ -111,6 +112,8 @@ export default function DerivDashboardPage() {
   const [analyzing, setAnalyzing] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
   const [liveStatus, setLiveStatus] = useState<LiveChartStatus>({ connectionState: 'connecting', loadingHistory: true, candleCount: 0 });
+  const [autotraderMessage, setAutotraderMessage] = useState('');
+  const [sendingToAutotrader, setSendingToAutotrader] = useState(false);
   const lastAnalyzeAtRef = useRef(0);
 
   useEffect(() => {
@@ -317,6 +320,31 @@ export default function DerivDashboardPage() {
         : { label: 'Connecting', icon: Loader2, className: 'border-sky-500/30 bg-sky-500/10 text-sky-100', dot: 'bg-sky-300' };
   const StatusIcon = statusTone.icon;
 
+  const handleSendToAutotrader = async () => {
+    if (!token || !analysis) {
+      return;
+    }
+
+    try {
+      setSendingToAutotrader(true);
+      setAutotraderMessage('');
+      const draft = persistedAnalysis
+        ? buildAutoTraderSignalFromAnalysis(persistedAnalysis)
+        : buildAutoTraderSignalFromDerivAnalysis(analysis, symbol);
+
+      if (!draft) {
+        throw new Error('The current Deriv result does not include a complete execution plan yet.');
+      }
+
+      await api.autotrader.createSignal(draft, token);
+      setAutotraderMessage('Deriv setup sent to AutoTrader.');
+    } catch (sendError: any) {
+      setAutotraderMessage(sendError?.message || 'Unable to send this Deriv setup to AutoTrader.');
+    } finally {
+      setSendingToAutotrader(false);
+    }
+  };
+
   const panelContent = (
     <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-800/90 bg-slate-900/80 backdrop-blur-xl">
       <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
@@ -384,8 +412,15 @@ export default function DerivDashboardPage() {
                   <Link href={`/analyze?analysisId=${encodeURIComponent(analysis.analysisId)}`}>
                     <Button variant="outline" className="h-10 border-slate-700 bg-slate-900/70 px-4">Open Full Result</Button>
                   </Link>
+                  {user?.subscription === 'TOP_TIER' ? (
+                    <Button onClick={() => void handleSendToAutotrader()} disabled={sendingToAutotrader} className="h-10 bg-emerald-600 px-4 text-white hover:bg-emerald-500">
+                      {sendingToAutotrader ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Zap className="mr-2 h-4 w-4" />}
+                      Send to AutoTrader
+                    </Button>
+                  ) : null}
                 </div>
               ) : null}
+              {autotraderMessage ? <p className="mt-3 text-xs text-slate-400">{autotraderMessage}</p> : null}
             </div>
 
             <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">

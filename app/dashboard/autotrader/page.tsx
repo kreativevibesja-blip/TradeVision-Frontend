@@ -60,10 +60,28 @@ export default function AutoTraderPage() {
     killSwitch: false,
   });
   const [loading, setLoading] = useState(true);
-  const [connectForm, setConnectForm] = useState({ accountId: '', broker: '', serverName: '' });
+  const [connectForm, setConnectForm] = useState({ accountId: '', broker: '', serverName: '', accountPassword: '' });
   const [settingsForm, setSettingsForm] = useState<RiskSettings>(settings);
   const [settingsDirty, setSettingsDirty] = useState(false);
   const [tab, setTab] = useState<'signals' | 'settings'>('signals');
+  const [connectionNotice, setConnectionNotice] = useState('');
+
+  const formatAccountAmount = (value: number | null, currency: string | null) => {
+    if (value == null || !Number.isFinite(value)) {
+      return 'Awaiting MT5 terminal sync';
+    }
+
+    try {
+      return new Intl.NumberFormat(undefined, {
+        style: currency ? 'currency' : 'decimal',
+        currency: currency || undefined,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(value);
+    } catch {
+      return `${value.toFixed(2)}${currency ? ` ${currency}` : ''}`;
+    }
+  };
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -94,8 +112,12 @@ export default function AutoTraderPage() {
     if (!token) return;
     const interval = setInterval(async () => {
       try {
-        const sigRes = await api.autotrader.getSignals(token);
+        const [sigRes, connRes] = await Promise.all([
+          api.autotrader.getSignals(token),
+          api.autotrader.getConnection(token),
+        ]);
         setSignals(sigRes.signals);
+        setConnection(connRes.connection);
       } catch {
         // silent
       }
@@ -108,9 +130,10 @@ export default function AutoTraderPage() {
     try {
       const res = await api.autotrader.connect(connectForm, token);
       setConnection(res.connection);
-      setConnectForm({ accountId: '', broker: '', serverName: '' });
+      setConnectForm({ accountId: '', broker: '', serverName: '', accountPassword: '' });
+      setConnectionNotice('MT5 credentials saved. Open the EA in your terminal to sync the live account name and balance.');
     } catch {
-      // silent
+      setConnectionNotice('Unable to save your MT5 connection details right now.');
     }
   };
 
@@ -119,8 +142,9 @@ export default function AutoTraderPage() {
     try {
       await api.autotrader.disconnect(token);
       setConnection(null);
+      setConnectionNotice('MT5 connection removed.');
     } catch {
-      // silent
+      setConnectionNotice('Unable to disconnect MT5 right now.');
     }
   };
 
@@ -302,8 +326,8 @@ export default function AutoTraderPage() {
           <Card>
             <CardHeader><CardTitle className="text-base">Connect MT5 Account</CardTitle></CardHeader>
             <CardContent className="space-y-3">
-              <p className="text-sm text-muted-foreground">Enter your MT5 account details. The Expert Advisor will authenticate using these credentials.</p>
-              <div className="grid gap-3 sm:grid-cols-3">
+              <p className="text-sm text-muted-foreground">Enter the MT5 login that matches the terminal running the Expert Advisor. The dashboard stores your password, while the EA heartbeat fills in the live account name, balance, equity, and currency.</p>
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 <div>
                   <Label className="text-xs">Account ID *</Label>
                   <Input placeholder="e.g. 12345678" value={connectForm.accountId} onChange={(e) => setConnectForm((p) => ({ ...p, accountId: e.target.value }))} />
@@ -316,7 +340,12 @@ export default function AutoTraderPage() {
                   <Label className="text-xs">Server</Label>
                   <Input placeholder="e.g. ICMarkets-Live" value={connectForm.serverName} onChange={(e) => setConnectForm((p) => ({ ...p, serverName: e.target.value }))} />
                 </div>
+                <div>
+                  <Label className="text-xs">MT5 Password</Label>
+                  <Input type="password" placeholder="Your MT5 password" value={connectForm.accountPassword} onChange={(e) => setConnectForm((p) => ({ ...p, accountPassword: e.target.value }))} />
+                </div>
               </div>
+              {connectionNotice ? <p className="text-xs text-muted-foreground">{connectionNotice}</p> : null}
               <Button onClick={handleConnect} disabled={!connectForm.accountId.trim()}>
                 <Wifi className="h-4 w-4 mr-1" /> Connect
               </Button>
@@ -326,20 +355,62 @@ export default function AutoTraderPage() {
       )}
 
       {connection?.isActive && (
-        <Card>
-          <CardContent className="p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Wifi className="h-4 w-4 text-green-400" />
-              <div>
-                <p className="text-sm font-medium">{connection.broker || 'MT5'} — {connection.accountId}</p>
-                <p className="text-xs text-muted-foreground">{connection.serverName || 'Connected'}</p>
+        <div className="grid gap-4 lg:grid-cols-[1.4fr_0.8fr]">
+          <Card>
+            <CardContent className="p-5">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="rounded-2xl bg-emerald-500/10 p-3 text-emerald-300">
+                    <Wifi className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Connected MT5 account</p>
+                    <p className="text-lg font-semibold">{connection.accountName || connection.broker || 'MT5 account'}</p>
+                    <p className="text-sm text-muted-foreground">{connection.accountId}{connection.serverName ? ` · ${connection.serverName}` : ''}</p>
+                  </div>
+                </div>
+                <Button variant="outline" size="sm" onClick={handleDisconnect}>
+                  <WifiOff className="h-4 w-4 mr-1" /> Disconnect
+                </Button>
               </div>
-            </div>
-            <Button variant="outline" size="sm" onClick={handleDisconnect}>
-              <WifiOff className="h-4 w-4 mr-1" /> Disconnect
-            </Button>
-          </CardContent>
-        </Card>
+
+              <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Balance</p>
+                  <p className="mt-2 text-lg font-semibold">{formatAccountAmount(connection.balance, connection.currency)}</p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Equity</p>
+                  <p className="mt-2 text-lg font-semibold">{formatAccountAmount(connection.equity, connection.currency)}</p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Broker</p>
+                  <p className="mt-2 text-sm font-semibold">{connection.broker || 'Waiting for terminal sync'}</p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Credentials</p>
+                  <p className="mt-2 text-sm font-semibold">{connection.hasPassword ? 'Password saved' : 'Password missing'}</p>
+                </div>
+              </div>
+
+              <p className="mt-4 text-xs text-muted-foreground">
+                {connection.lastSeenAt
+                  ? `Last heartbeat ${new Date(connection.lastSeenAt).toLocaleString()}`
+                  : 'Waiting for the Expert Advisor to send its first heartbeat.'}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-5 space-y-3">
+              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Execution flow</p>
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-muted-foreground">
+                Every analysis you send to AutoTrader becomes a pending signal here. In manual mode you approve it, in semi-auto only high-conviction setups pass automatically, and in full-auto the EA can execute as soon as the heartbeat is live.
+              </div>
+              {connectionNotice ? <p className="text-xs text-muted-foreground">{connectionNotice}</p> : null}
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {/* Tab Switcher */}
