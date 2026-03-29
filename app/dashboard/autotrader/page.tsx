@@ -143,7 +143,7 @@ function OneTapTradeContent() {
 
     const draft = buildAutoTraderSignalFromAnalysis(analysis);
     if (!draft) {
-      throw new Error('No usable One-Tap setup could be generated from the current market state.');
+      throw new Error('No One-Tap trade right now. Price must be close to support or resistance before a setup is generated.');
     }
 
     const { signal } = await api.autotrader.createSignal(draft, token);
@@ -523,7 +523,7 @@ function OneTapTradeContent() {
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Strategy note</p>
                 <h3 className="mt-2 text-lg font-semibold text-white">Why this feels instant</h3>
                 <p className="mt-3 text-sm leading-7 text-slate-300">
-                  One-Tap Trade always extracts the best available setup from your latest market context. If the main call is conservative, it still surfaces an opportunistic version so you can decide quickly and place the trade manually with clear levels.
+                  One-Tap Trade only produces a setup when price is close to a valid support or resistance zone. When that condition is met, it maps the entry around that zone, places the stop beyond it, and targets the opposite zone.
                 </p>
               </CardContent>
             </Card>

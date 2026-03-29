@@ -333,7 +333,7 @@ export default function DerivDashboardPage() {
         : buildAutoTraderSignalFromDerivAnalysis(analysis, symbol);
 
       if (!draft) {
-        throw new Error('The current Deriv result is not ready for One-Tap right now.');
+        throw new Error('No One-Tap trade right now. Price must be close to support or resistance before a setup is generated.');
       }
 
       const { signal } = await api.autotrader.createSignal(draft, token);

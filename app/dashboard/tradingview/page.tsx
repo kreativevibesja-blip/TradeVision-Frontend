@@ -126,7 +126,7 @@ export default function TradingViewDashboardPage() {
       const { analysis } = await api.getAnalysis(cachedAnalysis.analysisId, token);
       const draft = buildAutoTraderSignalFromAnalysis(analysis);
       if (!draft) {
-        throw new Error('The current live result is not ready for One-Tap right now.');
+        throw new Error('No One-Tap trade right now. Price must be close to support or resistance before a setup is generated.');
       }
       const { signal } = await api.autotrader.createSignal(draft, token);
       router.push(`/dashboard/autotrader?signalId=${encodeURIComponent(signal.id)}`);
