@@ -341,17 +341,17 @@ function OneTapTradeContent() {
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-3">
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <div className="aspect-square rounded-2xl border border-white/10 bg-white/5 p-4">
                     <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">Step 1</p>
                     <p className="mt-2 text-sm font-semibold text-white">Generate</p>
                     <p className="mt-2 text-xs leading-6 text-slate-400">Build a fresh setup from your latest chart analysis.</p>
                   </div>
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <div className="aspect-square rounded-2xl border border-white/10 bg-white/5 p-4">
                     <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">Step 2</p>
                     <p className="mt-2 text-sm font-semibold text-white">Review</p>
                     <p className="mt-2 text-xs leading-6 text-slate-400">Check entry, stop, target, confidence, and timing window.</p>
                   </div>
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <div className="aspect-square rounded-2xl border border-white/10 bg-white/5 p-4">
                     <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">Step 3</p>
                     <p className="mt-2 text-sm font-semibold text-white">Execute Anywhere</p>
                     <p className="mt-2 text-xs leading-6 text-slate-400">Place the order manually on your broker or charting platform using those levels.</p>
