@@ -903,7 +903,7 @@ export const api = {
       score?: number;
       confirmations?: string[];
       explanation?: string;
-      secondaryTrade?: TradeSignalSecondaryTrade | null;
+      secondaryTrade?: CreateTradeSignalSecondaryTrade | null;
       lotSize?: number;
     }, token: string) =>
       apiFetch<{ signal: TradeSignal }>('/autotrader/signals', {
@@ -1137,7 +1137,7 @@ export interface TradeSignal {
   score: number | null;
   confirmations: string[];
   explanation: string | null;
-      secondaryTrade?: CreateTradeSignalSecondaryTrade | null;
+  secondaryTrade: TradeSignalSecondaryTrade | null;
   lotSize: number | null;
   executedAt: string | null;
   cancelledAt: string | null;
