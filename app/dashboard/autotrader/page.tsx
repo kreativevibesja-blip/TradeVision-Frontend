@@ -7,10 +7,8 @@ import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
-import { api, type AnalysisResult, type Mt5Connection, type TradeSignal } from '@/lib/api';
+import { api, type AnalysisResult, type TradeSignal } from '@/lib/api';
 import { buildAutoTraderSignalFromAnalysis } from '@/lib/autotrader-signal';
 import {
   ArrowRight,
@@ -23,8 +21,6 @@ import {
   Sparkles,
   TrendingDown,
   TrendingUp,
-  Wifi,
-  WifiOff,
   Zap,
 } from 'lucide-react';
 
@@ -61,7 +57,6 @@ function OneTapTradeContent() {
   const searchParams = useSearchParams();
   const incomingSignalId = searchParams.get('signalId');
   const { user, token, loading: authLoading } = useAuth();
-  const [connection, setConnection] = useState<Mt5Connection | null>(null);
   const [signals, setSignals] = useState<TradeSignal[]>([]);
   const [latestAnalysis, setLatestAnalysis] = useState<AnalysisResult | null>(null);
   const [loading, setLoading] = useState(true);
@@ -72,8 +67,6 @@ function OneTapTradeContent() {
   const [now, setNow] = useState(Date.now());
   const [rippleKey, setRippleKey] = useState(0);
   const [focusedSignalId, setFocusedSignalId] = useState<string | null>(incomingSignalId);
-  const [connectForm, setConnectForm] = useState({ accountId: '', broker: '', serverName: '', accountPassword: '' });
-  const [connecting, setConnecting] = useState(false);
 
   const load = useCallback(async () => {
     if (!token) {
@@ -81,12 +74,10 @@ function OneTapTradeContent() {
     }
 
     try {
-      const [connectionResult, signalsResult, analysesResult] = await Promise.all([
-        api.autotrader.getConnection(token),
+      const [signalsResult, analysesResult] = await Promise.all([
         api.autotrader.getSignals(token),
         api.getAnalyses(token, 1),
       ]);
-      setConnection(connectionResult.connection);
       setSignals(signalsResult.signals);
       setLatestAnalysis(analysesResult.analyses[0] ?? null);
     } catch {
@@ -153,24 +144,6 @@ function OneTapTradeContent() {
   useEffect(() => {
     setExecuteSuccess(false);
   }, [activeSignal?.id]);
-
-  const connectionReady = Boolean(connection?.isActive);
-  const formatAccountAmount = (value: number | null, currency: string | null) => {
-    if (value == null || !Number.isFinite(value)) {
-      return 'Awaiting MT5 sync';
-    }
-
-    try {
-      return new Intl.NumberFormat(undefined, {
-        style: currency ? 'currency' : 'decimal',
-        currency: currency || undefined,
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }).format(value);
-    } catch {
-      return `${value.toFixed(2)}${currency ? ` ${currency}` : ''}`;
-    }
-  };
 
   const createSignalFromAnalysis = async (analysis: AnalysisResult) => {
     if (!token) {
@@ -259,44 +232,11 @@ function OneTapTradeContent() {
       }
 
       setExecuteSuccess(true);
-      setNotice('Trade sent. Check your MT5 terminal for the execution handoff.');
+      setNotice('Trade moved into your ready queue for execution.');
     } catch (error: any) {
       setNotice(error?.message || 'Unable to send this trade right now.');
     } finally {
       setExecuting(false);
-    }
-  };
-
-  const handleConnect = async () => {
-    if (!token || !connectForm.accountId.trim()) {
-      return;
-    }
-
-    try {
-      setConnecting(true);
-      setNotice('');
-      const { connection: nextConnection } = await api.autotrader.connect(connectForm, token);
-      setConnection(nextConnection);
-      setConnectForm({ accountId: '', broker: '', serverName: '', accountPassword: '' });
-      setNotice('MT5 bridge connected. One-Tap Trade will sync account data on the next heartbeat.');
-    } catch (error: any) {
-      setNotice(error?.message || 'Unable to connect your MT5 bridge right now.');
-    } finally {
-      setConnecting(false);
-    }
-  };
-
-  const handleDisconnect = async () => {
-    if (!token) {
-      return;
-    }
-
-    try {
-      await api.autotrader.disconnect(token);
-      setConnection(null);
-      setNotice('MT5 bridge disconnected.');
-    } catch (error: any) {
-      setNotice(error?.message || 'Unable to disconnect MT5 right now.');
     }
   };
 
@@ -400,9 +340,9 @@ function OneTapTradeContent() {
                   <p className="mt-1 text-xs text-slate-400">Fresh setups waiting for execution</p>
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Bridge status</p>
-                  <p className="mt-2 text-2xl font-semibold text-white">{connectionReady ? 'Live' : 'Offline'}</p>
-                  <p className="mt-1 text-xs text-slate-400">{connectionReady ? 'MT5 connected and waiting' : 'Connect MT5 to hand off trades'}</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Execution queue</p>
+                  <p className="mt-2 text-2xl font-semibold text-white">{activeSignal ? STATUS_COPY[activeSignal.status] || activeSignal.status : 'Standby'}</p>
+                  <p className="mt-1 text-xs text-slate-400">Built-in One-Tap workflow with no external bridge required</p>
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Analysis source</p>
@@ -417,73 +357,46 @@ function OneTapTradeContent() {
             <CardContent className="p-6 sm:p-8">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Execution bridge</p>
-                  <h2 className="mt-2 text-xl font-semibold text-white">MT5 Connection</h2>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Execution flow</p>
+                  <h2 className="mt-2 text-xl font-semibold text-white">One-Tap Pipeline</h2>
                 </div>
-                <Badge className={connectionReady ? 'border-emerald-400/30 bg-emerald-400/10 text-emerald-100' : 'border-white/10 bg-white/5 text-slate-300'}>
-                  {connectionReady ? 'Connected' : 'Awaiting setup'}
+                <Badge className="border-cyan-400/30 bg-cyan-400/10 text-cyan-100">
+                  Internal queue
                 </Badge>
               </div>
 
-              {connectionReady && connection ? (
-                <div className="mt-6 space-y-4">
-                  <div className="flex items-start justify-between gap-4 rounded-2xl border border-emerald-400/20 bg-emerald-400/5 p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="rounded-2xl bg-emerald-400/10 p-3 text-emerald-200"><Wifi className="h-5 w-5" /></div>
-                      <div>
-                        <p className="text-sm font-semibold text-white">{connection.accountName || connection.accountId}</p>
-                        <p className="mt-1 text-xs text-slate-400">{connection.serverName || 'Server pending'}{connection.broker ? ` · ${connection.broker}` : ''}</p>
-                      </div>
-                    </div>
-                    <Button variant="outline" size="sm" onClick={handleDisconnect} className="border-white/10 bg-white/5 text-slate-100 hover:bg-white/10">
-                      <WifiOff className="mr-1 h-4 w-4" /> Disconnect
-                    </Button>
-                  </div>
-
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                      <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">Balance</p>
-                      <p className="mt-2 text-lg font-semibold text-white">{formatAccountAmount(connection.balance, connection.currency)}</p>
-                    </div>
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                      <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">Equity</p>
-                      <p className="mt-2 text-lg font-semibold text-white">{formatAccountAmount(connection.equity, connection.currency)}</p>
-                    </div>
-                  </div>
-
-                  <p className="text-xs text-slate-400">
-                    {connection.lastSeenAt
-                      ? `Heartbeat synced ${new Date(connection.lastSeenAt).toLocaleString()}`
-                      : 'Waiting for the terminal heartbeat to confirm account details.'}
+              <div className="mt-6 space-y-4">
+                <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/5 p-4">
+                  <p className="text-sm font-semibold text-white">One-Tap now runs as a fully in-app workflow.</p>
+                  <p className="mt-2 text-sm leading-7 text-slate-300">
+                    Generate a setup, review the levels, then move it into your ready queue when you want to act. The workflow stays inside the app and no external bridge is required.
                   </p>
                 </div>
-              ) : (
-                <div className="mt-6 space-y-4">
-                  <p className="text-sm text-slate-300">Connect the MT5 account that should receive your one-tap execution handoff.</p>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div>
-                      <Label className="text-xs text-slate-400">Account ID</Label>
-                      <Input value={connectForm.accountId} onChange={(event) => setConnectForm((current) => ({ ...current, accountId: event.target.value }))} placeholder="12345678" className="border-white/10 bg-white/5 text-white" />
-                    </div>
-                    <div>
-                      <Label className="text-xs text-slate-400">Broker</Label>
-                      <Input value={connectForm.broker} onChange={(event) => setConnectForm((current) => ({ ...current, broker: event.target.value }))} placeholder="ICMarkets" className="border-white/10 bg-white/5 text-white" />
-                    </div>
-                    <div>
-                      <Label className="text-xs text-slate-400">Server</Label>
-                      <Input value={connectForm.serverName} onChange={(event) => setConnectForm((current) => ({ ...current, serverName: event.target.value }))} placeholder="ICMarkets-Live" className="border-white/10 bg-white/5 text-white" />
-                    </div>
-                    <div>
-                      <Label className="text-xs text-slate-400">MT5 Password</Label>
-                      <Input type="password" value={connectForm.accountPassword} onChange={(event) => setConnectForm((current) => ({ ...current, accountPassword: event.target.value }))} placeholder="Your MT5 password" className="border-white/10 bg-white/5 text-white" />
-                    </div>
+
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">Step 1</p>
+                    <p className="mt-2 text-sm font-semibold text-white">Generate</p>
+                    <p className="mt-2 text-xs leading-6 text-slate-400">Build a fresh setup from your latest chart analysis.</p>
                   </div>
-                  <Button variant="outline" size="lg" onClick={handleConnect} disabled={connecting || !connectForm.accountId.trim()} className="w-full rounded-2xl border-cyan-400/20 bg-cyan-400/10 text-cyan-100 hover:bg-cyan-400/15">
-                    {connecting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wifi className="mr-2 h-4 w-4" />}
-                    Connect MT5 Bridge
-                  </Button>
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">Step 2</p>
+                    <p className="mt-2 text-sm font-semibold text-white">Review</p>
+                    <p className="mt-2 text-xs leading-6 text-slate-400">Check entry, stop, target, confidence, and timing window.</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">Step 3</p>
+                    <p className="mt-2 text-sm font-semibold text-white">Queue</p>
+                    <p className="mt-2 text-xs leading-6 text-slate-400">Mark the setup ready and manage execution from your workflow.</p>
+                  </div>
                 </div>
-              )}
+
+                <p className="text-xs text-slate-400">
+                  {pendingSignals.length > 0
+                    ? `${pendingSignals.length} setup${pendingSignals.length === 1 ? '' : 's'} currently waiting in the queue.`
+                    : 'No setups are waiting in the queue right now.'}
+                </p>
+              </div>
             </CardContent>
           </Card>
         </motion.section>

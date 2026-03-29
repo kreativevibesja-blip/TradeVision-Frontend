@@ -243,7 +243,7 @@ export default function DashboardPage() {
                   <div>
                     <h2 className="text-xl font-semibold">One-Tap Trade</h2>
                     <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-                      Turn your best setups into instant one-click execution with premium trade cards, MT5 bridge status, and opportunistic entry generation.
+                      Turn your best setups into instant one-click execution with premium trade cards, queue-ready handoff, and opportunistic entry generation.
                     </p>
                   </div>
                 </div>

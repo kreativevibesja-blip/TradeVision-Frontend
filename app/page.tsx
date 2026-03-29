@@ -203,7 +203,7 @@ export default function HomePage() {
             transition={{ duration: 0.28, delay: 0.12 }}
           >
             Upload any chart screenshot and get professional trading analysis instantly.
-            Support for MT5, cTrader, TradingView, and Deriv charts including Boom, Crash, and Volatility indices.
+            Support for cTrader, TradingView, and Deriv charts including Boom, Crash, and Volatility indices.
           </motion.p>
 
           <motion.div
@@ -276,7 +276,7 @@ export default function HomePage() {
               {
                 icon: Upload,
                 title: 'Upload Chart',
-                desc: 'Drag and drop any chart screenshot from MT5, TradingView, cTrader, or Deriv.',
+                desc: 'Drag and drop any chart screenshot from TradingView, cTrader, or Deriv.',
                 color: 'from-blue-500 to-cyan-500',
                 step: '01',
               },

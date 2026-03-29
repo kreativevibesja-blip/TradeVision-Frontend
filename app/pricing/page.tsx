@@ -217,7 +217,7 @@ export default function PricingPage() {
             {[
               {
                 q: 'What chart platforms are supported?',
-                a: 'We support screenshots from TradingView, MetaTrader 5, cTrader, Deriv (including Boom, Crash, and Volatility indices), and any other trading platform.',
+                a: 'We support screenshots from TradingView, cTrader, Deriv (including Boom, Crash, and Volatility indices), and any other trading platform.',
               },
               {
                 q: 'How accurate is the AI analysis?',
