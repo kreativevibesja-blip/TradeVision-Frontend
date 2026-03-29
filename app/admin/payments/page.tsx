@@ -6,13 +6,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
-import { api, type AdminPayment, type AdminPaymentDateRangeFilter, type AdminPaymentPlanFilter, type AdminPaymentStatusFilter } from '@/lib/api';
+import { api, type AdminPayment, type AdminPaymentDateRangeFilter, type AdminPaymentPlanFilter, type AdminPaymentScope, type AdminPaymentStatusFilter } from '@/lib/api';
 import { formatJamaicaDateTime } from '@/lib/jamaica-time';
 import { Building2, CheckCircle2, CreditCard, Landmark, Loader2, Wallet, XCircle } from 'lucide-react';
 
 const paymentStatuses: Array<Exclude<AdminPaymentStatusFilter, 'ALL'>> = ['PENDING', 'COMPLETED', 'FAILED', 'REFUNDED'];
 const paymentPlans: Array<Exclude<AdminPaymentPlanFilter, 'ALL'>> = ['FREE', 'PRO', 'TOP_TIER'];
-type PaymentsView = 'all' | 'bank-transfers';
+type PaymentsView = 'completed-checkouts' | 'bank-transfers';
 
 const paymentMethodLabel: Record<AdminPayment['paymentMethod'], string> = {
   PAYPAL: 'PayPal',
@@ -35,7 +35,7 @@ export default function AdminPaymentsPage() {
   const [status, setStatus] = useState<AdminPaymentStatusFilter>('ALL');
   const [plan, setPlan] = useState<AdminPaymentPlanFilter>('ALL');
   const [dateRange, setDateRange] = useState<AdminPaymentDateRangeFilter>('30d');
-  const [activeView, setActiveView] = useState<PaymentsView>('all');
+  const [activeView, setActiveView] = useState<PaymentsView>('completed-checkouts');
   const [updatingPaymentId, setUpdatingPaymentId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -45,11 +45,12 @@ export default function AdminPaymentsPage() {
   const loadPayments = async () => {
     try {
       setLoading(true);
+      const scope: AdminPaymentScope = activeView === 'bank-transfers' ? 'BANK_TRANSFERS' : 'COMPLETED_CHECKOUTS';
       const data = await api.admin.getPayments(token!, {
         page,
-        status,
+        status: activeView === 'bank-transfers' ? status : 'ALL',
         plan,
-        paymentMethod: activeView === 'bank-transfers' ? 'BANK_TRANSFER' : 'ALL',
+        scope,
         dateRange,
       });
       setPayments(data.payments);
@@ -89,6 +90,18 @@ export default function AdminPaymentsPage() {
 
   const pendingTransfers = payments.filter((payment) => payment.paymentMethod === 'BANK_TRANSFER' && payment.status === 'PENDING').length;
   const visibleRevenue = payments.filter((payment) => payment.status === 'COMPLETED').reduce((sum, payment) => sum + payment.amount, 0);
+  const recordCountLabel = activeView === 'bank-transfers' ? 'Transfer records' : 'Completed checkouts';
+  const secondaryStatLabel = activeView === 'bank-transfers' ? 'Pending transfers' : 'Completed value';
+  const secondaryStatValue = activeView === 'bank-transfers' ? String(pendingTransfers) : `$${visibleRevenue.toFixed(2)}`;
+  const secondaryStatClasses = activeView === 'bank-transfers'
+    ? 'rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3'
+    : 'rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3';
+  const secondaryStatLabelClasses = activeView === 'bank-transfers'
+    ? 'text-xs uppercase tracking-[0.2em] text-amber-200/80'
+    : 'text-xs uppercase tracking-[0.2em] text-emerald-200/80';
+  const secondaryStatValueClasses = activeView === 'bank-transfers'
+    ? 'mt-1 text-2xl font-semibold text-amber-100'
+    : 'mt-1 text-2xl font-semibold text-emerald-100';
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
@@ -99,16 +112,16 @@ export default function AdminPaymentsPage() {
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-            <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Visible records</div>
+            <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{recordCountLabel}</div>
             <div className="mt-1 text-2xl font-semibold">{payments.length}</div>
           </div>
-          <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3">
-            <div className="text-xs uppercase tracking-[0.2em] text-amber-200/80">Pending transfers</div>
-            <div className="mt-1 text-2xl font-semibold text-amber-100">{pendingTransfers}</div>
+          <div className={secondaryStatClasses}>
+            <div className={secondaryStatLabelClasses}>{secondaryStatLabel}</div>
+            <div className={secondaryStatValueClasses}>{secondaryStatValue}</div>
           </div>
-          <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3">
-            <div className="text-xs uppercase tracking-[0.2em] text-emerald-200/80">Completed value</div>
-            <div className="mt-1 text-2xl font-semibold text-emerald-100">${visibleRevenue.toFixed(2)}</div>
+          <div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/10 px-4 py-3">
+            <div className="text-xs uppercase tracking-[0.2em] text-cyan-200/80">Active tab</div>
+            <div className="mt-1 text-2xl font-semibold text-cyan-100">{activeView === 'bank-transfers' ? 'Manual' : 'Checkout'}</div>
           </div>
         </div>
       </div>
@@ -122,11 +135,11 @@ export default function AdminPaymentsPage() {
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => { setPage(1); setActiveView('all'); }}
-                  className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition ${activeView === 'all' ? 'border-primary/40 bg-primary/10 text-foreground' : 'border-white/10 bg-white/5 text-muted-foreground hover:bg-white/10'}`}
+                  onClick={() => { setPage(1); setStatus('ALL'); setActiveView('completed-checkouts'); }}
+                  className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition ${activeView === 'completed-checkouts' ? 'border-primary/40 bg-primary/10 text-foreground' : 'border-white/10 bg-white/5 text-muted-foreground hover:bg-white/10'}`}
                 >
                   <Wallet className="h-4 w-4" />
-                  All Payments
+                  Completed Checkouts
                 </button>
                 <button
                   type="button"
@@ -150,16 +163,22 @@ export default function AdminPaymentsPage() {
                   ))}
                 </select>
 
-                <select
-                  value={status}
-                  onChange={(event) => { setPage(1); setStatus(event.target.value as AdminPaymentStatusFilter); }}
-                  className="h-8 rounded-lg border border-input bg-background/50 px-2 text-xs outline-none focus:ring-2 focus:ring-ring"
-                >
-                  <option value="ALL">All statuses</option>
-                  {paymentStatuses.map((paymentStatus) => (
-                    <option key={paymentStatus} value={paymentStatus}>{paymentStatus}</option>
-                  ))}
-                </select>
+                {activeView === 'bank-transfers' ? (
+                  <select
+                    value={status}
+                    onChange={(event) => { setPage(1); setStatus(event.target.value as AdminPaymentStatusFilter); }}
+                    className="h-8 rounded-lg border border-input bg-background/50 px-2 text-xs outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="ALL">All statuses</option>
+                    {paymentStatuses.map((paymentStatus) => (
+                      <option key={paymentStatus} value={paymentStatus}>{paymentStatus}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className="inline-flex h-8 items-center rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 text-xs font-medium text-emerald-100">
+                    Showing completed PayPal and card payments only
+                  </div>
+                )}
 
                 <select
                   value={dateRange}
@@ -173,7 +192,7 @@ export default function AdminPaymentsPage() {
                 </select>
               </div>
 
-              {activeView === 'all' ? (
+              {activeView === 'completed-checkouts' ? (
                 <div className="max-h-[70vh] overflow-auto rounded-2xl border border-white/10">
                   <table className="w-full min-w-[920px] text-sm">
                     <thead className="sticky top-0 bg-background/95 backdrop-blur-xl">
@@ -188,7 +207,11 @@ export default function AdminPaymentsPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {payments.map((payment) => (
+                      {payments.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="p-8 text-center text-sm text-muted-foreground">No completed PayPal or card payments match the current filters.</td>
+                        </tr>
+                      ) : payments.map((payment) => (
                         <tr key={payment.id} className="border-b border-white/5 hover:bg-white/5">
                           <td className="p-4">
                             <div className="font-medium">{payment.user?.name || 'Unknown User'}</div>
@@ -198,7 +221,6 @@ export default function AdminPaymentsPage() {
                           <td className="p-4">
                             <div className="flex items-center gap-2">
                               <Badge variant={paymentMethodVariant(payment.paymentMethod) as any}>{paymentMethodLabel[payment.paymentMethod]}</Badge>
-                              {payment.bankTransferBank ? <Badge variant="outline">{bankLabel[payment.bankTransferBank]}</Badge> : null}
                             </div>
                           </td>
                           <td className="p-4 font-medium">${payment.amount.toFixed(2)}</td>
