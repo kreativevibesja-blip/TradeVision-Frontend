@@ -43,7 +43,11 @@ export interface AnalysisResult {
   assetClass?: string | null;
   bias?: string;
   confidence: number;
-  currentPrice: number;
+  accountName: string | null;
+  balance: number | null;
+  equity: number | null;
+  currency: string | null;
+  hasPassword: boolean;
   trend: 'bullish' | 'bearish' | 'ranging';
   marketCondition?: 'trending' | 'ranging' | 'breakout' | 'consolidation';
   primaryStrategy?: 'SMC' | 'Supply & Demand' | 'S&R' | 'Pattern' | null;
@@ -888,7 +892,7 @@ export const api = {
     // MT5 Connection
     getConnection: (token: string) =>
       apiFetch<{ connection: Mt5Connection | null }>('/autotrader/connection', { token }),
-    connect: (data: { accountId: string; broker?: string; serverName?: string }, token: string) =>
+    connect: (data: { accountId: string; broker?: string; serverName?: string; accountPassword?: string }, token: string) =>
       apiFetch<{ connection: Mt5Connection }>('/autotrader/connection', {
         method: 'POST',
         body: JSON.stringify(data),
@@ -896,8 +900,20 @@ export const api = {
       }),
     disconnect: (token: string) =>
       apiFetch<{ success: boolean }>('/autotrader/disconnect', { method: 'POST', token }),
-    heartbeat: (token: string) =>
-      apiFetch<{ success: boolean }>('/autotrader/heartbeat', { method: 'POST', token }),
+    heartbeat: (data: {
+      accountId?: string;
+      broker?: string;
+      serverName?: string;
+      accountName?: string;
+      balance?: number;
+      equity?: number;
+      currency?: string;
+    }, token: string) =>
+      apiFetch<{ success: boolean; connection?: Mt5Connection | null }>('/autotrader/heartbeat', {
+        method: 'POST',
+        body: JSON.stringify(data),
+        token,
+      }),
 
     // Trade Signals
     createSignal: (data: {
@@ -1099,6 +1115,11 @@ export interface Mt5Connection {
   accountId: string;
   broker: string;
   serverName: string;
+  accountName: string | null;
+  balance: number | null;
+  equity: number | null;
+  currency: string | null;
+  hasPassword: boolean;
   isActive: boolean;
   lastSeenAt: string | null;
   createdAt: string;
