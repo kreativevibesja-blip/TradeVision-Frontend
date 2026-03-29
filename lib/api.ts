@@ -1105,6 +1105,21 @@ export interface TradeSignalSecondaryTrade {
   warning?: string | null;
 }
 
+export interface CreateTradeSignalSecondaryTrade {
+  direction: SignalDirection;
+  entryPrice: number;
+  stopLoss: number;
+  takeProfit: number;
+  confidence: SignalConfidence;
+  label?: string;
+  marketState?: SignalMarketState;
+  strategy?: string;
+  score?: number;
+  confirmations?: string[];
+  explanation?: string;
+  warning?: string;
+}
+
 export interface TradeSignal {
   id: string;
   userId: string;
@@ -1122,7 +1137,7 @@ export interface TradeSignal {
   score: number | null;
   confirmations: string[];
   explanation: string | null;
-  secondaryTrade: TradeSignalSecondaryTrade | null;
+      secondaryTrade?: CreateTradeSignalSecondaryTrade | null;
   lotSize: number | null;
   executedAt: string | null;
   cancelledAt: string | null;
