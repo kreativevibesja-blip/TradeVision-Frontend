@@ -15,7 +15,23 @@ export interface AutoTraderSignalDraft {
   score?: number;
   confirmations?: string[];
   explanation?: string;
+  secondaryTrade?: AutoTraderSecondaryTradeDraft | null;
   isOpportunistic: boolean;
+}
+
+export interface AutoTraderSecondaryTradeDraft {
+  direction: SignalDirection;
+  entryPrice: number;
+  stopLoss: number;
+  takeProfit: number;
+  confidence: SignalConfidence;
+  label?: string;
+  marketState?: SignalMarketState;
+  strategy?: string;
+  score?: number;
+  confirmations?: string[];
+  explanation?: string;
+  warning?: string;
 }
 
 const normalizeSymbol = (value: string) => value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
@@ -352,6 +368,51 @@ const evaluateCandidate = (
   };
 };
 
+const buildSecondaryTradeFromCounterTrend = (
+  analysis: AnalysisResult,
+  primaryDirection: SignalDirection,
+): AutoTraderSecondaryTradeDraft | null => {
+  const counterTrendPlan = analysis.counterTrendPlan;
+  if (!counterTrendPlan || counterTrendPlan.bias === 'none' || counterTrendPlan.bias === primaryDirection) {
+    return null;
+  }
+
+  if (counterTrendPlan.action === 'avoid') {
+    return null;
+  }
+
+  const entryPrice = midpoint(counterTrendPlan.entryZone?.min, counterTrendPlan.entryZone?.max);
+  const stopLoss = counterTrendPlan.stopLoss;
+  const takeProfit = counterTrendPlan.takeProfit1;
+  if (entryPrice == null || stopLoss == null || takeProfit == null) {
+    return null;
+  }
+
+  if ((counterTrendPlan.bias === 'buy' && takeProfit <= entryPrice)
+    || (counterTrendPlan.bias === 'sell' && takeProfit >= entryPrice)) {
+    return null;
+  }
+
+  const confirmations = [
+    'Counter-trend setup',
+    counterTrendPlan.confirmation !== 'none' ? counterTrendPlan.confirmation : null,
+  ].filter((value): value is string => Boolean(value));
+
+  return {
+    direction: counterTrendPlan.bias,
+    entryPrice,
+    stopLoss,
+    takeProfit,
+    confidence: mapConfidenceScoreToGrade(counterTrendPlan.confidence, analysis.setupQuality),
+    label: 'Counter-Trend Trade',
+    marketState: 'reversal',
+    strategy: 'Counter-Trend Reversal',
+    confirmations,
+    explanation: [counterTrendPlan.reason, counterTrendPlan.warning].filter(Boolean).join(' '),
+    warning: counterTrendPlan.warning,
+  };
+};
+
 export const mapConfidenceScoreToGrade = (score: number, fallback?: AnalysisResult['setupQuality']): SignalConfidence => {
   if (!Number.isFinite(score)) {
     return fallback === 'low' ? 'avoid' : 'B';
@@ -437,6 +498,7 @@ export const buildAutoTraderSignalFromAnalysis = (analysis: AnalysisResult): Aut
     score: selected.score,
     confirmations,
     explanation,
+    secondaryTrade: buildSecondaryTradeFromCounterTrend(analysis, selected.direction),
     isOpportunistic: true,
   };
 };
