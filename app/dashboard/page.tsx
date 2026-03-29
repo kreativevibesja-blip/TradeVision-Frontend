@@ -77,9 +77,11 @@ export default function DashboardPage() {
     );
   }
 
-  const usageLabel = user.subscription === 'PRO' ? 'Monthly Usage' : 'Daily Usage';
-  const usageValue = user.subscription === 'PRO' ? '300 analyses per month' : '2';
-  const usagePercent = user.subscription === 'PRO' ? 0 : ((user.dailyUsage || 0) / 2) * 100;
+  const isPaidPlan = user.subscription !== 'FREE';
+  const isTopTier = user.subscription === 'TOP_TIER';
+  const usageLabel = isPaidPlan ? 'Monthly Usage' : 'Daily Usage';
+  const usageValue = isPaidPlan ? '300 analyses per month' : '2';
+  const usagePercent = isPaidPlan ? 0 : ((user.dailyUsage || 0) / 2) * 100;
 
   return (
     <div>
@@ -104,12 +106,12 @@ export default function DashboardPage() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-sm text-muted-foreground">Subscription</span>
-                  <Badge variant={user.subscription === 'PRO' ? 'default' : 'secondary'}>
-                    {user.subscription === 'PRO' ? <Crown className="h-3 w-3 mr-1" /> : <Zap className="h-3 w-3 mr-1" />}
+                  <Badge variant={isPaidPlan ? 'default' : 'secondary'}>
+                    {isPaidPlan ? <Crown className="h-3 w-3 mr-1" /> : <Zap className="h-3 w-3 mr-1" />}
                     {user.subscription}
                   </Badge>
                 </div>
-                {user.subscription !== 'PRO' && (
+                {!isPaidPlan && (
                   <Link href="/pricing" className="block">
                     <Button variant="outline" size="sm" className="w-full mt-2">Upgrade to Pro</Button>
                   </Link>
@@ -121,12 +123,12 @@ export default function DashboardPage() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-muted-foreground">{usageLabel}</span>
-                  <span className="text-sm font-medium">{user.subscription === 'PRO' ? usageValue : `${user.dailyUsage || 0} / ${usageValue}`}</span>
+                  <span className="text-sm font-medium">{isPaidPlan ? usageValue : `${user.dailyUsage || 0} / ${usageValue}`}</span>
                 </div>
-                {user.subscription !== 'PRO' && (
+                {!isPaidPlan && (
                   <Progress value={usagePercent} className="h-2 mt-2" indicatorClassName={usagePercent >= 100 ? 'bg-red-500' : 'bg-primary'} />
                 )}
-                {user.subscription === 'PRO' && (
+                {isPaidPlan && (
                   <p className="text-2xl font-bold text-green-400 mt-2">300 / month</p>
                 )}
               </CardContent>
@@ -173,7 +175,7 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
-                  {user.subscription === 'PRO' ? (
+                  {isPaidPlan ? (
                     <Link href="/dashboard/tradingview">
                       <Button variant="gradient" className="gap-2">
                         <CandlestickChart className="h-4 w-4" />
@@ -188,7 +190,7 @@ export default function DashboardPage() {
                           Unlock Pro Access
                         </Button>
                       </Link>
-                      <p className="text-xs text-muted-foreground">Live TradingView analysis is available for Pro only.</p>
+                      <p className="text-xs text-muted-foreground">Live TradingView analysis is available on paid plans.</p>
                     </>
                   )}
                 </div>
@@ -210,7 +212,7 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
-                  {user.subscription === 'PRO' ? (
+                  {isPaidPlan ? (
                     <Link href="/dashboard/deriv">
                       <Button variant="gradient" className="gap-2">
                         <RadioTower className="h-4 w-4" />
@@ -225,7 +227,44 @@ export default function DashboardPage() {
                           Unlock Pro Access
                         </Button>
                       </Link>
-                      <p className="text-xs text-muted-foreground">Deriv live charts are available for Pro only.</p>
+                      <p className="text-xs text-muted-foreground">Deriv live charts are available on paid plans.</p>
+                    </>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="mobile-card overflow-hidden">
+              <CardContent className="flex h-full flex-col justify-between gap-5 p-6">
+                <div className="space-y-3">
+                  <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-amber-400/20 bg-amber-400/10 text-amber-300">
+                    <Crown className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold">AutoTrader for MT5</h2>
+                    <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+                      Turn approved trade signals into semi-automated execution with connection status, risk controls, and MT5 integration.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  {isTopTier ? (
+                    <Link href="/dashboard/autotrader">
+                      <Button variant="gradient" className="gap-2">
+                        <Crown className="h-4 w-4" />
+                        Open AutoTrader
+                      </Button>
+                    </Link>
+                  ) : (
+                    <>
+                      <Link href="/checkout?plan=TOP_TIER">
+                        <Button className="gap-2 bg-amber-600 text-white hover:bg-amber-500">
+                          <Crown className="h-4 w-4" />
+                          Upgrade to Top Tier
+                        </Button>
+                      </Link>
+                      <p className="text-xs text-muted-foreground">AutoTrader is available only on the Top Tier plan.</p>
                     </>
                   )}
                 </div>

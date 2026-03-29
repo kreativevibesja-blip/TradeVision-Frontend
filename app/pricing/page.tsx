@@ -19,7 +19,7 @@ type DisplayPlan = PricingPlan & {
   popular: boolean;
 };
 
-const fallbackPlanDetails: Record<'FREE' | 'PRO', Omit<DisplayPlan, 'id' | 'name' | 'tier' | 'price' | 'features' | 'dailyLimit' | 'isActive' | 'createdAt' | 'updatedAt'>> = {
+const fallbackPlanDetails: Record<'FREE' | 'PRO' | 'TOP_TIER', Omit<DisplayPlan, 'id' | 'name' | 'tier' | 'price' | 'features' | 'dailyLimit' | 'isActive' | 'createdAt' | 'updatedAt'>> = {
   FREE: {
     period: '/month',
     description: 'Perfect for trying out AI chart analysis',
@@ -31,11 +31,20 @@ const fallbackPlanDetails: Record<'FREE' | 'PRO', Omit<DisplayPlan, 'id' | 'name
   },
   PRO: {
     period: '/month',
-    description: 'For serious traders who want the best analysis',
+    description: 'For serious traders who want premium AI analysis',
     icon: Crown,
     color: 'from-blue-500 to-purple-600',
     cta: 'Subscribe Now',
     ctaLink: '/checkout?plan=PRO',
+    popular: false,
+  },
+  TOP_TIER: {
+    period: '/month',
+    description: 'Everything in Pro, plus AutoTrader for MT5',
+    icon: Crown,
+    color: 'from-amber-500 to-orange-600',
+    cta: 'Unlock Top Tier',
+    ctaLink: '/checkout?plan=TOP_TIER',
     popular: true,
   },
 };
@@ -57,7 +66,7 @@ const defaultFallbackPlans: DisplayPlan[] = [
     id: 'fallback-pro',
     name: 'TradeVision AI Pro',
     tier: 'PRO',
-    price: 19,
+    price: 19.95,
     features: ['300 analyses per month', 'Advanced Smart Money Concepts', 'Priority AI processing'],
     dailyLimit: 999999,
     isActive: true,
@@ -65,11 +74,23 @@ const defaultFallbackPlans: DisplayPlan[] = [
     updatedAt: '',
     ...fallbackPlanDetails.PRO,
   },
+  {
+    id: 'fallback-top-tier',
+    name: 'Top Tier 👑',
+    tier: 'TOP_TIER',
+    price: 39.95,
+    features: ['300 analyses per month', 'Advanced Smart Money Concepts', 'Priority AI processing', 'AutoTrader for MT5'],
+    dailyLimit: 999999,
+    isActive: true,
+    createdAt: '',
+    updatedAt: '',
+    ...fallbackPlanDetails.TOP_TIER,
+  },
 ];
 
 const toDisplayPlan = (plan: PricingPlan): DisplayPlan => ({
   ...plan,
-  ...(plan.tier === 'PRO'
+  ...(plan.tier !== 'FREE'
     ? {
         features: plan.features.map((feature) =>
           /unlimited|fair use|300 analyses per month/i.test(feature) ? '300 analyses per month' : feature
@@ -117,7 +138,7 @@ export default function PricingPage() {
           </p>
         </motion.div>
 
-        <div className="mx-auto grid max-w-4xl grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:gap-8">
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 md:gap-6 lg:gap-8">
           {plans.map((plan, i) => (
             <motion.div
               key={plan.id}
@@ -203,7 +224,7 @@ export default function PricingPage() {
               },
               {
                 q: 'Can I cancel anytime?',
-                a: 'Yes, you can cancel your Pro subscription at any time. Your access will remain active until the end of the billing period.',
+                a: 'Yes, you can cancel any paid subscription at any time. Your access will remain active until the end of the billing period.',
               },
               {
                 q: 'What payment methods are accepted?',

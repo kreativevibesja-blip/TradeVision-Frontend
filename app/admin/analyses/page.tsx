@@ -159,7 +159,7 @@ export default function AdminAnalysesPage() {
                           <td className="p-4 min-w-[220px]">
                             <p className="text-xs text-muted-foreground break-all">{a.user?.email || 'Unknown'}</p>
                             <div className="mt-2">
-                              <Badge variant={a.user?.subscription === 'PRO' ? 'default' : 'secondary'}>
+                              <Badge variant={a.user?.subscription && a.user.subscription !== 'FREE' ? 'default' : 'secondary'}>
                                 {a.user?.subscription || 'FREE'}
                               </Badge>
                             </div>

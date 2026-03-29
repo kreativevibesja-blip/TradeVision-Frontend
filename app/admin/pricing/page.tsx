@@ -13,7 +13,7 @@ import { Tag, Save, Plus, Trash2 } from 'lucide-react';
 type AdminPlan = {
   id: string;
   name: string;
-  tier: 'FREE' | 'PRO';
+  tier: 'FREE' | 'PRO' | 'TOP_TIER';
   price: number;
   dailyLimit: number;
   isActive: boolean;
@@ -22,7 +22,7 @@ type AdminPlan = {
 
 const emptyNewPlan = {
   name: '',
-  tier: 'PRO' as 'FREE' | 'PRO',
+  tier: 'PRO' as 'FREE' | 'PRO' | 'TOP_TIER',
   price: '0',
   dailyLimit: '0',
 };
@@ -35,7 +35,7 @@ export default function AdminPricingPage() {
   const [editPrice, setEditPrice] = useState('');
   const [editLimit, setEditLimit] = useState('');
   const [editName, setEditName] = useState('');
-  const [editTier, setEditTier] = useState<'FREE' | 'PRO'>('PRO');
+  const [editTier, setEditTier] = useState<'FREE' | 'PRO' | 'TOP_TIER'>('PRO');
   const [newPlan, setNewPlan] = useState(emptyNewPlan);
   const [saving, setSaving] = useState(false);
 
@@ -127,10 +127,11 @@ export default function AdminPricingPage() {
           <select
             className="flex h-10 w-full rounded-lg border border-input bg-background/50 px-3 py-2 text-sm"
             value={newPlan.tier}
-            onChange={(e) => setNewPlan((current) => ({ ...current, tier: e.target.value as 'FREE' | 'PRO' }))}
+            onChange={(e) => setNewPlan((current) => ({ ...current, tier: e.target.value as 'FREE' | 'PRO' | 'TOP_TIER' }))}
           >
             <option value="FREE">FREE</option>
             <option value="PRO">PRO</option>
+            <option value="TOP_TIER">TOP_TIER</option>
           </select>
           <Input
             placeholder="Price"
@@ -210,10 +211,11 @@ export default function AdminPricingPage() {
                       <select
                         className="mt-2 flex h-10 w-full rounded-lg border border-input bg-background/50 px-3 py-2 text-sm"
                         value={editTier}
-                        onChange={(e) => setEditTier(e.target.value as 'FREE' | 'PRO')}
+                        onChange={(e) => setEditTier(e.target.value as 'FREE' | 'PRO' | 'TOP_TIER')}
                       >
                         <option value="FREE">FREE</option>
                         <option value="PRO">PRO</option>
+                        <option value="TOP_TIER">TOP_TIER</option>
                       </select>
                     </div>
                     <div>

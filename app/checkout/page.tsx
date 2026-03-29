@@ -32,7 +32,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
-type PlanKey = 'FREE' | 'PRO';
+type PlanKey = 'FREE' | 'PRO' | 'TOP_TIER';
 type CheckoutMethod = 'paypal' | 'card' | 'bank-transfer';
 type BankTransferBank = 'SCOTIABANK' | 'NCB';
 
@@ -96,6 +96,15 @@ const planCatalog: Record<PlanKey, {
     icon: Crown,
     color: 'from-blue-500 to-purple-600',
     features: ['300 analyses per month', 'Advanced Smart Money Concepts', 'Priority AI processing'],
+  },
+  TOP_TIER: {
+    name: 'Top Tier 👑',
+    price: 39.95,
+    period: '/month',
+    description: '300 analyses per month plus AutoTrader for MT5.',
+    icon: Crown,
+    color: 'from-amber-500 to-orange-600',
+    features: ['300 analyses per month', 'Advanced Smart Money Concepts', 'Priority AI processing', 'AutoTrader for MT5'],
   },
 };
 
@@ -342,7 +351,8 @@ function CheckoutPageContent() {
 
   const isSuccess = searchParams.get('success') === 'true';
   const isCanceled = searchParams.get('canceled') === 'true';
-  const planKey = (searchParams.get('plan')?.toUpperCase() === 'FREE' ? 'FREE' : 'PRO') as PlanKey;
+  const requestedPlan = searchParams.get('plan')?.toUpperCase();
+  const planKey: PlanKey = requestedPlan === 'FREE' || requestedPlan === 'TOP_TIER' || requestedPlan === 'PRO' ? requestedPlan : 'PRO';
   const plan = planCatalog[planKey];
   const activeBillingAddress = sameAsShipping ? shippingAddress : billingAddress;
   const formReady = isAddressComplete(shippingAddress) && isAddressComplete(activeBillingAddress);
@@ -411,7 +421,7 @@ function CheckoutPageContent() {
   }, [user]);
 
   useEffect(() => {
-    if (!token || planKey !== 'PRO') return;
+    if (!token || planKey === 'FREE') return;
     api.referral.getMyDiscount(token)
       .then((data) => {
         if (data.discountPercent > 0) setReferralDiscount(data.discountPercent);
@@ -450,8 +460,8 @@ function CheckoutPageContent() {
       return;
     }
 
-    if (planKey === 'PRO' && user.subscription === 'PRO') {
-      setError('You already have a Pro subscription');
+    if ((planKey === 'TOP_TIER' && user.subscription === 'TOP_TIER') || (planKey === 'PRO' && (user.subscription === 'PRO' || user.subscription === 'TOP_TIER'))) {
+      setError(planKey === 'TOP_TIER' ? 'You already have the Top Tier subscription' : 'You already have this plan or higher');
       return;
     }
 
@@ -497,8 +507,8 @@ function CheckoutPageContent() {
       return;
     }
 
-    if (planKey === 'PRO' && user.subscription === 'PRO') {
-      setError('You already have a Pro subscription');
+    if ((planKey === 'TOP_TIER' && user.subscription === 'TOP_TIER') || (planKey === 'PRO' && (user.subscription === 'PRO' || user.subscription === 'TOP_TIER'))) {
+      setError(planKey === 'TOP_TIER' ? 'You already have the Top Tier subscription' : 'You already have this plan or higher');
       return;
     }
 
@@ -602,7 +612,7 @@ function CheckoutPageContent() {
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="font-semibold">{plan.name}</p>
-                          {planKey === 'PRO' ? <Badge variant="default">Most Popular</Badge> : <Badge variant="secondary">Starter</Badge>}
+                          {planKey === 'TOP_TIER' ? <Badge variant="default">Includes AutoTrader</Badge> : planKey === 'PRO' ? <Badge variant="outline">Premium</Badge> : <Badge variant="secondary">Starter</Badge>}
                         </div>
                         <p className="text-sm text-muted-foreground">{plan.description}</p>
                       </div>
@@ -691,7 +701,7 @@ function CheckoutPageContent() {
               </Card>
 
               {/* Coupon Code Section */}
-              {planKey === 'PRO' && (
+              {planKey !== 'FREE' && (
                 <Card className="mobile-card">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
@@ -785,7 +795,7 @@ function CheckoutPageContent() {
                   </div>
                 )}
 
-                {planKey === 'PRO' ? (
+                {planKey !== 'FREE' ? (
                   hasValidPayPalClientId ? (
                     <div className="space-y-3">
                       <PayPalButtonStack
@@ -969,7 +979,7 @@ function CheckoutPageContent() {
             </div>
             <h3 className="mt-6 text-center text-2xl font-semibold">Thank you. Your transfer is under review.</h3>
             <p className="mt-3 text-center text-sm leading-6 text-muted-foreground">
-              We have recorded your {bankTransferOptions[submittedTransfer.bankTransferBank].shortName} bank transfer request. Once the payment is verified, your account will be upgraded to TradeVision AI Pro immediately.
+              We have recorded your {bankTransferOptions[submittedTransfer.bankTransferBank].shortName} bank transfer request. Once the payment is verified, your account will be upgraded to {plan.name} immediately.
             </p>
             <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm">
               <div className="flex items-center justify-between gap-3">

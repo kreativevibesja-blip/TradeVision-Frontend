@@ -25,7 +25,7 @@ import {
 const AUDIENCE_OPTIONS = [
   { value: 'all', label: 'All Users', icon: Globe, desc: 'Every registered user' },
   { value: 'free', label: 'Free Users', icon: Users, desc: 'Users on Free plan' },
-  { value: 'pro', label: 'Pro Users', icon: Crown, desc: 'Users on Pro plan' },
+  { value: 'pro', label: 'Paid Users', icon: Crown, desc: 'Users on Pro or Top Tier plans' },
   { value: 'single', label: 'Single User', icon: User, desc: 'One specific user' },
 ];
 

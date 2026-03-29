@@ -450,7 +450,7 @@ export default function HomePage() {
             </h2>
           </FadeInSection>
 
-          <div className="mx-auto grid max-w-3xl grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:gap-8">
+          <div className="mx-auto grid max-w-6xl grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 md:gap-6 lg:gap-8">
             <FadeInSection>
               <Card className="h-full">
                 <CardContent className="p-8">
@@ -472,12 +472,12 @@ export default function HomePage() {
             </FadeInSection>
 
             <FadeInSection delay={0.15}>
-              <Card className="h-full border-primary/30 relative overflow-hidden">
+              <Card className="h-full relative overflow-hidden">
                 <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-purple-500" />
                 <CardContent className="p-8">
                   <div className="flex items-center gap-2 mb-2">
                     <h3 className="text-xl font-semibold">Pro</h3>
-                    <Badge variant="default">Popular 🔥</Badge>
+                    <Badge variant="outline">Premium</Badge>
                   </div>
                   <div className="text-4xl font-bold mb-4">$19.95<span className="text-lg text-muted-foreground font-normal">/month</span></div>
                   <ul className="space-y-3 mb-8">
@@ -494,8 +494,38 @@ export default function HomePage() {
                       </li>
                     ))}
                   </ul>
-                  <Link href="/checkout" className="block">
+                  <Link href="/checkout?plan=PRO" className="block">
                     <Button variant="gradient" size="lg" className="w-full">Upgrade to Pro</Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            </FadeInSection>
+
+            <FadeInSection delay={0.3}>
+              <Card className="h-full border-primary/30 relative overflow-hidden">
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 to-orange-500" />
+                <CardContent className="p-8">
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="text-xl font-semibold">Top Tier 👑</h3>
+                    <Badge variant="default">AutoTrader</Badge>
+                  </div>
+                  <div className="text-4xl font-bold mb-4">$39.95<span className="text-lg text-muted-foreground font-normal">/month</span></div>
+                  <ul className="space-y-3 mb-8">
+                    {[
+                      '300 analyses per month',
+                      'Advanced AI detection',
+                      'Priority processing',
+                      'Smart Money Concepts',
+                      'AutoTrader for MT5',
+                    ].map((f) => (
+                      <li key={f} className="flex items-center gap-2 text-sm">
+                        <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <Link href="/checkout?plan=TOP_TIER" className="block">
+                    <Button variant="gradient" size="lg" className="w-full">Unlock Top Tier</Button>
                   </Link>
                 </CardContent>
               </Card>

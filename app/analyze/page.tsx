@@ -310,7 +310,7 @@ function AnalyzePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, token, refreshUser } = useAuth();
-  const isPro = user?.subscription === 'PRO';
+  const isPro = user?.subscription !== 'FREE';
   const retryMode = searchParams.get('retry') === '1';
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);

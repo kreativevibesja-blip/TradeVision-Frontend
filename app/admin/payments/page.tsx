@@ -11,7 +11,7 @@ import { formatJamaicaDateTime } from '@/lib/jamaica-time';
 import { Building2, CheckCircle2, CreditCard, Landmark, Loader2, Wallet, XCircle } from 'lucide-react';
 
 const paymentStatuses: Array<Exclude<AdminPaymentStatusFilter, 'ALL'>> = ['PENDING', 'COMPLETED', 'FAILED', 'REFUNDED'];
-const paymentPlans: Array<Exclude<AdminPaymentPlanFilter, 'ALL'>> = ['FREE', 'PRO'];
+const paymentPlans: Array<Exclude<AdminPaymentPlanFilter, 'ALL'>> = ['FREE', 'PRO', 'TOP_TIER'];
 type PaymentsView = 'all' | 'bank-transfers';
 
 const paymentMethodLabel: Record<AdminPayment['paymentMethod'], string> = {

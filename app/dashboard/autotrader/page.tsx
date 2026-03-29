@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { api, TradeSignal, RiskSettings, Mt5Connection, AutoMode } from '@/lib/api';
 import {
@@ -183,6 +184,32 @@ export default function AutoTraderPage() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Card className="max-w-md w-full"><CardContent className="p-8 text-center"><p className="text-muted-foreground">Please sign in to access AutoTrader.</p></CardContent></Card>
+      </div>
+    );
+  }
+
+  if (user.subscription !== 'TOP_TIER') {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Card className="max-w-2xl w-full border-amber-500/20 bg-amber-500/5">
+          <CardContent className="p-8 text-center">
+            <div className="mx-auto mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-300">
+              <Bot className="h-6 w-6" />
+            </div>
+            <h1 className="text-2xl font-semibold">AutoTrader is a Top Tier feature</h1>
+            <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground">
+              Upgrade to Top Tier to connect MT5, manage execution rules, and run semi-automated trading from your TradeVision signals.
+            </p>
+            <div className="mt-6 flex justify-center">
+              <Link href="/checkout?plan=TOP_TIER">
+                <Button className="gap-2 bg-amber-600 text-white hover:bg-amber-500">
+                  <Bot className="h-4 w-4" />
+                  Upgrade to Top Tier
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }

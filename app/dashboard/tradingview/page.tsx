@@ -113,7 +113,7 @@ export default function TradingViewDashboardPage() {
   const cacheMatchesSelection = cachedAnalysis?.symbol === symbol && cachedAnalysis?.timeframe === timeframe;
 
   const startAnalysis = async (forceFresh = false) => {
-    if (!token || !user || user.subscription !== 'PRO' || analyzing) {
+    if (!token || !user || user.subscription === 'FREE' || analyzing) {
       return;
     }
 
@@ -191,7 +191,7 @@ export default function TradingViewDashboardPage() {
     );
   }
 
-  if (user.subscription !== 'PRO') {
+  if (user.subscription === 'FREE') {
     return (
       <div className="flex h-full items-center justify-center p-4">
         <Card className="mobile-card max-w-2xl overflow-hidden border-cyan-500/20 bg-cyan-500/5">
@@ -199,15 +199,15 @@ export default function TradingViewDashboardPage() {
             <div className="mx-auto mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-500/10 text-cyan-300">
               <Crown className="h-6 w-6" />
             </div>
-            <h1 className="text-2xl font-semibold">Live TradingView analysis is Pro only</h1>
+            <h1 className="text-2xl font-semibold">Live TradingView analysis is available on paid plans</h1>
             <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground">
-              Upgrade to Pro to open live TradingView charts in the dashboard, fetch real OHLC data, and analyze the selected symbol and timeframe instantly.
+              Upgrade to Pro or Top Tier to open live TradingView charts in the dashboard, fetch real OHLC data, and analyze the selected symbol and timeframe instantly.
             </p>
             <div className="mt-6 flex justify-center">
               <Link href="/pricing">
                 <Button className="gap-2 bg-cyan-600 text-white hover:bg-cyan-500">
                   <Crown className="h-4 w-4" />
-                  Upgrade to Pro
+                  Upgrade Now
                 </Button>
               </Link>
             </div>

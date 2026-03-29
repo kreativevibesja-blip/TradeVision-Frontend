@@ -11,7 +11,7 @@ import { api, type AdminUserListItem } from '@/lib/api';
 import { addDaysToDateInputValue, formatJamaicaDate, formatJamaicaDateTime, getEndOfJamaicaDayIso, getJamaicaDateInputValue, getStartOfJamaicaDayIso } from '@/lib/jamaica-time';
 import { Users, Search, Crown, Ban, ShieldCheck, Zap, X, CalendarRange } from 'lucide-react';
 
-type SubscriptionFilter = 'ALL' | 'FREE' | 'PRO';
+type SubscriptionFilter = 'ALL' | 'FREE' | 'PRO' | 'TOP_TIER';
 type DateFilter = 'ALL' | 'TODAY' | 'LAST_7_DAYS' | 'LAST_30_DAYS' | 'CUSTOM';
 
 const buildDateRange = (filter: DateFilter, customFrom: string, customTo: string) => {
@@ -146,6 +146,7 @@ export default function AdminUsersPage() {
                 <option value="ALL">All users</option>
                 <option value="FREE">Free users</option>
                 <option value="PRO">Pro users</option>
+                <option value="TOP_TIER">Top Tier users</option>
               </select>
             </div>
             <div className="flex flex-col gap-2 lg:w-48">
@@ -215,8 +216,8 @@ export default function AdminUsersPage() {
                         </div>
                       </td>
                       <td className="p-4">
-                        <Badge variant={u.subscription === 'PRO' ? 'default' : 'secondary'}>
-                          {u.subscription === 'PRO' ? <Crown className="h-3 w-3 mr-1" /> : <Zap className="h-3 w-3 mr-1" />}
+                        <Badge variant={u.subscription !== 'FREE' ? 'default' : 'secondary'}>
+                          {u.subscription !== 'FREE' ? <Crown className="h-3 w-3 mr-1" /> : <Zap className="h-3 w-3 mr-1" />}
                           {u.subscription}
                         </Badge>
                       </td>
@@ -229,10 +230,10 @@ export default function AdminUsersPage() {
                       </td>
                       <td className="p-4">
                         <div className="text-sm font-medium text-foreground">
-                          {u.usage?.current ?? 0}/{u.usage?.limit ?? (u.subscription === 'PRO' ? 300 : 2)}
+                          {u.usage?.current ?? 0}/{u.usage?.limit ?? (u.subscription !== 'FREE' ? 300 : 2)}
                         </div>
                         <p className="text-xs text-muted-foreground">
-                          {u.subscription === 'PRO' ? 'Current month' : 'Today'}
+                          {u.subscription !== 'FREE' ? 'Current month' : 'Today'}
                         </p>
                       </td>
                       <td className="p-4 text-muted-foreground">{u._count?.analyses || 0}</td>
@@ -253,15 +254,27 @@ export default function AdminUsersPage() {
                             >
                               <Crown className="h-3 w-3" />
                             </Button>
+                          ) : u.subscription === 'PRO' ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                updateUser(u.id, { subscription: 'TOP_TIER' });
+                              }}
+                              title="Upgrade to Top Tier"
+                            >
+                              <Crown className="h-3 w-3 text-amber-400" />
+                            </Button>
                           ) : (
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={(event) => {
                                 event.stopPropagation();
-                                updateUser(u.id, { subscription: 'FREE' });
+                                updateUser(u.id, { subscription: 'PRO' });
                               }}
-                              title="Downgrade to Free"
+                              title="Downgrade to Pro"
                             >
                               <Zap className="h-3 w-3" />
                             </Button>
@@ -379,10 +392,15 @@ export default function AdminUsersPage() {
                       <Crown className="mr-2 h-4 w-4" />
                       Upgrade to Pro
                     </Button>
+                  ) : selectedUser.subscription === 'PRO' ? (
+                    <Button onClick={() => updateUser(selectedUser.id, { subscription: 'TOP_TIER' })}>
+                      <Crown className="mr-2 h-4 w-4" />
+                      Upgrade to Top Tier
+                    </Button>
                   ) : (
-                    <Button variant="outline" onClick={() => updateUser(selectedUser.id, { subscription: 'FREE' })}>
+                    <Button variant="outline" onClick={() => updateUser(selectedUser.id, { subscription: 'PRO' })}>
                       <Zap className="mr-2 h-4 w-4" />
-                      Downgrade to Free
+                      Downgrade to Pro
                     </Button>
                   )}
                   <Button variant={selectedUser.banned ? 'outline' : 'destructive'} onClick={() => updateUser(selectedUser.id, { banned: !selectedUser.banned })}>

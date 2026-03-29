@@ -281,7 +281,7 @@ export default function DerivDashboardPage() {
     );
   }
 
-  if (user.subscription !== 'PRO') {
+  if (user.subscription === 'FREE') {
     return (
       <div className="flex h-full items-center justify-center p-4">
         <Card className="mobile-card max-w-2xl overflow-hidden border-cyan-500/20 bg-cyan-500/5">
@@ -289,15 +289,15 @@ export default function DerivDashboardPage() {
             <div className="mx-auto mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-500/10 text-cyan-300">
               <Crown className="h-6 w-6" />
             </div>
-            <h1 className="text-2xl font-semibold">Deriv live charts are Pro only</h1>
+            <h1 className="text-2xl font-semibold">Deriv live charts are available on paid plans</h1>
             <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground">
-              Upgrade to Pro to open live Deriv synthetic charts, stream candles in real time, and overlay AI zones directly on the chart.
+              Upgrade to Pro or Top Tier to open live Deriv synthetic charts, stream candles in real time, and overlay AI zones directly on the chart.
             </p>
             <div className="mt-6 flex justify-center">
               <Link href="/pricing">
                 <Button className="gap-2 bg-cyan-600 text-white hover:bg-cyan-500">
                   <Crown className="h-4 w-4" />
-                  Upgrade to Pro
+                  Upgrade Now
                 </Button>
               </Link>
             </div>
