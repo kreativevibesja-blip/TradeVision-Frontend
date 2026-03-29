@@ -894,6 +894,12 @@ export const api = {
       takeProfit: number;
       confidence?: SignalConfidence;
       analysisId?: string;
+      label?: string;
+      marketState?: SignalMarketState;
+      strategy?: string;
+      score?: number;
+      confirmations?: string[];
+      explanation?: string;
       lotSize?: number;
     }, token: string) =>
       apiFetch<{ signal: TradeSignal }>('/autotrader/signals', {
@@ -1077,6 +1083,7 @@ export interface SearchedUser {
 export type SignalDirection = 'buy' | 'sell';
 export type SignalConfidence = 'A+' | 'A' | 'B' | 'avoid';
 export type SignalStatus = 'pending' | 'ready' | 'executed' | 'cancelled' | 'expired';
+export type SignalMarketState = 'trending' | 'ranging' | 'choppy' | 'reversal';
 export type AutoMode = 'manual' | 'semi' | 'full';
 
 export interface TradeSignal {
@@ -1090,6 +1097,12 @@ export interface TradeSignal {
   confidence: SignalConfidence;
   status: SignalStatus;
   analysisId: string | null;
+  label: string | null;
+  marketState: SignalMarketState | null;
+  strategy: string | null;
+  score: number | null;
+  confirmations: string[];
+  explanation: string | null;
   lotSize: number | null;
   executedAt: string | null;
   cancelledAt: string | null;
