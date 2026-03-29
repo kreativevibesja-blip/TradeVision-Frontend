@@ -206,7 +206,7 @@ export interface AdminAnalysisLog {
   user: {
     email: string | null;
     name: string | null;
-    subscription: 'FREE' | 'PRO';
+    subscription: 'FREE' | 'PRO' | 'TOP_TIER';
   } | null;
 }
 
@@ -215,7 +215,7 @@ export interface AdminUserListItem {
   email: string;
   name: string | null;
   role: string;
-  subscription: 'FREE' | 'PRO';
+  subscription: 'FREE' | 'PRO' | 'TOP_TIER';
   banned: boolean;
   dailyUsage?: number | null;
   lastUsageReset?: string | null;
@@ -295,7 +295,7 @@ export interface SupportTicket {
 }
 
 export interface BillingSummary {
-  currentPlan: 'FREE' | 'PRO';
+  currentPlan: 'FREE' | 'PRO' | 'TOP_TIER';
   status: 'free' | 'active' | 'expired' | 'cancelled';
   expiresAt: string | null;
   lastPaymentAt: string | null;
@@ -310,7 +310,7 @@ export interface BillingSummary {
     status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
     paymentMethod: 'PAYPAL' | 'CARD' | 'BANK_TRANSFER' | 'COUPON';
     bankTransferBank: 'SCOTIABANK' | 'NCB' | null;
-    plan: 'FREE' | 'PRO';
+    plan: 'FREE' | 'PRO' | 'TOP_TIER';
     verifiedAt: string | null;
     createdAt: string;
     updatedAt: string;
@@ -326,7 +326,7 @@ export interface AdminPayment {
   status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
   paymentMethod: 'PAYPAL' | 'CARD' | 'BANK_TRANSFER' | 'COUPON';
   bankTransferBank: 'SCOTIABANK' | 'NCB' | null;
-  plan: 'FREE' | 'PRO';
+  plan: 'FREE' | 'PRO' | 'TOP_TIER';
   verifiedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -344,7 +344,7 @@ export type AdminPaymentDateRangeFilter = '7d' | '30d' | '90d' | 'all';
 export interface PricingPlan {
   id: string;
   name: string;
-  tier: 'FREE' | 'PRO';
+  tier: 'FREE' | 'PRO' | 'TOP_TIER';
   price: number;
   features: string[];
   dailyLimit: number;
@@ -583,7 +583,7 @@ export const api = {
       options?: {
         search?: string;
         page?: number;
-        subscription?: 'FREE' | 'PRO';
+        subscription?: 'FREE' | 'PRO' | 'TOP_TIER';
         createdFrom?: string;
         createdTo?: string;
       }
