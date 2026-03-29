@@ -12,6 +12,7 @@ import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { api, resolveAssetUrl, type AnalysisResult } from '@/lib/api';
+import { buildAutoTraderSignalFromAnalysis } from '@/lib/autotrader-signal';
 import { AuthModal } from '@/components/AuthModal';
 import { ChartLightbox } from '@/components/ChartLightbox';
 import {
