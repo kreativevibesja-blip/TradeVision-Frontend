@@ -11,9 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { api, type AnalysisResult, type TradeSignal } from '@/lib/api';
 import { buildAutoTraderSignalFromAnalysis } from '@/lib/autotrader-signal';
 import {
-  ArrowRight,
   Bot,
-  CheckCircle2,
   Crown,
   Info,
   Loader2,
@@ -32,10 +30,10 @@ const CONFIDENCE_COLORS: Record<string, string> = {
 };
 
 const STATUS_COPY: Record<string, string> = {
-  pending: 'Ready to send',
-  ready: 'Trade sent',
-  executed: 'Executed',
-  cancelled: 'Cancelled',
+  pending: 'New setup',
+  ready: 'Saved setup',
+  executed: 'Logged',
+  cancelled: 'Dismissed',
   expired: 'Expired',
 };
 
@@ -61,11 +59,8 @@ function OneTapTradeContent() {
   const [latestAnalysis, setLatestAnalysis] = useState<AnalysisResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
-  const [executing, setExecuting] = useState(false);
-  const [executeSuccess, setExecuteSuccess] = useState(false);
   const [notice, setNotice] = useState('');
   const [now, setNow] = useState(Date.now());
-  const [rippleKey, setRippleKey] = useState(0);
   const [focusedSignalId, setFocusedSignalId] = useState<string | null>(incomingSignalId);
 
   const load = useCallback(async () => {
@@ -141,10 +136,6 @@ function OneTapTradeContent() {
     [focusedSignalId, historicalSignals, pendingSignals, signals],
   );
 
-  useEffect(() => {
-    setExecuteSuccess(false);
-  }, [activeSignal?.id]);
-
   const createSignalFromAnalysis = async (analysis: AnalysisResult) => {
     if (!token) {
       return null;
@@ -162,7 +153,7 @@ function OneTapTradeContent() {
     setNotice(
       draft.isOpportunistic
         ? 'Opportunistic setup generated based on current market conditions.'
-        : 'Fresh One-Tap setup generated and ready to send.',
+        : 'Fresh One-Tap setup generated.',
     );
     return signal;
   };
@@ -208,35 +199,11 @@ function OneTapTradeContent() {
       }, token);
       setSignals((current) => [signal, ...current.filter((item) => item.id !== signal.id)]);
       setFocusedSignalId(signal.id);
-      setNotice('Trade regenerated from your latest live setup.');
+      setNotice('Trade plan regenerated from your latest live setup.');
     } catch (error: any) {
       setNotice(error?.message || 'Unable to regenerate this One-Tap setup right now.');
     } finally {
       setGenerating(false);
-    }
-  };
-
-  const handleExecuteTrade = async () => {
-    if (!token || !activeSignal) {
-      return;
-    }
-
-    try {
-      setExecuting(true);
-      setNotice('');
-      setRippleKey((current) => current + 1);
-
-      if (activeSignal.status === 'pending') {
-        const { signal } = await api.autotrader.approveSignal(activeSignal.id, token);
-        setSignals((current) => current.map((item) => (item.id === signal.id ? signal : item)));
-      }
-
-      setExecuteSuccess(true);
-      setNotice('Trade moved into your ready queue for execution.');
-    } catch (error: any) {
-      setNotice(error?.message || 'Unable to send this trade right now.');
-    } finally {
-      setExecuting(false);
     }
   };
 
@@ -271,7 +238,7 @@ function OneTapTradeContent() {
             <Badge className="border-fuchsia-400/30 bg-fuchsia-400/10 text-fuchsia-100">One-Tap Pro+</Badge>
             <h1 className="mt-4 text-3xl font-semibold text-white">One-Tap Trade is part of One-Tap Pro+</h1>
             <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
-              Instant trade setups, advanced entry precision, and one-click execution flow. No clutter, no hesitation, no missed moves.
+              Instant trade setups with advanced entry precision and clear manual execution levels. No clutter, no hesitation, no missed moves.
             </p>
             <div className="mt-8 flex justify-center">
               <Link href="/checkout?plan=TOP_TIER">
@@ -307,7 +274,7 @@ function OneTapTradeContent() {
               </div>
               <h1 className="mt-5 text-3xl font-semibold tracking-tight text-white sm:text-4xl">One-Tap Trade</h1>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
-                Instant high-quality trade setups. No guessing.
+                Instant high-quality trade setups with precise entry, stop loss, and take profit levels.
               </p>
 
               <div className="mt-6 flex flex-wrap gap-3">
@@ -335,14 +302,14 @@ function OneTapTradeContent() {
 
               <div className="mt-8 grid gap-3 sm:grid-cols-3">
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Signal queue</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Setups</p>
                   <p className="mt-2 text-2xl font-semibold text-white">{pendingSignals.length}</p>
-                  <p className="mt-1 text-xs text-slate-400">Fresh setups waiting for execution</p>
+                  <p className="mt-1 text-xs text-slate-400">Fresh trade plans available to review</p>
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Execution queue</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Plan status</p>
                   <p className="mt-2 text-2xl font-semibold text-white">{activeSignal ? STATUS_COPY[activeSignal.status] || activeSignal.status : 'Standby'}</p>
-                  <p className="mt-1 text-xs text-slate-400">Built-in One-Tap workflow with no external bridge required</p>
+                  <p className="mt-1 text-xs text-slate-400">Use the levels below when placing the trade on your own platform</p>
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Analysis source</p>
@@ -357,19 +324,19 @@ function OneTapTradeContent() {
             <CardContent className="p-6 sm:p-8">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Execution flow</p>
-                  <h2 className="mt-2 text-xl font-semibold text-white">One-Tap Pipeline</h2>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Trade plan guide</p>
+                  <h2 className="mt-2 text-xl font-semibold text-white">Manual Execution Levels</h2>
                 </div>
                 <Badge className="border-cyan-400/30 bg-cyan-400/10 text-cyan-100">
-                  Internal queue
+                  Entry + SL + TP
                 </Badge>
               </div>
 
               <div className="mt-6 space-y-4">
                 <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/5 p-4">
-                  <p className="text-sm font-semibold text-white">One-Tap now runs as a fully in-app workflow.</p>
+                  <p className="text-sm font-semibold text-white">One-Tap now focuses on clean trade levels.</p>
                   <p className="mt-2 text-sm leading-7 text-slate-300">
-                    Generate a setup, review the levels, then move it into your ready queue when you want to act. The workflow stays inside the app and no external bridge is required.
+                    Generate a setup, review the levels, then place the trade manually wherever you execute. One-Tap gives you the entry, stop loss, and take profit without trying to manage the order for you.
                   </p>
                 </div>
 
@@ -386,15 +353,15 @@ function OneTapTradeContent() {
                   </div>
                   <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                     <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">Step 3</p>
-                    <p className="mt-2 text-sm font-semibold text-white">Queue</p>
-                    <p className="mt-2 text-xs leading-6 text-slate-400">Mark the setup ready and manage execution from your workflow.</p>
+                    <p className="mt-2 text-sm font-semibold text-white">Execute Anywhere</p>
+                    <p className="mt-2 text-xs leading-6 text-slate-400">Place the order manually on your broker or charting platform using those levels.</p>
                   </div>
                 </div>
 
                 <p className="text-xs text-slate-400">
                   {pendingSignals.length > 0
-                    ? `${pendingSignals.length} setup${pendingSignals.length === 1 ? '' : 's'} currently waiting in the queue.`
-                    : 'No setups are waiting in the queue right now.'}
+                    ? `${pendingSignals.length} setup${pendingSignals.length === 1 ? '' : 's'} currently available to review.`
+                    : 'No setups are available to review right now.'}
                 </p>
               </div>
             </CardContent>
@@ -479,33 +446,8 @@ function OneTapTradeContent() {
                       </div>
                     </div>
 
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="text-sm text-slate-300">
-                        Status: <span className="font-medium text-white">{STATUS_COPY[activeSignal.status] || activeSignal.status}</span>
-                      </div>
-                      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="relative">
-                        <Button
-                          size="xl"
-                          onClick={() => void handleExecuteTrade()}
-                          disabled={executing || activeSignal.status === 'cancelled' || activeSignal.status === 'expired'}
-                          className="relative min-w-[220px] overflow-hidden rounded-2xl bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-[0_18px_45px_rgba(59,130,246,0.28)] transition-transform hover:scale-[1.01] hover:from-blue-400 hover:to-fuchsia-500"
-                        >
-                          <AnimatePresence>
-                            {rippleKey > 0 ? (
-                              <motion.span
-                                key={rippleKey}
-                                initial={{ scale: 0, opacity: 0.5 }}
-                                animate={{ scale: 2.4, opacity: 0 }}
-                                exit={{ opacity: 0 }}
-                                transition={{ duration: 0.55, ease: 'easeOut' }}
-                                className="pointer-events-none absolute inset-0 mx-auto my-auto h-20 w-20 rounded-full bg-white/20"
-                              />
-                            ) : null}
-                          </AnimatePresence>
-                          {executing ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : executeSuccess || activeSignal.status === 'ready' ? <CheckCircle2 className="mr-2 h-5 w-5" /> : <ArrowRight className="mr-2 h-5 w-5" />}
-                          {executing ? 'Executing...' : executeSuccess || activeSignal.status === 'ready' ? 'Trade Sent ✅' : 'Execute Trade'}
-                        </Button>
-                      </motion.div>
+                    <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm leading-7 text-slate-300">
+                      <span className="font-medium text-white">How to use it:</span> place this setup manually in your execution platform using the entry, stop loss, and take profit shown above.
                     </div>
                   </div>
                 </motion.div>
@@ -521,7 +463,7 @@ function OneTapTradeContent() {
                       <div className="rounded-3xl bg-cyan-400/10 p-4 text-cyan-200"><Bot className="h-7 w-7" /></div>
                       <h2 className="mt-5 text-2xl font-semibold text-white">No active One-Tap setup yet</h2>
                       <p className="mt-3 max-w-xl text-sm leading-7 text-slate-300">
-                        Generate a new trade from your latest analysis, or send a setup from the analysis workspace to see it animate here instantly.
+                        Generate a new trade plan from your latest analysis, or send a setup from the analysis workspace to see the entry, stop loss, and take profit here instantly.
                       </p>
                     </CardContent>
                   </Card>
@@ -533,7 +475,7 @@ function OneTapTradeContent() {
               <CardContent className="p-5 sm:p-6">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Trade queue</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Saved setups</p>
                     <h3 className="mt-2 text-lg font-semibold text-white">Recent One-Tap setups</h3>
                   </div>
                   <Button variant="ghost" size="sm" onClick={() => void load()} className="text-slate-300 hover:bg-white/5 hover:text-white">
@@ -567,7 +509,7 @@ function OneTapTradeContent() {
                     </button>
                   )) : (
                     <div className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-slate-400">
-                      No queued setups yet. Send a chart analysis to One-Tap to populate this rail.
+                      No saved setups yet. Send a chart analysis to One-Tap to populate this rail.
                     </div>
                   )}
                 </div>
@@ -581,15 +523,15 @@ function OneTapTradeContent() {
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Strategy note</p>
                 <h3 className="mt-2 text-lg font-semibold text-white">Why this feels instant</h3>
                 <p className="mt-3 text-sm leading-7 text-slate-300">
-                  One-Tap Trade always extracts the best available setup from your latest market context. If the main call is conservative, it still surfaces an opportunistic version so you can decide quickly instead of staring at a wait signal.
+                  One-Tap Trade always extracts the best available setup from your latest market context. If the main call is conservative, it still surfaces an opportunistic version so you can decide quickly and place the trade manually with clear levels.
                 </p>
               </CardContent>
             </Card>
 
             <Card className="overflow-hidden border-white/10 bg-slate-950/55 backdrop-blur-xl">
               <CardContent className="p-5 sm:p-6">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Trade history</p>
-                <h3 className="mt-2 text-lg font-semibold text-white">Recent outcomes</h3>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Archived setups</p>
+                <h3 className="mt-2 text-lg font-semibold text-white">Recent records</h3>
                 <div className="mt-4 space-y-3">
                   {historicalSignals.length > 0 ? historicalSignals.slice(0, 5).map((signal) => (
                     <div key={signal.id} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
@@ -603,7 +545,7 @@ function OneTapTradeContent() {
                     </div>
                   )) : (
                     <div className="rounded-2xl border border-dashed border-white/10 p-5 text-sm text-slate-400">
-                      Executed and archived trades will appear here.
+                      Older and archived setups will appear here.
                     </div>
                   )}
                 </div>
