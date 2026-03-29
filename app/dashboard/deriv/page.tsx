@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { LiveChart, type LiveChartStatus } from '@/components/LiveChart';
+import { OneTapWorkflowPanel } from '@/components/OneTapWorkflowPanel';
 import { useAuth } from '@/hooks/useAuth';
 import { api, type AnalysisResult } from '@/lib/api';
 import { buildAutoTraderSignalFromAnalysis, buildAutoTraderSignalFromDerivAnalysis } from '@/lib/autotrader-signal';
@@ -19,6 +20,12 @@ const STORAGE_KEY = 'dashboard_deriv_chart_state';
 const ANALYSIS_CACHE_KEY = 'dashboard_deriv_chart_analysis_cache';
 const ANALYZE_DEBOUNCE_MS = 1200;
 const ANALYSIS_CACHE_TTL_MS = 5 * 60 * 1000;
+const ONE_TAP_WORKFLOW_STEPS = [
+  'Reading the live candle flow...',
+  'Checking support, resistance, and confirmations...',
+  'Building your One-Tap trade plan...',
+  'Opening One-Tap Trade...',
+];
 
 interface StoredState {
   symbol: string;
@@ -381,7 +388,7 @@ export default function DerivDashboardPage() {
       }
 
       const { signal } = await api.autotrader.createSignal(draft, token);
-      router.push(`/dashboard/autotrader?signalId=${encodeURIComponent(signal.id)}`);
+      router.push(`/dashboard/autotrader?signalId=${encodeURIComponent(signal.id)}&workflow=one-tap&source=deriv`);
     } catch (sendError: any) {
       setAutotraderMessage(sendError?.message || 'Unable to analyze this Deriv chart with One-Tap Trade.');
     } finally {
@@ -656,6 +663,13 @@ export default function DerivDashboardPage() {
         </div>
         <div className="h-[calc(58svh-3rem)]">{panelContent}</div>
       </motion.div>
+      <OneTapWorkflowPanel
+        open={sendingToAutotrader}
+        title="Analyzing this Deriv chart"
+        subtitle="One-Tap is reviewing the live candles, validating the setup, and loading the finished trade plan page."
+        steps={ONE_TAP_WORKFLOW_STEPS}
+        fullscreen
+      />
     </motion.section>
   );
 }

@@ -554,13 +554,17 @@ function AnalyzePageContent() {
         setShowAiZones(Boolean(result.analysis.markedImageUrl));
 
         if (mode === 'one-tap') {
+          setCurrentStage('Building One-Tap setup...');
+          setProgress(92);
           const draft = buildAutoTraderSignalFromAnalysis(result.analysis);
           if (!draft) {
             setError('NO TRADE: One-Tap analyzed this chart but did not find a valid opportunistic setup. The market state, confirmations, or score were not strong enough.');
           } else {
             const { signal } = await api.autotrader.createSignal(draft, token);
+            setCurrentStage('Loading One-Tap Trade...');
+            setProgress(100);
             await refreshUser().catch(() => {});
-            router.push(`/dashboard/autotrader?signalId=${encodeURIComponent(signal.id)}`);
+            router.push(`/dashboard/autotrader?signalId=${encodeURIComponent(signal.id)}&workflow=one-tap&source=analyze`);
             return;
           }
         }

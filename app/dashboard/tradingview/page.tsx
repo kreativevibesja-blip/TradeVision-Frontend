@@ -8,6 +8,7 @@ import { AlertTriangle, Crown, Info, Loader2, PanelRightOpen, RefreshCcw, Wifi, 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { OneTapWorkflowPanel } from '@/components/OneTapWorkflowPanel';
 import { TradingViewAdvancedChart } from '@/components/TradingViewAdvancedChart';
 import { useAuth } from '@/hooks/useAuth';
 import { api, type AnalysisResult } from '@/lib/api';
@@ -19,6 +20,12 @@ const STORAGE_KEY = 'dashboard_live_chart_state';
 const CACHE_KEY = 'dashboard_live_chart_analysis_cache';
 const CACHE_TTL_MS = 5 * 60 * 1000;
 const ANALYZE_DEBOUNCE_MS = 1200;
+const ONE_TAP_WORKFLOW_STEPS = [
+  'Reading the live chart structure...',
+  'Validating the opportunistic setup...',
+  'Building your One-Tap trade plan...',
+  'Opening One-Tap Trade...',
+];
 
 interface StoredState {
   symbol: string;
@@ -153,7 +160,7 @@ export default function TradingViewDashboardPage() {
         throw new Error('NO TRADE: One-Tap only issues an opportunistic setup when the market state is valid, price is reacting at support or resistance, at least 2 confirmations are present, and the setup score is 5 or higher.');
       }
       const { signal } = await api.autotrader.createSignal(draft, token);
-      router.push(`/dashboard/autotrader?signalId=${encodeURIComponent(signal.id)}`);
+      router.push(`/dashboard/autotrader?signalId=${encodeURIComponent(signal.id)}&workflow=one-tap&source=tradingview`);
     } catch (sendError: any) {
       setAutotraderMessage(sendError?.message || 'Unable to analyze this live chart with One-Tap Trade.');
     } finally {
@@ -477,6 +484,13 @@ export default function TradingViewDashboardPage() {
         </div>
         <div className="h-[calc(58svh-3rem)]">{panelContent}</div>
       </motion.div>
+      <OneTapWorkflowPanel
+        open={sendingToAutotrader}
+        title="Analyzing this live chart"
+        subtitle="One-Tap is reviewing structure, checking confirmations, and preparing the trade plan before opening the result page."
+        steps={ONE_TAP_WORKFLOW_STEPS}
+        fullscreen
+      />
     </motion.section>
   );
 }

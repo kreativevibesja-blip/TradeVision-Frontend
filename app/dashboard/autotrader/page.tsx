@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { OneTapWorkflowPanel } from '@/components/OneTapWorkflowPanel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -44,6 +45,36 @@ const MARKET_STATE_COPY: Record<string, string> = {
   reversal: 'Reversal',
 };
 
+const ONE_TAP_WORKFLOW_COPY: Record<string, { title: string; subtitle: string; steps: string[] }> = {
+  analyze: {
+    title: 'Loading your One-Tap result',
+    subtitle: 'Your chart was analyzed successfully. One-Tap is now loading the finished setup on this page.',
+    steps: [
+      'Finalizing the screenshot analysis...',
+      'Saving the One-Tap setup...',
+      'Loading your trade plan...',
+    ],
+  },
+  tradingview: {
+    title: 'Loading your One-Tap result',
+    subtitle: 'The live TradingView chart has been processed. One-Tap is loading the finished trade plan now.',
+    steps: [
+      'Reading the live chart structure...',
+      'Saving the One-Tap setup...',
+      'Loading your trade plan...',
+    ],
+  },
+  deriv: {
+    title: 'Loading your One-Tap result',
+    subtitle: 'The Deriv live chart has been processed. One-Tap is loading the finished trade plan now.',
+    steps: [
+      'Reviewing the live candle flow...',
+      'Saving the One-Tap setup...',
+      'Loading your trade plan...',
+    ],
+  },
+};
+
 const formatTradePrice = (value: number, symbol: string) => {
   const digits = Math.abs(value) >= 100 ? 2 : symbol.includes('JPY') || Math.abs(value) >= 1 ? 3 : 5;
   return value.toFixed(digits);
@@ -53,6 +84,8 @@ function OneTapTradeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const incomingSignalId = searchParams.get('signalId');
+  const workflowMode = searchParams.get('workflow');
+  const workflowSource = searchParams.get('source') || 'analyze';
   const { user, token, loading: authLoading } = useAuth();
   const [signals, setSignals] = useState<TradeSignal[]>([]);
   const [latestAnalysis, setLatestAnalysis] = useState<AnalysisResult | null>(null);
@@ -128,6 +161,9 @@ function OneTapTradeContent() {
     () => signals.find((signal) => signal.id === focusedSignalId) ?? pendingSignals[0] ?? historicalSignals[0] ?? null,
     [focusedSignalId, historicalSignals, pendingSignals, signals],
   );
+
+  const workflowCopy = ONE_TAP_WORKFLOW_COPY[workflowSource] || ONE_TAP_WORKFLOW_COPY.analyze;
+  const showWorkflowTransition = workflowMode === 'one-tap' && loading;
 
   const createSignalFromAnalysis = async (analysis: AnalysisResult) => {
     if (!token) {
@@ -209,9 +245,18 @@ function OneTapTradeContent() {
   if (authLoading || loading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <Card className="max-w-md w-full overflow-hidden border-white/10 bg-slate-950/70">
-          <CardContent className="p-8 text-center text-sm text-slate-300">Loading One-Tap Trade...</CardContent>
-        </Card>
+        {showWorkflowTransition ? (
+          <OneTapWorkflowPanel
+            open
+            title={workflowCopy.title}
+            subtitle={workflowCopy.subtitle}
+            steps={workflowCopy.steps}
+          />
+        ) : (
+          <Card className="max-w-md w-full overflow-hidden border-white/10 bg-slate-950/70">
+            <CardContent className="p-8 text-center text-sm text-slate-300">Loading One-Tap Trade...</CardContent>
+          </Card>
+        )}
       </div>
     );
   }
