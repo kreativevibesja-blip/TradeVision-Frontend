@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -56,7 +56,7 @@ const formatCountdown = (createdAt: string, now: number) => {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 };
 
-export default function AutoTraderPage() {
+function OneTapTradeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const incomingSignalId = searchParams.get('signalId');
@@ -700,5 +700,23 @@ export default function AutoTraderPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function OneTapTradeFallback() {
+  return (
+    <div className="flex min-h-[60vh] items-center justify-center">
+      <Card className="max-w-md w-full overflow-hidden border-white/10 bg-slate-950/70">
+        <CardContent className="p-8 text-center text-sm text-slate-300">Loading One-Tap Trade...</CardContent>
+      </Card>
+    </div>
+  );
+}
+
+export default function AutoTraderPage() {
+  return (
+    <Suspense fallback={<OneTapTradeFallback />}>
+      <OneTapTradeContent />
+    </Suspense>
   );
 }
