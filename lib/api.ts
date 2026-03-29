@@ -43,11 +43,7 @@ export interface AnalysisResult {
   assetClass?: string | null;
   bias?: string;
   confidence: number;
-  accountName: string | null;
-  balance: number | null;
-  equity: number | null;
-  currency: string | null;
-  hasPassword: boolean;
+  currentPrice: number;
   trend: 'bullish' | 'bearish' | 'ranging';
   marketCondition?: 'trending' | 'ranging' | 'breakout' | 'consolidation';
   primaryStrategy?: 'SMC' | 'Supply & Demand' | 'S&R' | 'Pattern' | null;
