@@ -321,7 +321,12 @@ export default function DerivDashboardPage() {
   const StatusIcon = statusTone.icon;
 
   const handleSendToAutotrader = async () => {
-    if (!token || !analysis || sendingToAutotrader) {
+    if (!token || sendingToAutotrader) {
+      return;
+    }
+
+    if (candles.length < 50) {
+      setAutotraderMessage('Not enough live candle data is loaded yet for One-Tap analysis.');
       return;
     }
 
