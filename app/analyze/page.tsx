@@ -542,7 +542,18 @@ function AnalyzePageContent() {
 
       // Free users get queued — redirect to queue waiting page
       if (result.queued && result.jobId) {
-        router.push(`/analyze/queue?jobId=${result.jobId}&analysisId=${result.analysisId || ''}`);
+        const queueParams = new URLSearchParams({
+          jobId: result.jobId,
+          analysisId: result.analysisId || '',
+        });
+
+        if (mode === 'one-tap') {
+          queueParams.set('returnTo', '/analyze');
+          queueParams.set('workflow', 'one-tap');
+          queueParams.set('source', 'analyze');
+        }
+
+        router.push(`/analyze/queue?${queueParams.toString()}`);
         return;
       }
 

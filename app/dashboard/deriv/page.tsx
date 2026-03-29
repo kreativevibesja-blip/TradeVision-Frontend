@@ -360,7 +360,14 @@ export default function DerivDashboardPage() {
       }
 
       if (data.queued && data.jobId) {
-        router.push(`/analyze/queue?jobId=${encodeURIComponent(data.jobId)}&analysisId=${encodeURIComponent(data.analysisId || '')}&returnTo=${encodeURIComponent('/dashboard/deriv')}`);
+        const queueParams = new URLSearchParams({
+          jobId: data.jobId,
+          analysisId: data.analysisId || '',
+          returnTo: '/dashboard/deriv',
+          workflow: 'one-tap',
+          source: 'deriv',
+        });
+        router.push(`/analyze/queue?${queueParams.toString()}`);
         return;
       }
 

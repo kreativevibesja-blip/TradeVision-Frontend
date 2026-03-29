@@ -132,7 +132,14 @@ export default function TradingViewDashboardPage() {
       setAutotraderMessage('');
       const result = await api.analyzeLiveChart({ source: 'tradingview-live', symbol, timeframe }, token);
       if (result.queued && result.jobId) {
-        router.push(`/analyze/queue?jobId=${encodeURIComponent(result.jobId)}&analysisId=${encodeURIComponent(result.analysisId || '')}&returnTo=${encodeURIComponent('/dashboard/tradingview')}`);
+        const queueParams = new URLSearchParams({
+          jobId: result.jobId,
+          analysisId: result.analysisId || '',
+          returnTo: '/dashboard/tradingview',
+          workflow: 'one-tap',
+          source: 'tradingview',
+        });
+        router.push(`/analyze/queue?${queueParams.toString()}`);
         return;
       }
 
