@@ -14,6 +14,11 @@ export interface AutoTraderSignalDraft {
 
 const normalizeSymbol = (value: string) => value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
 
+interface PriceZone {
+  min: number;
+  max: number;
+}
+
 const fallbackDistance = (price: number) => {
   if (!Number.isFinite(price) || price === 0) {
     return 1;
@@ -25,22 +30,39 @@ const fallbackDistance = (price: number) => {
   return 0.0015;
 };
 
-const inferDirection = (analysis: AnalysisResult): SignalDirection => {
-  if (analysis.entryPlan?.bias === 'buy' || analysis.entryPlan?.bias === 'sell') {
-    return analysis.entryPlan.bias;
+const toPriceZone = (zone?: { min: number | null; max: number | null } | null): PriceZone | null => {
+  if (!zone) {
+    return null;
   }
 
-  if (analysis.bias === 'buy' || analysis.bias === 'sell') {
-    return analysis.bias;
+  const values = [zone.min, zone.max].filter((value): value is number => typeof value === 'number' && Number.isFinite(value));
+  if (values.length === 0) {
+    return null;
   }
 
-  if (analysis.counterTrendPlan?.bias === 'buy' || analysis.counterTrendPlan?.bias === 'sell') {
-    return analysis.counterTrendPlan.bias;
+  return {
+    min: Math.min(...values),
+    max: Math.max(...values),
+  };
+};
+
+const zoneWidth = (zone: PriceZone) => Math.abs(zone.max - zone.min);
+
+const distanceToZone = (price: number, zone: PriceZone) => {
+  if (price < zone.min) {
+    return zone.min - price;
   }
 
-  if (analysis.trend === 'bullish') return 'buy';
-  if (analysis.trend === 'bearish') return 'sell';
-  return analysis.currentPricePosition === 'premium' ? 'sell' : 'buy';
+  if (price > zone.max) {
+    return price - zone.max;
+  }
+
+  return 0;
+};
+
+const isNearZone = (price: number, zone: PriceZone) => {
+  const proximityBuffer = Math.max(zoneWidth(zone) * 0.35, fallbackDistance(price));
+  return distanceToZone(price, zone) <= proximityBuffer;
 };
 
 const midpoint = (min?: number | null, max?: number | null) => {
@@ -67,35 +89,60 @@ export const mapConfidenceScoreToGrade = (score: number, fallback?: AnalysisResu
 };
 
 export const buildAutoTraderSignalFromAnalysis = (analysis: AnalysisResult): AutoTraderSignalDraft | null => {
-  const direction = inferDirection(analysis);
-  const entryPrice = midpoint(analysis.entryPlan?.entryZone?.min, analysis.entryPlan?.entryZone?.max)
-    ?? midpoint(analysis.entryZone?.min, analysis.entryZone?.max)
-    ?? midpoint(analysis.counterTrendPlan?.entryZone?.min, analysis.counterTrendPlan?.entryZone?.max)
-    ?? (typeof analysis.currentPrice === 'number' ? analysis.currentPrice : null);
-  const basePrice = entryPrice ?? analysis.currentPrice;
-  const rawStopLoss = analysis.stopLoss
-    ?? analysis.counterTrendPlan?.stopLoss
-    ?? analysis.invalidationLevel
-    ?? null;
-  const stopDistance = basePrice != null && rawStopLoss != null
-    ? Math.abs(basePrice - rawStopLoss)
-    : basePrice != null
-      ? fallbackDistance(basePrice)
-      : null;
-  const stopLoss = rawStopLoss ?? (basePrice != null && stopDistance != null
-    ? direction === 'buy'
-      ? basePrice - stopDistance
-      : basePrice + stopDistance
-    : null);
-  const takeProfit = analysis.takeProfit1
-    ?? analysis.counterTrendPlan?.takeProfit1
-    ?? (basePrice != null && stopDistance != null
-      ? direction === 'buy'
-        ? basePrice + stopDistance * 2.4
-        : basePrice - stopDistance * 2.4
-      : null);
+  if (!Number.isFinite(analysis.currentPrice)) {
+    return null;
+  }
 
-  if (stopLoss == null || takeProfit == null || entryPrice == null) {
+  const currentPrice = analysis.currentPrice;
+  const supportZone = toPriceZone(analysis.zones?.demandZone ?? null);
+  const resistanceZone = toPriceZone(analysis.zones?.supplyZone ?? null);
+
+  if (!supportZone || !resistanceZone) {
+    return null;
+  }
+
+  const nearSupport = isNearZone(currentPrice, supportZone);
+  const nearResistance = isNearZone(currentPrice, resistanceZone);
+
+  if (!nearSupport && !nearResistance) {
+    return null;
+  }
+
+  let direction: SignalDirection;
+  let activeZone: PriceZone;
+  let targetZone: PriceZone;
+
+  if (nearSupport && !nearResistance) {
+    direction = 'buy';
+    activeZone = supportZone;
+    targetZone = resistanceZone;
+  } else if (nearResistance && !nearSupport) {
+    direction = 'sell';
+    activeZone = resistanceZone;
+    targetZone = supportZone;
+  } else if (distanceToZone(currentPrice, supportZone) <= distanceToZone(currentPrice, resistanceZone)) {
+    direction = 'buy';
+    activeZone = supportZone;
+    targetZone = resistanceZone;
+  } else {
+    direction = 'sell';
+    activeZone = resistanceZone;
+    targetZone = supportZone;
+  }
+
+  const entryPrice = midpoint(activeZone.min, activeZone.max);
+  const takeProfit = midpoint(targetZone.min, targetZone.max);
+
+  if (entryPrice == null || takeProfit == null) {
+    return null;
+  }
+
+  const stopPadding = Math.max(zoneWidth(activeZone) * 0.2, fallbackDistance(entryPrice) * 0.5);
+  const stopLoss = direction === 'buy'
+    ? activeZone.min - stopPadding
+    : activeZone.max + stopPadding;
+
+  if ((direction === 'buy' && takeProfit <= entryPrice) || (direction === 'sell' && takeProfit >= entryPrice)) {
     return null;
   }
 
