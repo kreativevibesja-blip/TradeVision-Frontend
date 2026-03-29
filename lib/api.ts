@@ -882,6 +882,70 @@ export const api = {
         token,
       }),
   },
+
+  // ── AutoTrader ──
+  autotrader: {
+    // MT5 Connection
+    getConnection: (token: string) =>
+      apiFetch<{ connection: Mt5Connection | null }>('/autotrader/connection', { token }),
+    connect: (data: { accountId: string; broker?: string; serverName?: string }, token: string) =>
+      apiFetch<{ connection: Mt5Connection }>('/autotrader/connection', {
+        method: 'POST',
+        body: JSON.stringify(data),
+        token,
+      }),
+    disconnect: (token: string) =>
+      apiFetch<{ success: boolean }>('/autotrader/disconnect', { method: 'POST', token }),
+    heartbeat: (token: string) =>
+      apiFetch<{ success: boolean }>('/autotrader/heartbeat', { method: 'POST', token }),
+
+    // Trade Signals
+    createSignal: (data: {
+      symbol: string;
+      direction: SignalDirection;
+      entryPrice: number;
+      stopLoss: number;
+      takeProfit: number;
+      confidence?: SignalConfidence;
+      analysisId?: string;
+      lotSize?: number;
+    }, token: string) =>
+      apiFetch<{ signal: TradeSignal }>('/autotrader/signals', {
+        method: 'POST',
+        body: JSON.stringify(data),
+        token,
+      }),
+    getSignals: (token: string, status?: SignalStatus) =>
+      apiFetch<{ signals: TradeSignal[] }>(`/autotrader/signals${status ? `?status=${status}` : ''}`, { token }),
+    getPendingSignals: (token: string) =>
+      apiFetch<{ signals: TradeSignal[]; killSwitch: boolean; autoMode: AutoMode }>('/autotrader/signals/pending', { token }),
+    approveSignal: (id: string, token: string) =>
+      apiFetch<{ signal: TradeSignal }>(`/autotrader/signals/${encodeURIComponent(id)}/approve`, { method: 'POST', token }),
+    confirmExecution: (id: string, data: { ticket: string; lotSize?: number }, token: string) =>
+      apiFetch<{ signal: TradeSignal }>(`/autotrader/signals/${encodeURIComponent(id)}/confirm`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+        token,
+      }),
+    cancelSignal: (id: string, token: string) =>
+      apiFetch<{ signal: TradeSignal }>(`/autotrader/signals/${encodeURIComponent(id)}/cancel`, { method: 'POST', token }),
+
+    // Risk Settings
+    getSettings: (token: string) =>
+      apiFetch<{ settings: RiskSettings }>('/autotrader/settings', { token }),
+    updateSettings: (data: Partial<RiskSettings>, token: string) =>
+      apiFetch<{ settings: RiskSettings }>('/autotrader/settings', {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+        token,
+      }),
+    toggleKillSwitch: (enabled: boolean, token: string) =>
+      apiFetch<{ settings: RiskSettings }>('/autotrader/kill-switch', {
+        method: 'POST',
+        body: JSON.stringify({ enabled }),
+        token,
+      }),
+  },
 };
 
 // ── Referral Types ──
@@ -1020,4 +1084,50 @@ export interface SearchedUser {
   email: string;
   name: string | null;
   subscription: string;
+}
+
+// ── AutoTrader Types ──
+
+export type SignalDirection = 'buy' | 'sell';
+export type SignalConfidence = 'A+' | 'A' | 'B' | 'avoid';
+export type SignalStatus = 'pending' | 'ready' | 'executed' | 'cancelled' | 'expired';
+export type AutoMode = 'manual' | 'semi' | 'full';
+
+export interface Mt5Connection {
+  id: string;
+  userId: string;
+  accountId: string;
+  broker: string;
+  serverName: string;
+  isActive: boolean;
+  lastSeenAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TradeSignal {
+  id: string;
+  userId: string;
+  symbol: string;
+  direction: SignalDirection;
+  entryPrice: number;
+  stopLoss: number;
+  takeProfit: number;
+  confidence: SignalConfidence;
+  status: SignalStatus;
+  analysisId: string | null;
+  lotSize: number | null;
+  executedAt: string | null;
+  cancelledAt: string | null;
+  ticket: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RiskSettings {
+  riskPerTrade: number;
+  maxDailyLoss: number;
+  maxTradesPerDay: number;
+  autoMode: AutoMode;
+  killSwitch: boolean;
 }
