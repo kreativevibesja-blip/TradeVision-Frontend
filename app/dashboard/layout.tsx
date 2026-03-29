@@ -25,18 +25,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="page-stack min-h-screen">
       <div className="page-shell max-w-6xl">
-        <div className="grid gap-6 lg:grid-cols-[220px_1fr] lg:items-start">
-          <aside className="lg:sticky lg:top-24">
-            <Card className="mobile-card overflow-hidden">
+        <div className="grid gap-6 lg:grid-cols-[max-content_1fr] lg:items-start">
+          <aside className="lg:sticky lg:top-24 lg:self-start">
+            <Card className="mobile-card overflow-hidden lg:w-fit">
               <CardContent className="p-3">
-                <nav className="flex gap-2 overflow-x-auto lg:flex-col">
+                <nav className="flex gap-2 overflow-x-auto lg:flex-col lg:items-start">
                   {dashboardNav.map((item) => {
                     const isActive = pathname === item.href;
                     return (
                       <Link
                         key={item.href}
                         href={item.href}
-                        className={`inline-flex min-h-12 items-center gap-2 rounded-xl px-4 py-3 text-sm whitespace-nowrap transition-colors ${
+                        className={`inline-flex min-h-12 items-center gap-2 rounded-xl px-4 py-3 text-sm whitespace-nowrap transition-colors lg:min-h-0 lg:w-auto lg:px-3.5 lg:py-2.5 ${
                           isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-white/5 hover:text-foreground'
                         }`}
                       >
