@@ -17,7 +17,17 @@ type DisplayPlan = PricingPlan & {
   cta: string;
   ctaLink: string;
   popular: boolean;
+  badge: string | null;
 };
+
+const oneTapProFeatures = [
+  '300 analyses per month',
+  'Instant trade setups',
+  'One-tap execution',
+  'Priority signal generation',
+  'Advanced entry precision',
+  'Faster response time',
+];
 
 const fallbackPlanDetails: Record<'FREE' | 'PRO' | 'TOP_TIER', Omit<DisplayPlan, 'id' | 'name' | 'tier' | 'price' | 'features' | 'dailyLimit' | 'isActive' | 'createdAt' | 'updatedAt'>> = {
   FREE: {
@@ -28,6 +38,7 @@ const fallbackPlanDetails: Record<'FREE' | 'PRO' | 'TOP_TIER', Omit<DisplayPlan,
     cta: 'Subscribe Now',
     ctaLink: '/checkout?plan=FREE',
     popular: false,
+    badge: null,
   },
   PRO: {
     period: '/month',
@@ -37,15 +48,17 @@ const fallbackPlanDetails: Record<'FREE' | 'PRO' | 'TOP_TIER', Omit<DisplayPlan,
     cta: 'Subscribe Now',
     ctaLink: '/checkout?plan=PRO',
     popular: false,
+    badge: null,
   },
   TOP_TIER: {
     period: '/month',
-    description: 'Never miss a trade again with instant One-Tap execution setups',
+    description: 'Instant trade setups with One-Tap Trade, advanced entry precision, and faster response time.',
     icon: Crown,
     color: 'from-fuchsia-500 via-violet-500 to-cyan-500',
     cta: 'Upgrade to One-Tap Pro+',
     ctaLink: '/checkout?plan=TOP_TIER',
     popular: true,
+    badge: 'One-Tap Trade',
   },
 };
 
@@ -79,7 +92,7 @@ const defaultFallbackPlans: DisplayPlan[] = [
     name: 'One-Tap Pro+',
     tier: 'TOP_TIER',
     price: 39.95,
-    features: ['Instant trade setups', 'One-tap execution', 'Priority signal generation', 'Advanced entry precision', 'Faster response time'],
+    features: oneTapProFeatures,
     dailyLimit: 999999,
     isActive: true,
     createdAt: '',
@@ -90,13 +103,18 @@ const defaultFallbackPlans: DisplayPlan[] = [
 
 const toDisplayPlan = (plan: PricingPlan): DisplayPlan => ({
   ...plan,
-  ...(plan.tier !== 'FREE'
+  ...(plan.tier === 'TOP_TIER'
     ? {
-        features: plan.features.map((feature) =>
-          /unlimited|fair use|300 analyses per month/i.test(feature) ? '300 analyses per month' : feature
-        ),
+        name: 'One-Tap Pro+',
+        features: oneTapProFeatures,
       }
-    : {}),
+    : plan.tier !== 'FREE'
+      ? {
+          features: plan.features.map((feature) =>
+            /unlimited|fair use|300 analyses per month/i.test(feature) ? '300 analyses per month' : feature
+          ),
+        }
+      : {}),
   ...fallbackPlanDetails[plan.tier],
 });
 
@@ -159,7 +177,7 @@ export default function PricingPage() {
                     <div>
                       <div className="flex items-center gap-2">
                         <h3 className="text-xl font-semibold">{plan.name}</h3>
-                        {plan.popular && <Badge variant="default">Never miss a trade again</Badge>}
+                        {plan.badge ? <Badge variant="default">{plan.badge}</Badge> : null}
                       </div>
                     </div>
                   </div>
