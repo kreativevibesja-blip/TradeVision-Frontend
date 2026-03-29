@@ -32,6 +32,18 @@ type TradingViewApi = {
 
 let tradingViewScriptPromise: Promise<TradingViewApi> | null = null;
 
+const destroyWidget = (widget: TradingViewWidgetInstance | null) => {
+  if (!widget?.remove) {
+    return;
+  }
+
+  try {
+    widget.remove();
+  } catch {
+    // TradingView can throw if React has already detached the underlying node.
+  }
+};
+
 const loadTradingViewApi = () => {
   if (typeof window === 'undefined') {
     return Promise.reject(new Error('TradingView can only load in the browser.'));
@@ -113,7 +125,7 @@ export function TradingViewAdvancedChart({ symbol, interval, className }: Tradin
           return;
         }
 
-        widgetRef.current?.remove?.();
+        destroyWidget(widgetRef.current);
         widgetRef.current = new tradingView.widget({
           autosize: true,
           symbol,
@@ -141,7 +153,7 @@ export function TradingViewAdvancedChart({ symbol, interval, className }: Tradin
 
     return () => {
       disposed = true;
-      widgetRef.current?.remove?.();
+      destroyWidget(widgetRef.current);
       widgetRef.current = null;
 
       if (containerRef.current) {
