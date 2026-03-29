@@ -885,32 +885,6 @@ export const api = {
 
   // ── AutoTrader ──
   autotrader: {
-    // MT5 Connection
-    getConnection: (token: string) =>
-      apiFetch<{ connection: Mt5Connection | null }>('/autotrader/connection', { token }),
-    connect: (data: { accountId: string; broker?: string; serverName?: string; accountPassword?: string }, token: string) =>
-      apiFetch<{ connection: Mt5Connection }>('/autotrader/connection', {
-        method: 'POST',
-        body: JSON.stringify(data),
-        token,
-      }),
-    disconnect: (token: string) =>
-      apiFetch<{ success: boolean }>('/autotrader/disconnect', { method: 'POST', token }),
-    heartbeat: (data: {
-      accountId?: string;
-      broker?: string;
-      serverName?: string;
-      accountName?: string;
-      balance?: number;
-      equity?: number;
-      currency?: string;
-    }, token: string) =>
-      apiFetch<{ success: boolean; connection?: Mt5Connection | null }>('/autotrader/heartbeat', {
-        method: 'POST',
-        body: JSON.stringify(data),
-        token,
-      }),
-
     // Trade Signals
     createSignal: (data: {
       symbol: string;
@@ -1104,23 +1078,6 @@ export type SignalDirection = 'buy' | 'sell';
 export type SignalConfidence = 'A+' | 'A' | 'B' | 'avoid';
 export type SignalStatus = 'pending' | 'ready' | 'executed' | 'cancelled' | 'expired';
 export type AutoMode = 'manual' | 'semi' | 'full';
-
-export interface Mt5Connection {
-  id: string;
-  userId: string;
-  accountId: string;
-  broker: string;
-  serverName: string;
-  accountName: string | null;
-  balance: number | null;
-  equity: number | null;
-  currency: string | null;
-  hasPassword: boolean;
-  isActive: boolean;
-  lastSeenAt: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
 
 export interface TradeSignal {
   id: string;
