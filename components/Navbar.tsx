@@ -48,7 +48,7 @@ export function Navbar() {
               Analyze
             </Link>
             <Link href="/trade-examples" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Trade Examples
+              Education
             </Link>
             <Link href="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Pricing
