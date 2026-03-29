@@ -44,7 +44,7 @@ export default function AdminTicketsPage() {
   const [pages, setPages] = useState(1);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [status, setStatus] = useState<StatusFilter>('ALL');
+  const [status, setStatus] = useState<StatusFilter>('OPEN');
   const [priority, setPriority] = useState<PriorityFilter>('ALL');
   const [dateRange, setDateRange] = useState<DateRangeFilter>('30d');
   const [draftStatus, setDraftStatus] = useState<TicketStatus>('OPEN');
