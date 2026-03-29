@@ -45,6 +45,7 @@ export function Footer() {
               <h4 className="mb-4 font-semibold">Product</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><Link href="/analyze" className="transition-colors hover:text-foreground">Chart Analysis</Link></li>
+                <li><Link href="/trade-examples" className="transition-colors hover:text-foreground">Trade Quality Examples</Link></li>
                 <li><Link href="/pricing" className="transition-colors hover:text-foreground">Pricing</Link></li>
                 <li><Link href="/dashboard" className="transition-colors hover:text-foreground">Dashboard</Link></li>
               </ul>

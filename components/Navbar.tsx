@@ -47,6 +47,9 @@ export function Navbar() {
             <Link href="/analyze" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Analyze
             </Link>
+            <Link href="/trade-examples" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Trade Examples
+            </Link>
             <Link href="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Pricing
             </Link>
@@ -111,6 +114,9 @@ export function Navbar() {
               </Link>
               <Link href="/pricing" className="flex min-h-12 items-center rounded-xl px-4 text-sm hover:bg-white/5" onClick={() => setMobileOpen(false)}>
                 Pricing
+              </Link>
+              <Link href="/trade-examples" className="flex min-h-12 items-center rounded-xl px-4 text-sm hover:bg-white/5" onClick={() => setMobileOpen(false)}>
+                Trade Examples
               </Link>
               {user ? (
                 <>
