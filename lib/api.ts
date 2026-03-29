@@ -1111,13 +1111,13 @@ export interface CreateTradeSignalSecondaryTrade {
   stopLoss: number;
   takeProfit: number;
   confidence: SignalConfidence;
-  label?: string;
-  marketState?: SignalMarketState;
-  strategy?: string;
-  score?: number;
+  label?: string | null;
+  marketState?: SignalMarketState | null;
+  strategy?: string | null;
+  score?: number | null;
   confirmations?: string[];
-  explanation?: string;
-  warning?: string;
+  explanation?: string | null;
+  warning?: string | null;
 }
 
 export interface TradeSignal {
