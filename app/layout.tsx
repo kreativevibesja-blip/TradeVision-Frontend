@@ -16,6 +16,11 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'TradeVision AI - AI Trading Chart Analysis',
   description: 'Upload any trading chart screenshot and get professional AI-powered analysis instantly. Supports cTrader, TradingView, and Deriv charts.',
+  icons: {
+    icon: '/icon.svg',
+    shortcut: '/icon.svg',
+    apple: '/icon.svg',
+  },
 };
 
 export const viewport: Viewport = {
