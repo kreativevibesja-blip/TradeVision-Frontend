@@ -37,6 +37,13 @@ const STATUS_COPY: Record<string, string> = {
   expired: 'Expired',
 };
 
+const MARKET_STATE_COPY: Record<string, string> = {
+  trending: 'Trending',
+  ranging: 'Ranging',
+  choppy: 'Choppy',
+  reversal: 'Reversal',
+};
+
 const formatTradePrice = (value: number, symbol: string) => {
   const digits = Math.abs(value) >= 100 ? 2 : symbol.includes('JPY') || Math.abs(value) >= 1 ? 3 : 5;
   return value.toFixed(digits);
@@ -143,7 +150,7 @@ function OneTapTradeContent() {
 
     const draft = buildAutoTraderSignalFromAnalysis(analysis);
     if (!draft) {
-      throw new Error('No One-Tap trade right now. Price must be close to support or resistance before a setup is generated.');
+      throw new Error('NO TRADE: One-Tap only issues an opportunistic setup when the market state is valid, price is reacting at support or resistance, at least 2 confirmations are present, and the setup score is 5 or higher.');
     }
 
     const { signal } = await api.autotrader.createSignal(draft, token);
@@ -196,6 +203,12 @@ function OneTapTradeContent() {
         takeProfit: activeSignal.takeProfit,
         confidence: activeSignal.confidence,
         analysisId: activeSignal.analysisId || undefined,
+        label: activeSignal.label || undefined,
+        marketState: activeSignal.marketState || undefined,
+        strategy: activeSignal.strategy || undefined,
+        score: activeSignal.score ?? undefined,
+        confirmations: activeSignal.confirmations ?? [],
+        explanation: activeSignal.explanation || undefined,
       }, token);
       setSignals((current) => [signal, ...current.filter((item) => item.id !== signal.id)]);
       setFocusedSignalId(signal.id);
@@ -402,8 +415,11 @@ function OneTapTradeContent() {
                     <div className="flex flex-wrap items-start justify-between gap-4">
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
-                          <Badge className="border-fuchsia-400/30 bg-fuchsia-400/12 text-fuchsia-100">Opportunistic Setup</Badge>
+                          <Badge className="border-fuchsia-400/30 bg-fuchsia-400/12 text-fuchsia-100">{activeSignal.label || 'Opportunistic Setup'}</Badge>
                           <Badge className={CONFIDENCE_COLORS[activeSignal.confidence] || 'border-white/10 bg-white/5 text-slate-200'}>{activeSignal.confidence}</Badge>
+                          {activeSignal.marketState ? (
+                            <Badge className="border-white/10 bg-white/5 text-slate-200">{MARKET_STATE_COPY[activeSignal.marketState] || activeSignal.marketState}</Badge>
+                          ) : null}
                           <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200" title="This is an aggressive opportunity setup">
                             <motion.span className="h-2.5 w-2.5 rounded-full bg-emerald-400" animate={{ opacity: [1, 0.35, 1] }} transition={{ duration: 1.1, repeat: Infinity }} />
                             Live signal
@@ -416,7 +432,8 @@ function OneTapTradeContent() {
                           </span>
                         </div>
                         <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-slate-300">
-                          <span>Generated based on current market conditions</span>
+                          <span>{activeSignal.strategy || 'Generated based on current market conditions'}</span>
+                          {typeof activeSignal.score === 'number' ? <span>Score {activeSignal.score}</span> : null}
                           <span className="inline-flex items-center gap-1 text-slate-400" title="This is an aggressive opportunity setup">
                             <Info className="h-3.5 w-3.5" />
                             Aggressive opportunity
@@ -449,6 +466,23 @@ function OneTapTradeContent() {
                     <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm leading-7 text-slate-300">
                       <span className="font-medium text-white">How to use it:</span> place this setup manually in your execution platform using the entry, stop loss, and take profit shown above.
                     </div>
+
+                    {((activeSignal.confirmations?.length ?? 0) > 0 || activeSignal.explanation) ? (
+                      <div className="grid gap-4 lg:grid-cols-[0.7fr_1.3fr]">
+                        <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Confirmations used</p>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {(activeSignal.confirmations?.length ?? 0) > 0 ? activeSignal.confirmations.map((confirmation) => (
+                              <Badge key={confirmation} className="border-cyan-400/25 bg-cyan-400/10 text-cyan-100">{confirmation}</Badge>
+                            )) : <p className="text-sm text-slate-400">No confirmations were stored for this setup.</p>}
+                          </div>
+                        </div>
+                        <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm leading-7 text-slate-300">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Setup explanation</p>
+                          <p className="mt-3">{activeSignal.explanation || 'No stored explanation for this setup.'}</p>
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
                 </motion.div>
               ) : (
@@ -499,6 +533,7 @@ function OneTapTradeContent() {
                           <div>
                             <p className="font-semibold text-white">{signal.symbol} {signal.direction.toUpperCase()}</p>
                             <p className="mt-1 text-xs text-slate-400">Entry {formatTradePrice(signal.entryPrice, signal.symbol)} · TP {formatTradePrice(signal.takeProfit, signal.symbol)}</p>
+                            {signal.strategy ? <p className="mt-1 text-[11px] text-slate-500">{signal.strategy}{typeof signal.score === 'number' ? ` · Score ${signal.score}` : ''}</p> : null}
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
@@ -523,7 +558,7 @@ function OneTapTradeContent() {
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Strategy note</p>
                 <h3 className="mt-2 text-lg font-semibold text-white">Why this feels instant</h3>
                 <p className="mt-3 text-sm leading-7 text-slate-300">
-                  One-Tap Trade only produces a setup when price is close to a valid support or resistance zone. When that condition is met, it maps the entry around that zone, places the stop beyond it, and targets the opposite zone.
+                  One-Tap Trade only produces an Opportunistic Setup when the market state is valid, price is reacting at support or resistance, at least two confirmations are present, and the weighted setup score reaches 5 or more.
                 </p>
               </CardContent>
             </Card>

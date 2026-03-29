@@ -126,7 +126,7 @@ export default function TradingViewDashboardPage() {
       const { analysis } = await api.getAnalysis(cachedAnalysis.analysisId, token);
       const draft = buildAutoTraderSignalFromAnalysis(analysis);
       if (!draft) {
-        throw new Error('No One-Tap trade right now. Price must be close to support or resistance before a setup is generated.');
+        throw new Error('NO TRADE: One-Tap only issues an opportunistic setup when the market state is valid, price is reacting at support or resistance, at least 2 confirmations are present, and the setup score is 5 or higher.');
       }
       const { signal } = await api.autotrader.createSignal(draft, token);
       router.push(`/dashboard/autotrader?signalId=${encodeURIComponent(signal.id)}`);
