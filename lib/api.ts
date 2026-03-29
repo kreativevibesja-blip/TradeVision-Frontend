@@ -340,6 +340,7 @@ export type AdminPaymentStatusFilter = AdminPayment['status'] | 'ALL';
 export type AdminPaymentPlanFilter = AdminPayment['plan'] | 'ALL';
 export type AdminPaymentMethodFilter = AdminPayment['paymentMethod'] | 'ALL';
 export type AdminPaymentDateRangeFilter = '7d' | '30d' | '90d' | 'all';
+export type AdminPaymentScope = 'COMPLETED_CHECKOUTS' | 'BANK_TRANSFERS';
 
 export interface PricingPlan {
   id: string;
@@ -626,10 +627,12 @@ export const api = {
         status?: AdminPaymentStatusFilter;
         paymentMethod?: AdminPaymentMethodFilter;
         dateRange?: AdminPaymentDateRangeFilter;
+        scope?: AdminPaymentScope;
       } = {}
     ) => {
       const params = new URLSearchParams();
       params.set('page', String(options.page ?? 1));
+      if (options.scope) params.set('scope', options.scope);
       if (options.plan && options.plan !== 'ALL') params.set('plan', options.plan);
       if (options.status && options.status !== 'ALL') params.set('status', options.status);
       if (options.paymentMethod && options.paymentMethod !== 'ALL') params.set('paymentMethod', options.paymentMethod);
