@@ -98,13 +98,13 @@ const planCatalog: Record<PlanKey, {
     features: ['300 analyses per month', 'Advanced Smart Money Concepts', 'Priority AI processing'],
   },
   TOP_TIER: {
-    name: 'Top Tier 👑',
+    name: 'One-Tap Pro+',
     price: 39.95,
     period: '/month',
-    description: '300 analyses per month plus AutoTrader for MT5.',
+    description: '300 analyses per month plus One-Tap Trade and instant execution setups.',
     icon: Crown,
-    color: 'from-amber-500 to-orange-600',
-    features: ['300 analyses per month', 'Advanced Smart Money Concepts', 'Priority AI processing', 'AutoTrader for MT5'],
+    color: 'from-fuchsia-500 via-violet-500 to-cyan-500',
+    features: ['300 analyses per month', 'Instant trade setups', 'One-tap execution', 'Priority signal generation', 'Advanced entry precision'],
   },
 };
 
@@ -461,7 +461,7 @@ function CheckoutPageContent() {
     }
 
     if ((planKey === 'TOP_TIER' && user.subscription === 'TOP_TIER') || (planKey === 'PRO' && (user.subscription === 'PRO' || user.subscription === 'TOP_TIER'))) {
-      setError(planKey === 'TOP_TIER' ? 'You already have the Top Tier subscription' : 'You already have this plan or higher');
+      setError(planKey === 'TOP_TIER' ? 'You already have One-Tap Pro+' : 'You already have this plan or higher');
       return;
     }
 
@@ -508,7 +508,7 @@ function CheckoutPageContent() {
     }
 
     if ((planKey === 'TOP_TIER' && user.subscription === 'TOP_TIER') || (planKey === 'PRO' && (user.subscription === 'PRO' || user.subscription === 'TOP_TIER'))) {
-      setError(planKey === 'TOP_TIER' ? 'You already have the Top Tier subscription' : 'You already have this plan or higher');
+      setError(planKey === 'TOP_TIER' ? 'You already have One-Tap Pro+' : 'You already have this plan or higher');
       return;
     }
 
@@ -612,7 +612,7 @@ function CheckoutPageContent() {
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="font-semibold">{plan.name}</p>
-                          {planKey === 'TOP_TIER' ? <Badge variant="default">Includes AutoTrader</Badge> : planKey === 'PRO' ? <Badge variant="outline">Premium</Badge> : <Badge variant="secondary">Starter</Badge>}
+                          {planKey === 'TOP_TIER' ? <Badge variant="default">Includes One-Tap Trade</Badge> : planKey === 'PRO' ? <Badge variant="outline">Premium</Badge> : <Badge variant="secondary">Starter</Badge>}
                         </div>
                         <p className="text-sm text-muted-foreground">{plan.description}</p>
                       </div>

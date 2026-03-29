@@ -1,74 +1,163 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AnimatePresence, motion } from 'framer-motion';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
-import { api, TradeSignal, RiskSettings, Mt5Connection, AutoMode } from '@/lib/api';
+import { api, type AnalysisResult, type Mt5Connection, type TradeSignal } from '@/lib/api';
+import { buildAutoTraderSignalFromAnalysis } from '@/lib/autotrader-signal';
 import {
+  ArrowRight,
   Bot,
+  CheckCircle2,
+  Crown,
+  Info,
+  Loader2,
+  RefreshCw,
+  Sparkles,
+  TrendingDown,
+  TrendingUp,
   Wifi,
   WifiOff,
-  ShieldAlert,
-  ShieldCheck,
-  TrendingUp,
-  TrendingDown,
-  CheckCircle2,
-  XCircle,
-  Clock,
   Zap,
-  Settings2,
-  AlertTriangle,
-  RefreshCw,
 } from 'lucide-react';
 
-const MODE_LABELS: Record<AutoMode, { label: string; desc: string; color: string }> = {
-  manual: { label: 'Manual', desc: 'Review & approve every signal before execution', color: 'text-blue-400' },
-  semi: { label: 'Semi-Auto', desc: 'Auto-approve A+ signals, confirm the rest', color: 'text-yellow-400' },
-  full: { label: 'Full Auto', desc: 'All signals execute automatically via EA', color: 'text-green-400' },
-};
-
 const CONFIDENCE_COLORS: Record<string, string> = {
-  'A+': 'bg-green-500/20 text-green-400 border-green-500/30',
-  A: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-  B: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-  avoid: 'bg-red-500/20 text-red-400 border-red-500/30',
+  'A+': 'border-emerald-400/40 bg-emerald-400/10 text-emerald-200',
+  A: 'border-cyan-400/40 bg-cyan-400/10 text-cyan-200',
+  B: 'border-amber-400/40 bg-amber-400/10 text-amber-100',
+  avoid: 'border-rose-400/40 bg-rose-400/10 text-rose-100',
 };
 
-const STATUS_BADGES: Record<string, { label: string; className: string }> = {
-  pending: { label: 'Pending', className: 'bg-yellow-500/20 text-yellow-400' },
-  ready: { label: 'Ready', className: 'bg-blue-500/20 text-blue-400' },
-  executed: { label: 'Executed', className: 'bg-green-500/20 text-green-400' },
-  cancelled: { label: 'Cancelled', className: 'bg-zinc-500/20 text-zinc-400' },
-  expired: { label: 'Expired', className: 'bg-zinc-500/20 text-zinc-400' },
+const STATUS_COPY: Record<string, string> = {
+  pending: 'Ready to send',
+  ready: 'Trade sent',
+  executed: 'Executed',
+  cancelled: 'Cancelled',
+  expired: 'Expired',
+};
+
+const formatTradePrice = (value: number, symbol: string) => {
+  const digits = Math.abs(value) >= 100 ? 2 : symbol.includes('JPY') || Math.abs(value) >= 1 ? 3 : 5;
+  return value.toFixed(digits);
+};
+
+const formatCountdown = (createdAt: string, now: number) => {
+  const expiresAt = new Date(createdAt).getTime() + 15 * 60 * 1000;
+  const remaining = Math.max(0, expiresAt - now);
+  const minutes = Math.floor(remaining / 60000);
+  const seconds = Math.floor((remaining % 60000) / 1000);
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 };
 
 export default function AutoTraderPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const incomingSignalId = searchParams.get('signalId');
   const { user, token, loading: authLoading } = useAuth();
   const [connection, setConnection] = useState<Mt5Connection | null>(null);
   const [signals, setSignals] = useState<TradeSignal[]>([]);
-  const [settings, setSettings] = useState<RiskSettings>({
-    riskPerTrade: 1.0,
-    maxDailyLoss: 5.0,
-    maxTradesPerDay: 3,
-    autoMode: 'manual',
-    killSwitch: false,
-  });
+  const [latestAnalysis, setLatestAnalysis] = useState<AnalysisResult | null>(null);
   const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
+  const [executing, setExecuting] = useState(false);
+  const [executeSuccess, setExecuteSuccess] = useState(false);
+  const [notice, setNotice] = useState('');
+  const [now, setNow] = useState(Date.now());
+  const [rippleKey, setRippleKey] = useState(0);
+  const [focusedSignalId, setFocusedSignalId] = useState<string | null>(incomingSignalId);
   const [connectForm, setConnectForm] = useState({ accountId: '', broker: '', serverName: '', accountPassword: '' });
-  const [settingsForm, setSettingsForm] = useState<RiskSettings>(settings);
-  const [settingsDirty, setSettingsDirty] = useState(false);
-  const [tab, setTab] = useState<'signals' | 'settings'>('signals');
-  const [connectionNotice, setConnectionNotice] = useState('');
+  const [connecting, setConnecting] = useState(false);
 
+  const load = useCallback(async () => {
+    if (!token) {
+      return;
+    }
+
+    try {
+      const [connectionResult, signalsResult, analysesResult] = await Promise.all([
+        api.autotrader.getConnection(token),
+        api.autotrader.getSignals(token),
+        api.getAnalyses(token, 1),
+      ]);
+      setConnection(connectionResult.connection);
+      setSignals(signalsResult.signals);
+      setLatestAnalysis(analysesResult.analyses[0] ?? null);
+    } catch {
+      setNotice('Unable to refresh One-Tap Trade right now.');
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    if (incomingSignalId) {
+      setFocusedSignalId(incomingSignalId);
+    }
+  }, [incomingSignalId]);
+
+  useEffect(() => {
+    if (token) {
+      void load();
+    } else if (!authLoading) {
+      setLoading(false);
+    }
+  }, [authLoading, load, token]);
+
+  useEffect(() => {
+    if (!token) {
+      return;
+    }
+
+    const refreshInterval = window.setInterval(() => {
+      void load();
+    }, 15000);
+
+    return () => window.clearInterval(refreshInterval);
+  }, [load, token]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const pendingSignals = useMemo(
+    () => signals.filter((signal) => signal.status === 'pending' || signal.status === 'ready'),
+    [signals],
+  );
+  const historicalSignals = useMemo(
+    () => signals.filter((signal) => signal.status === 'executed' || signal.status === 'cancelled' || signal.status === 'expired'),
+    [signals],
+  );
+
+  useEffect(() => {
+    if (focusedSignalId && signals.some((signal) => signal.id === focusedSignalId)) {
+      return;
+    }
+
+    const nextSignal = pendingSignals[0] ?? historicalSignals[0] ?? null;
+    setFocusedSignalId(nextSignal?.id ?? null);
+  }, [focusedSignalId, historicalSignals, pendingSignals, signals]);
+
+  const activeSignal = useMemo(
+    () => signals.find((signal) => signal.id === focusedSignalId) ?? pendingSignals[0] ?? historicalSignals[0] ?? null,
+    [focusedSignalId, historicalSignals, pendingSignals, signals],
+  );
+
+  useEffect(() => {
+    setExecuteSuccess(false);
+  }, [activeSignal?.id]);
+
+  const connectionReady = Boolean(connection?.isActive);
   const formatAccountAmount = (value: number | null, currency: string | null) => {
     if (value == null || !Number.isFinite(value)) {
-      return 'Awaiting MT5 terminal sync';
+      return 'Awaiting MT5 sync';
     }
 
     try {
@@ -83,152 +172,172 @@ export default function AutoTraderPage() {
     }
   };
 
-  const load = useCallback(async () => {
-    if (!token) return;
-    try {
-      const [connRes, sigRes, setRes] = await Promise.all([
-        api.autotrader.getConnection(token),
-        api.autotrader.getSignals(token),
-        api.autotrader.getSettings(token),
-      ]);
-      setConnection(connRes.connection);
-      setSignals(sigRes.signals);
-      setSettings(setRes.settings);
-      setSettingsForm(setRes.settings);
-    } catch {
-      // silent
-    } finally {
-      setLoading(false);
+  const createSignalFromAnalysis = async (analysis: AnalysisResult) => {
+    if (!token) {
+      return null;
     }
-  }, [token]);
 
-  useEffect(() => {
-    if (token) load();
-    else if (!authLoading) setLoading(false);
-  }, [token, authLoading, load]);
+    const draft = buildAutoTraderSignalFromAnalysis(analysis);
+    if (!draft) {
+      throw new Error('No usable One-Tap setup could be generated from the current market state.');
+    }
 
-  // Refresh signals every 5s
-  useEffect(() => {
-    if (!token) return;
-    const interval = setInterval(async () => {
-      try {
-        const [sigRes, connRes] = await Promise.all([
-          api.autotrader.getSignals(token),
-          api.autotrader.getConnection(token),
-        ]);
-        setSignals(sigRes.signals);
-        setConnection(connRes.connection);
-      } catch {
-        // silent
+    const { signal } = await api.autotrader.createSignal(draft, token);
+    setSignals((current) => [signal, ...current.filter((item) => item.id !== signal.id)]);
+    setFocusedSignalId(signal.id);
+    router.replace(`/dashboard/autotrader?signalId=${encodeURIComponent(signal.id)}`);
+    setNotice(
+      draft.isOpportunistic
+        ? 'Opportunistic setup generated based on current market conditions.'
+        : 'Fresh One-Tap setup generated and ready to send.',
+    );
+    return signal;
+  };
+
+  const handleGenerateTrade = async () => {
+    if (!latestAnalysis) {
+      router.push('/analyze?returnTo=%2Fdashboard%2Fautotrader');
+      return;
+    }
+
+    try {
+      setGenerating(true);
+      setNotice('');
+      await createSignalFromAnalysis(latestAnalysis);
+    } catch (error: any) {
+      setNotice(error?.message || 'Unable to generate a new One-Tap setup right now.');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleRegenerateTrade = async () => {
+    if (latestAnalysis) {
+      await handleGenerateTrade();
+      return;
+    }
+
+    if (!token || !activeSignal) {
+      return;
+    }
+
+    try {
+      setGenerating(true);
+      setNotice('');
+      const { signal } = await api.autotrader.createSignal({
+        symbol: activeSignal.symbol,
+        direction: activeSignal.direction,
+        entryPrice: activeSignal.entryPrice,
+        stopLoss: activeSignal.stopLoss,
+        takeProfit: activeSignal.takeProfit,
+        confidence: activeSignal.confidence,
+        analysisId: activeSignal.analysisId || undefined,
+      }, token);
+      setSignals((current) => [signal, ...current.filter((item) => item.id !== signal.id)]);
+      setFocusedSignalId(signal.id);
+      setNotice('Trade regenerated from your latest live setup.');
+    } catch (error: any) {
+      setNotice(error?.message || 'Unable to regenerate this One-Tap setup right now.');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleExecuteTrade = async () => {
+    if (!token || !activeSignal) {
+      return;
+    }
+
+    try {
+      setExecuting(true);
+      setNotice('');
+      setRippleKey((current) => current + 1);
+
+      if (activeSignal.status === 'pending') {
+        const { signal } = await api.autotrader.approveSignal(activeSignal.id, token);
+        setSignals((current) => current.map((item) => (item.id === signal.id ? signal : item)));
       }
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [token]);
+
+      setExecuteSuccess(true);
+      setNotice('Trade sent. Check your MT5 terminal for the execution handoff.');
+    } catch (error: any) {
+      setNotice(error?.message || 'Unable to send this trade right now.');
+    } finally {
+      setExecuting(false);
+    }
+  };
 
   const handleConnect = async () => {
-    if (!token || !connectForm.accountId.trim()) return;
+    if (!token || !connectForm.accountId.trim()) {
+      return;
+    }
+
     try {
-      const res = await api.autotrader.connect(connectForm, token);
-      setConnection(res.connection);
+      setConnecting(true);
+      setNotice('');
+      const { connection: nextConnection } = await api.autotrader.connect(connectForm, token);
+      setConnection(nextConnection);
       setConnectForm({ accountId: '', broker: '', serverName: '', accountPassword: '' });
-      setConnectionNotice('MT5 credentials saved. Open the EA in your terminal to sync the live account name and balance.');
-    } catch {
-      setConnectionNotice('Unable to save your MT5 connection details right now.');
+      setNotice('MT5 bridge connected. One-Tap Trade will sync account data on the next heartbeat.');
+    } catch (error: any) {
+      setNotice(error?.message || 'Unable to connect your MT5 bridge right now.');
+    } finally {
+      setConnecting(false);
     }
   };
 
   const handleDisconnect = async () => {
-    if (!token) return;
+    if (!token) {
+      return;
+    }
+
     try {
       await api.autotrader.disconnect(token);
       setConnection(null);
-      setConnectionNotice('MT5 connection removed.');
-    } catch {
-      setConnectionNotice('Unable to disconnect MT5 right now.');
+      setNotice('MT5 bridge disconnected.');
+    } catch (error: any) {
+      setNotice(error?.message || 'Unable to disconnect MT5 right now.');
     }
-  };
-
-  const handleApprove = async (id: string) => {
-    if (!token) return;
-    try {
-      const res = await api.autotrader.approveSignal(id, token);
-      setSignals((prev) => prev.map((s) => (s.id === id ? res.signal : s)));
-    } catch {
-      // silent
-    }
-  };
-
-  const handleCancel = async (id: string) => {
-    if (!token) return;
-    try {
-      const res = await api.autotrader.cancelSignal(id, token);
-      setSignals((prev) => prev.map((s) => (s.id === id ? res.signal : s)));
-    } catch {
-      // silent
-    }
-  };
-
-  const handleKillSwitch = async () => {
-    if (!token) return;
-    try {
-      const res = await api.autotrader.toggleKillSwitch(!settings.killSwitch, token);
-      setSettings(res.settings);
-      setSettingsForm(res.settings);
-    } catch {
-      // silent
-    }
-  };
-
-  const handleSaveSettings = async () => {
-    if (!token) return;
-    try {
-      const res = await api.autotrader.updateSettings(settingsForm, token);
-      setSettings(res.settings);
-      setSettingsForm(res.settings);
-      setSettingsDirty(false);
-    } catch {
-      // silent
-    }
-  };
-
-  const updateSettingsField = <K extends keyof RiskSettings>(key: K, value: RiskSettings[K]) => {
-    setSettingsForm((prev) => ({ ...prev, [key]: value }));
-    setSettingsDirty(true);
   };
 
   if (authLoading || loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Card className="max-w-md w-full"><CardContent className="p-8 text-center"><p className="text-muted-foreground">Loading AutoTrader...</p></CardContent></Card>
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Card className="max-w-md w-full overflow-hidden border-white/10 bg-slate-950/70">
+          <CardContent className="p-8 text-center text-sm text-slate-300">Loading One-Tap Trade...</CardContent>
+        </Card>
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Card className="max-w-md w-full"><CardContent className="p-8 text-center"><p className="text-muted-foreground">Please sign in to access AutoTrader.</p></CardContent></Card>
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Card className="max-w-md w-full overflow-hidden border-white/10 bg-slate-950/70">
+          <CardContent className="p-8 text-center text-sm text-slate-300">Please sign in to access One-Tap Trade.</CardContent>
+        </Card>
       </div>
     );
   }
 
   if (user.subscription !== 'TOP_TIER') {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Card className="max-w-2xl w-full border-amber-500/20 bg-amber-500/5">
-          <CardContent className="p-8 text-center">
-            <div className="mx-auto mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-300">
-              <Bot className="h-6 w-6" />
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Card className="max-w-3xl w-full overflow-hidden border-fuchsia-500/20 bg-[radial-gradient(circle_at_top,_rgba(168,85,247,0.18),_transparent_35%),linear-gradient(180deg,rgba(15,23,42,0.98),rgba(2,6,23,1))]">
+          <CardContent className="p-8 text-center sm:p-10">
+            <div className="mx-auto mb-5 inline-flex h-16 w-16 items-center justify-center rounded-3xl bg-fuchsia-500/10 text-fuchsia-300 shadow-[0_0_45px_rgba(217,70,239,0.18)]">
+              <Zap className="h-7 w-7" />
             </div>
-            <h1 className="text-2xl font-semibold">AutoTrader is a Top Tier feature</h1>
-            <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground">
-              Upgrade to Top Tier to connect MT5, manage execution rules, and run semi-automated trading from your TradeVision signals.
+            <Badge className="border-fuchsia-400/30 bg-fuchsia-400/10 text-fuchsia-100">One-Tap Pro+</Badge>
+            <h1 className="mt-4 text-3xl font-semibold text-white">One-Tap Trade is part of One-Tap Pro+</h1>
+            <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
+              Instant trade setups, advanced entry precision, and one-click execution flow. No clutter, no hesitation, no missed moves.
             </p>
-            <div className="mt-6 flex justify-center">
+            <div className="mt-8 flex justify-center">
               <Link href="/checkout?plan=TOP_TIER">
-                <Button className="gap-2 bg-amber-600 text-white hover:bg-amber-500">
-                  <Bot className="h-4 w-4" />
-                  Upgrade to Top Tier
+                <Button variant="gradient" size="xl" className="gap-2 rounded-2xl px-10 shadow-[0_0_35px_rgba(59,130,246,0.25)]">
+                  <Crown className="h-5 w-5" />
+                  Upgrade to One-Tap Pro+
                 </Button>
               </Link>
             </div>
@@ -238,434 +347,358 @@ export default function AutoTraderPage() {
     );
   }
 
-  const pendingSignals = signals.filter((s) => s.status === 'pending' || s.status === 'ready');
-  const historicalSignals = signals.filter((s) => s.status === 'executed' || s.status === 'cancelled' || s.status === 'expired');
-  const modeInfo = MODE_LABELS[settings.autoMode];
-
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Bot className="h-6 w-6 text-primary" />
-            AutoTrader
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">Semi-automated MT5 trading powered by your analysis signals</p>
-        </div>
-        <Button variant="ghost" size="sm" onClick={load}>
-          <RefreshCw className="h-4 w-4 mr-1" /> Refresh
-        </Button>
-      </motion.div>
+    <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.16),_transparent_25%),radial-gradient(circle_at_top_right,_rgba(217,70,239,0.18),_transparent_30%),linear-gradient(180deg,rgba(2,6,23,0.96),rgba(15,23,42,0.98))] p-4 sm:p-6 lg:p-8">
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,transparent,rgba(255,255,255,0.03),transparent)] opacity-70" />
 
-      {/* Status Row */}
-      <div className="grid gap-4 md:grid-cols-3">
-        {/* Connection Status */}
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            {connection?.isActive ? (
-              <Wifi className="h-5 w-5 text-green-400" />
-            ) : (
-              <WifiOff className="h-5 w-5 text-zinc-500" />
-            )}
-            <div className="min-w-0 flex-1">
-              <p className="text-xs text-muted-foreground">MT5 Connection</p>
-              {connection?.isActive ? (
-                <p className="text-sm font-medium truncate">{connection.broker || connection.accountId}</p>
-              ) : (
-                <p className="text-sm text-zinc-500">Disconnected</p>
-              )}
-            </div>
-            <Badge variant="outline" className={connection?.isActive ? 'border-green-500/30 text-green-400' : 'border-zinc-500/30 text-zinc-500'}>
-              {connection?.isActive ? 'Online' : 'Offline'}
-            </Badge>
-          </CardContent>
-        </Card>
-
-        {/* Kill Switch */}
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            {settings.killSwitch ? (
-              <ShieldAlert className="h-5 w-5 text-red-400" />
-            ) : (
-              <ShieldCheck className="h-5 w-5 text-green-400" />
-            )}
-            <div className="min-w-0 flex-1">
-              <p className="text-xs text-muted-foreground">Kill Switch</p>
-              <p className={`text-sm font-medium ${settings.killSwitch ? 'text-red-400' : 'text-green-400'}`}>
-                {settings.killSwitch ? 'ACTIVE — Trading Halted' : 'Inactive'}
-              </p>
-            </div>
-            <Button
-              size="sm"
-              variant={settings.killSwitch ? 'default' : 'outline'}
-              className={settings.killSwitch ? 'bg-red-600 hover:bg-red-700' : ''}
-              onClick={handleKillSwitch}
-            >
-              {settings.killSwitch ? 'Disable' : 'Enable'}
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Auto Mode */}
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <Zap className={`h-5 w-5 ${modeInfo.color}`} />
-            <div className="min-w-0 flex-1">
-              <p className="text-xs text-muted-foreground">Mode</p>
-              <p className={`text-sm font-medium ${modeInfo.color}`}>{modeInfo.label}</p>
-            </div>
-            <p className="text-xs text-muted-foreground max-w-[120px] text-right hidden sm:block">{modeInfo.desc}</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* MT5 Connection Panel */}
-      {!connection?.isActive && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          <Card>
-            <CardHeader><CardTitle className="text-base">Connect MT5 Account</CardTitle></CardHeader>
-            <CardContent className="space-y-3">
-              <p className="text-sm text-muted-foreground">Enter the MT5 login that matches the terminal running the Expert Advisor. The dashboard stores your password, while the EA heartbeat fills in the live account name, balance, equity, and currency.</p>
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                <div>
-                  <Label className="text-xs">Account ID *</Label>
-                  <Input placeholder="e.g. 12345678" value={connectForm.accountId} onChange={(e) => setConnectForm((p) => ({ ...p, accountId: e.target.value }))} />
-                </div>
-                <div>
-                  <Label className="text-xs">Broker</Label>
-                  <Input placeholder="e.g. ICMarkets" value={connectForm.broker} onChange={(e) => setConnectForm((p) => ({ ...p, broker: e.target.value }))} />
-                </div>
-                <div>
-                  <Label className="text-xs">Server</Label>
-                  <Input placeholder="e.g. ICMarkets-Live" value={connectForm.serverName} onChange={(e) => setConnectForm((p) => ({ ...p, serverName: e.target.value }))} />
-                </div>
-                <div>
-                  <Label className="text-xs">MT5 Password</Label>
-                  <Input type="password" placeholder="Your MT5 password" value={connectForm.accountPassword} onChange={(e) => setConnectForm((p) => ({ ...p, accountPassword: e.target.value }))} />
-                </div>
+      <div className="relative space-y-6">
+        <motion.section
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]"
+        >
+          <Card className="overflow-hidden border-white/10 bg-slate-950/50 shadow-[0_30px_80px_rgba(2,6,23,0.45)] backdrop-blur-xl">
+            <CardContent className="relative p-6 sm:p-8">
+              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/70 to-transparent" />
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge className="border-cyan-400/30 bg-cyan-400/10 text-cyan-100">One-Tap Trade</Badge>
+                <Badge className="border-white/10 bg-white/5 text-slate-300">Instant clarity</Badge>
               </div>
-              {connectionNotice ? <p className="text-xs text-muted-foreground">{connectionNotice}</p> : null}
-              <Button onClick={handleConnect} disabled={!connectForm.accountId.trim()}>
-                <Wifi className="h-4 w-4 mr-1" /> Connect
-              </Button>
-            </CardContent>
-          </Card>
-        </motion.div>
-      )}
+              <h1 className="mt-5 text-3xl font-semibold tracking-tight text-white sm:text-4xl">One-Tap Trade</h1>
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
+                Instant high-quality trade setups. No guessing.
+              </p>
 
-      {connection?.isActive && (
-        <div className="grid gap-4 lg:grid-cols-[1.4fr_0.8fr]">
-          <Card>
-            <CardContent className="p-5">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="rounded-2xl bg-emerald-500/10 p-3 text-emerald-300">
-                    <Wifi className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Connected MT5 account</p>
-                    <p className="text-lg font-semibold">{connection.accountName || connection.broker || 'MT5 account'}</p>
-                    <p className="text-sm text-muted-foreground">{connection.accountId}{connection.serverName ? ` · ${connection.serverName}` : ''}</p>
-                  </div>
-                </div>
-                <Button variant="outline" size="sm" onClick={handleDisconnect}>
-                  <WifiOff className="h-4 w-4 mr-1" /> Disconnect
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Button
+                  variant="gradient"
+                  size="xl"
+                  onClick={() => void handleGenerateTrade()}
+                  disabled={generating}
+                  className="gap-2 rounded-2xl px-8 shadow-[0_0_40px_rgba(99,102,241,0.3)]"
+                >
+                  {generating ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5" />}
+                  Generate Trade
+                </Button>
+                <Button
+                  variant="outline"
+                  size="xl"
+                  onClick={() => void handleRegenerateTrade()}
+                  disabled={generating || (!activeSignal && !latestAnalysis)}
+                  className="rounded-2xl border-white/10 bg-white/5 px-8 text-slate-100 hover:bg-white/10"
+                >
+                  <RefreshCw className={`mr-2 h-5 w-5 ${generating ? 'animate-spin' : ''}`} />
+                  Regenerate Trade
                 </Button>
               </div>
 
-              <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="mt-8 grid gap-3 sm:grid-cols-3">
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Balance</p>
-                  <p className="mt-2 text-lg font-semibold">{formatAccountAmount(connection.balance, connection.currency)}</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Signal queue</p>
+                  <p className="mt-2 text-2xl font-semibold text-white">{pendingSignals.length}</p>
+                  <p className="mt-1 text-xs text-slate-400">Fresh setups waiting for execution</p>
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Equity</p>
-                  <p className="mt-2 text-lg font-semibold">{formatAccountAmount(connection.equity, connection.currency)}</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Bridge status</p>
+                  <p className="mt-2 text-2xl font-semibold text-white">{connectionReady ? 'Live' : 'Offline'}</p>
+                  <p className="mt-1 text-xs text-slate-400">{connectionReady ? 'MT5 connected and waiting' : 'Connect MT5 to hand off trades'}</p>
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Broker</p>
-                  <p className="mt-2 text-sm font-semibold">{connection.broker || 'Waiting for terminal sync'}</p>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                  <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Credentials</p>
-                  <p className="mt-2 text-sm font-semibold">{connection.hasPassword ? 'Password saved' : 'Password missing'}</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Analysis source</p>
+                  <p className="mt-2 text-2xl font-semibold text-white">{latestAnalysis ? latestAnalysis.pair : 'None'}</p>
+                  <p className="mt-1 text-xs text-slate-400">{latestAnalysis ? 'Latest market context ready to convert' : 'Run an analysis to seed One-Tap'}</p>
                 </div>
               </div>
-
-              <p className="mt-4 text-xs text-muted-foreground">
-                {connection.lastSeenAt
-                  ? `Last heartbeat ${new Date(connection.lastSeenAt).toLocaleString()}`
-                  : 'Waiting for the Expert Advisor to send its first heartbeat.'}
-              </p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="p-5 space-y-3">
-              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Execution flow</p>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-muted-foreground">
-                Every analysis you send to AutoTrader becomes a pending signal here. In manual mode you approve it, in semi-auto only high-conviction setups pass automatically, and in full-auto the EA can execute as soon as the heartbeat is live.
-              </div>
-              {connectionNotice ? <p className="text-xs text-muted-foreground">{connectionNotice}</p> : null}
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Tab Switcher */}
-      <div className="flex gap-2 border-b border-white/10 pb-0">
-        {(['signals', 'settings'] as const).map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-              tab === t ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {t === 'signals' ? 'Signals' : 'Risk Settings'}
-          </button>
-        ))}
-      </div>
-
-      {/* Signals Tab */}
-      {tab === 'signals' && (
-        <div className="space-y-4">
-          {/* Active / Pending Signals */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <Clock className="h-4 w-4" /> Active Signals
-                {pendingSignals.length > 0 && (
-                  <Badge className="bg-primary/20 text-primary">{pendingSignals.length}</Badge>
-                )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {pendingSignals.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-4 text-center">No pending signals. Run an analysis to generate trade signals.</p>
-              ) : (
-                <div className="space-y-3">
-                  {pendingSignals.map((signal) => (
-                    <SignalCard key={signal.id} signal={signal} onApprove={handleApprove} onCancel={handleCancel} />
-                  ))}
+          <Card className="overflow-hidden border-white/10 bg-slate-950/55 shadow-[0_30px_80px_rgba(2,6,23,0.45)] backdrop-blur-xl">
+            <CardContent className="p-6 sm:p-8">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Execution bridge</p>
+                  <h2 className="mt-2 text-xl font-semibold text-white">MT5 Connection</h2>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+                <Badge className={connectionReady ? 'border-emerald-400/30 bg-emerald-400/10 text-emerald-100' : 'border-white/10 bg-white/5 text-slate-300'}>
+                  {connectionReady ? 'Connected' : 'Awaiting setup'}
+                </Badge>
+              </div>
 
-          {/* History */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <TrendingUp className="h-4 w-4" /> Signal History
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {historicalSignals.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-4 text-center">No signal history yet.</p>
-              ) : (
-                <div className="space-y-2">
-                  {historicalSignals.slice(0, 20).map((signal) => (
-                    <div key={signal.id} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
-                      <div className="flex items-center gap-3">
-                        {signal.direction === 'buy' ? (
-                          <TrendingUp className="h-4 w-4 text-green-400" />
-                        ) : (
-                          <TrendingDown className="h-4 w-4 text-red-400" />
-                        )}
-                        <div>
-                          <span className="text-sm font-medium">{signal.symbol}</span>
-                          <span className="text-xs text-muted-foreground ml-2">{signal.direction.toUpperCase()}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge className={CONFIDENCE_COLORS[signal.confidence] || ''} variant="outline">
-                          {signal.confidence}
-                        </Badge>
-                        <Badge className={STATUS_BADGES[signal.status]?.className || ''}>
-                          {STATUS_BADGES[signal.status]?.label || signal.status}
-                        </Badge>
+              {connectionReady && connection ? (
+                <div className="mt-6 space-y-4">
+                  <div className="flex items-start justify-between gap-4 rounded-2xl border border-emerald-400/20 bg-emerald-400/5 p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="rounded-2xl bg-emerald-400/10 p-3 text-emerald-200"><Wifi className="h-5 w-5" /></div>
+                      <div>
+                        <p className="text-sm font-semibold text-white">{connection.accountName || connection.accountId}</p>
+                        <p className="mt-1 text-xs text-slate-400">{connection.serverName || 'Server pending'}{connection.broker ? ` · ${connection.broker}` : ''}</p>
                       </div>
                     </div>
-                  ))}
+                    <Button variant="outline" size="sm" onClick={handleDisconnect} className="border-white/10 bg-white/5 text-slate-100 hover:bg-white/10">
+                      <WifiOff className="mr-1 h-4 w-4" /> Disconnect
+                    </Button>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                      <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">Balance</p>
+                      <p className="mt-2 text-lg font-semibold text-white">{formatAccountAmount(connection.balance, connection.currency)}</p>
+                    </div>
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                      <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">Equity</p>
+                      <p className="mt-2 text-lg font-semibold text-white">{formatAccountAmount(connection.equity, connection.currency)}</p>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-slate-400">
+                    {connection.lastSeenAt
+                      ? `Heartbeat synced ${new Date(connection.lastSeenAt).toLocaleString()}`
+                      : 'Waiting for the terminal heartbeat to confirm account details.'}
+                  </p>
+                </div>
+              ) : (
+                <div className="mt-6 space-y-4">
+                  <p className="text-sm text-slate-300">Connect the MT5 account that should receive your one-tap execution handoff.</p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <Label className="text-xs text-slate-400">Account ID</Label>
+                      <Input value={connectForm.accountId} onChange={(event) => setConnectForm((current) => ({ ...current, accountId: event.target.value }))} placeholder="12345678" className="border-white/10 bg-white/5 text-white" />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-slate-400">Broker</Label>
+                      <Input value={connectForm.broker} onChange={(event) => setConnectForm((current) => ({ ...current, broker: event.target.value }))} placeholder="ICMarkets" className="border-white/10 bg-white/5 text-white" />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-slate-400">Server</Label>
+                      <Input value={connectForm.serverName} onChange={(event) => setConnectForm((current) => ({ ...current, serverName: event.target.value }))} placeholder="ICMarkets-Live" className="border-white/10 bg-white/5 text-white" />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-slate-400">MT5 Password</Label>
+                      <Input type="password" value={connectForm.accountPassword} onChange={(event) => setConnectForm((current) => ({ ...current, accountPassword: event.target.value }))} placeholder="Your MT5 password" className="border-white/10 bg-white/5 text-white" />
+                    </div>
+                  </div>
+                  <Button variant="outline" size="lg" onClick={handleConnect} disabled={connecting || !connectForm.accountId.trim()} className="w-full rounded-2xl border-cyan-400/20 bg-cyan-400/10 text-cyan-100 hover:bg-cyan-400/15">
+                    {connecting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wifi className="mr-2 h-4 w-4" />}
+                    Connect MT5 Bridge
+                  </Button>
                 </div>
               )}
             </CardContent>
           </Card>
-        </div>
-      )}
+        </motion.section>
 
-      {/* Settings Tab */}
-      {tab === 'settings' && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Settings2 className="h-4 w-4" /> Risk Management
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Auto Mode */}
-            <div>
-              <Label className="text-sm font-medium">Execution Mode</Label>
-              <div className="grid gap-2 mt-2 sm:grid-cols-3">
-                {(Object.entries(MODE_LABELS) as [AutoMode, typeof MODE_LABELS['manual']][]).map(([mode, info]) => (
-                  <button
-                    key={mode}
-                    onClick={() => updateSettingsField('autoMode', mode)}
-                    className={`p-3 rounded-xl border text-left transition-colors ${
-                      settingsForm.autoMode === mode
-                        ? 'border-primary bg-primary/10'
-                        : 'border-white/10 hover:border-white/20'
-                    }`}
-                  >
-                    <p className={`text-sm font-medium ${info.color}`}>{info.label}</p>
-                    <p className="text-xs text-muted-foreground mt-1">{info.desc}</p>
-                  </button>
-                ))}
-              </div>
-            </div>
+        {notice ? (
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+            <Card className="border-white/10 bg-white/5">
+              <CardContent className="flex items-center gap-3 p-4 text-sm text-slate-200">
+                <Sparkles className="h-4 w-4 text-cyan-300" />
+                {notice}
+              </CardContent>
+            </Card>
+          </motion.div>
+        ) : null}
 
-            {/* Risk Parameters */}
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div>
-                <Label className="text-xs">Risk Per Trade (%)</Label>
-                <Input
-                  type="number"
-                  min={0.1}
-                  max={10}
-                  step={0.1}
-                  value={settingsForm.riskPerTrade}
-                  onChange={(e) => updateSettingsField('riskPerTrade', Number(e.target.value))}
-                />
-              </div>
-              <div>
-                <Label className="text-xs">Max Daily Loss (%)</Label>
-                <Input
-                  type="number"
-                  min={1}
-                  max={50}
-                  step={0.5}
-                  value={settingsForm.maxDailyLoss}
-                  onChange={(e) => updateSettingsField('maxDailyLoss', Number(e.target.value))}
-                />
-              </div>
-              <div>
-                <Label className="text-xs">Max Trades / Day</Label>
-                <Input
-                  type="number"
-                  min={1}
-                  max={20}
-                  step={1}
-                  value={settingsForm.maxTradesPerDay}
-                  onChange={(e) => updateSettingsField('maxTradesPerDay', Number(e.target.value))}
-                />
-              </div>
-            </div>
+        <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+          <div className="space-y-6">
+            <AnimatePresence mode="wait">
+              {activeSignal ? (
+                <motion.div
+                  key={activeSignal.id}
+                  initial={{ opacity: 0, y: 24, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1, boxShadow: ['0 0 0 rgba(59,130,246,0)', '0 0 40px rgba(59,130,246,0.22)', '0 0 0 rgba(59,130,246,0)'] }}
+                  exit={{ opacity: 0, y: -18, scale: 0.98 }}
+                  transition={{ duration: 0.35, boxShadow: { duration: 2.8, repeat: Infinity, ease: 'easeInOut' } }}
+                  className="relative overflow-hidden rounded-3xl border border-blue-500/30 bg-gradient-to-br from-slate-900 to-slate-800 p-6 shadow-xl"
+                >
+                  <motion.div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-y-0 left-[-35%] w-1/2 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                    animate={{ x: ['0%', '230%'] }}
+                    transition={{ duration: 2.8, repeat: Infinity, ease: 'linear' }}
+                  />
 
-            {/* Kill Switch Info */}
-            <div className={`p-3 rounded-xl border ${settings.killSwitch ? 'border-red-500/30 bg-red-500/10' : 'border-white/10'}`}>
-              <div className="flex items-center gap-2">
-                <AlertTriangle className={`h-4 w-4 ${settings.killSwitch ? 'text-red-400' : 'text-muted-foreground'}`} />
-                <p className="text-sm font-medium">Kill Switch</p>
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                When active, the kill switch immediately halts all automated trading. No new signals will be sent to your EA.
-              </p>
-              <Button size="sm" variant={settings.killSwitch ? 'destructive' : 'outline'} className="mt-2" onClick={handleKillSwitch}>
-                {settings.killSwitch ? 'Disable Kill Switch' : 'Enable Kill Switch'}
-              </Button>
-            </div>
+                  <div className="relative flex flex-col gap-5">
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge className="border-fuchsia-400/30 bg-fuchsia-400/12 text-fuchsia-100">Opportunistic Setup</Badge>
+                          <Badge className={CONFIDENCE_COLORS[activeSignal.confidence] || 'border-white/10 bg-white/5 text-slate-200'}>{activeSignal.confidence}</Badge>
+                          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200" title="This is an aggressive opportunity setup">
+                            <motion.span className="h-2.5 w-2.5 rounded-full bg-emerald-400" animate={{ opacity: [1, 0.35, 1] }} transition={{ duration: 1.1, repeat: Infinity }} />
+                            Live signal
+                          </div>
+                        </div>
+                        <div className="mt-4 flex flex-wrap items-center gap-3">
+                          <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">{activeSignal.symbol} {activeSignal.direction.toUpperCase()}</h2>
+                          <span className={`rounded-full px-3 py-1 text-sm font-semibold ${activeSignal.direction === 'buy' ? 'bg-emerald-400/12 text-emerald-200 shadow-[0_0_25px_rgba(74,222,128,0.18)]' : 'bg-rose-400/12 text-rose-200 shadow-[0_0_25px_rgba(251,113,133,0.18)]'}`}>
+                            {activeSignal.direction === 'buy' ? 'BUY' : 'SELL'}
+                          </span>
+                        </div>
+                        <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-slate-300">
+                          <span>Generated based on current market conditions</span>
+                          <span className="inline-flex items-center gap-1 text-slate-400" title="This is an aggressive opportunity setup">
+                            <Info className="h-3.5 w-3.5" />
+                            Aggressive opportunity
+                          </span>
+                        </div>
+                      </div>
 
-            {settingsDirty && (
-              <div className="flex justify-end">
-                <Button onClick={handleSaveSettings}>Save Settings</Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  );
-}
+                      <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-right">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Entry window</p>
+                        <p className="mt-2 text-2xl font-semibold text-white">{formatCountdown(activeSignal.createdAt, now)}</p>
+                        <p className="mt-1 text-xs text-slate-400">Counted from signal creation</p>
+                      </div>
+                    </div>
 
-// ── Signal Card Component ──
+                    <div className="grid gap-4 sm:grid-cols-3">
+                      <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                        <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">Entry</p>
+                        <p className="mt-2 text-3xl font-semibold tracking-tight text-white">{formatTradePrice(activeSignal.entryPrice, activeSignal.symbol)}</p>
+                      </div>
+                      <div className="rounded-2xl border border-rose-400/20 bg-rose-400/10 p-4">
+                        <p className="text-[11px] uppercase tracking-[0.16em] text-rose-200/80">SL</p>
+                        <p className="mt-2 text-2xl font-semibold tracking-tight text-rose-100">{formatTradePrice(activeSignal.stopLoss, activeSignal.symbol)}</p>
+                      </div>
+                      <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-4">
+                        <p className="text-[11px] uppercase tracking-[0.16em] text-emerald-200/80">TP</p>
+                        <p className="mt-2 text-2xl font-semibold tracking-tight text-emerald-100">{formatTradePrice(activeSignal.takeProfit, activeSignal.symbol)}</p>
+                      </div>
+                    </div>
 
-function SignalCard({
-  signal,
-  onApprove,
-  onCancel,
-}: {
-  signal: TradeSignal;
-  onApprove: (id: string) => void;
-  onCancel: (id: string) => void;
-}) {
-  const isBuy = signal.direction === 'buy';
-  const rr = signal.stopLoss !== 0
-    ? Math.abs(signal.takeProfit - signal.entryPrice) / Math.abs(signal.entryPrice - signal.stopLoss)
-    : 0;
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="text-sm text-slate-300">
+                        Status: <span className="font-medium text-white">{STATUS_COPY[activeSignal.status] || activeSignal.status}</span>
+                      </div>
+                      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="relative">
+                        <Button
+                          size="xl"
+                          onClick={() => void handleExecuteTrade()}
+                          disabled={executing || activeSignal.status === 'cancelled' || activeSignal.status === 'expired'}
+                          className="relative min-w-[220px] overflow-hidden rounded-2xl bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-[0_18px_45px_rgba(59,130,246,0.28)] transition-transform hover:scale-[1.01] hover:from-blue-400 hover:to-fuchsia-500"
+                        >
+                          <AnimatePresence>
+                            {rippleKey > 0 ? (
+                              <motion.span
+                                key={rippleKey}
+                                initial={{ scale: 0, opacity: 0.5 }}
+                                animate={{ scale: 2.4, opacity: 0 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 0.55, ease: 'easeOut' }}
+                                className="pointer-events-none absolute inset-0 mx-auto my-auto h-20 w-20 rounded-full bg-white/20"
+                              />
+                            ) : null}
+                          </AnimatePresence>
+                          {executing ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : executeSuccess || activeSignal.status === 'ready' ? <CheckCircle2 className="mr-2 h-5 w-5" /> : <ArrowRight className="mr-2 h-5 w-5" />}
+                          {executing ? 'Executing...' : executeSuccess || activeSignal.status === 'ready' ? 'Trade Sent ✅' : 'Execute Trade'}
+                        </Button>
+                      </motion.div>
+                    </div>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="empty"
+                  initial={{ opacity: 0, y: 18 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                >
+                  <Card className="overflow-hidden border-dashed border-white/10 bg-white/[0.03]">
+                    <CardContent className="flex min-h-[340px] flex-col items-center justify-center p-8 text-center">
+                      <div className="rounded-3xl bg-cyan-400/10 p-4 text-cyan-200"><Bot className="h-7 w-7" /></div>
+                      <h2 className="mt-5 text-2xl font-semibold text-white">No active One-Tap setup yet</h2>
+                      <p className="mt-3 max-w-xl text-sm leading-7 text-slate-300">
+                        Generate a new trade from your latest analysis, or send a setup from the analysis workspace to see it animate here instantly.
+                      </p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-  return (
-    <div className="p-4 rounded-xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.04] transition-colors">
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-3">
-          {isBuy ? (
-            <div className="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center">
-              <TrendingUp className="h-5 w-5 text-green-400" />
-            </div>
-          ) : (
-            <div className="h-10 w-10 rounded-full bg-red-500/10 flex items-center justify-center">
-              <TrendingDown className="h-5 w-5 text-red-400" />
-            </div>
-          )}
-          <div>
-            <p className="font-semibold">{signal.symbol}</p>
-            <p className={`text-xs font-medium ${isBuy ? 'text-green-400' : 'text-red-400'}`}>
-              {signal.direction.toUpperCase()}
-            </p>
+            <Card className="overflow-hidden border-white/10 bg-slate-950/55 backdrop-blur-xl">
+              <CardContent className="p-5 sm:p-6">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Trade queue</p>
+                    <h3 className="mt-2 text-lg font-semibold text-white">Recent One-Tap setups</h3>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => void load()} className="text-slate-300 hover:bg-white/5 hover:text-white">
+                    <RefreshCw className="mr-2 h-4 w-4" /> Refresh
+                  </Button>
+                </div>
+
+                <div className="mt-5 space-y-3">
+                  {pendingSignals.length > 0 ? pendingSignals.slice(0, 4).map((signal) => (
+                    <button
+                      key={signal.id}
+                      type="button"
+                      onClick={() => setFocusedSignalId(signal.id)}
+                      className={`w-full rounded-2xl border p-4 text-left transition-all ${signal.id === activeSignal?.id ? 'border-cyan-400/30 bg-cyan-400/10 shadow-[0_0_25px_rgba(34,211,238,0.08)]' : 'border-white/10 bg-white/[0.03] hover:bg-white/[0.05]'}`}
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className={`rounded-2xl p-3 ${signal.direction === 'buy' ? 'bg-emerald-400/10 text-emerald-200' : 'bg-rose-400/10 text-rose-200'}`}>
+                            {signal.direction === 'buy' ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-white">{signal.symbol} {signal.direction.toUpperCase()}</p>
+                            <p className="mt-1 text-xs text-slate-400">Entry {formatTradePrice(signal.entryPrice, signal.symbol)} · TP {formatTradePrice(signal.takeProfit, signal.symbol)}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge className={CONFIDENCE_COLORS[signal.confidence] || 'border-white/10 bg-white/5 text-slate-200'}>{signal.confidence}</Badge>
+                          <Badge className="border-white/10 bg-white/5 text-slate-200">{STATUS_COPY[signal.status] || signal.status}</Badge>
+                        </div>
+                      </div>
+                    </button>
+                  )) : (
+                    <div className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-slate-400">
+                      No queued setups yet. Send a chart analysis to One-Tap to populate this rail.
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="space-y-6">
+            <Card className="overflow-hidden border-white/10 bg-slate-950/55 backdrop-blur-xl">
+              <CardContent className="p-5 sm:p-6">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Strategy note</p>
+                <h3 className="mt-2 text-lg font-semibold text-white">Why this feels instant</h3>
+                <p className="mt-3 text-sm leading-7 text-slate-300">
+                  One-Tap Trade always extracts the best available setup from your latest market context. If the main call is conservative, it still surfaces an opportunistic version so you can decide quickly instead of staring at a wait signal.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="overflow-hidden border-white/10 bg-slate-950/55 backdrop-blur-xl">
+              <CardContent className="p-5 sm:p-6">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Trade history</p>
+                <h3 className="mt-2 text-lg font-semibold text-white">Recent outcomes</h3>
+                <div className="mt-4 space-y-3">
+                  {historicalSignals.length > 0 ? historicalSignals.slice(0, 5).map((signal) => (
+                    <div key={signal.id} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="font-medium text-white">{signal.symbol} {signal.direction.toUpperCase()}</p>
+                          <p className="mt-1 text-xs text-slate-400">{new Date(signal.createdAt).toLocaleString()}</p>
+                        </div>
+                        <Badge className="border-white/10 bg-white/5 text-slate-200">{STATUS_COPY[signal.status] || signal.status}</Badge>
+                      </div>
+                    </div>
+                  )) : (
+                    <div className="rounded-2xl border border-dashed border-white/10 p-5 text-sm text-slate-400">
+                      Executed and archived trades will appear here.
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Badge className={CONFIDENCE_COLORS[signal.confidence] || ''} variant="outline">
-            {signal.confidence}
-          </Badge>
-          <Badge className={STATUS_BADGES[signal.status]?.className || ''}>
-            {STATUS_BADGES[signal.status]?.label || signal.status}
-          </Badge>
-        </div>
       </div>
-
-      <div className="grid grid-cols-4 gap-3 mt-3 text-center">
-        <div>
-          <p className="text-xs text-muted-foreground">Entry</p>
-          <p className="text-sm font-mono">{signal.entryPrice.toFixed(5)}</p>
-        </div>
-        <div>
-          <p className="text-xs text-muted-foreground">SL</p>
-          <p className="text-sm font-mono text-red-400">{signal.stopLoss.toFixed(5)}</p>
-        </div>
-        <div>
-          <p className="text-xs text-muted-foreground">TP</p>
-          <p className="text-sm font-mono text-green-400">{signal.takeProfit.toFixed(5)}</p>
-        </div>
-        <div>
-          <p className="text-xs text-muted-foreground">R:R</p>
-          <p className="text-sm font-mono">{rr > 0 ? `1:${rr.toFixed(1)}` : '—'}</p>
-        </div>
-      </div>
-
-      {(signal.status === 'pending' || signal.status === 'ready') && (
-        <div className="flex gap-2 mt-3 justify-end">
-          {signal.status === 'pending' && (
-            <Button size="sm" onClick={() => onApprove(signal.id)}>
-              <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Approve
-            </Button>
-          )}
-          <Button size="sm" variant="outline" onClick={() => onCancel(signal.id)}>
-            <XCircle className="h-3.5 w-3.5 mr-1" /> Cancel
-          </Button>
-        </div>
-      )}
     </div>
   );
 }

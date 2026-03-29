@@ -9,7 +9,7 @@ const dashboardNav = [
   { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
   { href: '/dashboard/tradingview', label: 'Live Chart', icon: CandlestickChart },
   { href: '/dashboard/deriv', label: 'Deriv Live', icon: RadioTower },
-  { href: '/dashboard/autotrader', label: 'AutoTrader', icon: Bot },
+  { href: '/dashboard/autotrader', label: 'One-Tap Trade', icon: Bot },
   { href: '/dashboard/billing', label: 'Billing', icon: CreditCard },
   { href: '/dashboard/referrals', label: 'Referrals', icon: Users },
 ];

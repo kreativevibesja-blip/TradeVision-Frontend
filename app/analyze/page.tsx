@@ -581,17 +581,17 @@ function AnalyzePageContent() {
 
   const handleSendToAutotrader = async () => {
     if (!token || !analysis || !autoTraderDraft) {
-      setAutotraderNotice('This analysis does not include a complete entry, stop loss, and take profit for AutoTrader yet.');
+      setAutotraderNotice('This market snapshot is not ready for One-Tap right now.');
       return;
     }
 
     try {
       setSendingToAutotrader(true);
       setAutotraderNotice('');
-      await api.autotrader.createSignal(autoTraderDraft, token);
-      setAutotraderNotice('Signal sent to AutoTrader. Review it from the AutoTrader dashboard before execution.');
+      const { signal } = await api.autotrader.createSignal(autoTraderDraft, token);
+      router.push(`/dashboard/autotrader?signalId=${encodeURIComponent(signal.id)}`);
     } catch (sendError: any) {
-      setAutotraderNotice(sendError?.message || 'Unable to send this setup to AutoTrader.');
+      setAutotraderNotice(sendError?.message || 'Unable to send this setup to One-Tap Trade.');
     } finally {
       setSendingToAutotrader(false);
     }
@@ -892,7 +892,7 @@ function AnalyzePageContent() {
                       className="gap-2 bg-emerald-600 text-white hover:bg-emerald-500 disabled:bg-emerald-600/50"
                     >
                       {sendingToAutotrader ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bot className="h-4 w-4" />}
-                      Send to AutoTrader
+                      Send to One-Tap
                     </Button>
                   ) : null}
                   <Button
@@ -923,16 +923,16 @@ function AnalyzePageContent() {
                 <Card className="mobile-card border-emerald-500/20 bg-emerald-500/5">
                   <CardContent className="flex flex-col gap-3 p-5 md:flex-row md:items-center md:justify-between">
                     <div>
-                      <p className="text-sm font-medium text-emerald-100">AutoTrader handoff</p>
+                      <p className="text-sm font-medium text-emerald-100">One-Tap handoff</p>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        This button creates a pending MT5 signal with the current entry, stop loss, and first take profit so you can review or execute it from AutoTrader.
+                        This button generates the best available setup, even on a wait call, then opens One-Tap Trade so you can execute it with a single click.
                       </p>
                       {autotraderNotice ? <p className="mt-2 text-xs text-muted-foreground">{autotraderNotice}</p> : null}
                     </div>
                     <div className="rounded-2xl border border-emerald-500/20 bg-black/20 px-4 py-3 text-sm text-emerald-100">
                       {autoTraderDraft
                         ? `${autoTraderDraft.direction.toUpperCase()} ${autoTraderDraft.symbol} at ${formatPrice(autoTraderDraft.entryPrice, pair)}`
-                        : 'This result is informational only and cannot be auto-traded yet.'}
+                        : 'This result is informational only and cannot be sent to One-Tap yet.'}
                     </div>
                   </CardContent>
                 </Card>

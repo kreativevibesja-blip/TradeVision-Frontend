@@ -40,10 +40,10 @@ const fallbackPlanDetails: Record<'FREE' | 'PRO' | 'TOP_TIER', Omit<DisplayPlan,
   },
   TOP_TIER: {
     period: '/month',
-    description: 'Everything in Pro, plus AutoTrader for MT5',
+    description: 'Never miss a trade again with instant One-Tap execution setups',
     icon: Crown,
-    color: 'from-amber-500 to-orange-600',
-    cta: 'Unlock Top Tier',
+    color: 'from-fuchsia-500 via-violet-500 to-cyan-500',
+    cta: 'Upgrade to One-Tap Pro+',
     ctaLink: '/checkout?plan=TOP_TIER',
     popular: true,
   },
@@ -76,10 +76,10 @@ const defaultFallbackPlans: DisplayPlan[] = [
   },
   {
     id: 'fallback-top-tier',
-    name: 'Top Tier 👑',
+    name: 'One-Tap Pro+',
     tier: 'TOP_TIER',
     price: 39.95,
-    features: ['300 analyses per month', 'Advanced Smart Money Concepts', 'Priority AI processing', 'AutoTrader for MT5'],
+    features: ['Instant trade setups', 'One-tap execution', 'Priority signal generation', 'Advanced entry precision', 'Faster response time'],
     dailyLimit: 999999,
     isActive: true,
     createdAt: '',
@@ -145,10 +145,11 @@ export default function PricingPage() {
               initial={false}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.15 }}
+              whileHover={{ y: -8, scale: 1.015 }}
             >
-              <Card className={`relative h-full overflow-hidden ${plan.popular ? 'border-primary/40' : ''}`}>
+              <Card className={`relative h-full overflow-hidden transition-all duration-300 hover:shadow-[0_22px_80px_rgba(15,23,42,0.28)] ${plan.popular ? 'border-fuchsia-400/40 shadow-[0_0_50px_rgba(217,70,239,0.14)]' : 'hover:border-white/20'}`}>
                 {plan.popular && (
-                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-purple-500" />
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-fuchsia-500 via-violet-500 to-cyan-400" />
                 )}
                 <CardContent className="p-5 sm:p-6 lg:p-8">
                   <div className="flex items-center gap-3 mb-4">
@@ -158,7 +159,7 @@ export default function PricingPage() {
                     <div>
                       <div className="flex items-center gap-2">
                         <h3 className="text-xl font-semibold">{plan.name}</h3>
-                        {plan.popular && <Badge variant="default">Most Popular</Badge>}
+                        {plan.popular && <Badge variant="default">Never miss a trade again</Badge>}
                       </div>
                     </div>
                   </div>

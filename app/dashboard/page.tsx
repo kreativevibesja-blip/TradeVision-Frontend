@@ -241,9 +241,9 @@ export default function DashboardPage() {
                     <Crown className="h-5 w-5" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold">AutoTrader for MT5</h2>
+                    <h2 className="text-xl font-semibold">One-Tap Trade</h2>
                     <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-                      Turn approved trade signals into semi-automated execution with connection status, risk controls, and MT5 integration.
+                      Turn your best setups into instant one-click execution with premium trade cards, MT5 bridge status, and opportunistic entry generation.
                     </p>
                   </div>
                 </div>
@@ -253,7 +253,7 @@ export default function DashboardPage() {
                     <Link href="/dashboard/autotrader">
                       <Button variant="gradient" className="gap-2">
                         <Crown className="h-4 w-4" />
-                        Open AutoTrader
+                        Open One-Tap Trade
                       </Button>
                     </Link>
                   ) : (
@@ -261,10 +261,10 @@ export default function DashboardPage() {
                       <Link href="/checkout?plan=TOP_TIER">
                         <Button className="gap-2 bg-amber-600 text-white hover:bg-amber-500">
                           <Crown className="h-4 w-4" />
-                          Upgrade to Top Tier
+                          Upgrade to One-Tap Pro+
                         </Button>
                       </Link>
-                      <p className="text-xs text-muted-foreground">AutoTrader is available only on the Top Tier plan.</p>
+                      <p className="text-xs text-muted-foreground">One-Tap Trade is available only on the One-Tap Pro+ plan.</p>
                     </>
                   )}
                 </div>

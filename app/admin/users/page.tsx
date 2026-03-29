@@ -146,7 +146,7 @@ export default function AdminUsersPage() {
                 <option value="ALL">All users</option>
                 <option value="FREE">Free users</option>
                 <option value="PRO">Pro users</option>
-                <option value="TOP_TIER">Top Tier users</option>
+                <option value="TOP_TIER">One-Tap Pro+ users</option>
               </select>
             </div>
             <div className="flex flex-col gap-2 lg:w-48">
@@ -262,7 +262,7 @@ export default function AdminUsersPage() {
                                 event.stopPropagation();
                                 updateUser(u.id, { subscription: 'TOP_TIER' });
                               }}
-                              title="Upgrade to Top Tier"
+                              title="Upgrade to One-Tap Pro+"
                             >
                               <Crown className="h-3 w-3 text-amber-400" />
                             </Button>
@@ -395,7 +395,7 @@ export default function AdminUsersPage() {
                   ) : selectedUser.subscription === 'PRO' ? (
                     <Button onClick={() => updateUser(selectedUser.id, { subscription: 'TOP_TIER' })}>
                       <Crown className="mr-2 h-4 w-4" />
-                      Upgrade to Top Tier
+                      Upgrade to One-Tap Pro+
                     </Button>
                   ) : (
                     <Button variant="outline" onClick={() => updateUser(selectedUser.id, { subscription: 'PRO' })}>

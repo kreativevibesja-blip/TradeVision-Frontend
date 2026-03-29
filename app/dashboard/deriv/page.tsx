@@ -294,7 +294,7 @@ export default function DerivDashboardPage() {
             </div>
             <h1 className="text-2xl font-semibold">Deriv live charts are available on paid plans</h1>
             <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground">
-              Upgrade to Pro or Top Tier to open live Deriv synthetic charts, stream candles in real time, and overlay AI zones directly on the chart.
+              Upgrade to Pro or One-Tap Pro+ to open live Deriv synthetic charts, stream candles in real time, and overlay AI zones directly on the chart.
             </p>
             <div className="mt-6 flex justify-center">
               <Link href="/pricing">
@@ -333,13 +333,13 @@ export default function DerivDashboardPage() {
         : buildAutoTraderSignalFromDerivAnalysis(analysis, symbol);
 
       if (!draft) {
-        throw new Error('The current Deriv result does not include a complete execution plan yet.');
+        throw new Error('The current Deriv result is not ready for One-Tap right now.');
       }
 
-      await api.autotrader.createSignal(draft, token);
-      setAutotraderMessage('Deriv setup sent to AutoTrader.');
+      const { signal } = await api.autotrader.createSignal(draft, token);
+      router.push(`/dashboard/autotrader?signalId=${encodeURIComponent(signal.id)}`);
     } catch (sendError: any) {
-      setAutotraderMessage(sendError?.message || 'Unable to send this Deriv setup to AutoTrader.');
+      setAutotraderMessage(sendError?.message || 'Unable to send this Deriv setup to One-Tap Trade.');
     } finally {
       setSendingToAutotrader(false);
     }
@@ -415,7 +415,7 @@ export default function DerivDashboardPage() {
                   {user?.subscription === 'TOP_TIER' ? (
                     <Button onClick={() => void handleSendToAutotrader()} disabled={sendingToAutotrader} className="h-10 bg-emerald-600 px-4 text-white hover:bg-emerald-500">
                       {sendingToAutotrader ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Zap className="mr-2 h-4 w-4" />}
-                      Send to AutoTrader
+                      Send to One-Tap
                     </Button>
                   ) : null}
                 </div>

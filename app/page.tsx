@@ -506,17 +506,18 @@ export default function HomePage() {
                 <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 to-orange-500" />
                 <CardContent className="p-8">
                   <div className="flex items-center gap-2 mb-2">
-                    <h3 className="text-xl font-semibold">Top Tier 👑</h3>
-                    <Badge variant="default">AutoTrader</Badge>
+                    <h3 className="text-xl font-semibold">One-Tap Pro+</h3>
+                    <Badge variant="default">One-Tap Trade</Badge>
                   </div>
                   <div className="text-4xl font-bold mb-4">$39.95<span className="text-lg text-muted-foreground font-normal">/month</span></div>
                   <ul className="space-y-3 mb-8">
                     {[
                       '300 analyses per month',
-                      'Advanced AI detection',
-                      'Priority processing',
-                      'Smart Money Concepts',
-                      'AutoTrader for MT5',
+                      'Instant trade setups',
+                      'One-tap execution',
+                      'Priority signal generation',
+                      'Advanced entry precision',
+                      'Faster response time',
                     ].map((f) => (
                       <li key={f} className="flex items-center gap-2 text-sm">
                         <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
@@ -525,7 +526,7 @@ export default function HomePage() {
                     ))}
                   </ul>
                   <Link href="/checkout?plan=TOP_TIER" className="block">
-                    <Button variant="gradient" size="lg" className="w-full">Unlock Top Tier</Button>
+                    <Button variant="gradient" size="lg" className="w-full">Upgrade to One-Tap Pro+</Button>
                   </Link>
                 </CardContent>
               </Card>
