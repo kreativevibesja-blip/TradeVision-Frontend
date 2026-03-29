@@ -38,6 +38,9 @@ interface EvaluatedCandidate {
   strategy: string;
   score: number;
   confirmations: ScoredConfirmation[];
+  trendAlignment: boolean;
+  pullbackZoneValid: boolean;
+  structureLevelValid: boolean;
 }
 
 const fallbackDistance = (price: number) => {
@@ -136,10 +139,66 @@ const directionMatchesShift = (direction: SignalDirection, analysis: AnalysisRes
 };
 
 const mapStrategyLabel = (marketState: SignalMarketState) => {
-  if (marketState === 'trending') return 'continuation entries';
-  if (marketState === 'ranging') return 'support/resistance + sweeps';
-  if (marketState === 'reversal') return 'liquidity sweep + confirmation';
+  if (marketState === 'trending') return 'Pullback Continuation';
+  if (marketState === 'ranging') return 'Support/Resistance Reversal';
+  if (marketState === 'reversal') return 'Pullback Reversal';
   return 'stand aside';
+};
+
+const getPriceLocation = (analysis: AnalysisResult) => analysis.pricePosition?.location ?? analysis.currentPricePosition;
+
+const isExtremeForDirection = (
+  analysis: AnalysisResult,
+  marketState: SignalMarketState,
+  direction: SignalDirection,
+) => {
+  if (marketState !== 'trending') {
+    return false;
+  }
+
+  const location = getPriceLocation(analysis);
+  return (direction === 'buy' && location === 'premium')
+    || (direction === 'sell' && location === 'discount');
+};
+
+const hasValidPullbackZone = (
+  analysis: AnalysisResult,
+  direction: SignalDirection,
+  activeZone: PriceZone,
+) => {
+  const entryZone = toPriceZone(analysis.entryPlan?.entryZone ?? analysis.entryZone ?? null);
+  const textCorpus = normalizeText(
+    analysis.entryPlan?.reason,
+    analysis.reasoning,
+    analysis.message,
+    analysis.strategy,
+    analysis.primaryStrategy,
+  );
+
+  return analysis.entryPlan?.bias === direction && (
+    zoneOverlap(activeZone, entryZone)
+    || /pullback|retracement|retest|previous structure|moving average|ema|supply|demand|order block|imbalance|fvg/i.test(textCorpus)
+  );
+};
+
+const hasValidStructureLevel = (
+  analysis: AnalysisResult,
+  direction: SignalDirection,
+  activeZone: PriceZone,
+) => {
+  const entryZone = toPriceZone(analysis.entryPlan?.entryZone ?? analysis.entryZone ?? null);
+  const hasZoneStructure = zoneOverlap(activeZone, entryZone)
+    || /support|resistance|structure|swing|protected|previous high|previous low/i.test(
+      normalizeText(analysis.entryPlan?.reason, analysis.reasoning, analysis.message),
+    );
+
+  if (!hasZoneStructure) {
+    return false;
+  }
+
+  return direction === 'buy'
+    ? analysis.structure.bos === 'bullish' || analysis.structure.choch === 'bullish' || analysis.trend === 'bullish'
+    : analysis.structure.bos === 'bearish' || analysis.structure.choch === 'bearish' || analysis.trend === 'bearish';
 };
 
 const detectMarketState = (analysis: AnalysisResult): SignalMarketState => {
@@ -239,11 +298,22 @@ const evaluateCandidate = (
     return null;
   }
 
-  if (marketState === 'trending' && !directionMatchesTrend(direction, analysis.trend)) {
+  if (isExtremeForDirection(analysis, marketState, direction)) {
     return null;
   }
 
-  if (marketState === 'reversal' && !directionMatchesShift(direction, analysis)) {
+  const trendAlignment = marketState === 'ranging'
+    ? true
+    : marketState === 'reversal'
+      ? directionMatchesShift(direction, analysis)
+      : directionMatchesTrend(direction, analysis.trend);
+
+  if (!trendAlignment) {
+    return null;
+  }
+
+  const pullbackZoneValid = hasValidPullbackZone(analysis, direction, activeZone);
+  if (!pullbackZoneValid) {
     return null;
   }
 
@@ -258,7 +328,12 @@ const evaluateCandidate = (
     return null;
   }
 
-  const score = 3 + confirmations.reduce((total, item) => total + item.weight, 0);
+  const structureLevelValid = hasValidStructureLevel(analysis, direction, activeZone);
+  const score = (trendAlignment ? 2 : 0)
+    + (pullbackZoneValid ? 2 : 0)
+    + (confirmations.length >= 2 ? 2 : 0)
+    + (structureLevelValid ? 1 : 0);
+
   if (score < 5) {
     return null;
   }
@@ -271,6 +346,9 @@ const evaluateCandidate = (
     strategy: mapStrategyLabel(marketState),
     score,
     confirmations,
+    trendAlignment,
+    pullbackZoneValid,
+    structureLevelValid,
   };
 };
 
@@ -343,7 +421,7 @@ export const buildAutoTraderSignalFromAnalysis = (analysis: AnalysisResult): Aut
 
   const confirmations = selected.confirmations.map((item) => item.label);
   const zoneLabel = selected.direction === 'buy' ? 'support' : 'resistance';
-  const explanation = `Opportunistic Setup: ${selected.marketState} market using ${selected.strategy}. Score ${selected.score} with confirmations: ${confirmations.join(', ')}. Price is reacting at ${zoneLabel}, so entry is mapped from the active zone, stop sits beyond it, and target reaches for the opposite zone.`;
+  const explanation = `Opportunistic Setup: ${selected.marketState} market using ${selected.strategy}. Score ${selected.score}/7 with confirmations: ${confirmations.join(', ')}. Price has pulled back into ${zoneLabel}, confirmation has already formed, stop sits beyond the invalidation swing, and target reaches for the next structure or liquidity zone.`;
 
   return {
     symbol: normalizeSymbol(analysis.pair),
