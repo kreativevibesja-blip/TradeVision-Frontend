@@ -3,12 +3,13 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
-import { CandlestickChart, CreditCard, LayoutDashboard, RadioTower, Users } from 'lucide-react';
+import { CandlestickChart, CreditCard, LayoutDashboard, RadioTower, Users, Bot } from 'lucide-react';
 
 const dashboardNav = [
   { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
   { href: '/dashboard/tradingview', label: 'Live Chart', icon: CandlestickChart },
   { href: '/dashboard/deriv', label: 'Deriv Live', icon: RadioTower },
+  { href: '/dashboard/autotrader', label: 'AutoTrader', icon: Bot },
   { href: '/dashboard/billing', label: 'Billing', icon: CreditCard },
   { href: '/dashboard/referrals', label: 'Referrals', icon: Users },
 ];
