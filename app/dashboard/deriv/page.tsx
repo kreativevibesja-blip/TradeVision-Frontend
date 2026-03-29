@@ -321,16 +321,55 @@ export default function DerivDashboardPage() {
   const StatusIcon = statusTone.icon;
 
   const handleSendToAutotrader = async () => {
-    if (!token || !analysis) {
+    if (!token || !analysis || sendingToAutotrader) {
       return;
     }
 
     try {
       setSendingToAutotrader(true);
       setAutotraderMessage('');
-      const draft = persistedAnalysis
-        ? buildAutoTraderSignalFromAnalysis(persistedAnalysis)
-        : buildAutoTraderSignalFromDerivAnalysis(analysis, symbol);
+
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          symbol,
+          timeframe,
+          candles: candles.slice(-DERIV_ANALYSIS_CANDLE_COUNT),
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'One-Tap analysis failed.');
+      }
+
+      if (data.queued && data.jobId) {
+        router.push(`/analyze/queue?jobId=${encodeURIComponent(data.jobId)}&analysisId=${encodeURIComponent(data.analysisId || '')}&returnTo=${encodeURIComponent('/dashboard/deriv')}`);
+        return;
+      }
+
+      if (!data.analysis?.id) {
+        throw new Error('One-Tap analysis did not return a persisted result.');
+      }
+
+      const mappedResult = mapPersistedAnalysisToDerivResult(data.analysis, candles.slice(-DERIV_ANALYSIS_CANDLE_COUNT));
+      const nextCache: CachedAnalysis = {
+        symbol,
+        timeframe,
+        savedAt: new Date().toISOString(),
+        analysisId: data.analysis.id,
+        result: mappedResult,
+      };
+
+      window.localStorage.setItem(ANALYSIS_CACHE_KEY, JSON.stringify(nextCache));
+      setAnalysis(mappedResult);
+      setPersistedAnalysis(data.analysis);
+
+      const draft = buildAutoTraderSignalFromAnalysis(data.analysis);
 
       if (!draft) {
         throw new Error('NO TRADE: One-Tap only issues an opportunistic setup when the market state is valid, price is reacting at support or resistance, at least 2 confirmations are present, and the setup score is 5 or higher.');
@@ -339,7 +378,7 @@ export default function DerivDashboardPage() {
       const { signal } = await api.autotrader.createSignal(draft, token);
       router.push(`/dashboard/autotrader?signalId=${encodeURIComponent(signal.id)}`);
     } catch (sendError: any) {
-      setAutotraderMessage(sendError?.message || 'Unable to send this Deriv setup to One-Tap Trade.');
+      setAutotraderMessage(sendError?.message || 'Unable to analyze this Deriv chart with One-Tap Trade.');
     } finally {
       setSendingToAutotrader(false);
     }
@@ -415,7 +454,7 @@ export default function DerivDashboardPage() {
                   {user?.subscription === 'TOP_TIER' ? (
                     <Button onClick={() => void handleSendToAutotrader()} disabled={sendingToAutotrader} className="h-10 bg-emerald-600 px-4 text-white hover:bg-emerald-500">
                       {sendingToAutotrader ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Zap className="mr-2 h-4 w-4" />}
-                      Send to One-Tap
+                      Analyze with One-Tap
                     </Button>
                   ) : null}
                 </div>
@@ -560,6 +599,12 @@ export default function DerivDashboardPage() {
                       {analyzing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Zap className="mr-2 h-4 w-4" />}
                       {analyzing ? 'Analyzing...' : 'Analyze'}
                     </Button>
+                    {user?.subscription === 'TOP_TIER' ? (
+                      <Button onClick={() => void handleSendToAutotrader()} disabled={sendingToAutotrader || candles.length < 50} className="h-11 bg-emerald-600 px-4 text-white hover:bg-emerald-500">
+                        {sendingToAutotrader ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Zap className="mr-2 h-4 w-4" />}
+                        Analyze with One-Tap
+                      </Button>
+                    ) : null}
                   </div>
                 </div>
               </div>

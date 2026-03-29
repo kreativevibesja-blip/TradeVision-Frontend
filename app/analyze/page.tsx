@@ -12,7 +12,6 @@ import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { api, resolveAssetUrl, type AnalysisResult } from '@/lib/api';
-import { buildAutoTraderSignalFromAnalysis } from '@/lib/autotrader-signal';
 import { AuthModal } from '@/components/AuthModal';
 import { ChartLightbox } from '@/components/ChartLightbox';
 import {
@@ -313,6 +312,7 @@ function AnalyzePageContent() {
   const searchParams = useSearchParams();
   const { user, token, refreshUser } = useAuth();
   const isPro = user?.subscription !== 'FREE';
+  const isTopTier = user?.subscription === 'TOP_TIER';
   const retryMode = searchParams.get('retry') === '1';
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -333,8 +333,6 @@ function AnalyzePageContent() {
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [queueStarting, setQueueStarting] = useState(false);
-  const [sendingToAutotrader, setSendingToAutotrader] = useState(false);
-  const [autotraderNotice, setAutotraderNotice] = useState('');
   const analysisId = searchParams.get('analysisId');
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -347,7 +345,6 @@ function AnalyzePageContent() {
     setPreview(URL.createObjectURL(nextFile));
     setAnalysis(null);
     setError('');
-    setAutotraderNotice('');
   }, []);
 
   const onDrop2 = useCallback((acceptedFiles: File[]) => {
@@ -360,7 +357,6 @@ function AnalyzePageContent() {
     setPreview2(URL.createObjectURL(nextFile));
     setAnalysis(null);
     setError('');
-    setAutotraderNotice('');
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -491,10 +487,15 @@ function AnalyzePageContent() {
     };
   }, [analysis?.id, analysisId, token]);
 
-  const handleAnalyze = async () => {
+  const handleAnalyze = async (mode: 'standard' | 'one-tap' = 'standard') => {
     if (!user || !token) {
       setAuthMode('login');
       setAuthOpen(true);
+      return;
+    }
+
+    if (mode === 'one-tap' && user.subscription !== 'TOP_TIER') {
+      setError('Analyze with One-Tap is available only on the One-Tap Pro+ plan.');
       return;
     }
 
@@ -550,6 +551,19 @@ function AnalyzePageContent() {
         setCurrentStage(ANALYSIS_STEPS[ANALYSIS_STEPS.length - 1]);
         setAnalysis(result.analysis);
         setShowAiZones(Boolean(result.analysis.markedImageUrl));
+
+        if (mode === 'one-tap') {
+          const draft = buildAutoTraderSignalFromAnalysis(result.analysis);
+          if (!draft) {
+            setError('NO TRADE: One-Tap analyzed this chart but did not find a valid opportunistic setup. The market state, confirmations, or score were not strong enough.');
+          } else {
+            const { signal } = await api.autotrader.createSignal(draft, token);
+            await refreshUser().catch(() => {});
+            router.push(`/dashboard/autotrader?signalId=${encodeURIComponent(signal.id)}`);
+            return;
+          }
+        }
+
         await refreshUser().catch(() => {});
       }
       setLoading(false);
@@ -570,7 +584,6 @@ function AnalyzePageContent() {
 
   const trend = analysis?.trend || 'ranging';
   const signalType = analysis?.signalType || 'wait';
-  const autoTraderDraft = analysis ? buildAutoTraderSignalFromAnalysis(analysis) : null;
   const originalChartUrl = preview || resolveAssetUrl(analysis?.originalImageUrl || analysis?.imageUrl || null);
   const markedChartUrl = resolveAssetUrl(analysis?.markedImageUrl || null);
   const displayedChartUrl = showAiZones && markedChartUrl ? markedChartUrl : originalChartUrl;
@@ -578,24 +591,6 @@ function AnalyzePageContent() {
     step,
     complete: progress >= (index + 1) * 20 || currentStage === step,
   }));
-
-  const handleSendToAutotrader = async () => {
-    if (!token || !analysis || !autoTraderDraft) {
-      setAutotraderNotice('This market snapshot is not ready for One-Tap right now.');
-      return;
-    }
-
-    try {
-      setSendingToAutotrader(true);
-      setAutotraderNotice('');
-      const { signal } = await api.autotrader.createSignal(autoTraderDraft, token);
-      router.push(`/dashboard/autotrader?signalId=${encodeURIComponent(signal.id)}`);
-    } catch (sendError: any) {
-      setAutotraderNotice(sendError?.message || 'Unable to send this setup to One-Tap Trade.');
-    } finally {
-      setSendingToAutotrader(false);
-    }
-  };
 
   return (
     <div className="min-h-screen py-8">
@@ -820,25 +815,55 @@ function AnalyzePageContent() {
                     </div>
                   )}
 
-                  <Button
-                    variant="glow"
-                    size="lg"
-                    className="w-full gap-2"
-                    onClick={handleAnalyze}
-                    disabled={loading || !file}
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Analyzing SMC structure...
-                      </>
-                    ) : (
-                      <>
-                        <Brain className="h-5 w-5" />
-                        Generate Signal
-                      </>
-                    )}
-                  </Button>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <Button
+                      variant="glow"
+                      size="lg"
+                      className="w-full gap-2"
+                      onClick={() => void handleAnalyze('standard')}
+                      disabled={loading || !file}
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Analyzing SMC structure...
+                        </>
+                      ) : (
+                        <>
+                          <Brain className="h-5 w-5" />
+                          Generate Signal
+                        </>
+                      )}
+                    </Button>
+
+                    {isTopTier ? (
+                      <Button
+                        variant="gradient"
+                        size="lg"
+                        className="w-full gap-2"
+                        onClick={() => void handleAnalyze('one-tap')}
+                        disabled={loading || !file}
+                      >
+                        {loading ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Analyzing with One-Tap...
+                          </>
+                        ) : (
+                          <>
+                            <Bot className="h-5 w-5" />
+                            Analyze with One-Tap
+                          </>
+                        )}
+                      </Button>
+                    ) : null}
+                  </div>
+
+                  {!isTopTier && user ? (
+                    <p className="text-xs text-center text-muted-foreground">
+                      Analyze with One-Tap is available only on the One-Tap Pro+ plan.
+                    </p>
+                  ) : null}
 
                   {!user && (
                     <p className="text-xs text-center text-muted-foreground">
@@ -885,16 +910,6 @@ function AnalyzePageContent() {
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {user?.subscription === 'TOP_TIER' ? (
-                    <Button
-                      onClick={handleSendToAutotrader}
-                      disabled={sendingToAutotrader || !autoTraderDraft}
-                      className="gap-2 bg-emerald-600 text-white hover:bg-emerald-500 disabled:bg-emerald-600/50"
-                    >
-                      {sendingToAutotrader ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bot className="h-4 w-4" />}
-                      Send to One-Tap
-                    </Button>
-                  ) : null}
                   <Button
                     variant="outline"
                     onClick={() => {
@@ -911,32 +926,12 @@ function AnalyzePageContent() {
                       setProgress(0);
                       setCurrentStage(ANALYSIS_STEPS[0]);
                       setError('');
-                      setAutotraderNotice('');
                     }}
                   >
                     New Analysis
                   </Button>
                 </div>
               </div>
-
-              {user?.subscription === 'TOP_TIER' ? (
-                <Card className="mobile-card border-emerald-500/20 bg-emerald-500/5">
-                  <CardContent className="flex flex-col gap-3 p-5 md:flex-row md:items-center md:justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-emerald-100">One-Tap handoff</p>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        This button generates the best available setup, even on a wait call, then opens One-Tap Trade so you can execute it with a single click.
-                      </p>
-                      {autotraderNotice ? <p className="mt-2 text-xs text-muted-foreground">{autotraderNotice}</p> : null}
-                    </div>
-                    <div className="rounded-2xl border border-emerald-500/20 bg-black/20 px-4 py-3 text-sm text-emerald-100">
-                      {autoTraderDraft
-                        ? `${autoTraderDraft.direction.toUpperCase()} ${autoTraderDraft.symbol} at ${formatPrice(autoTraderDraft.entryPrice, pair)}`
-                        : 'This result is informational only and cannot be sent to One-Tap yet.'}
-                    </div>
-                  </CardContent>
-                </Card>
-              ) : null}
 
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6">
                 <div className="lg:col-span-2 space-y-6">

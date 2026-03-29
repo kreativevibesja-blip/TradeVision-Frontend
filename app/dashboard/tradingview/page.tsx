@@ -116,22 +116,46 @@ export default function TradingViewDashboardPage() {
   const cacheMatchesSelection = cachedAnalysis?.symbol === symbol && cachedAnalysis?.timeframe === timeframe;
 
   const handleSendToAutotrader = async () => {
-    if (!token || !cachedAnalysis?.analysisId) {
+    if (!token || !user || sendingToAutotrader) {
       return;
     }
 
     try {
       setSendingToAutotrader(true);
       setAutotraderMessage('');
-      const { analysis } = await api.getAnalysis(cachedAnalysis.analysisId, token);
-      const draft = buildAutoTraderSignalFromAnalysis(analysis);
+      const result = await api.analyzeLiveChart({ source: 'tradingview-live', symbol, timeframe }, token);
+      if (result.queued && result.jobId) {
+        router.push(`/analyze/queue?jobId=${encodeURIComponent(result.jobId)}&analysisId=${encodeURIComponent(result.analysisId || '')}&returnTo=${encodeURIComponent('/dashboard/tradingview')}`);
+        return;
+      }
+
+      if (!result.analysis) {
+        throw new Error('One-Tap analysis did not return a valid live chart result.');
+      }
+
+      const nextCache: CachedAnalysis = {
+        symbol,
+        timeframe,
+        analysisId: result.analysis.id,
+        createdAt: new Date().toISOString(),
+        pair: result.analysis.pair,
+        confidence: result.analysis.confidence,
+        signalType: result.analysis.signalType,
+        marketCondition: result.analysis.marketCondition,
+        primaryStrategy: result.analysis.primaryStrategy,
+      };
+
+      window.localStorage.setItem(CACHE_KEY, JSON.stringify(nextCache));
+      setCachedAnalysis(nextCache);
+
+      const draft = buildAutoTraderSignalFromAnalysis(result.analysis);
       if (!draft) {
         throw new Error('NO TRADE: One-Tap only issues an opportunistic setup when the market state is valid, price is reacting at support or resistance, at least 2 confirmations are present, and the setup score is 5 or higher.');
       }
       const { signal } = await api.autotrader.createSignal(draft, token);
       router.push(`/dashboard/autotrader?signalId=${encodeURIComponent(signal.id)}`);
     } catch (sendError: any) {
-      setAutotraderMessage(sendError?.message || 'Unable to send this live chart setup to One-Tap Trade.');
+      setAutotraderMessage(sendError?.message || 'Unable to analyze this live chart with One-Tap Trade.');
     } finally {
       setSendingToAutotrader(false);
     }
@@ -316,7 +340,7 @@ export default function TradingViewDashboardPage() {
                 {user?.subscription === 'TOP_TIER' ? (
                   <Button onClick={() => void handleSendToAutotrader()} disabled={sendingToAutotrader} className="h-10 bg-emerald-600 px-4 text-white hover:bg-emerald-500">
                     {sendingToAutotrader ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Zap className="mr-2 h-4 w-4" />}
-                    Send to One-Tap
+                    Analyze with One-Tap
                   </Button>
                 ) : null}
                 <Button onClick={() => void startAnalysis(true)} disabled={analyzing} className="h-10 bg-blue-500 px-4 text-white hover:bg-blue-600">
@@ -405,6 +429,12 @@ export default function TradingViewDashboardPage() {
                       {analyzing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Zap className="mr-2 h-4 w-4" />}
                       {analyzing ? 'Analyzing...' : 'Analyze'}
                     </Button>
+                    {user?.subscription === 'TOP_TIER' ? (
+                      <Button onClick={() => void handleSendToAutotrader()} disabled={sendingToAutotrader} className="h-11 bg-emerald-600 px-4 text-white hover:bg-emerald-500">
+                        {sendingToAutotrader ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Zap className="mr-2 h-4 w-4" />}
+                        Analyze with One-Tap
+                      </Button>
+                    ) : null}
                   </div>
                 </div>
               </div>

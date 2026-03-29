@@ -49,14 +49,6 @@ const formatTradePrice = (value: number, symbol: string) => {
   return value.toFixed(digits);
 };
 
-const formatCountdown = (createdAt: string, now: number) => {
-  const expiresAt = new Date(createdAt).getTime() + 15 * 60 * 1000;
-  const remaining = Math.max(0, expiresAt - now);
-  const minutes = Math.floor(remaining / 60000);
-  const seconds = Math.floor((remaining % 60000) / 1000);
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-};
-
 function OneTapTradeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -67,7 +59,6 @@ function OneTapTradeContent() {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [notice, setNotice] = useState('');
-  const [now, setNow] = useState(Date.now());
   const [focusedSignalId, setFocusedSignalId] = useState<string | null>(incomingSignalId);
 
   const load = useCallback(async () => {
@@ -114,11 +105,6 @@ function OneTapTradeContent() {
 
     return () => window.clearInterval(refreshInterval);
   }, [load, token]);
-
-  useEffect(() => {
-    const timer = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => window.clearInterval(timer);
-  }, []);
 
   const pendingSignals = useMemo(
     () => signals.filter((signal) => signal.status === 'pending' || signal.status === 'ready'),
@@ -441,11 +427,6 @@ function OneTapTradeContent() {
                         </div>
                       </div>
 
-                      <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-right">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Entry window</p>
-                        <p className="mt-2 text-2xl font-semibold text-white">{formatCountdown(activeSignal.createdAt, now)}</p>
-                        <p className="mt-1 text-xs text-slate-400">Counted from signal creation</p>
-                      </div>
                     </div>
 
                     <div className="grid gap-4 sm:grid-cols-3">
