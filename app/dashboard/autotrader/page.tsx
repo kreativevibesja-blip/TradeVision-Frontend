@@ -483,8 +483,8 @@ function OneTapTradeContent() {
                   </Button>
                 </div>
 
-                <div className="mt-5 space-y-3">
-                  {pendingSignals.length > 0 ? pendingSignals.slice(0, 4).map((signal) => (
+                <div className="mt-5 max-h-[28rem] space-y-3 overflow-y-auto pr-1">
+                  {pendingSignals.length > 0 ? pendingSignals.map((signal) => (
                     <button
                       key={signal.id}
                       type="button"
