@@ -80,6 +80,133 @@ const formatTradePrice = (value: number, symbol: string) => {
   return value.toFixed(digits);
 };
 
+const formatTradePlanTitle = (label?: string | null) => label && label.trim().length > 0 ? label : 'Trade Setup';
+
+type TradePlanCardProps = {
+  symbol: TradeSignal['symbol'];
+  direction: TradeSignal['direction'];
+  entryPrice: number;
+  stopLoss: number;
+  takeProfit: number;
+  confidence: TradeSignal['confidence'];
+  marketState?: TradeSignal['marketState'] | null;
+  strategy?: string | null;
+  score?: number | null;
+  confirmations?: string[];
+  explanation?: string | null;
+  label?: string | null;
+  warning?: string | null;
+  tone?: 'primary' | 'secondary';
+};
+
+function TradePlanCard({
+  symbol,
+  direction,
+  entryPrice,
+  stopLoss,
+  takeProfit,
+  confidence,
+  marketState,
+  strategy,
+  score,
+  confirmations,
+  explanation,
+  label,
+  warning,
+  tone = 'primary',
+}: TradePlanCardProps) {
+  const isPrimary = tone === 'primary';
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 24, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1, boxShadow: ['0 0 0 rgba(59,130,246,0)', isPrimary ? '0 0 40px rgba(59,130,246,0.22)' : '0 0 32px rgba(244,114,182,0.16)', '0 0 0 rgba(59,130,246,0)'] }}
+      exit={{ opacity: 0, y: -18, scale: 0.98 }}
+      transition={{ duration: 0.35, boxShadow: { duration: 2.8, repeat: Infinity, ease: 'easeInOut' } }}
+      className={`relative overflow-hidden rounded-3xl border p-6 shadow-xl ${isPrimary ? 'border-blue-500/30 bg-gradient-to-br from-slate-900 to-slate-800' : 'border-rose-400/25 bg-gradient-to-br from-slate-900 via-slate-900 to-rose-950/40'}`}
+    >
+      <motion.div
+        aria-hidden
+        className="pointer-events-none absolute inset-y-0 left-[-35%] w-1/2 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+        animate={{ x: ['0%', '230%'] }}
+        transition={{ duration: 2.8, repeat: Infinity, ease: 'linear' }}
+      />
+
+      <div className="relative flex flex-col gap-5">
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge className={isPrimary ? 'border-fuchsia-400/30 bg-fuchsia-400/12 text-fuchsia-100' : 'border-rose-400/30 bg-rose-400/12 text-rose-100'}>{formatTradePlanTitle(label)}</Badge>
+            <Badge className={CONFIDENCE_COLORS[confidence] || 'border-white/10 bg-white/5 text-slate-200'}>{confidence}</Badge>
+            {marketState ? (
+              <Badge className="border-white/10 bg-white/5 text-slate-200">{MARKET_STATE_COPY[marketState] || marketState}</Badge>
+            ) : null}
+            <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200">
+              <motion.span className={`h-2.5 w-2.5 rounded-full ${isPrimary ? 'bg-emerald-400' : 'bg-rose-300'}`} animate={{ opacity: [1, 0.35, 1] }} transition={{ duration: 1.1, repeat: Infinity }} />
+              {isPrimary ? 'Main trade' : 'Counter-trend trade'}
+            </div>
+          </div>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">{symbol} {direction.toUpperCase()}</h2>
+            <span className={`rounded-full px-3 py-1 text-sm font-semibold ${direction === 'buy' ? 'bg-emerald-400/12 text-emerald-200 shadow-[0_0_25px_rgba(74,222,128,0.18)]' : 'bg-rose-400/12 text-rose-200 shadow-[0_0_25px_rgba(251,113,133,0.18)]'}`}>
+              {direction === 'buy' ? 'BUY' : 'SELL'}
+            </span>
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-slate-300">
+            <span>{strategy || 'Generated based on current market conditions'}</span>
+            {typeof score === 'number' ? <span>Score {score}</span> : null}
+            <span className="inline-flex items-center gap-1 text-slate-400">
+              <Info className="h-3.5 w-3.5" />
+              {isPrimary ? 'Primary setup' : 'Secondary setup'}
+            </span>
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+            <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">Entry</p>
+            <p className="mt-2 text-3xl font-semibold tracking-tight text-white">{formatTradePrice(entryPrice, symbol)}</p>
+          </div>
+          <div className="rounded-2xl border border-rose-400/20 bg-rose-400/10 p-4">
+            <p className="text-[11px] uppercase tracking-[0.16em] text-rose-200/80">SL</p>
+            <p className="mt-2 text-2xl font-semibold tracking-tight text-rose-100">{formatTradePrice(stopLoss, symbol)}</p>
+          </div>
+          <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-4">
+            <p className="text-[11px] uppercase tracking-[0.16em] text-emerald-200/80">TP</p>
+            <p className="mt-2 text-2xl font-semibold tracking-tight text-emerald-100">{formatTradePrice(takeProfit, symbol)}</p>
+          </div>
+        </div>
+
+        {warning ? (
+          <div className="rounded-2xl border border-rose-400/20 bg-rose-400/10 p-4 text-sm leading-7 text-rose-100">
+            <span className="font-medium text-white">Warning:</span> {warning}
+          </div>
+        ) : null}
+
+        <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm leading-7 text-slate-300">
+          <span className="font-medium text-white">How to use it:</span> place this setup manually in your execution platform using the entry, stop loss, and take profit shown above.
+        </div>
+
+        {((confirmations?.length ?? 0) > 0 || explanation) ? (
+          <div className="grid gap-4 lg:grid-cols-[0.7fr_1.3fr]">
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Confirmations used</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {(confirmations?.length ?? 0) > 0 ? confirmations?.map((confirmation) => (
+                  <Badge key={confirmation} className="border-cyan-400/25 bg-cyan-400/10 text-cyan-100">{confirmation}</Badge>
+                )) : <p className="text-sm text-slate-400">No confirmations were stored for this setup.</p>}
+              </div>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm leading-7 text-slate-300">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Setup explanation</p>
+              <p className="mt-3">{explanation || 'No stored explanation for this setup.'}</p>
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </motion.div>
+  );
+}
+
 function OneTapTradeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -161,6 +288,7 @@ function OneTapTradeContent() {
     () => signals.find((signal) => signal.id === focusedSignalId) ?? pendingSignals[0] ?? historicalSignals[0] ?? null,
     [focusedSignalId, historicalSignals, pendingSignals, signals],
   );
+  const activeSecondaryTrade = activeSignal?.secondaryTrade ?? null;
 
   const workflowCopy = ONE_TAP_WORKFLOW_COPY[workflowSource] || ONE_TAP_WORKFLOW_COPY.analyze;
   const showWorkflowTransition = workflowMode === 'one-tap' && loading;
@@ -231,6 +359,7 @@ function OneTapTradeContent() {
         score: activeSignal.score ?? undefined,
         confirmations: activeSignal.confirmations ?? [],
         explanation: activeSignal.explanation || undefined,
+        secondaryTrade: activeSignal.secondaryTrade,
       }, token);
       setSignals((current) => [signal, ...current.filter((item) => item.id !== signal.id)]);
       setFocusedSignalId(signal.id);
@@ -427,89 +556,40 @@ function OneTapTradeContent() {
           <div className="space-y-6">
             <AnimatePresence mode="wait">
               {activeSignal ? (
-                <motion.div
-                  key={activeSignal.id}
-                  initial={{ opacity: 0, y: 24, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1, boxShadow: ['0 0 0 rgba(59,130,246,0)', '0 0 40px rgba(59,130,246,0.22)', '0 0 0 rgba(59,130,246,0)'] }}
-                  exit={{ opacity: 0, y: -18, scale: 0.98 }}
-                  transition={{ duration: 0.35, boxShadow: { duration: 2.8, repeat: Infinity, ease: 'easeInOut' } }}
-                  className="relative overflow-hidden rounded-3xl border border-blue-500/30 bg-gradient-to-br from-slate-900 to-slate-800 p-6 shadow-xl"
-                >
-                  <motion.div
-                    aria-hidden
-                    className="pointer-events-none absolute inset-y-0 left-[-35%] w-1/2 bg-gradient-to-r from-transparent via-white/10 to-transparent"
-                    animate={{ x: ['0%', '230%'] }}
-                    transition={{ duration: 2.8, repeat: Infinity, ease: 'linear' }}
+                <motion.div key={activeSignal.id} className="space-y-6">
+                  <TradePlanCard
+                    symbol={activeSignal.symbol}
+                    direction={activeSignal.direction}
+                    entryPrice={activeSignal.entryPrice}
+                    stopLoss={activeSignal.stopLoss}
+                    takeProfit={activeSignal.takeProfit}
+                    confidence={activeSignal.confidence}
+                    marketState={activeSignal.marketState}
+                    strategy={activeSignal.strategy}
+                    score={activeSignal.score}
+                    confirmations={activeSignal.confirmations}
+                    explanation={activeSignal.explanation}
+                    label={activeSignal.label}
+                    tone="primary"
                   />
-
-                  <div className="relative flex flex-col gap-5">
-                    <div className="flex flex-wrap items-start justify-between gap-4">
-                      <div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Badge className="border-fuchsia-400/30 bg-fuchsia-400/12 text-fuchsia-100">{activeSignal.label || 'Opportunistic Setup'}</Badge>
-                          <Badge className={CONFIDENCE_COLORS[activeSignal.confidence] || 'border-white/10 bg-white/5 text-slate-200'}>{activeSignal.confidence}</Badge>
-                          {activeSignal.marketState ? (
-                            <Badge className="border-white/10 bg-white/5 text-slate-200">{MARKET_STATE_COPY[activeSignal.marketState] || activeSignal.marketState}</Badge>
-                          ) : null}
-                          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-200" title="This is an aggressive opportunity setup">
-                            <motion.span className="h-2.5 w-2.5 rounded-full bg-emerald-400" animate={{ opacity: [1, 0.35, 1] }} transition={{ duration: 1.1, repeat: Infinity }} />
-                            Live signal
-                          </div>
-                        </div>
-                        <div className="mt-4 flex flex-wrap items-center gap-3">
-                          <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">{activeSignal.symbol} {activeSignal.direction.toUpperCase()}</h2>
-                          <span className={`rounded-full px-3 py-1 text-sm font-semibold ${activeSignal.direction === 'buy' ? 'bg-emerald-400/12 text-emerald-200 shadow-[0_0_25px_rgba(74,222,128,0.18)]' : 'bg-rose-400/12 text-rose-200 shadow-[0_0_25px_rgba(251,113,133,0.18)]'}`}>
-                            {activeSignal.direction === 'buy' ? 'BUY' : 'SELL'}
-                          </span>
-                        </div>
-                        <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-slate-300">
-                          <span>{activeSignal.strategy || 'Generated based on current market conditions'}</span>
-                          {typeof activeSignal.score === 'number' ? <span>Score {activeSignal.score}</span> : null}
-                          <span className="inline-flex items-center gap-1 text-slate-400" title="This is an aggressive opportunity setup">
-                            <Info className="h-3.5 w-3.5" />
-                            Aggressive opportunity
-                          </span>
-                        </div>
-                      </div>
-
-                    </div>
-
-                    <div className="grid gap-4 sm:grid-cols-3">
-                      <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                        <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">Entry</p>
-                        <p className="mt-2 text-3xl font-semibold tracking-tight text-white">{formatTradePrice(activeSignal.entryPrice, activeSignal.symbol)}</p>
-                      </div>
-                      <div className="rounded-2xl border border-rose-400/20 bg-rose-400/10 p-4">
-                        <p className="text-[11px] uppercase tracking-[0.16em] text-rose-200/80">SL</p>
-                        <p className="mt-2 text-2xl font-semibold tracking-tight text-rose-100">{formatTradePrice(activeSignal.stopLoss, activeSignal.symbol)}</p>
-                      </div>
-                      <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-4">
-                        <p className="text-[11px] uppercase tracking-[0.16em] text-emerald-200/80">TP</p>
-                        <p className="mt-2 text-2xl font-semibold tracking-tight text-emerald-100">{formatTradePrice(activeSignal.takeProfit, activeSignal.symbol)}</p>
-                      </div>
-                    </div>
-
-                    <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm leading-7 text-slate-300">
-                      <span className="font-medium text-white">How to use it:</span> place this setup manually in your execution platform using the entry, stop loss, and take profit shown above.
-                    </div>
-
-                    {((activeSignal.confirmations?.length ?? 0) > 0 || activeSignal.explanation) ? (
-                      <div className="grid gap-4 lg:grid-cols-[0.7fr_1.3fr]">
-                        <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Confirmations used</p>
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            {(activeSignal.confirmations?.length ?? 0) > 0 ? activeSignal.confirmations.map((confirmation) => (
-                              <Badge key={confirmation} className="border-cyan-400/25 bg-cyan-400/10 text-cyan-100">{confirmation}</Badge>
-                            )) : <p className="text-sm text-slate-400">No confirmations were stored for this setup.</p>}
-                          </div>
-                        </div>
-                        <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm leading-7 text-slate-300">
-                          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Setup explanation</p>
-                          <p className="mt-3">{activeSignal.explanation || 'No stored explanation for this setup.'}</p>
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
+                  {activeSecondaryTrade ? (
+                    <TradePlanCard
+                      symbol={activeSignal.symbol}
+                      direction={activeSecondaryTrade.direction}
+                      entryPrice={activeSecondaryTrade.entryPrice}
+                      stopLoss={activeSecondaryTrade.stopLoss}
+                      takeProfit={activeSecondaryTrade.takeProfit}
+                      confidence={activeSecondaryTrade.confidence}
+                      marketState={activeSecondaryTrade.marketState}
+                      strategy={activeSecondaryTrade.strategy}
+                      score={activeSecondaryTrade.score}
+                      confirmations={activeSecondaryTrade.confirmations}
+                      explanation={activeSecondaryTrade.explanation}
+                      label={activeSecondaryTrade.label}
+                      warning={activeSecondaryTrade.warning}
+                      tone="secondary"
+                    />
+                  ) : null}
                 </motion.div>
               ) : (
                 <motion.div
@@ -559,7 +639,7 @@ function OneTapTradeContent() {
                           <div>
                             <p className="font-semibold text-white">{signal.symbol} {signal.direction.toUpperCase()}</p>
                             <p className="mt-1 text-xs text-slate-400">Entry {formatTradePrice(signal.entryPrice, signal.symbol)} · TP {formatTradePrice(signal.takeProfit, signal.symbol)}</p>
-                            {signal.strategy ? <p className="mt-1 text-[11px] text-slate-500">{signal.strategy}{typeof signal.score === 'number' ? ` · Score ${signal.score}` : ''}</p> : null}
+                            {signal.strategy ? <p className="mt-1 text-[11px] text-slate-500">{signal.strategy}{typeof signal.score === 'number' ? ` · Score ${signal.score}` : ''}{signal.secondaryTrade ? ' · Includes counter-trend trade' : ''}</p> : signal.secondaryTrade ? <p className="mt-1 text-[11px] text-slate-500">Includes counter-trend trade</p> : null}
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
