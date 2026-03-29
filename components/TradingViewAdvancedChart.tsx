@@ -3,6 +3,84 @@
 import { useEffect, useId, useRef } from 'react';
 import { cn } from '@/lib/utils';
 
+const TRADINGVIEW_SCRIPT_ID = 'tradingview-widget-script';
+
+type TradingViewWidgetInstance = {
+  remove?: () => void;
+};
+
+type TradingViewWidgetOptions = {
+  autosize: boolean;
+  symbol: string;
+  interval: string;
+  timezone: string;
+  theme: string;
+  style: string;
+  locale: string;
+  allow_symbol_change: boolean;
+  hide_top_toolbar: boolean;
+  hide_legend: boolean;
+  save_image: boolean;
+  calendar: boolean;
+  support_host: string;
+  container_id: string;
+};
+
+type TradingViewApi = {
+  widget: new (options: TradingViewWidgetOptions) => TradingViewWidgetInstance;
+};
+
+let tradingViewScriptPromise: Promise<TradingViewApi> | null = null;
+
+const loadTradingViewApi = () => {
+  if (typeof window === 'undefined') {
+    return Promise.reject(new Error('TradingView can only load in the browser.'));
+  }
+
+  if (window.TradingView?.widget) {
+    return Promise.resolve(window.TradingView as TradingViewApi);
+  }
+
+  if (!tradingViewScriptPromise) {
+    tradingViewScriptPromise = new Promise<TradingViewApi>((resolve, reject) => {
+      const existingScript = document.getElementById(TRADINGVIEW_SCRIPT_ID) as HTMLScriptElement | null;
+
+      const handleReady = () => {
+        if (window.TradingView?.widget) {
+          resolve(window.TradingView as TradingViewApi);
+          return;
+        }
+
+        reject(new Error('TradingView widget API did not initialize.'));
+      };
+
+      if (existingScript) {
+        existingScript.addEventListener('load', handleReady, { once: true });
+        existingScript.addEventListener('error', () => reject(new Error('Failed to load TradingView widget API.')), { once: true });
+
+        if ((existingScript as HTMLScriptElement).dataset.loaded === 'true') {
+          handleReady();
+        }
+
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.id = TRADINGVIEW_SCRIPT_ID;
+      script.src = 'https://s3.tradingview.com/tv.js';
+      script.async = true;
+      script.onload = () => {
+        script.dataset.loaded = 'true';
+        handleReady();
+      };
+      script.onerror = () => reject(new Error('Failed to load TradingView widget API.'));
+      document.head.appendChild(script);
+    });
+  }
+
+  return tradingViewScriptPromise;
+};
+
 interface TradingViewAdvancedChartProps {
   symbol: string;
   interval: string;
@@ -11,12 +89,13 @@ interface TradingViewAdvancedChartProps {
 
 declare global {
   interface Window {
-    TradingView?: unknown;
+    TradingView?: TradingViewApi;
   }
 }
 
 export function TradingViewAdvancedChart({ symbol, interval, className }: TradingViewAdvancedChartProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const widgetRef = useRef<TradingViewWidgetInstance | null>(null);
   const containerId = useId().replace(/:/g, '_');
 
   useEffect(() => {
@@ -24,41 +103,47 @@ export function TradingViewAdvancedChart({ symbol, interval, className }: Tradin
       return;
     }
 
-    containerRef.current.innerHTML = '';
+    let disposed = false;
 
-    const widgetContainer = document.createElement('div');
-    widgetContainer.className = 'tradingview-widget-container__widget absolute inset-0';
-    widgetContainer.id = containerId;
+    containerRef.current.innerHTML = `<div id="${containerId}" class="absolute inset-0" />`;
 
-    const copyright = document.createElement('div');
-    copyright.className = 'tradingview-widget-copyright hidden';
+    void loadTradingViewApi()
+      .then((tradingView) => {
+        if (disposed || !containerRef.current) {
+          return;
+        }
 
-    const script = document.createElement('script');
-    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
-    script.type = 'text/javascript';
-    script.async = true;
-    script.innerHTML = JSON.stringify({
-      autosize: true,
-      symbol,
-      interval,
-      timezone: 'Etc/UTC',
-      theme: 'dark',
-      style: '1',
-      locale: 'en',
-      allow_symbol_change: false,
-      hide_top_toolbar: false,
-      hide_legend: false,
-      save_image: false,
-      calendar: false,
-      support_host: 'https://www.tradingview.com',
-      container_id: containerId,
-    });
+        widgetRef.current?.remove?.();
+        widgetRef.current = new tradingView.widget({
+          autosize: true,
+          symbol,
+          interval,
+          timezone: 'Etc/UTC',
+          theme: 'dark',
+          style: '1',
+          locale: 'en',
+          allow_symbol_change: false,
+          hide_top_toolbar: false,
+          hide_legend: false,
+          save_image: false,
+          calendar: false,
+          support_host: 'https://www.tradingview.com',
+          container_id: containerId,
+        });
+      })
+      .catch(() => {
+        if (disposed || !containerRef.current) {
+          return;
+        }
 
-    containerRef.current.appendChild(widgetContainer);
-    containerRef.current.appendChild(copyright);
-    containerRef.current.appendChild(script);
+        containerRef.current.innerHTML = '<div class="flex h-full items-center justify-center bg-slate-950 text-sm text-slate-400">Unable to load TradingView chart.</div>';
+      });
 
     return () => {
+      disposed = true;
+      widgetRef.current?.remove?.();
+      widgetRef.current = null;
+
       if (containerRef.current) {
         containerRef.current.innerHTML = '';
       }
