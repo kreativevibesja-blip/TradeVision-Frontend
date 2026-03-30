@@ -413,6 +413,59 @@ const buildSecondaryTradeFromCounterTrend = (
   };
 };
 
+const buildSecondaryTradeFromLeftSidePlan = (
+  analysis: AnalysisResult,
+  primaryDirection: SignalDirection,
+): AutoTraderSecondaryTradeDraft | null => {
+  const leftSidePlan = analysis.leftSidePlan;
+  if (!leftSidePlan || leftSidePlan.bias === 'none' || leftSidePlan.action === 'avoid') {
+    return null;
+  }
+
+  const currentEntryZone = toPriceZone(analysis.entryPlan?.entryZone ?? analysis.entryZone ?? null);
+  const leftEntryZone = toPriceZone(leftSidePlan.entryZone ?? null);
+  if (leftSidePlan.bias === primaryDirection && zoneOverlap(currentEntryZone, leftEntryZone)) {
+    return null;
+  }
+
+  const entryPrice = midpoint(leftSidePlan.entryZone?.min, leftSidePlan.entryZone?.max);
+  const stopLoss = leftSidePlan.stopLoss;
+  const takeProfit = leftSidePlan.takeProfit1;
+  if (entryPrice == null || stopLoss == null || takeProfit == null) {
+    return null;
+  }
+
+  if ((leftSidePlan.bias === 'buy' && takeProfit <= entryPrice)
+    || (leftSidePlan.bias === 'sell' && takeProfit >= entryPrice)) {
+    return null;
+  }
+
+  const confirmations = [
+    'Left-side opportunity',
+    leftSidePlan.confirmation !== 'none' ? leftSidePlan.confirmation : null,
+  ].filter((value): value is string => Boolean(value));
+
+  return {
+    direction: leftSidePlan.bias,
+    entryPrice,
+    stopLoss,
+    takeProfit,
+    confidence: mapConfidenceScoreToGrade(leftSidePlan.confidence, analysis.setupQuality),
+    label: 'Left-Side Opportunity',
+    marketState: analysis.marketCondition === 'ranging' ? 'ranging' : 'reversal',
+    strategy: 'Potential Left-Side Setup',
+    confirmations,
+    explanation: [leftSidePlan.reason, leftSidePlan.warning].filter(Boolean).join(' '),
+    warning: leftSidePlan.warning,
+  };
+};
+
+const buildSecondaryTrade = (
+  analysis: AnalysisResult,
+  primaryDirection: SignalDirection,
+) => buildSecondaryTradeFromLeftSidePlan(analysis, primaryDirection)
+  ?? buildSecondaryTradeFromCounterTrend(analysis, primaryDirection);
+
 export const mapConfidenceScoreToGrade = (score: number, fallback?: AnalysisResult['setupQuality']): SignalConfidence => {
   if (!Number.isFinite(score)) {
     return fallback === 'low' ? 'avoid' : 'B';
@@ -498,7 +551,7 @@ export const buildAutoTraderSignalFromAnalysis = (analysis: AnalysisResult): Aut
     score: selected.score,
     confirmations,
     explanation,
-    secondaryTrade: buildSecondaryTradeFromCounterTrend(analysis, selected.direction),
+    secondaryTrade: buildSecondaryTrade(analysis, selected.direction),
     isOpportunistic: true,
   };
 };

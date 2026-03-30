@@ -105,6 +105,25 @@ export interface AnalysisResult {
     takeProfit3: number | null;
     confidence: number;
   } | null;
+  leftSidePlan?: {
+    action: 'enter' | 'wait' | 'avoid';
+    bias: 'buy' | 'sell' | 'none';
+    entryType: 'instant' | 'confirmation' | 'none';
+    entryZone: {
+      min: number | null;
+      max: number | null;
+    } | null;
+    confirmation: 'CHoCH' | 'BOS' | 'rejection' | 'none';
+    reason: string;
+    warning: string;
+    invalidationLevel: number | null;
+    invalidationReason: string;
+    stopLoss: number | null;
+    takeProfit1: number | null;
+    takeProfit2: number | null;
+    takeProfit3: number | null;
+    confidence: number;
+  } | null;
   entryLogic: {
     type: 'reversal' | 'continuation' | 'none';
     entryZone: {

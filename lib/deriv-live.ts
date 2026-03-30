@@ -55,6 +55,16 @@ export interface DerivAnalysisResult {
     reason: string;
     confidence: number;
   } | null;
+  leftSidePlan?: {
+    action: 'enter' | 'wait' | 'avoid';
+    bias: 'buy' | 'sell' | 'none';
+    entry: number | null;
+    stopLoss: number | null;
+    takeProfit: number | null;
+    warning: string;
+    reason: string;
+    confidence: number;
+  } | null;
 }
 
 export const DERIV_SYMBOLS: DerivSymbolOption[] = [
@@ -182,6 +192,20 @@ export const mapPersistedAnalysisToDerivResult = (
           warning: analysis.counterTrendPlan.warning,
           reason: analysis.counterTrendPlan.reason,
           confidence: analysis.counterTrendPlan.confidence,
+        }
+      : null,
+    leftSidePlan: analysis.leftSidePlan
+      ? {
+          action: analysis.leftSidePlan.action,
+          bias: analysis.leftSidePlan.bias,
+          entry: analysis.leftSidePlan.entryZone?.min != null && analysis.leftSidePlan.entryZone?.max != null
+            ? (analysis.leftSidePlan.entryZone.min + analysis.leftSidePlan.entryZone.max) / 2
+            : null,
+          stopLoss: analysis.leftSidePlan.stopLoss,
+          takeProfit: analysis.leftSidePlan.takeProfit1,
+          warning: analysis.leftSidePlan.warning,
+          reason: analysis.leftSidePlan.reason,
+          confidence: analysis.leftSidePlan.confidence,
         }
       : null,
   };
