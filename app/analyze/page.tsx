@@ -1391,6 +1391,82 @@ function AnalyzePageContent() {
                     </Card>
                   ) : null}
 
+                  {analysis.leftSidePlan?.bias && analysis.leftSidePlan.bias !== 'none' ? (
+                    <Card className="mobile-card border-amber-500/30 bg-amber-500/5">
+                      <CardContent className="p-6 space-y-4">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Target className="h-4 w-4 text-amber-300" />
+                          <span className="text-sm font-medium">Left-Side Potential Setup</span>
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-400/40 text-amber-200">
+                            FUTURE
+                          </Badge>
+                        </div>
+                        <p className="text-xs leading-relaxed text-amber-100/90">{analysis.leftSidePlan.warning}</p>
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <Zap className="h-3.5 w-3.5 text-amber-300" />
+                            <span className="text-xs font-medium text-amber-200">Bias / Action</span>
+                          </div>
+                          <p className="text-sm font-semibold pl-5 capitalize">
+                            {analysis.leftSidePlan.bias} · {analysis.leftSidePlan.action}
+                          </p>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <Target className="h-3.5 w-3.5 text-cyan-300" />
+                            <span className="text-xs font-medium text-cyan-200">Future Entry Zone</span>
+                          </div>
+                          <p className="text-sm pl-5 text-muted-foreground">{formatStructuredZone(analysis.leftSidePlan.entryZone, pair)}</p>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <Clock className="h-3.5 w-3.5 text-amber-300" />
+                            <span className="text-xs font-medium text-amber-200">Wait For</span>
+                          </div>
+                          <p className="text-sm pl-5 text-muted-foreground capitalize">
+                            {analysis.leftSidePlan.confirmation === 'none'
+                              ? 'Return into the older left-side zone and confirm'
+                              : analysis.leftSidePlan.confirmation}
+                          </p>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <Sparkles className="h-3.5 w-3.5 text-amber-300" />
+                            <span className="text-xs font-medium text-amber-200">Reason</span>
+                          </div>
+                          <p className="text-sm pl-5 text-muted-foreground">{analysis.leftSidePlan.reason}</p>
+                        </div>
+                        {analysis.leftSidePlan.stopLoss != null ? (
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <ShieldAlert className="h-3.5 w-3.5 text-red-300" />
+                              <span className="text-xs font-medium text-red-200">Stop Loss</span>
+                            </div>
+                            <p className="text-sm font-semibold pl-5">{formatPrice(analysis.leftSidePlan.stopLoss, pair)}</p>
+                          </div>
+                        ) : null}
+                        {analysis.leftSidePlan.takeProfit1 != null ? (
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-300" />
+                              <span className="text-xs font-medium text-emerald-200">Take Profit 1</span>
+                            </div>
+                            <p className="text-sm font-semibold pl-5">{formatPrice(analysis.leftSidePlan.takeProfit1, pair)}</p>
+                          </div>
+                        ) : null}
+                        {analysis.leftSidePlan.takeProfit2 != null ? (
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <CheckCircle2 className="h-3.5 w-3.5 text-teal-300" />
+                              <span className="text-xs font-medium text-teal-200">Take Profit 2</span>
+                            </div>
+                            <p className="text-sm font-semibold pl-5">{formatPrice(analysis.leftSidePlan.takeProfit2, pair)}</p>
+                          </div>
+                        ) : null}
+                      </CardContent>
+                    </Card>
+                  ) : null}
+
                   {!isPro ? (
                     <Card className="mobile-card border-purple-500/30 bg-purple-500/5">
                       <CardContent className="p-6">

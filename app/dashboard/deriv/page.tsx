@@ -516,6 +516,36 @@ export default function DerivDashboardPage() {
               </div>
             ) : null}
 
+            {analysis.leftSidePlan && analysis.leftSidePlan.bias !== 'none' ? (
+              <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
+                <div className="flex items-center gap-2">
+                  <Target className="h-4 w-4 text-amber-300" />
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-200/80">Left-side potential setup</p>
+                  <Badge variant="outline" className="border-amber-400/30 bg-amber-500/10 text-amber-100">Future</Badge>
+                </div>
+                <p className="mt-3 text-xs leading-5 text-amber-100/90">{analysis.leftSidePlan.warning}</p>
+                <div className="mt-4 grid grid-cols-1 gap-2">
+                  <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
+                    <p className="text-[11px] uppercase tracking-[0.14em] text-slate-500">Bias / Action</p>
+                    <p className="mt-2 text-sm font-semibold capitalize text-slate-100">{analysis.leftSidePlan.bias} · {analysis.leftSidePlan.action}</p>
+                  </div>
+                  <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
+                    <p className="text-[11px] uppercase tracking-[0.14em] text-slate-500">Entry</p>
+                    <p className="mt-2 text-sm font-semibold tabular-nums text-slate-100">{formatTradingPrice(analysis.leftSidePlan.entry)}</p>
+                  </div>
+                  <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3">
+                    <p className="text-[11px] uppercase tracking-[0.14em] text-red-200/70">Stop</p>
+                    <p className="mt-2 text-sm font-semibold tabular-nums text-red-100">{formatTradingPrice(analysis.leftSidePlan.stopLoss)}</p>
+                  </div>
+                  <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3">
+                    <p className="text-[11px] uppercase tracking-[0.14em] text-emerald-200/70">Target</p>
+                    <p className="mt-2 text-sm font-semibold tabular-nums text-emerald-100">{formatTradingPrice(analysis.leftSidePlan.takeProfit)}</p>
+                  </div>
+                </div>
+                <p className="mt-3 text-sm leading-6 text-slate-300">{analysis.leftSidePlan.reason}</p>
+              </div>
+            ) : null}
+
             <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Key levels</p>
               <div className="mt-3 space-y-2">
