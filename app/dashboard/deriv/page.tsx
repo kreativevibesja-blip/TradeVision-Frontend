@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { AlertTriangle, Crown, Info, Loader2, PanelRightOpen, RefreshCcw, Wifi, WifiOff, X, Zap } from 'lucide-react';
+import { AlertTriangle, Crown, Info, Loader2, PanelRightOpen, RefreshCcw, Target, Wifi, WifiOff, X, Zap } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
