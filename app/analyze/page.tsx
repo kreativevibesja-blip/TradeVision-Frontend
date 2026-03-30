@@ -329,6 +329,7 @@ function AnalyzePageContent() {
   const [progress, setProgress] = useState(0);
   const [currentStage, setCurrentStage] = useState(ANALYSIS_STEPS[0]);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
+  const [showOneTapCounterTrend, setShowOneTapCounterTrend] = useState(false);
   const [error, setError] = useState('');
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
@@ -463,6 +464,7 @@ function AnalyzePageContent() {
         }
 
         setAnalysis(result.analysis);
+        setShowOneTapCounterTrend(false);
         setPair(result.analysis.pair);
         setTimeframe(result.analysis.timeframe);
         setCurrentPrice(String(result.analysis.currentPrice ?? ''));
@@ -562,6 +564,7 @@ function AnalyzePageContent() {
         setProgress(100);
         setCurrentStage(ANALYSIS_STEPS[ANALYSIS_STEPS.length - 1]);
         setAnalysis(result.analysis);
+        setShowOneTapCounterTrend(mode === 'one-tap');
         setShowAiZones(Boolean(result.analysis.markedImageUrl));
 
         if (mode === 'one-tap') {
@@ -1315,7 +1318,7 @@ function AnalyzePageContent() {
                     </Card>
                   ) : null}
 
-                  {analysis.counterTrendPlan?.bias && analysis.counterTrendPlan.bias !== 'none' ? (
+                  {showOneTapCounterTrend && analysis.counterTrendPlan?.bias && analysis.counterTrendPlan.bias !== 'none' ? (
                     <Card className="mobile-card border-rose-500/30 bg-rose-500/5">
                       <CardContent className="p-6 space-y-4">
                         <div className="flex items-center gap-2 mb-1">

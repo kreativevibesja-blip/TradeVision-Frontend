@@ -114,6 +114,7 @@ export default function DerivDashboardPage() {
   const [candles, setCandles] = useState<DerivCandle[]>([]);
   const [analysis, setAnalysis] = useState<DerivAnalysisResult | null>(null);
   const [persistedAnalysis, setPersistedAnalysis] = useState<AnalysisResult | null>(null);
+  const [showOneTapCounterTrend, setShowOneTapCounterTrend] = useState(false);
   const [chartError, setChartError] = useState('');
   const [analysisError, setAnalysisError] = useState('');
   const [analyzing, setAnalyzing] = useState(false);
@@ -146,8 +147,10 @@ export default function DerivDashboardPage() {
     const cached = readCachedAnalysis();
     if (cached && cached.symbol === symbol && cached.timeframe === timeframe) {
       setAnalysis(cached.result);
+      setShowOneTapCounterTrend(false);
     } else {
       setAnalysis(null);
+      setShowOneTapCounterTrend(false);
     }
   }, [symbol, timeframe]);
 
@@ -264,6 +267,7 @@ export default function DerivDashboardPage() {
 
       window.localStorage.setItem(ANALYSIS_CACHE_KEY, JSON.stringify(nextCache));
       setAnalysis(mappedResult);
+      setShowOneTapCounterTrend(false);
     } catch (error: any) {
       setAnalysisError(error?.message || 'Unable to analyze this Deriv chart right now.');
     } finally {
@@ -387,6 +391,7 @@ export default function DerivDashboardPage() {
       window.localStorage.setItem(ANALYSIS_CACHE_KEY, JSON.stringify(nextCache));
       setAnalysis(mappedResult);
       setPersistedAnalysis(data.analysis);
+      setShowOneTapCounterTrend(true);
 
       const draft = buildAutoTraderSignalFromAnalysis(data.analysis);
 
@@ -486,7 +491,7 @@ export default function DerivDashboardPage() {
               <p className="mt-3 leading-6 text-slate-300">{analysis.reasoning}</p>
             </div>
 
-            {analysis.counterTrendPlan && analysis.counterTrendPlan.bias !== 'none' ? (
+            {showOneTapCounterTrend && analysis.counterTrendPlan && analysis.counterTrendPlan.bias !== 'none' ? (
               <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4">
                 <div className="flex items-center gap-2">
                   <AlertTriangle className="h-4 w-4 text-rose-300" />
