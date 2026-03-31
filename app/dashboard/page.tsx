@@ -265,10 +265,10 @@ export default function DashboardPage() {
                       <Link href="/checkout?plan=TOP_TIER">
                         <Button className="gap-2 bg-amber-600 text-white hover:bg-amber-500">
                           <Crown className="h-4 w-4" />
-                          Upgrade to One-Tap Pro+
+                          Upgrade to PRO+
                         </Button>
                       </Link>
-                      <p className="text-xs text-muted-foreground">One-Tap Trade is available only on the One-Tap Pro+ plan.</p>
+                      <p className="text-xs text-muted-foreground">One-Tap Trade is available only on the PRO+ plan.</p>
                     </>
                   )}
                 </div>

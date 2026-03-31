@@ -98,7 +98,7 @@ const planCatalog: Record<PlanKey, {
     features: ['300 analyses per month', 'Advanced Smart Money Concepts', 'Priority AI processing'],
   },
   TOP_TIER: {
-    name: 'One-Tap Pro+',
+    name: 'PRO+',
     price: 39.95,
     period: '/month',
     description: '300 analyses per month plus One-Tap Trade and instant execution setups.',
@@ -461,7 +461,7 @@ function CheckoutPageContent() {
     }
 
     if ((planKey === 'TOP_TIER' && user.subscription === 'TOP_TIER') || (planKey === 'PRO' && (user.subscription === 'PRO' || user.subscription === 'TOP_TIER'))) {
-      setError(planKey === 'TOP_TIER' ? 'You already have One-Tap Pro+' : 'You already have this plan or higher');
+      setError(planKey === 'TOP_TIER' ? 'You already have PRO+' : 'You already have this plan or higher');
       return;
     }
 
@@ -508,7 +508,7 @@ function CheckoutPageContent() {
     }
 
     if ((planKey === 'TOP_TIER' && user.subscription === 'TOP_TIER') || (planKey === 'PRO' && (user.subscription === 'PRO' || user.subscription === 'TOP_TIER'))) {
-      setError(planKey === 'TOP_TIER' ? 'You already have One-Tap Pro+' : 'You already have this plan or higher');
+      setError(planKey === 'TOP_TIER' ? 'You already have PRO+' : 'You already have this plan or higher');
       return;
     }
 

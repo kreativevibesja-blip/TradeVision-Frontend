@@ -408,8 +408,8 @@ function OneTapTradeContent() {
             <div className="mx-auto mb-5 inline-flex h-16 w-16 items-center justify-center rounded-3xl bg-fuchsia-500/10 text-fuchsia-300 shadow-[0_0_45px_rgba(217,70,239,0.18)]">
               <Zap className="h-7 w-7" />
             </div>
-            <Badge className="border-fuchsia-400/30 bg-fuchsia-400/10 text-fuchsia-100">One-Tap Pro+</Badge>
-            <h1 className="mt-4 text-3xl font-semibold text-white">One-Tap Trade is part of One-Tap Pro+</h1>
+            <Badge className="border-fuchsia-400/30 bg-fuchsia-400/10 text-fuchsia-100">PRO+</Badge>
+            <h1 className="mt-4 text-3xl font-semibold text-white">One-Tap Trade is part of PRO+</h1>
             <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
               Instant trade setups with advanced entry precision and clear manual execution levels. No clutter, no hesitation, no missed moves.
             </p>
@@ -417,7 +417,7 @@ function OneTapTradeContent() {
               <Link href="/checkout?plan=TOP_TIER">
                 <Button variant="gradient" size="xl" className="gap-2 rounded-2xl px-10 shadow-[0_0_35px_rgba(59,130,246,0.25)]">
                   <Crown className="h-5 w-5" />
-                  Upgrade to One-Tap Pro+
+                  Upgrade to PRO+
                 </Button>
               </Link>
             </div>

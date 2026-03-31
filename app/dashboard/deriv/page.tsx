@@ -305,7 +305,7 @@ export default function DerivDashboardPage() {
             </div>
             <h1 className="text-2xl font-semibold">Deriv live charts are available on paid plans</h1>
             <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground">
-              Upgrade to Pro or One-Tap Pro+ to open live Deriv synthetic charts, stream candles in real time, and overlay AI zones directly on the chart.
+              Upgrade to Pro or PRO+ to open live Deriv synthetic charts, stream candles in real time, and overlay AI zones directly on the chart.
             </p>
             <div className="mt-6 flex justify-center">
               <Link href="/pricing">

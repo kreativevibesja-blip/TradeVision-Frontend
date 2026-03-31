@@ -498,7 +498,7 @@ function AnalyzePageContent() {
     }
 
     if (mode === 'one-tap' && user.subscription !== 'TOP_TIER') {
-      setError('Analyze with One-Tap is available only on the One-Tap Pro+ plan.');
+      setError('Analyze with One-Tap is available only on the PRO+ plan.');
       return;
     }
 
@@ -880,7 +880,7 @@ function AnalyzePageContent() {
 
                   {!isTopTier && user ? (
                     <p className="text-xs text-center text-muted-foreground">
-                      Analyze with One-Tap is available only on the One-Tap Pro+ plan.
+                      Analyze with One-Tap is available only on the PRO+ plan.
                     </p>
                   ) : null}
 

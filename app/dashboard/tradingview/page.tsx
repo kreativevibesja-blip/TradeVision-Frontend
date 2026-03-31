@@ -264,7 +264,7 @@ export default function TradingViewDashboardPage() {
             </div>
             <h1 className="text-2xl font-semibold">Live TradingView analysis is available on paid plans</h1>
             <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground">
-              Upgrade to Pro or One-Tap Pro+ to open live TradingView charts in the dashboard, fetch real OHLC data, and analyze the selected symbol and timeframe instantly.
+              Upgrade to Pro or PRO+ to open live TradingView charts in the dashboard, fetch real OHLC data, and analyze the selected symbol and timeframe instantly.
             </p>
             <div className="mt-6 flex justify-center">
               <Link href="/pricing">

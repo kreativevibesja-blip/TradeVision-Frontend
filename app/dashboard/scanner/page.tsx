@@ -287,11 +287,11 @@ export default function ScannerPage() {
             <Radar className="mx-auto h-12 w-12 text-primary/60" />
             <h2 className="text-xl font-bold">Smart Session Scanner</h2>
             <p className="text-muted-foreground">
-              Upgrade to the One-Tap Pro+ plan to unlock the Smart Session Scanner that monitors
+              Upgrade to the PRO+ plan to unlock the Smart Session Scanner that monitors
               markets and alerts you to high-probability setups in real time.
             </p>
             <Button variant="gradient" onClick={() => (window.location.href = '/dashboard/billing')}>
-              Upgrade to One-Tap Pro+
+              Upgrade to PRO+
             </Button>
           </CardContent>
         </Card>

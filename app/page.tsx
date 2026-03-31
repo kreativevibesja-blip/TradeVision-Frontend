@@ -508,7 +508,7 @@ export default function HomePage() {
                 <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 to-orange-500" />
                 <CardContent className="p-8">
                   <div className="flex items-center gap-2 mb-2">
-                    <h3 className="text-xl font-semibold">One-Tap Pro+</h3>
+                    <h3 className="text-xl font-semibold">PRO+</h3>
                     <Badge variant="default">One-Tap Trade</Badge>
                   </div>
                   <div className="text-4xl font-bold mb-4">$39.95<span className="text-lg text-muted-foreground font-normal">/month</span></div>
@@ -528,7 +528,7 @@ export default function HomePage() {
                     ))}
                   </ul>
                   <Link href="/checkout?plan=TOP_TIER" className="block">
-                    <Button variant="gradient" size="lg" className="w-full">Upgrade to One-Tap Pro+</Button>
+                    <Button variant="gradient" size="lg" className="w-full">Upgrade to PRO+</Button>
                   </Link>
                 </CardContent>
               </Card>
