@@ -104,7 +104,7 @@ const planCatalog: Record<PlanKey, {
     description: '300 analyses per month plus One-Tap Trade and instant execution setups.',
     icon: Crown,
     color: 'from-fuchsia-500 via-violet-500 to-cyan-500',
-    features: ['300 analyses per month', 'Instant trade setups', 'One-tap execution', 'Priority signal generation', 'Advanced entry precision'],
+    features: ['300 analyses per month', 'Instant trade setups', 'One-tap execution', 'Priority signal generation', 'Advanced entry precision', 'Smart Session Scanner'],
   },
 };
 

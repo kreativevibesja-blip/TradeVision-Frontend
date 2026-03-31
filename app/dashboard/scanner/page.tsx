@@ -279,7 +279,7 @@ export default function ScannerPage() {
     );
   }
 
-  if (user.subscription === 'FREE') {
+  if (user.subscription !== 'TOP_TIER') {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <Card className="max-w-md w-full">
@@ -287,11 +287,11 @@ export default function ScannerPage() {
             <Radar className="mx-auto h-12 w-12 text-primary/60" />
             <h2 className="text-xl font-bold">Smart Session Scanner</h2>
             <p className="text-muted-foreground">
-              Upgrade to a paid plan to unlock the AI session scanner that monitors markets and
-              alerts you to high-probability setups.
+              Upgrade to the One-Tap Pro+ plan to unlock the Smart Session Scanner that monitors
+              markets and alerts you to high-probability setups in real time.
             </p>
             <Button variant="gradient" onClick={() => (window.location.href = '/dashboard/billing')}>
-              Upgrade Now
+              Upgrade to One-Tap Pro+
             </Button>
           </CardContent>
         </Card>

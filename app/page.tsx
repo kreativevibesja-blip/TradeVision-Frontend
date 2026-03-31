@@ -17,6 +17,7 @@ import {
   Eye,
   Target,
   TrendingUp,
+  Radar,
   Shield,
   ArrowRight,
   ChevronDown,
@@ -330,6 +331,7 @@ export default function HomePage() {
               { icon: BarChart3, title: 'Structure Detection', desc: 'Identifies BOS, CHOCH, and market structure shifts automatically.' },
               { icon: Target, title: 'Liquidity Analysis', desc: 'Detects liquidity pools, stop hunts, and sweep zones.' },
               { icon: TrendingUp, title: 'Auto Entry & TP', desc: 'Calculates optimal entry, stop loss, and multiple take profit levels.' },
+              { icon: Radar, title: 'Smart Session Scanner', desc: 'Monitors London & NY sessions in real time and alerts you to high-probability setups.' },
             ].map((feature, i) => (
               <FadeInSection key={feature.title} delay={i * 0.1}>
                 <Card className="group hover:border-primary/30 hover:glow-blue transition-all duration-300 h-full">

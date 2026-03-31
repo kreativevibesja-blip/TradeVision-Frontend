@@ -27,6 +27,7 @@ const oneTapProFeatures = [
   'Priority signal generation',
   'Advanced entry precision',
   'Faster response time',
+  'Smart Session Scanner',
 ];
 
 const fallbackPlanDetails: Record<'FREE' | 'PRO' | 'TOP_TIER', Omit<DisplayPlan, 'id' | 'name' | 'tier' | 'price' | 'features' | 'dailyLimit' | 'isActive' | 'createdAt' | 'updatedAt'>> = {
@@ -52,7 +53,7 @@ const fallbackPlanDetails: Record<'FREE' | 'PRO' | 'TOP_TIER', Omit<DisplayPlan,
   },
   TOP_TIER: {
     period: '/month',
-    description: 'Instant trade setups with One-Tap Trade, advanced entry precision, and faster response time.',
+    description: 'Instant trade setups with One-Tap Trade, Smart Session Scanner, advanced entry precision, and faster response time.',
     icon: Crown,
     color: 'from-fuchsia-500 via-violet-500 to-cyan-500',
     cta: 'Upgrade to One-Tap Pro+',
