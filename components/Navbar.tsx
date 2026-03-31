@@ -116,7 +116,7 @@ export function Navbar() {
                 Pricing
               </Link>
               <Link href="/trade-examples" className="flex min-h-12 items-center rounded-xl px-4 text-sm hover:bg-white/5" onClick={() => setMobileOpen(false)}>
-                Trade Examples
+                Education
               </Link>
               {user ? (
                 <>
