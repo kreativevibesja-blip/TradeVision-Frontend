@@ -20,7 +20,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const isLiveWorkspace = pathname === '/dashboard/tradingview' || pathname === '/dashboard/deriv';
 
   if (isLiveWorkspace) {
-    return <div className="h-[calc(100svh-9rem)] overflow-hidden md:h-[calc(100svh-4rem)]">{children}</div>;
+    return <div className="h-[calc(100svh-5rem)] overflow-hidden md:h-[calc(100svh-4rem)]">{children}</div>;
   }
 
   return (
@@ -29,21 +29,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="grid gap-6 lg:grid-cols-[max-content_1fr] lg:items-start">
           <aside className="lg:sticky lg:top-24 lg:self-start">
             <Card className="mobile-card overflow-hidden lg:w-fit">
-              <CardContent className="p-3">
-                <nav className="flex gap-1.5 overflow-x-auto sm:gap-2 lg:flex-col lg:items-start">
+              <CardContent className="p-2 sm:p-3">
+                <nav className="-mx-0.5 flex gap-1 overflow-x-auto scrollbar-none sm:gap-1.5 lg:flex-col lg:items-start">
                   {dashboardNav.map((item) => {
                     const isActive = pathname === item.href;
                     return (
                       <Link
                         key={item.href}
                         href={item.href}
-                        title={item.label}
-                        className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-2.5 py-2 text-sm whitespace-nowrap transition-colors sm:min-h-12 sm:px-4 sm:py-3 lg:min-h-0 lg:w-auto lg:justify-start lg:px-3.5 lg:py-2.5 ${
+                        className={`inline-flex shrink-0 items-center gap-1.5 rounded-xl px-2.5 py-2 text-xs whitespace-nowrap transition-colors sm:gap-2 sm:px-4 sm:py-3 sm:text-sm lg:min-h-0 lg:w-auto lg:px-3.5 lg:py-2.5 ${
                           isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-white/5 hover:text-foreground'
                         }`}
                       >
-                        <item.icon className="h-4 w-4 shrink-0" />
-                        <span className="hidden sm:inline">{item.label}</span>
+                        <item.icon className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
+                        {item.label}
                       </Link>
                     );
                   })}
