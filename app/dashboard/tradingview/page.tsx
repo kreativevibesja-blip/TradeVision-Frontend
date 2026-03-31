@@ -430,23 +430,23 @@ export default function TradingViewDashboardPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 overflow-x-auto pb-1">
-                    <Button variant="outline" onClick={() => setPanelOpen(true)} className="h-11 border-slate-700 bg-slate-900/70 px-3 text-slate-100 lg:hidden">
-                      <PanelRightOpen className="mr-2 h-4 w-4" />
+                  <div className="flex flex-wrap items-center gap-2 pb-1">
+                    <Button variant="outline" onClick={() => setPanelOpen(true)} className="h-10 border-slate-700 bg-slate-900/70 px-3 text-sm text-slate-100 sm:h-11 lg:hidden">
+                      <PanelRightOpen className="mr-1.5 h-4 w-4" />
                       Panel
                     </Button>
-                    <Button variant="outline" onClick={() => void startAnalysis(true)} disabled={analyzing} className="h-11 border-slate-700 bg-slate-900/70 px-4 text-slate-100 hover:bg-slate-800">
-                      <RefreshCcw className={`mr-2 h-4 w-4 ${analyzing ? 'animate-spin' : ''}`} />
+                    <Button variant="outline" onClick={() => void startAnalysis(true)} disabled={analyzing} className="h-10 border-slate-700 bg-slate-900/70 px-3 text-sm text-slate-100 hover:bg-slate-800 sm:h-11 sm:px-4">
+                      <RefreshCcw className={`mr-1.5 h-4 w-4 ${analyzing ? 'animate-spin' : ''}`} />
                       Re-analyze
                     </Button>
-                    <Button onClick={() => void startAnalysis(false)} disabled={analyzing} className="h-11 bg-blue-500 px-4 text-white hover:bg-blue-600">
-                      {analyzing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Zap className="mr-2 h-4 w-4" />}
+                    <Button onClick={() => void startAnalysis(false)} disabled={analyzing} className="h-10 bg-blue-500 px-3 text-sm text-white hover:bg-blue-600 sm:h-11 sm:px-4">
+                      {analyzing ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Zap className="mr-1.5 h-4 w-4" />}
                       {analyzing ? 'Analyzing...' : 'Analyze'}
                     </Button>
                     {user?.subscription === 'TOP_TIER' ? (
-                      <Button onClick={() => void handleSendToAutotrader()} disabled={sendingToAutotrader} className="h-11 bg-emerald-600 px-4 text-white hover:bg-emerald-500">
-                        {sendingToAutotrader ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Zap className="mr-2 h-4 w-4" />}
-                        Analyze with One-Tap
+                      <Button onClick={() => void handleSendToAutotrader()} disabled={sendingToAutotrader} className="h-10 bg-emerald-600 px-3 text-sm text-white hover:bg-emerald-500 sm:h-11 sm:px-4">
+                        {sendingToAutotrader ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Zap className="mr-1.5 h-4 w-4" />}
+                        One-Tap
                       </Button>
                     ) : null}
                   </div>
