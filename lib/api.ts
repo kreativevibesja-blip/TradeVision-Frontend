@@ -961,6 +961,59 @@ export const api = {
         token,
       }),
   },
+
+  // ── Scanner ──
+  scanner: {
+    getStatus: (token: string) =>
+      apiFetch<ScannerStatusResponse>('/scanner/status', { token }),
+
+    toggle: (sessionType: ScannerSessionType, enabled: boolean, token: string) =>
+      apiFetch<{ session: ScannerSession }>('/scanner/toggle', {
+        method: 'POST',
+        body: JSON.stringify({ sessionType, enabled }),
+        token,
+      }),
+
+    triggerScan: (token: string) =>
+      apiFetch<{ results: ScanResult[]; alerts: ScannerAlert[] }>('/scanner/scan', {
+        method: 'POST',
+        token,
+      }),
+
+    getResults: (token: string, sessionType?: ScannerSessionType, limit?: number) => {
+      const params = new URLSearchParams();
+      if (sessionType) params.set('sessionType', sessionType);
+      if (limit) params.set('limit', String(limit));
+      const query = params.toString();
+      return apiFetch<{ results: ScanResult[] }>(`/scanner/results${query ? `?${query}` : ''}`, { token });
+    },
+
+    getAlerts: (token: string, unreadOnly = false) =>
+      apiFetch<{ alerts: ScannerAlert[] }>(`/scanner/alerts${unreadOnly ? '?unreadOnly=true' : ''}`, { token }),
+
+    markAlertsRead: (alertIds: string[], token: string) =>
+      apiFetch<{ success: boolean }>('/scanner/alerts/read', {
+        method: 'POST',
+        body: JSON.stringify({ alertIds }),
+        token,
+      }),
+
+    getSummary: (sessionType: ScannerSessionType, token: string) =>
+      apiFetch<{ summary: ScannerSessionSummary }>(`/scanner/summary?sessionType=${sessionType}`, { token }),
+
+    checkProximity: (token: string) =>
+      apiFetch<{ alerts: ScannerAlert[] }>('/scanner/check-proximity', {
+        method: 'POST',
+        token,
+      }),
+
+    expireSession: (sessionType: ScannerSessionType, token: string) =>
+      apiFetch<{ success: boolean }>('/scanner/expire', {
+        method: 'POST',
+        body: JSON.stringify({ sessionType }),
+        token,
+      }),
+  },
 };
 
 // ── Referral Types ──
@@ -1171,4 +1224,63 @@ export interface RiskSettings {
   maxTradesPerDay: number;
   autoMode: AutoMode;
   killSwitch: boolean;
+}
+
+// ── Scanner Types ──
+
+export type ScannerSessionType = 'london' | 'newyork';
+export type ScanResultStatus = 'active' | 'triggered' | 'invalidated' | 'expired';
+export type ScannerAlertType = 'info' | 'trade' | 'warning';
+
+export interface ScannerSession {
+  id: string;
+  userId: string;
+  sessionType: ScannerSessionType;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ScanResult {
+  id: string;
+  userId: string;
+  symbol: string;
+  timeframe: string;
+  direction: SignalDirection;
+  entry: number;
+  stopLoss: number;
+  takeProfit: number;
+  confidenceScore: number;
+  strategy: string | null;
+  confirmations: string[];
+  sessionType: ScannerSessionType;
+  status: ScanResultStatus;
+  rank: number | null;
+  createdAt: string;
+}
+
+export interface ScannerAlert {
+  id: string;
+  userId: string;
+  scanResultId: string | null;
+  message: string;
+  type: ScannerAlertType;
+  read: boolean;
+  createdAt: string;
+}
+
+export interface ScannerStatusResponse {
+  sessions: ScannerSession[];
+  activeWindows: ScannerSessionType[];
+  londonActive: boolean;
+  newyorkActive: boolean;
+  symbols: string[];
+  timeframe: string;
+}
+
+export interface ScannerSessionSummary {
+  total: number;
+  triggered: number;
+  invalidated: number;
+  active: number;
 }
