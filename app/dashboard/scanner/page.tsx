@@ -37,6 +37,7 @@ import {
   Target,
   Eye,
   EyeOff,
+  Trophy,
 } from 'lucide-react';
 
 // ── Helpers ──
@@ -200,13 +201,9 @@ export default function ScannerPage() {
       if (scanning) return;
       setScanning(true);
       try {
-        const data = await api.scanner.triggerScan(token);
-        if (data.results.length > 0) {
-          setResults((prev) => [...data.results, ...prev].slice(0, 50));
-        }
-        // Also check proximity
+        await api.scanner.triggerScan(token);
         await api.scanner.checkProximity(token);
-        await loadSummary();
+        await Promise.all([loadResults(), loadAlerts(), loadSummary()]);
       } catch {
         // silent
       } finally {
@@ -225,7 +222,7 @@ export default function ScannerPage() {
         scanIntervalRef.current = null;
       }
     };
-  }, [token, anySessionEnabled, scanning, loadSummary]);
+  }, [token, anySessionEnabled, scanning, loadAlerts, loadResults, loadSummary]);
 
   // ── Toggle session ──
   const handleToggleSession = async (type: ScannerSessionType) => {
@@ -300,6 +297,8 @@ export default function ScannerPage() {
   }
 
   const topResult = results.find((r) => r.rank === 1 && r.status === 'active');
+  const liveResults = results.filter((r) => r.status !== 'closed');
+  const closedResults = results.filter((r) => r.status === 'closed');
 
   return (
     <div>
@@ -456,18 +455,18 @@ export default function ScannerPage() {
                 </p>
               </CardContent>
             </Card>
-          ) : results.length === 0 ? (
+          ) : liveResults.length === 0 ? (
             <Card>
               <CardContent className="p-8 text-center">
                 <Radar className="mx-auto mb-3 h-10 w-10 animate-pulse text-primary/40" />
                 <p className="text-muted-foreground">
-                  {scanning ? 'Scanning for setups...' : 'No setups found yet. The scanner will check again shortly.'}
+                  {scanning ? 'Scanning for setups...' : 'No live setups are active right now. The scanner will keep monitoring.'}
                 </p>
               </CardContent>
             </Card>
           ) : (
             <div className="space-y-3">
-              {results
+              {liveResults
                 .filter((r) => !topResult || r.id !== topResult.id)
                 .slice(0, 10)
                 .map((result) => (
@@ -485,6 +484,32 @@ export default function ScannerPage() {
           )}
         </div>
 
+        {/* ── Closed Trades ── */}
+        <div className="mb-6">
+          <h2 className="mb-3 text-lg font-semibold">Closed Trades</h2>
+          {closedResults.length === 0 ? (
+            <Card>
+              <CardContent className="p-6 text-center text-sm text-muted-foreground">
+                Closed trades will appear here after TP or SL is hit.
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {closedResults.slice(0, 10).map((result) => (
+                <Card key={result.id}>
+                  <CardContent className="p-4">
+                    <SetupCard
+                      result={result}
+                      expanded={expandedResult === result.id}
+                      onToggle={() => setExpandedResult(expandedResult === result.id ? null : result.id)}
+                    />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* ── Session Summary ── */}
         {summary && (
           <Card>
@@ -492,10 +517,11 @@ export default function ScannerPage() {
               <CardTitle className="text-lg">Session Summary</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
                 <SummaryItem label="Total Setups" value={summary.total} icon={BarChart3} color="text-blue-400" />
                 <SummaryItem label="Active" value={summary.active} icon={Target} color="text-green-400" />
                 <SummaryItem label="Triggered" value={summary.triggered} icon={CheckCircle2} color="text-emerald-400" />
+                <SummaryItem label="Closed" value={summary.closed} icon={Trophy} color="text-amber-400" />
                 <SummaryItem label="Invalidated" value={summary.invalidated} icon={XCircle} color="text-red-400" />
               </div>
             </CardContent>
@@ -523,6 +549,7 @@ function SetupCard({
   const statusBadge = {
     active: { label: 'Active', variant: 'success' as const },
     triggered: { label: 'Triggered', variant: 'default' as const },
+    closed: { label: result.closeReason === 'tp' ? 'Closed TP' : 'Closed SL', variant: 'secondary' as const },
     invalidated: { label: 'Invalidated', variant: 'destructive' as const },
     expired: { label: 'Expired', variant: 'outline' as const },
   }[result.status];
@@ -593,6 +620,13 @@ function SetupCard({
               <PriceRow label="Stop Loss" value={formatPrice(result.stopLoss)} color="text-red-400" />
               <PriceRow label="Take Profit" value={formatPrice(result.takeProfit)} color="text-green-400" />
             </div>
+
+            {(result.triggeredAt || result.closedAt) && (
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                {result.triggeredAt ? <PriceRow label="Triggered" value={formatTime(result.triggeredAt)} color="text-emerald-400" /> : null}
+                {result.closedAt ? <PriceRow label={result.closeReason === 'tp' ? 'Closed at TP' : 'Closed at SL'} value={formatTime(result.closedAt)} color={result.closeReason === 'tp' ? 'text-amber-400' : 'text-red-400'} /> : null}
+              </div>
+            )}
 
             {result.confirmations.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-1.5">
