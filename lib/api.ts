@@ -1229,7 +1229,7 @@ export interface RiskSettings {
 // ── Scanner Types ──
 
 export type ScannerSessionType = 'london' | 'newyork';
-export type ScanResultStatus = 'active' | 'triggered' | 'invalidated' | 'expired';
+export type ScanResultStatus = 'active' | 'triggered' | 'closed' | 'invalidated' | 'expired';
 export type ScannerAlertType = 'info' | 'trade' | 'warning';
 
 export interface ScannerSession {
@@ -1255,6 +1255,9 @@ export interface ScanResult {
   confirmations: string[];
   sessionType: ScannerSessionType;
   status: ScanResultStatus;
+  closeReason: 'tp' | 'sl' | null;
+  triggeredAt: string | null;
+  closedAt: string | null;
   rank: number | null;
   createdAt: string;
 }
@@ -1281,6 +1284,7 @@ export interface ScannerStatusResponse {
 export interface ScannerSessionSummary {
   total: number;
   triggered: number;
+  closed: number;
   invalidated: number;
   active: number;
 }
