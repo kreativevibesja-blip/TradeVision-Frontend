@@ -980,10 +980,11 @@ export const api = {
         token,
       }),
 
-    getResults: (token: string, sessionType?: ScannerSessionType, limit?: number) => {
+    getResults: (token: string, sessionType?: ScannerSessionType, limit?: number, scope?: 'all' | 'current' | 'history') => {
       const params = new URLSearchParams();
       if (sessionType) params.set('sessionType', sessionType);
       if (limit) params.set('limit', String(limit));
+      if (scope) params.set('scope', scope);
       const query = params.toString();
       return apiFetch<{ results: ScanResult[] }>(`/scanner/results${query ? `?${query}` : ''}`, { token });
     },
