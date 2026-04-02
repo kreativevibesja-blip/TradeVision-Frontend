@@ -90,6 +90,7 @@ export default function ScannerPage() {
   const [londonWindowActive, setLondonWindowActive] = useState(false);
   const [newyorkWindowActive, setNewyorkWindowActive] = useState(false);
   const [results, setResults] = useState<ScanResult[]>([]);
+  const [historyResults, setHistoryResults] = useState<ScanResult[]>([]);
   const [alerts, setAlerts] = useState<ScannerAlert[]>([]);
   const [summary, setSummary] = useState<ScannerSessionSummary | null>(null);
   const [scanning, setScanning] = useState(false);
@@ -97,6 +98,7 @@ export default function ScannerPage() {
   const [togglingSession, setTogglingSession] = useState<ScannerSessionType | null>(null);
   const [expandedResult, setExpandedResult] = useState<string | null>(null);
   const [showAlerts, setShowAlerts] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
 
   const scanIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -125,8 +127,18 @@ export default function ScannerPage() {
   const loadResults = useCallback(async () => {
     if (!token) return;
     try {
-      const data = await api.scanner.getResults(token, undefined, 20);
+      const data = await api.scanner.getResults(token, undefined, 20, 'current');
       setResults(data.results);
+    } catch {
+      // silent
+    }
+  }, [token]);
+
+  const loadHistoryResults = useCallback(async () => {
+    if (!token) return;
+    try {
+      const data = await api.scanner.getResults(token, undefined, 50, 'history');
+      setHistoryResults(data.results);
     } catch {
       // silent
     }
@@ -156,10 +168,10 @@ export default function ScannerPage() {
   // ── Initial load ──
   useEffect(() => {
     if (!token || authLoading) return;
-    Promise.all([loadStatus(), loadResults(), loadAlerts(), loadSummary()]).finally(() =>
+    Promise.all([loadStatus(), loadResults(), loadHistoryResults(), loadAlerts(), loadSummary()]).finally(() =>
       setInitialLoading(false),
     );
-  }, [token, authLoading, loadStatus, loadResults, loadAlerts, loadSummary]);
+  }, [token, authLoading, loadStatus, loadResults, loadHistoryResults, loadAlerts, loadSummary]);
 
   // ── Realtime alerts via Supabase ──
   useEffect(() => {
@@ -203,7 +215,7 @@ export default function ScannerPage() {
       try {
         await api.scanner.triggerScan(token);
         await api.scanner.checkProximity(token);
-        await Promise.all([loadResults(), loadAlerts(), loadSummary()]);
+        await Promise.all([loadResults(), loadHistoryResults(), loadAlerts(), loadSummary()]);
       } catch {
         // silent
       } finally {
@@ -222,7 +234,7 @@ export default function ScannerPage() {
         scanIntervalRef.current = null;
       }
     };
-  }, [token, anySessionEnabled, scanning, loadAlerts, loadResults, loadSummary]);
+  }, [token, anySessionEnabled, scanning, loadAlerts, loadResults, loadHistoryResults, loadSummary]);
 
   // ── Toggle session ──
   const handleToggleSession = async (type: ScannerSessionType) => {
@@ -510,6 +522,51 @@ export default function ScannerPage() {
           )}
         </div>
 
+        {/* ── History Panel ── */}
+        <div className="mb-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-lg">Signal History</CardTitle>
+              <Button variant="ghost" size="sm" onClick={() => setShowHistory((prev) => !prev)}>
+                {showHistory ? 'Hide history' : 'View history'}
+              </Button>
+            </CardHeader>
+            <AnimatePresence initial={false}>
+              {showHistory && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden"
+                >
+                  <CardContent className="pt-0">
+                    {historyResults.length === 0 ? (
+                      <div className="rounded-xl bg-white/5 p-6 text-center text-sm text-muted-foreground">
+                        Older signals will appear here after the trading day rolls over.
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {historyResults.slice(0, 20).map((result) => (
+                          <Card key={result.id}>
+                            <CardContent className="p-4">
+                              <SetupCard
+                                result={result}
+                                expanded={expandedResult === result.id}
+                                onToggle={() => setExpandedResult(expandedResult === result.id ? null : result.id)}
+                              />
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </Card>
+        </div>
+
         {/* ── Session Summary ── */}
         {summary && (
           <Card>
@@ -546,6 +603,13 @@ function SetupCard({
   isTop?: boolean;
 }) {
   const isBuy = result.direction === 'buy';
+  const outcomeBadge = result.status === 'closed'
+    ? result.closeReason === 'tp'
+      ? { label: 'Win', variant: 'success' as const }
+      : { label: 'Loss', variant: 'destructive' as const }
+    : result.status === 'invalidated'
+      ? { label: 'No Entry', variant: 'outline' as const }
+      : null;
   const statusBadge = {
     active: { label: 'Active', variant: 'success' as const },
     triggered: { label: 'Triggered', variant: 'default' as const },
@@ -573,6 +637,7 @@ function SetupCard({
             <span className="font-semibold">{result.symbol}</span>
             <Badge variant={isBuy ? 'success' : 'destructive'}>{result.direction.toUpperCase()}</Badge>
             <Badge variant={statusBadge.variant}>{statusBadge.label}</Badge>
+            {outcomeBadge ? <Badge variant={outcomeBadge.variant}>{outcomeBadge.label}</Badge> : null}
             {result.rank && result.rank <= 3 && (
               <span className="text-xs font-medium text-muted-foreground">#{result.rank}</span>
             )}
