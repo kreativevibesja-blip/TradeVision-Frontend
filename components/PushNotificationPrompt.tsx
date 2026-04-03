@@ -7,8 +7,8 @@ import {
   isPushSupported,
   getPushPermissionState,
   subscribeToPush,
-  unsubscribeFromPush,
   registerServiceWorker,
+  syncExistingPushSubscription,
 } from '@/lib/pushNotifications';
 
 interface Props {
@@ -37,10 +37,18 @@ export default function PushNotificationPrompt({ token }: Props) {
         const reg = await navigator.serviceWorker.ready;
         const sub = await reg.pushManager.getSubscription();
         setSubscribed(!!sub);
+
+        if (sub && permission === 'granted') {
+          try {
+            await syncExistingPushSubscription(token);
+          } catch (err) {
+            console.error('[Push] Existing subscription sync failed:', err);
+          }
+        }
       }
     };
     check();
-  }, []);
+  }, [token, permission]);
 
   if (!supported) return null;
   if (permission === 'denied') return null;
