@@ -45,11 +45,13 @@ import {
 const SESSION_LABELS: Record<ScannerSessionType, string> = {
   london: 'London',
   newyork: 'New York',
+  volatility: 'Volatility 24/7',
 };
 
 const SESSION_HOURS: Record<ScannerSessionType, string> = {
   london: '2:00 AM – 11:00 AM EST',
   newyork: '8:00 AM – 5:00 PM EST',
+  volatility: 'Runs 24/7 on Volatility 10-100 and 10s-100s',
 };
 
 function formatTime(iso: string) {
@@ -89,6 +91,7 @@ export default function ScannerPage() {
   const [sessions, setSessions] = useState<ScannerSession[]>([]);
   const [londonWindowActive, setLondonWindowActive] = useState(false);
   const [newyorkWindowActive, setNewyorkWindowActive] = useState(false);
+  const [volatilityWindowActive, setVolatilityWindowActive] = useState(true);
   const [results, setResults] = useState<ScanResult[]>([]);
   const [historyResults, setHistoryResults] = useState<ScanResult[]>([]);
   const [alerts, setAlerts] = useState<ScannerAlert[]>([]);
@@ -109,7 +112,7 @@ export default function ScannerPage() {
     [sessions],
   );
 
-  const anySessionEnabled = isSessionEnabled('london') || isSessionEnabled('newyork');
+  const anySessionEnabled = isSessionEnabled('london') || isSessionEnabled('newyork') || isSessionEnabled('volatility');
   const unreadAlertCount = alerts.filter((a) => !a.read).length;
 
   // ── Load initial data ──
@@ -120,6 +123,7 @@ export default function ScannerPage() {
       setSessions(status.sessions);
       setLondonWindowActive(status.londonActive);
       setNewyorkWindowActive(status.newyorkActive);
+      setVolatilityWindowActive(status.volatilityActive);
     } catch {
       // silent
     }
@@ -157,14 +161,13 @@ export default function ScannerPage() {
 
   const loadSummary = useCallback(async () => {
     if (!token) return;
-    const primarySession: ScannerSessionType = newyorkWindowActive ? 'newyork' : 'london';
     try {
-      const data = await api.scanner.getSummary(primarySession, token);
+      const data = await api.scanner.getSummary(token);
       setSummary(data.summary);
     } catch {
       // silent
     }
-  }, [token, newyorkWindowActive]);
+  }, [token]);
 
   // ── Initial load ──
   useEffect(() => {
@@ -329,7 +332,7 @@ export default function ScannerPage() {
               <div>
                 <h1 className="text-2xl font-bold sm:text-3xl">Smart Session Scanner</h1>
                 <p className="text-sm text-muted-foreground">
-                  The backend monitors the market continuously and alerts you when high-probability setups appear.
+                  London and New York scan your session markets, while volatility setups scan 24/7 in the backend.
                 </p>
               </div>
             </div>
@@ -362,10 +365,14 @@ export default function ScannerPage() {
         </div>
 
         {/* ── Session Toggles ── */}
-        <div className="mb-6 grid gap-4 sm:grid-cols-2">
-          {(['london', 'newyork'] as const).map((type) => {
+        <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {(['london', 'newyork', 'volatility'] as const).map((type) => {
             const enabled = isSessionEnabled(type);
-            const windowActive = type === 'london' ? londonWindowActive : newyorkWindowActive;
+            const windowActive = type === 'london'
+              ? londonWindowActive
+              : type === 'newyork'
+                ? newyorkWindowActive
+                : volatilityWindowActive;
             const toggling = togglingSession === type;
 
             return (
@@ -376,7 +383,7 @@ export default function ScannerPage() {
                       className={`h-3 w-3 rounded-full ${windowActive ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-zinc-600'}`}
                     />
                     <div>
-                      <p className="font-semibold">{SESSION_LABELS[type]} Session</p>
+                      <p className="font-semibold">{SESSION_LABELS[type]}</p>
                       <p className="text-xs text-muted-foreground">{SESSION_HOURS[type]}</p>
                     </div>
                   </div>
@@ -463,7 +470,7 @@ export default function ScannerPage() {
               <CardContent className="p-8 text-center">
                 <Radar className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
                 <p className="text-muted-foreground">
-                  Enable a session above to start scanning markets.
+                  Enable a scanner mode above to start scanning markets.
                 </p>
               </CardContent>
             </Card>
@@ -567,11 +574,11 @@ export default function ScannerPage() {
           </Card>
         </div>
 
-        {/* ── Session Summary ── */}
+        {/* ── Scanner Summary ── */}
         {summary && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Session Summary</CardTitle>
+              <CardTitle className="text-lg">Scanner Summary</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
@@ -705,7 +712,7 @@ function SetupCard({
 
             <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
               <span>Timeframe: {result.timeframe}</span>
-              <span>Session: {SESSION_LABELS[result.sessionType]}</span>
+              <span>Mode: {SESSION_LABELS[result.sessionType]}</span>
               <span>Confidence: {confidenceLabel(result.confidenceScore)}</span>
             </div>
           </motion.div>
