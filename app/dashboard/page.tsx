@@ -25,7 +25,6 @@ import {
   CandlestickChart,
   RadioTower,
 } from 'lucide-react';
-import PushNotificationPrompt from '@/components/PushNotificationPrompt';
 
 export default function DashboardPage() {
   const { user, token, loading: authLoading, refreshUser } = useAuth();
@@ -100,9 +99,6 @@ export default function DashboardPage() {
               </Button>
             </Link>
           </div>
-
-          {/* Push notification prompt */}
-          {isTopTier && token && <div className="mb-6"><PushNotificationPrompt token={token} /></div>}
 
           {/* Stats */}
           <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-4 md:gap-6">

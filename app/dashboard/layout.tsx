@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
+import PushNotificationPrompt from '@/components/PushNotificationPrompt';
+import { useAuth } from '@/hooks/useAuth';
 import { CandlestickChart, CreditCard, LayoutDashboard, RadioTower, Users, Bot, Radar } from 'lucide-react';
 
 const dashboardNav = [
@@ -17,7 +19,9 @@ const dashboardNav = [
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { user, token } = useAuth();
   const isLiveWorkspace = pathname === '/dashboard/tradingview' || pathname === '/dashboard/deriv';
+  const showPushPrompt = user?.subscription === 'TOP_TIER' && Boolean(token);
 
   if (isLiveWorkspace) {
     return <div className="h-[calc(100svh-5rem)] overflow-hidden md:h-[calc(100svh-4rem)]">{children}</div>;
@@ -50,7 +54,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </CardContent>
             </Card>
           </aside>
-          <div className="min-w-0">{children}</div>
+          <div className="min-w-0 space-y-6">
+            {showPushPrompt && token ? <PushNotificationPrompt token={token} /> : null}
+            {children}
+          </div>
         </div>
       </div>
     </div>
