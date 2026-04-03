@@ -63,7 +63,8 @@ function formatTime(iso: string) {
   });
 }
 
-function formatPrice(price: number) {
+function formatPrice(price: number | null | undefined) {
+  if (price == null || !Number.isFinite(price)) return '-';
   if (price >= 100) return price.toFixed(2);
   if (price >= 1) return price.toFixed(4);
   return price.toFixed(5);
@@ -770,10 +771,11 @@ function SetupCard({
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="mt-4 grid gap-3 sm:grid-cols-3 border-t border-white/5 pt-4">
+            <div className="mt-4 grid gap-3 border-t border-white/5 pt-4 sm:grid-cols-2 xl:grid-cols-4">
               <PriceRow label="Entry" value={formatPrice(result.entry)} color="text-foreground" />
               <PriceRow label="Stop Loss" value={formatPrice(result.stopLoss)} color="text-red-400" />
-              <PriceRow label="Take Profit" value={formatPrice(result.takeProfit)} color="text-green-400" />
+              <PriceRow label="TP1 (1:2)" value={formatPrice(result.takeProfit)} color="text-green-400" />
+              <PriceRow label="TP2 (1:3)" value={formatPrice(result.takeProfit2)} color="text-emerald-300" />
             </div>
 
             {(result.triggeredAt || result.closedAt) && (
@@ -828,11 +830,12 @@ function PotentialTradeCard({ trade }: { trade: ScannerPotentialTrade }) {
         </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
         <PriceRow label="Current Price" value={formatPrice(trade.currentPrice)} color="text-foreground" />
         <PriceRow label="Projected Entry" value={formatPrice(trade.entry)} color="text-foreground" />
         <PriceRow label="Projected Stop" value={formatPrice(trade.stopLoss)} color="text-red-400" />
-        <PriceRow label="Projected Target" value={formatPrice(trade.takeProfit)} color="text-green-400" />
+        <PriceRow label="Projected TP1 (1:2)" value={formatPrice(trade.takeProfit)} color="text-green-400" />
+        <PriceRow label="Projected TP2 (1:3)" value={formatPrice(trade.takeProfit2)} color="text-emerald-300" />
       </div>
 
       {trade.contextLabels.length > 0 && (
