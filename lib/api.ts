@@ -208,6 +208,20 @@ export interface LiveChartMarketData {
   currentPrice: number;
 }
 
+export interface DerivLiveChartMarketData {
+  symbol: string;
+  granularity: number;
+  candles: Array<{
+    time: number;
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+  }>;
+  currentPrice: number;
+  source: 'deriv-backend';
+}
+
 export interface AdminAnalysisLog {
   id: string;
   pair: string;
@@ -495,6 +509,12 @@ export const api = {
   getLiveChartMarketData: (symbol: string, timeframe: string, token: string) =>
     apiFetch<{ marketData: LiveChartMarketData }>(
       `/live-chart-market-data?symbol=${encodeURIComponent(symbol)}&timeframe=${encodeURIComponent(timeframe)}`,
+      { token }
+    ),
+
+  getDerivLiveChartMarketData: (symbol: string, granularity: number, token: string, limit = 500) =>
+    apiFetch<{ marketData: DerivLiveChartMarketData }>(
+      `/deriv-live-chart-market-data?symbol=${encodeURIComponent(symbol)}&granularity=${encodeURIComponent(String(granularity))}&limit=${encodeURIComponent(String(limit))}`,
       { token }
     ),
 
