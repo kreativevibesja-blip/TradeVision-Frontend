@@ -55,6 +55,14 @@ const SESSION_HOURS: Record<ScannerSessionType, string> = {
   volatility: 'Runs 24/7 on Volatility 10-100 and 10s-100s',
 };
 
+function getSessionStatusText(sessionType: ScannerSessionType, windowActive: boolean) {
+  if (sessionType === 'volatility') {
+    return SESSION_HOURS[sessionType];
+  }
+
+  return windowActive ? SESSION_HOURS[sessionType] : 'Market Closed';
+}
+
 function formatTime(iso: string) {
   return new Date(iso).toLocaleTimeString('en-US', {
     hour: '2-digit',
@@ -480,7 +488,7 @@ export default function ScannerPage() {
                     />
                     <div>
                       <p className="font-semibold">{SESSION_LABELS[type]}</p>
-                      <p className="text-xs text-muted-foreground">{SESSION_HOURS[type]}</p>
+                      <p className="text-xs text-muted-foreground">{getSessionStatusText(type, windowActive)}</p>
                     </div>
                   </div>
                   <button
