@@ -1019,8 +1019,8 @@ export const api = {
         token,
       }),
 
-    getSummary: (sessionType: ScannerSessionType, token: string) =>
-      apiFetch<{ summary: ScannerSessionSummary }>(`/scanner/summary?sessionType=${sessionType}`, { token }),
+    getSummary: (token: string, sessionType?: ScannerSessionType) =>
+      apiFetch<{ summary: ScannerSessionSummary }>(`/scanner/summary${sessionType ? `?sessionType=${sessionType}` : ''}`, { token }),
 
     checkProximity: (token: string) =>
       apiFetch<{ alerts: ScannerAlert[] }>('/scanner/check-proximity', {
@@ -1249,7 +1249,7 @@ export interface RiskSettings {
 
 // ── Scanner Types ──
 
-export type ScannerSessionType = 'london' | 'newyork';
+export type ScannerSessionType = 'london' | 'newyork' | 'volatility';
 export type ScanResultStatus = 'active' | 'triggered' | 'closed' | 'invalidated' | 'expired';
 export type ScannerAlertType = 'info' | 'trade' | 'warning';
 
@@ -1298,6 +1298,7 @@ export interface ScannerStatusResponse {
   activeWindows: ScannerSessionType[];
   londonActive: boolean;
   newyorkActive: boolean;
+  volatilityActive: boolean;
   symbols: string[];
   timeframe: string;
 }
