@@ -1274,6 +1274,7 @@ export interface ScanResult {
   entry: number;
   stopLoss: number;
   takeProfit: number;
+  takeProfit2: number | null;
   confidenceScore: number;
   strategy: string | null;
   confirmations: string[];
@@ -1322,6 +1323,7 @@ export interface ScannerPotentialTrade {
   entry: number;
   stopLoss: number;
   takeProfit: number;
+  takeProfit2: number;
   activationProbability: number;
   strategy: string;
   narrative: string;
