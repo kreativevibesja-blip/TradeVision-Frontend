@@ -1022,6 +1022,9 @@ export const api = {
     getSummary: (token: string, sessionType?: ScannerSessionType) =>
       apiFetch<{ summary: ScannerSessionSummary }>(`/scanner/summary${sessionType ? `?sessionType=${sessionType}` : ''}`, { token }),
 
+    getPotentials: (token: string, limit = 12) =>
+      apiFetch<{ potentials: ScannerPotentialTrade[] }>(`/scanner/potentials?limit=${encodeURIComponent(String(limit))}`, { token }),
+
     checkProximity: (token: string) =>
       apiFetch<{ alerts: ScannerAlert[] }>('/scanner/check-proximity', {
         method: 'POST',
@@ -1309,4 +1312,20 @@ export interface ScannerSessionSummary {
   closed: number;
   invalidated: number;
   active: number;
+}
+
+export interface ScannerPotentialTrade {
+  symbol: string;
+  sessionType: ScannerSessionType;
+  direction: SignalDirection;
+  currentPrice: number;
+  entry: number;
+  stopLoss: number;
+  takeProfit: number;
+  activationProbability: number;
+  strategy: string;
+  narrative: string;
+  fulfilledConditions: string[];
+  requiredTriggers: string[];
+  contextLabels: string[];
 }
