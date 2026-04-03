@@ -101,6 +101,7 @@ export default function ScannerPage() {
   const [showHistory, setShowHistory] = useState(false);
 
   const scanIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const refreshInFlightRef = useRef(false);
 
   // Check if user has a session enabled
   const isSessionEnabled = useCallback(
@@ -210,13 +211,15 @@ export default function ScannerPage() {
     }
 
     const refreshScannerData = async () => {
-      if (scanning) return;
+      if (refreshInFlightRef.current) return;
+      refreshInFlightRef.current = true;
       setScanning(true);
       try {
         await Promise.all([loadStatus(), loadResults(), loadHistoryResults(), loadAlerts(), loadSummary()]);
       } catch {
         // silent
       } finally {
+        refreshInFlightRef.current = false;
         setScanning(false);
       }
     };
@@ -231,7 +234,7 @@ export default function ScannerPage() {
         scanIntervalRef.current = null;
       }
     };
-  }, [token, scanning, loadAlerts, loadHistoryResults, loadResults, loadStatus, loadSummary]);
+  }, [token, loadAlerts, loadHistoryResults, loadResults, loadStatus, loadSummary]);
 
   // ── Toggle session ──
   const handleToggleSession = async (type: ScannerSessionType) => {
@@ -350,12 +353,12 @@ export default function ScannerPage() {
           </div>
 
           {/* Scanning indicator */}
-          {scanning && (
-            <div className="mt-4 flex items-center gap-2 text-sm text-primary">
-              <Loader2 className="h-4 w-4 animate-spin" />
+          <div className="mt-4 min-h-5">
+            <div className={`flex items-center gap-2 text-sm text-primary transition-opacity ${scanning ? 'opacity-100' : 'opacity-0'}`}>
+              <Loader2 className={`h-4 w-4 ${scanning ? 'animate-spin' : ''}`} />
               <span>Refreshing scanner data...</span>
             </div>
-          )}
+          </div>
         </div>
 
         {/* ── Session Toggles ── */}
