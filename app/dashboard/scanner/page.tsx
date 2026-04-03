@@ -82,6 +82,64 @@ function confidenceLabel(score: number) {
   return 'Low';
 }
 
+function formatTimeframeLabel(timeframe: string) {
+  return timeframe.toUpperCase();
+}
+
+function getEntryInstruction(result: ScanResult) {
+  const timeframeLabel = formatTimeframeLabel(result.timeframe);
+  const engulfingLabel = result.direction === 'buy' ? 'Bullish engulfing' : 'Bearish engulfing';
+  const hasDirectionalEngulfing = result.confirmations.includes(engulfingLabel);
+
+  if (result.status === 'triggered') {
+    return {
+      badgeLabel: 'Enter Now',
+      badgeVariant: 'default' as const,
+      message: `Entry is live now on the ${timeframeLabel} setup.`,
+    };
+  }
+
+  if (result.status === 'active') {
+    if (!hasDirectionalEngulfing) {
+      return {
+        badgeLabel: 'Await Candle Close',
+        badgeVariant: 'secondary' as const,
+        message: `Enter after the current ${timeframeLabel} candle closes with a ${engulfingLabel.toLowerCase()} confirmation.`,
+      };
+    }
+
+    return {
+      badgeLabel: 'Await Entry Trigger',
+      badgeVariant: 'secondary' as const,
+      message: `Stand by for the ${timeframeLabel} entry trigger to complete before executing.`,
+    };
+  }
+
+  if (result.status === 'closed') {
+    return {
+      badgeLabel: result.closeReason === 'tp' ? 'Closed TP' : 'Closed SL',
+      badgeVariant: 'secondary' as const,
+      message: result.closeReason === 'tp'
+        ? 'This setup has already completed at take profit.'
+        : 'This setup has already completed at stop loss.',
+    };
+  }
+
+  if (result.status === 'invalidated') {
+    return {
+      badgeLabel: 'Invalidated',
+      badgeVariant: 'destructive' as const,
+      message: 'The setup is no longer valid for entry.',
+    };
+  }
+
+  return {
+    badgeLabel: 'Expired',
+    badgeVariant: 'outline' as const,
+    message: 'This setup has expired and should not be traded.',
+  };
+}
+
 // ── Scan interval ──
 
 const SCAN_INTERVAL_MS = 45_000; // passive refresh only; backend scanner runs independently
@@ -706,13 +764,7 @@ function SetupCard({
     : result.status === 'invalidated'
       ? { label: 'No Entry', variant: 'outline' as const }
       : null;
-  const statusBadge = {
-    active: { label: 'Active', variant: 'success' as const },
-    triggered: { label: 'Triggered', variant: 'default' as const },
-    closed: { label: result.closeReason === 'tp' ? 'Closed TP' : 'Closed SL', variant: 'secondary' as const },
-    invalidated: { label: 'Invalidated', variant: 'destructive' as const },
-    expired: { label: 'Expired', variant: 'outline' as const },
-  }[result.status];
+  const entryInstruction = getEntryInstruction(result);
 
   return (
     <div>
@@ -732,7 +784,7 @@ function SetupCard({
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-semibold">{result.symbol}</span>
             <Badge variant={isBuy ? 'success' : 'destructive'}>{result.direction.toUpperCase()}</Badge>
-            <Badge variant={statusBadge.variant}>{statusBadge.label}</Badge>
+            <Badge variant={entryInstruction.badgeVariant}>{entryInstruction.badgeLabel}</Badge>
             {outcomeBadge ? <Badge variant={outcomeBadge.variant}>{outcomeBadge.label}</Badge> : null}
             {result.rank && result.rank <= 3 && (
               <span className="text-xs font-medium text-muted-foreground">#{result.rank}</span>
@@ -745,6 +797,7 @@ function SetupCard({
               {formatTime(result.createdAt)}
             </span>
           </div>
+          <p className="mt-2 text-sm text-muted-foreground">{entryInstruction.message}</p>
         </div>
 
         {/* Confidence */}
@@ -785,7 +838,7 @@ function SetupCard({
 
             {(result.triggeredAt || result.closedAt) && (
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                {result.triggeredAt ? <PriceRow label="Triggered" value={formatTime(result.triggeredAt)} color="text-emerald-400" /> : null}
+                {result.triggeredAt ? <PriceRow label="Entry Ready" value={formatTime(result.triggeredAt)} color="text-emerald-400" /> : null}
                 {result.closedAt ? <PriceRow label={result.closeReason === 'tp' ? 'Closed at TP' : 'Closed at SL'} value={formatTime(result.closedAt)} color={result.closeReason === 'tp' ? 'text-amber-400' : 'text-red-400'} /> : null}
               </div>
             )}
