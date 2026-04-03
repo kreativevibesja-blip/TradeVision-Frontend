@@ -103,6 +103,7 @@ export default function ScannerPage() {
   const [togglingSession, setTogglingSession] = useState<ScannerSessionType | null>(null);
   const [expandedResult, setExpandedResult] = useState<string | null>(null);
   const [showAlerts, setShowAlerts] = useState(false);
+  const [showPotentialTrades, setShowPotentialTrades] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
 
   const scanIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -517,34 +518,51 @@ export default function ScannerPage() {
 
         {/* ── Potential Trades ── */}
         <div className="mb-6">
-          <h2 className="mb-3 text-lg font-semibold">Potential Trades</h2>
-          {!anySessionEnabled ? (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <EyeOff className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
-                <p className="text-muted-foreground">Enable a scanner mode above to see the watchlist.</p>
-              </CardContent>
-            </Card>
-          ) : potentialTrades.length === 0 ? (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <Eye className="mx-auto mb-3 h-10 w-10 text-primary/40" />
-                <p className="text-muted-foreground">
-                  No strong potential trades are forming right now. The scanner is still watching for price to move into cleaner trigger locations.
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-3">
-              {potentialTrades.map((trade) => (
-                <Card key={`${trade.sessionType}-${trade.symbol}-${trade.direction}`}>
-                  <CardContent className="p-4">
-                    <PotentialTradeCard trade={trade} />
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-lg">Potential Trades</CardTitle>
+              <Button variant="ghost" size="sm" onClick={() => setShowPotentialTrades((prev) => !prev)}>
+                {showPotentialTrades ? 'Hide watchlist' : 'View watchlist'}
+              </Button>
+            </CardHeader>
+            <AnimatePresence initial={false}>
+              {showPotentialTrades && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden"
+                >
+                  <CardContent className="pt-0">
+                    {!anySessionEnabled ? (
+                      <div className="rounded-xl bg-white/5 p-8 text-center">
+                        <EyeOff className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
+                        <p className="text-muted-foreground">Enable a scanner mode above to see the watchlist.</p>
+                      </div>
+                    ) : potentialTrades.length === 0 ? (
+                      <div className="rounded-xl bg-white/5 p-8 text-center">
+                        <Eye className="mx-auto mb-3 h-10 w-10 text-primary/40" />
+                        <p className="text-muted-foreground">
+                          No strong potential trades are forming right now. The scanner is still watching for price to move into cleaner trigger locations.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {potentialTrades.map((trade) => (
+                          <Card key={`${trade.sessionType}-${trade.symbol}-${trade.direction}`}>
+                            <CardContent className="p-4">
+                              <PotentialTradeCard trade={trade} />
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </Card>
         </div>
 
         {/* ── Closed Trades ── */}
