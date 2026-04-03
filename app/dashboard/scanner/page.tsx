@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api';
 import type {
   ScanResult,
+  ScannerPotentialTrade,
   ScannerAlert,
   ScannerSession,
   ScannerSessionType,
@@ -93,6 +94,7 @@ export default function ScannerPage() {
   const [newyorkWindowActive, setNewyorkWindowActive] = useState(false);
   const [volatilityWindowActive, setVolatilityWindowActive] = useState(true);
   const [results, setResults] = useState<ScanResult[]>([]);
+  const [potentialTrades, setPotentialTrades] = useState<ScannerPotentialTrade[]>([]);
   const [historyResults, setHistoryResults] = useState<ScanResult[]>([]);
   const [alerts, setAlerts] = useState<ScannerAlert[]>([]);
   const [summary, setSummary] = useState<ScannerSessionSummary | null>(null);
@@ -149,6 +151,16 @@ export default function ScannerPage() {
     }
   }, [token]);
 
+  const loadPotentialTrades = useCallback(async () => {
+    if (!token) return;
+    try {
+      const data = await api.scanner.getPotentials(token, 10);
+      setPotentialTrades(data.potentials);
+    } catch {
+      // silent
+    }
+  }, [token]);
+
   const loadAlerts = useCallback(async () => {
     if (!token) return;
     try {
@@ -172,10 +184,10 @@ export default function ScannerPage() {
   // ── Initial load ──
   useEffect(() => {
     if (!token || authLoading) return;
-    Promise.all([loadStatus(), loadResults(), loadHistoryResults(), loadAlerts(), loadSummary()]).finally(() =>
+    Promise.all([loadStatus(), loadResults(), loadPotentialTrades(), loadHistoryResults(), loadAlerts(), loadSummary()]).finally(() =>
       setInitialLoading(false),
     );
-  }, [token, authLoading, loadStatus, loadResults, loadHistoryResults, loadAlerts, loadSummary]);
+  }, [token, authLoading, loadStatus, loadResults, loadPotentialTrades, loadHistoryResults, loadAlerts, loadSummary]);
 
   // ── Realtime alerts via Supabase ──
   useEffect(() => {
@@ -218,7 +230,7 @@ export default function ScannerPage() {
       refreshInFlightRef.current = true;
       setScanning(true);
       try {
-        await Promise.all([loadStatus(), loadResults(), loadHistoryResults(), loadAlerts(), loadSummary()]);
+        await Promise.all([loadStatus(), loadResults(), loadPotentialTrades(), loadHistoryResults(), loadAlerts(), loadSummary()]);
       } catch {
         // silent
       } finally {
@@ -237,7 +249,7 @@ export default function ScannerPage() {
         scanIntervalRef.current = null;
       }
     };
-  }, [token, loadAlerts, loadHistoryResults, loadResults, loadStatus, loadSummary]);
+  }, [token, loadAlerts, loadHistoryResults, loadPotentialTrades, loadResults, loadStatus, loadSummary]);
 
   // ── Toggle session ──
   const handleToggleSession = async (type: ScannerSessionType) => {
@@ -503,6 +515,38 @@ export default function ScannerPage() {
           )}
         </div>
 
+        {/* ── Potential Trades ── */}
+        <div className="mb-6">
+          <h2 className="mb-3 text-lg font-semibold">Potential Trades</h2>
+          {!anySessionEnabled ? (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <EyeOff className="mx-auto mb-3 h-10 w-10 text-muted-foreground/40" />
+                <p className="text-muted-foreground">Enable a scanner mode above to see the watchlist.</p>
+              </CardContent>
+            </Card>
+          ) : potentialTrades.length === 0 ? (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <Eye className="mx-auto mb-3 h-10 w-10 text-primary/40" />
+                <p className="text-muted-foreground">
+                  No strong potential trades are forming right now. The scanner is still watching for price to move into cleaner trigger locations.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {potentialTrades.map((trade) => (
+                <Card key={`${trade.sessionType}-${trade.symbol}-${trade.direction}`}>
+                  <CardContent className="p-4">
+                    <PotentialTradeCard trade={trade} />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* ── Closed Trades ── */}
         <div className="mb-6">
           <h2 className="mb-3 text-lg font-semibold">Closed Trades</h2>
@@ -718,6 +762,78 @@ function SetupCard({
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+function PotentialTradeCard({ trade }: { trade: ScannerPotentialTrade }) {
+  const isBuy = trade.direction === 'buy';
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-semibold">{trade.symbol}</span>
+            <Badge variant={isBuy ? 'success' : 'destructive'}>{trade.direction.toUpperCase()}</Badge>
+            <Badge variant="outline">{SESSION_LABELS[trade.sessionType]}</Badge>
+          </div>
+          <p className="mt-1 text-sm text-muted-foreground">{trade.strategy}</p>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{trade.narrative}</p>
+        </div>
+
+        <div className="min-w-[140px] rounded-xl bg-white/5 p-3 text-right">
+          <p className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground">Activation chance</p>
+          <p className="mt-1 text-2xl font-bold">{Math.round(trade.activationProbability)}%</p>
+          <Progress value={trade.activationProbability} className="mt-2 h-2" />
+        </div>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-4">
+        <PriceRow label="Current Price" value={formatPrice(trade.currentPrice)} color="text-foreground" />
+        <PriceRow label="Projected Entry" value={formatPrice(trade.entry)} color="text-foreground" />
+        <PriceRow label="Projected Stop" value={formatPrice(trade.stopLoss)} color="text-red-400" />
+        <PriceRow label="Projected Target" value={formatPrice(trade.takeProfit)} color="text-green-400" />
+      </div>
+
+      {trade.contextLabels.length > 0 && (
+        <div>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">Current market context</p>
+          <div className="flex flex-wrap gap-1.5">
+            {trade.contextLabels.map((label) => (
+              <Badge key={label} variant="secondary" className="text-xs">
+                {label}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-emerald-400">Already in place</p>
+          <div className="space-y-2">
+            {trade.fulfilledConditions.map((condition) => (
+              <div key={condition} className="flex items-start gap-2 rounded-lg bg-emerald-500/5 px-3 py-2 text-sm">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
+                <span>{condition}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-amber-400">Scanner is waiting for</p>
+          <div className="space-y-2">
+            {trade.requiredTriggers.slice(0, 5).map((condition) => (
+              <div key={condition} className="flex items-start gap-2 rounded-lg bg-amber-500/5 px-3 py-2 text-sm">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+                <span>{condition}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
