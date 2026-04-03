@@ -682,6 +682,7 @@ export default function DerivDashboardPage() {
               <LiveChart
                 symbol={symbol}
                 granularity={selectedTimeframe.granularity}
+                token={token}
                 overlay={chartOverlay}
                 onCandlesChange={setCandles}
                 onError={setChartError}
