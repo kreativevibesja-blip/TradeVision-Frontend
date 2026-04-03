@@ -85,6 +85,7 @@ function confidenceLabel(score: number) {
 // ── Scan interval ──
 
 const SCAN_INTERVAL_MS = 45_000; // passive refresh only; backend scanner runs independently
+const LIVE_FEED_MIN_CONFIDENCE = 75;
 
 export default function ScannerPage() {
   const { user, token, loading: authLoading } = useAuth();
@@ -347,7 +348,9 @@ export default function ScannerPage() {
   }
 
   const topResult = results.find((r) => r.rank === 1 && r.status === 'active');
-  const liveResults = results.filter((r) => r.status !== 'closed');
+  const liveResults = results.filter(
+    (r) => r.status === 'triggered' && r.confidenceScore >= LIVE_FEED_MIN_CONFIDENCE,
+  );
   const closedResults = results.filter((r) => r.status === 'closed');
 
   return (
@@ -514,7 +517,9 @@ export default function ScannerPage() {
               <CardContent className="p-8 text-center">
                 <Radar className="mx-auto mb-3 h-10 w-10 animate-pulse text-primary/40" />
                 <p className="text-muted-foreground">
-                  {scanning ? 'Scanning for setups...' : 'No live setups are active right now. The scanner will keep monitoring.'}
+                  {scanning
+                    ? 'Refreshing triggered setups...'
+                    : 'No triggered signals at 75% confidence or higher are active right now. The scanner will keep monitoring.'}
                 </p>
               </CardContent>
             </Card>
