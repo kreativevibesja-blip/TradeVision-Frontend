@@ -194,7 +194,7 @@ export default function ScannerPage() {
   useEffect(() => {
     if (!supabase || !user) return;
 
-    const channel = supabase
+    const alertsChannel = supabase
       .channel('scanner-alerts')
       .on(
         'postgres_changes',
@@ -211,10 +211,31 @@ export default function ScannerPage() {
       )
       .subscribe();
 
+    const resultsChannel = supabase
+      .channel('scanner-results')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'ScanResult',
+          filter: `userId=eq.${user.id}`,
+        },
+        () => {
+          if (!token) {
+            return;
+          }
+
+          void Promise.all([loadResults(), loadPotentialTrades(), loadHistoryResults(), loadSummary()]);
+        },
+      )
+      .subscribe();
+
     return () => {
-      void supabase?.removeChannel(channel);
+      void supabase?.removeChannel(alertsChannel);
+      void supabase?.removeChannel(resultsChannel);
     };
-  }, [user]);
+  }, [user, token, loadHistoryResults, loadPotentialTrades, loadResults, loadSummary]);
 
   // ── Passive refresh interval ──
   useEffect(() => {
