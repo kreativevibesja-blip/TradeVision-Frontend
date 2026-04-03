@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Activity, Loader2, Wifi, WifiOff } from 'lucide-react';
+import { api } from '@/lib/api';
 import { DERIV_ANALYSIS_CANDLE_COUNT, type DerivCandle, getDerivCacheKey } from '@/lib/deriv-live';
 import { AnnotatedCandlesChart } from '@/components/AnnotatedCandlesChart';
 import type { ChartOverlaySet } from '@/lib/live-chart-drawings';
@@ -10,6 +11,7 @@ import { cn } from '@/lib/utils';
 interface LiveChartProps {
   symbol: string;
   granularity: number;
+  token?: string | null;
   overlay: ChartOverlaySet | null;
   onCandlesChange?: (candles: DerivCandle[]) => void;
   onError?: (message: string) => void;
@@ -28,6 +30,8 @@ export interface LiveChartStatus {
 
 const CACHE_TTL_MS = 30_000;
 const MAX_CANDLES = DERIV_ANALYSIS_CANDLE_COUNT;
+const SNAPSHOT_LIMIT = Math.min(MAX_CANDLES, 1500);
+const POLL_INTERVAL_MS = 5000;
 
 const readCachedCandles = (symbol: string, granularity: number): DerivCandle[] | null => {
   if (typeof window === 'undefined') {
@@ -67,9 +71,26 @@ const storeCachedCandles = (symbol: string, granularity: number, candles: DerivC
   }
 };
 
+const mergeCandles = (existing: DerivCandle[], incoming: DerivCandle[]) => {
+  const byTime = new Map<number, DerivCandle>();
+
+  for (const candle of existing) {
+    byTime.set(candle.time, candle);
+  }
+
+  for (const candle of incoming) {
+    byTime.set(candle.time, candle);
+  }
+
+  return Array.from(byTime.values())
+    .sort((a, b) => a.time - b.time)
+    .slice(-MAX_CANDLES);
+};
+
 export function LiveChart({
   symbol,
   granularity,
+  token,
   overlay,
   onCandlesChange,
   onError,
@@ -78,7 +99,6 @@ export function LiveChart({
   height,
 }: LiveChartProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
-  const wsRef = useRef<WebSocket | null>(null);
   const candlesRef = useRef<DerivCandle[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [connectionState, setConnectionState] = useState<ConnectionState>('connecting');
@@ -111,132 +131,70 @@ export function LiveChart({
       onCandlesChange?.(cachedCandles.slice(-MAX_CANDLES));
       setLoadingHistory(false);
     } else {
+      candlesRef.current = [];
       setCandles([]);
+      setCandleCount(0);
       setLoadingHistory(true);
     }
 
     setConnectionState('connecting');
     onError?.('');
 
-    wsRef.current?.close();
-    const ws = new WebSocket('wss://ws.derivws.com/websockets/v3?app_id=102880');
-    wsRef.current = ws;
+    if (!token) {
+      setConnectionState('disconnected');
+      setLoadingHistory(false);
+      onError?.('Authentication is required for live chart data.');
+      return;
+    }
 
-    const requestHistory = () => {
-      ws.send(
-        JSON.stringify({
-          ticks_history: symbol,
-          style: 'candles',
-          granularity,
-          count: MAX_CANDLES,
-          end: 'latest',
-        })
-      );
+    let active = true;
+
+    const applyIncomingCandles = (incoming: DerivCandle[], replaceAll = false) => {
+      const nextCandles = replaceAll ? incoming.slice(-MAX_CANDLES) : mergeCandles(candlesRef.current, incoming);
+      candlesRef.current = nextCandles;
+      setCandles(nextCandles);
+      setCandleCount(nextCandles.length);
+      storeCachedCandles(symbol, granularity, nextCandles);
+      onCandlesChange?.(nextCandles.slice(-MAX_CANDLES));
     };
 
-    const subscribeTicks = () => {
-      ws.send(
-        JSON.stringify({
-          ticks: symbol,
-          subscribe: 1,
-        })
-      );
-    };
-
-    ws.onopen = () => {
-      setConnectionState('connected');
-      requestHistory();
-    };
-
-    ws.onmessage = (event) => {
+    const fetchSnapshot = async (limit: number, replaceAll = false) => {
       try {
-        const message = JSON.parse(event.data) as any;
-        if (message.error?.message) {
-          onError?.(message.error.message);
-          setConnectionState('disconnected');
+        const { marketData } = await api.getDerivLiveChartMarketData(symbol, granularity, token, limit);
+        if (!active) {
           return;
         }
 
-        if (message.msg_type === 'candles' && Array.isArray(message.candles)) {
-          const mapped = message.candles
-            .map((candle: any) => ({
-              time: Number(candle.epoch),
-              open: Number(candle.open),
-              high: Number(candle.high),
-              low: Number(candle.low),
-              close: Number(candle.close),
-            }))
-            .filter((candle: DerivCandle) => [candle.time, candle.open, candle.high, candle.low, candle.close].every(Number.isFinite));
+        const mapped = marketData.candles.filter((candle) =>
+          [candle.time, candle.open, candle.high, candle.low, candle.close].every(Number.isFinite)
+        );
 
-          candlesRef.current = mapped;
-          setCandles(mapped);
-          setCandleCount(mapped.length);
-          storeCachedCandles(symbol, granularity, mapped);
-          onCandlesChange?.(mapped.slice(-MAX_CANDLES));
-          setLoadingHistory(false);
-          subscribeTicks();
+        applyIncomingCandles(mapped, replaceAll);
+        setConnectionState('connected');
+        setLoadingHistory(false);
+        onError?.('');
+      } catch (error) {
+        if (!active) {
           return;
         }
 
-        if (message.msg_type === 'tick' && message.tick) {
-          const epoch = Number(message.tick.epoch);
-          const quote = Number(message.tick.quote);
-          if (!Number.isFinite(epoch) || !Number.isFinite(quote)) {
-            return;
-          }
-
-          const candleTime = Math.floor(epoch / granularity) * granularity;
-          const nextCandles = [...candlesRef.current];
-          const lastCandle = nextCandles[nextCandles.length - 1];
-
-          if (lastCandle && lastCandle.time === candleTime) {
-            const updated = {
-              ...lastCandle,
-              high: Math.max(lastCandle.high, quote),
-              low: Math.min(lastCandle.low, quote),
-              close: quote,
-            };
-            nextCandles[nextCandles.length - 1] = updated;
-          } else {
-            const open = lastCandle?.close ?? quote;
-            const created = {
-              time: candleTime,
-              open,
-              high: Math.max(open, quote),
-              low: Math.min(open, quote),
-              close: quote,
-            };
-            nextCandles.push(created);
-            if (nextCandles.length > MAX_CANDLES) {
-              nextCandles.splice(0, nextCandles.length - MAX_CANDLES);
-            }
-          }
-
-          candlesRef.current = nextCandles;
-          setCandles(nextCandles);
-          setCandleCount(nextCandles.length);
-          storeCachedCandles(symbol, granularity, nextCandles);
-          onCandlesChange?.(nextCandles.slice(-MAX_CANDLES));
-        }
-      } catch {
-        onError?.('Failed to parse Deriv data feed.');
+        setConnectionState('disconnected');
+        setLoadingHistory(false);
+        onError?.(error instanceof Error ? error.message : 'Failed to load Deriv live chart data.');
       }
     };
 
-    ws.onerror = () => {
-      setConnectionState('disconnected');
-      onError?.('Deriv live feed connection failed.');
-    };
+    void fetchSnapshot(SNAPSHOT_LIMIT, true);
 
-    ws.onclose = () => {
-      setConnectionState('disconnected');
-    };
+    const intervalId = window.setInterval(() => {
+      void fetchSnapshot(3, false);
+    }, POLL_INTERVAL_MS);
 
     return () => {
-      ws.close();
-      wsRef.current = null;
+      active = false;
+      window.clearInterval(intervalId);
     };
-  }, [symbol, granularity, onCandlesChange, onError]);
+  }, [symbol, granularity, token, onCandlesChange, onError]);
 
   const StatusIcon = statusMeta.icon;
 
