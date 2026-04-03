@@ -80,7 +80,7 @@ function confidenceLabel(score: number) {
 
 // ── Scan interval ──
 
-const SCAN_INTERVAL_MS = 45_000; // 45 seconds
+const SCAN_INTERVAL_MS = 45_000; // passive refresh only; backend scanner runs independently
 
 export default function ScannerPage() {
   const { user, token, loading: authLoading } = useAuth();
@@ -199,9 +199,9 @@ export default function ScannerPage() {
     };
   }, [user]);
 
-  // ── Auto-scan interval ──
+  // ── Passive refresh interval ──
   useEffect(() => {
-    if (!token || !anySessionEnabled) {
+    if (!token) {
       if (scanIntervalRef.current) {
         clearInterval(scanIntervalRef.current);
         scanIntervalRef.current = null;
@@ -209,13 +209,11 @@ export default function ScannerPage() {
       return;
     }
 
-    const runScan = async () => {
+    const refreshScannerData = async () => {
       if (scanning) return;
       setScanning(true);
       try {
-        await api.scanner.triggerScan(token);
-        await api.scanner.checkProximity(token);
-        await Promise.all([loadResults(), loadHistoryResults(), loadAlerts(), loadSummary()]);
+        await Promise.all([loadStatus(), loadResults(), loadHistoryResults(), loadAlerts(), loadSummary()]);
       } catch {
         // silent
       } finally {
@@ -223,10 +221,9 @@ export default function ScannerPage() {
       }
     };
 
-    // Run once immediately
-    void runScan();
+    void refreshScannerData();
 
-    scanIntervalRef.current = setInterval(runScan, SCAN_INTERVAL_MS);
+    scanIntervalRef.current = setInterval(refreshScannerData, SCAN_INTERVAL_MS);
 
     return () => {
       if (scanIntervalRef.current) {
@@ -234,7 +231,7 @@ export default function ScannerPage() {
         scanIntervalRef.current = null;
       }
     };
-  }, [token, anySessionEnabled, scanning, loadAlerts, loadResults, loadHistoryResults, loadSummary]);
+  }, [token, scanning, loadAlerts, loadHistoryResults, loadResults, loadStatus, loadSummary]);
 
   // ── Toggle session ──
   const handleToggleSession = async (type: ScannerSessionType) => {
@@ -329,7 +326,7 @@ export default function ScannerPage() {
               <div>
                 <h1 className="text-2xl font-bold sm:text-3xl">Smart Session Scanner</h1>
                 <p className="text-sm text-muted-foreground">
-                  AI monitors the market and alerts you when high-probability setups appear.
+                  The backend monitors the market continuously and alerts you when high-probability setups appear.
                 </p>
               </div>
             </div>
@@ -353,10 +350,10 @@ export default function ScannerPage() {
           </div>
 
           {/* Scanning indicator */}
-          {scanning && anySessionEnabled && (
+          {scanning && (
             <div className="mt-4 flex items-center gap-2 text-sm text-primary">
               <Loader2 className="h-4 w-4 animate-spin" />
-              <span>Scanning markets...</span>
+              <span>Refreshing scanner data...</span>
             </div>
           )}
         </div>
