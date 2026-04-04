@@ -692,8 +692,6 @@ export const api = {
   admin: {
     getDashboard: (token: string) =>
       apiFetch<AdminDashboardStats>('/admin/dashboard', { token }),
-    getTradeLog: (token: string) =>
-      apiFetch<AdminTradeLogOverview>('/admin/trade-log', { token }),
     getUsers: (
       token: string,
       options?: {
@@ -1101,19 +1099,6 @@ export const api = {
     getPotentials: (token: string, limit = 12) =>
       apiFetch<{ potentials: ScannerPotentialTrade[] }>(`/scanner/potentials?limit=${encodeURIComponent(String(limit))}`, { token }),
 
-    getTradeLog: (token: string) =>
-      apiFetch<ScannerTradeLogOverview>('/scanner/trade-log', { token }),
-
-    saveTradeAction: (
-      data: { tradeId: string; action: TradeDecisionAction; skipReason?: string },
-      token: string,
-    ) =>
-      apiFetch<{ trade: ScannerTradeDecision }>('/scanner/trade-log/action', {
-        method: 'POST',
-        body: JSON.stringify(data),
-        token,
-      }),
-
     checkProximity: (token: string) =>
       apiFetch<{ alerts: ScannerAlert[] }>('/scanner/check-proximity', {
         method: 'POST',
@@ -1344,8 +1329,6 @@ export interface RiskSettings {
 export type ScannerSessionType = 'london' | 'newyork' | 'volatility';
 export type ScanResultStatus = 'active' | 'triggered' | 'closed' | 'invalidated' | 'expired';
 export type ScannerAlertType = 'info' | 'trade' | 'warning';
-export type TradeDecisionAction = 'taken' | 'skipped';
-export type TradeOutcomeStatus = 'pending' | 'win' | 'loss';
 
 export interface ScannerSession {
   id: string;
@@ -1422,71 +1405,4 @@ export interface ScannerPotentialTrade {
   fulfilledConditions: string[];
   requiredTriggers: string[];
   contextLabels: string[];
-}
-
-export interface ScannerTradeDecision {
-  tradeId: string;
-  scanResultId: string;
-  symbol: string;
-  direction: SignalDirection;
-  entry: number;
-  stopLoss: number;
-  takeProfit: number;
-  strategy: string | null;
-  sessionType: ScannerSessionType | null;
-  timeframe: string | null;
-  tradeStatus: TradeOutcomeStatus;
-  scanResultStatus: ScanResultStatus;
-  action: TradeDecisionAction | null;
-  skipReason: string | null;
-  createdAt: string;
-}
-
-export interface ScannerTradeLogStats {
-  totalSignals: number;
-  totalTaken: number;
-  totalSkipped: number;
-  unansweredSignals: number;
-  resolvedTaken: number;
-  takenWins: number;
-  takenLosses: number;
-  winRate: number;
-  missedWins: number;
-  missedLosses: number;
-  allSignalsR: number;
-  followedSignalsR: number;
-}
-
-export interface ScannerTradeLogOverview {
-  activeTrades: ScannerTradeDecision[];
-  stats: ScannerTradeLogStats;
-  insights: string[];
-  generatedAt: string;
-}
-
-export interface AdminTradeLogOverview {
-  summary: {
-    totalTradesGenerated: number;
-    pendingTrades: number;
-    resolvedTrades: number;
-    takenCount: number;
-    skippedCount: number;
-    takenRate: number;
-    skippedRate: number;
-  };
-  skipReasons: Array<{
-    reason: string;
-    count: number;
-  }>;
-  bestSignals: Array<{
-    symbol: string;
-    direction: SignalDirection;
-    strategy: string | null;
-    total: number;
-    wins: number;
-    losses: number;
-    winRate: number;
-    netR: number;
-  }>;
-  generatedAt: string;
 }
