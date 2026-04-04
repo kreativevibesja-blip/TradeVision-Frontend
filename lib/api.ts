@@ -470,6 +470,80 @@ async function apiFetch<T>(endpoint: string, options: FetchOptions = {}): Promis
   return response.json();
 }
 
+export interface ScannerPanelsStreamPayload {
+  results: ScanResult[];
+  potentials: ScannerPotentialTrade[];
+  generatedAt: string;
+}
+
+export async function openScannerPanelsStream(
+  token: string,
+  handlers: {
+    onPanels: (payload: ScannerPanelsStreamPayload) => void;
+    onError?: (error: Error) => void;
+    signal?: AbortSignal;
+  },
+) {
+  const resolvedToken = await resolveAuthToken(token);
+  const response = await fetch(`${API_URL}/scanner/stream`, {
+    method: 'GET',
+    headers: resolvedToken ? { Authorization: `Bearer ${resolvedToken}` } : {},
+    signal: handlers.signal,
+  });
+
+  if (!response.ok || !response.body) {
+    throw new Error(`Scanner stream failed (${response.status})`);
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  const processBlock = (block: string) => {
+    const eventLine = block.split('\n').find((line) => line.startsWith('event:'));
+    const dataLines = block
+      .split('\n')
+      .filter((line) => line.startsWith('data:'))
+      .map((line) => line.slice(5).trim());
+
+    if (!eventLine || dataLines.length === 0) {
+      return;
+    }
+
+    const eventName = eventLine.slice(6).trim();
+    const rawData = dataLines.join('\n');
+
+    if (eventName === 'scanner-panels') {
+      handlers.onPanels(JSON.parse(rawData) as ScannerPanelsStreamPayload);
+      return;
+    }
+
+    if (eventName === 'scanner-error' && handlers.onError) {
+      try {
+        const payload = JSON.parse(rawData) as { message?: string };
+        handlers.onError(new Error(payload.message || 'Scanner stream update failed'));
+      } catch {
+        handlers.onError(new Error('Scanner stream update failed'));
+      }
+    }
+  };
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) {
+      break;
+    }
+
+    buffer += decoder.decode(value, { stream: true });
+    const blocks = buffer.split('\n\n');
+    buffer = blocks.pop() ?? '';
+
+    for (const block of blocks) {
+      processBlock(block);
+    }
+  }
+}
+
 export const api = {
   heartbeatVisitor: (data: { sessionId: string; currentPath?: string }) =>
     apiFetch<{ success: boolean }>('/visitors/heartbeat', {
