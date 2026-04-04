@@ -641,7 +641,7 @@ export default function ScannerPage() {
                         </p>
                       </div>
                     ) : (
-                      <div className="space-y-3">
+                      <div className="max-h-[32rem] space-y-3 overflow-y-auto pr-2">
                         {potentialTrades.map((trade) => (
                           <Card key={`${trade.sessionType}-${trade.symbol}-${trade.direction}`}>
                             <CardContent className="p-4">
@@ -708,7 +708,7 @@ export default function ScannerPage() {
                         Older signals will appear here after the trading day rolls over.
                       </div>
                     ) : (
-                      <div className="space-y-3">
+                      <div className="max-h-[32rem] space-y-3 overflow-y-auto pr-2">
                         {historyResults.slice(0, 20).map((result) => (
                           <Card key={result.id}>
                             <CardContent className="p-4">
