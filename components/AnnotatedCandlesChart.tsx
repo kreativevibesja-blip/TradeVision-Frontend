@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { CandlestickSeries, ColorType, LineStyle, createChart } from 'lightweight-charts';
+import { CandlestickSeries, ColorType, LineSeries, LineStyle, createChart } from 'lightweight-charts';
+import { calculateEmaSeries } from '@/lib/ema';
 import { cn } from '@/lib/utils';
 import type { ChartCandle, ChartOverlaySet } from '@/lib/live-chart-drawings';
 
@@ -29,6 +30,8 @@ interface OverlayRect {
 const CHART_BG = '#020617';
 const GRID = '#1e293b';
 const TEXT = '#e2e8f0';
+const EMA_50_COLOR = '#38bdf8';
+const EMA_200_COLOR = '#f59e0b';
 
 export function AnnotatedCandlesChart({
   candles,
@@ -42,6 +45,8 @@ export function AnnotatedCandlesChart({
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<any>(null);
   const candleSeriesRef = useRef<any>(null);
+  const ema50SeriesRef = useRef<any>(null);
+  const ema200SeriesRef = useRef<any>(null);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const overlayFrameRef = useRef<number | null>(null);
   const priceLinesRef = useRef<any[]>([]);
@@ -107,8 +112,26 @@ export function AnnotatedCandlesChart({
       wickDownColor: '#ef4444',
     });
 
+    const ema50Series = chart.addSeries(LineSeries, {
+      color: EMA_50_COLOR,
+      lineWidth: 2,
+      crosshairMarkerVisible: false,
+      lastValueVisible: true,
+      priceLineVisible: false,
+    });
+
+    const ema200Series = chart.addSeries(LineSeries, {
+      color: EMA_200_COLOR,
+      lineWidth: 2,
+      crosshairMarkerVisible: false,
+      lastValueVisible: true,
+      priceLineVisible: false,
+    });
+
     chartRef.current = chart;
     candleSeriesRef.current = candleSeries;
+    ema50SeriesRef.current = ema50Series;
+    ema200SeriesRef.current = ema200Series;
 
     const resize = () => {
       if (!chartContainerRef.current || !chartRef.current) {
@@ -134,6 +157,8 @@ export function AnnotatedCandlesChart({
       chart.remove();
       chartRef.current = null;
       candleSeriesRef.current = null;
+      ema50SeriesRef.current = null;
+      ema200SeriesRef.current = null;
     };
   }, [height]);
 
@@ -196,11 +221,15 @@ export function AnnotatedCandlesChart({
   useEffect(() => {
     const chart = chartRef.current;
     const candleSeries = candleSeriesRef.current;
-    if (!chart || !candleSeries) {
+    const ema50Series = ema50SeriesRef.current;
+    const ema200Series = ema200SeriesRef.current;
+    if (!chart || !candleSeries || !ema50Series || !ema200Series) {
       return;
     }
 
     candleSeries.setData(candles);
+    ema50Series.setData(calculateEmaSeries(candles, 50));
+    ema200Series.setData(calculateEmaSeries(candles, 200));
 
     if (candles.length > 0 && !hasFittedRef.current) {
       chart.timeScale().fitContent();
@@ -241,6 +270,12 @@ export function AnnotatedCandlesChart({
     queueOverlayCalculation();
   }, [overlay]);
 
+  const legendItems = [
+    ...(overlay?.legendItems ?? []),
+    { key: 'ema-50', label: 'EMA 50', color: EMA_50_COLOR },
+    { key: 'ema-200', label: 'EMA 200', color: EMA_200_COLOR },
+  ];
+
   return (
     <div className={cn('relative h-full w-full min-h-0 overflow-hidden rounded-[1rem] bg-slate-950', className)}>
       <div ref={chartContainerRef} className="h-full w-full" />
@@ -266,9 +301,9 @@ export function AnnotatedCandlesChart({
         ))}
       </div>
 
-      {overlay?.legendItems?.length ? (
+      {legendItems.length ? (
         <div className="pointer-events-none absolute right-4 top-4 z-10 flex max-w-[18rem] flex-wrap justify-end gap-2">
-          {overlay.legendItems.map((item) => (
+          {legendItems.map((item) => (
             <span key={item.key} className="rounded-full border border-white/10 bg-slate-900/85 px-2.5 py-1 text-[10px] font-medium text-slate-100 backdrop-blur" style={{ boxShadow: `inset 0 0 0 1px ${item.color}` }}>
               {item.label}
             </span>
