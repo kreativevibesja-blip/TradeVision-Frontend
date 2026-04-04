@@ -1359,6 +1359,7 @@ export interface ScanResult {
   closedAt: string | null;
   rank: number | null;
   createdAt: string;
+  currentPrice?: number | null;
 }
 
 export interface ScannerAlert {
