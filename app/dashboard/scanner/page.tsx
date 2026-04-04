@@ -1239,26 +1239,6 @@ function SetupCard({
               <PriceRow label="TP2 (1:3)" value={formatPrice(result.takeProfit2)} color="text-emerald-300" />
             </div>
 
-            {livePulse && (result.status === 'triggered' || result.status === 'active') ? (
-              <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                <PriceRow
-                  label="Live Move"
-                  value={`${livePulse.signedMove >= 0 ? '+' : ''}${formatPrice(Math.abs(livePulse.signedMove))}`}
-                  color={livePulse.state === 'profit' ? 'text-emerald-300' : livePulse.state === 'drawdown' ? 'text-rose-300' : 'text-cyan-300'}
-                />
-                <PriceRow
-                  label="Return In R"
-                  value={`${livePulse.moveInR >= 0 ? '+' : ''}${livePulse.moveInR.toFixed(2)}R`}
-                  color={livePulse.state === 'profit' ? 'text-emerald-300' : livePulse.state === 'drawdown' ? 'text-rose-300' : 'text-cyan-300'}
-                />
-                <PriceRow
-                  label="Entry Drift"
-                  value={`${livePulse.percentFromEntry >= 0 ? '+' : ''}${livePulse.percentFromEntry.toFixed(2)}%`}
-                  color={livePulse.state === 'profit' ? 'text-emerald-300' : livePulse.state === 'drawdown' ? 'text-rose-300' : 'text-cyan-300'}
-                />
-              </div>
-            ) : null}
-
             {(result.triggeredAt || result.closedAt) && (
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 {result.triggeredAt ? <PriceRow label="Entry Ready" value={formatTime(result.triggeredAt)} color="text-emerald-400" /> : null}
