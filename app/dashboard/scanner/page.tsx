@@ -15,8 +15,6 @@ import type {
   ScannerSession,
   ScannerSessionType,
   ScannerSessionSummary,
-  ScannerTradeDecision,
-  ScannerTradeLogOverview,
 } from '@/lib/api';
 import { supabase } from '@/lib/supabase';
 import {
@@ -58,14 +56,6 @@ const SESSION_HOURS: Record<ScannerSessionType, string> = {
   volatility: 'Runs 24/7 on Volatility 10-100 and 10s-100s',
 };
 
-const SKIP_REASON_OPTIONS = [
-  'Missed it',
-  'Didn’t trust setup',
-  'Risk too high',
-  'Already in trade',
-  'Other',
-] as const;
-
 function getSessionStatusText(sessionType: ScannerSessionType, windowActive: boolean) {
   if (sessionType === 'volatility') {
     return SESSION_HOURS[sessionType];
@@ -87,10 +77,6 @@ function formatPrice(price: number | null | undefined) {
   if (price >= 100) return price.toFixed(2);
   if (price >= 1) return price.toFixed(4);
   return price.toFixed(5);
-}
-
-function formatRValue(value: number) {
-  return `${value >= 0 ? '+' : ''}${value.toFixed(2)}R`;
 }
 
 function getLiveTradePulse(result: ScanResult) {
@@ -243,7 +229,6 @@ export default function ScannerPage() {
   const [historyResults, setHistoryResults] = useState<ScanResult[]>([]);
   const [alerts, setAlerts] = useState<ScannerAlert[]>([]);
   const [summary, setSummary] = useState<ScannerSessionSummary | null>(null);
-  const [tradeLog, setTradeLog] = useState<ScannerTradeLogOverview | null>(null);
   const [scanning, setScanning] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [togglingSession, setTogglingSession] = useState<ScannerSessionType | null>(null);
@@ -251,10 +236,6 @@ export default function ScannerPage() {
   const [showAlerts, setShowAlerts] = useState(false);
   const [showPotentialTrades, setShowPotentialTrades] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const [showTradeInsights, setShowTradeInsights] = useState(false);
-  const [savingTradeId, setSavingTradeId] = useState<string | null>(null);
-  const [expandedSkipTradeId, setExpandedSkipTradeId] = useState<string | null>(null);
-  const [customSkipReasons, setCustomSkipReasons] = useState<Record<string, string>>({});
 
   const backgroundIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const backgroundRefreshInFlightRef = useRef(false);
@@ -332,16 +313,6 @@ export default function ScannerPage() {
     }
   }, [token]);
 
-  const loadTradeLog = useCallback(async () => {
-    if (!token) return;
-    try {
-      const data = await api.scanner.getTradeLog(token);
-      setTradeLog(data);
-    } catch {
-      // silent
-    }
-  }, [token]);
-
   // ── Initial load ──
   useEffect(() => {
     if (!token || authLoading) return;
@@ -355,7 +326,7 @@ export default function ScannerPage() {
         setInitialLoading(false);
       }
 
-      void Promise.allSettled([loadPotentialTrades(), loadHistoryResults(), loadAlerts(), loadTradeLog()]);
+      void Promise.allSettled([loadPotentialTrades(), loadHistoryResults(), loadAlerts()]);
     };
 
     void bootstrap();
@@ -363,7 +334,7 @@ export default function ScannerPage() {
     return () => {
       active = false;
     };
-  }, [token, authLoading, loadStatus, loadResults, loadPotentialTrades, loadHistoryResults, loadAlerts, loadSummary, loadTradeLog]);
+  }, [token, authLoading, loadStatus, loadResults, loadPotentialTrades, loadHistoryResults, loadAlerts, loadSummary]);
 
   // ── Realtime alerts via Supabase ──
   useEffect(() => {
@@ -401,7 +372,7 @@ export default function ScannerPage() {
             return;
           }
 
-          void Promise.all([loadHistoryResults(), loadSummary(), loadTradeLog()]);
+          void Promise.all([loadHistoryResults(), loadSummary()]);
         },
       )
       .subscribe();
@@ -410,7 +381,7 @@ export default function ScannerPage() {
       void supabase?.removeChannel(alertsChannel);
       void supabase?.removeChannel(resultsChannel);
     };
-  }, [user, token, loadHistoryResults, loadSummary, loadTradeLog]);
+  }, [user, token, loadHistoryResults, loadSummary]);
 
   // ── Push-driven live feed and potentials ──
   useEffect(() => {
@@ -472,7 +443,7 @@ export default function ScannerPage() {
       backgroundRefreshInFlightRef.current = true;
       setScanning(true);
       try {
-        await Promise.all([loadStatus(), loadHistoryResults(), loadAlerts(), loadSummary(), loadTradeLog()]);
+        await Promise.all([loadStatus(), loadHistoryResults(), loadAlerts(), loadSummary()]);
       } catch {
         // silent
       } finally {
@@ -490,33 +461,7 @@ export default function ScannerPage() {
       }
     };
 
-  }, [token, loadAlerts, loadHistoryResults, loadStatus, loadSummary, loadTradeLog]);
-
-  const handleTradeAction = useCallback(async (tradeId: string, action: 'taken' | 'skipped', skipReason?: string) => {
-    if (!token) return;
-
-    setSavingTradeId(tradeId);
-    try {
-      await api.scanner.saveTradeAction(
-        {
-          tradeId,
-          action,
-          ...(skipReason ? { skipReason } : {}),
-        },
-        token,
-      );
-      await loadTradeLog();
-      if (action === 'taken') {
-        setExpandedSkipTradeId((current) => current === tradeId ? null : current);
-      } else {
-        setExpandedSkipTradeId(null);
-      }
-    } catch {
-      // silent
-    } finally {
-      setSavingTradeId(null);
-    }
-  }, [token, loadTradeLog]);
+  }, [token, loadAlerts, loadHistoryResults, loadStatus, loadSummary]);
 
   // ── Toggle session ──
   const handleToggleSession = async (type: ScannerSessionType) => {
@@ -591,16 +536,6 @@ export default function ScannerPage() {
   }
 
   const topResult = results.find((r) => r.rank === 1 && r.status === 'active');
-  const activeTradeDecisions = tradeLog?.activeTrades ?? [];
-  const activeResults = results
-    .filter((r) => r.status === 'active')
-    .sort((left, right) => {
-      if ((left.rank ?? Number.MAX_SAFE_INTEGER) !== (right.rank ?? Number.MAX_SAFE_INTEGER)) {
-        return (left.rank ?? Number.MAX_SAFE_INTEGER) - (right.rank ?? Number.MAX_SAFE_INTEGER);
-      }
-
-      return right.confidenceScore - left.confidenceScore;
-    });
   const liveResults = results
     .filter((r) => r.status === 'triggered')
     .sort((left, right) => {
@@ -613,8 +548,6 @@ export default function ScannerPage() {
       return rightTriggeredAt - leftTriggeredAt;
     });
   const closedResults = results.filter((r) => r.status === 'closed');
-  const resultById = new Map(results.map((result) => [result.id, result]));
-  const tradeDecisionByResultId = new Map(activeTradeDecisions.map((trade) => [trade.scanResultId, trade]));
 
   return (
     <div>
@@ -757,135 +690,8 @@ export default function ScannerPage() {
                   <Flame className="h-5 w-5 text-orange-400" />
                   <span className="text-sm font-bold text-orange-400">#1 Best Setup</span>
                 </div>
-                <SetupCard
-                  result={topResult}
-                  expanded={expandedResult === topResult.id}
-                  onToggle={() => setExpandedResult(expandedResult === topResult.id ? null : topResult.id)}
-                  isTop
-                  tradeDecision={tradeDecisionByResultId.get(topResult.id) ?? null}
-                  savingTradeId={savingTradeId}
-                  expandedSkipTradeId={expandedSkipTradeId}
-                  customSkipReason={customSkipReasons[tradeDecisionByResultId.get(topResult.id)?.tradeId ?? ''] ?? ''}
-                  onTakeTrade={(tradeId) => void handleTradeAction(tradeId, 'taken')}
-                  onToggleSkipTrade={(tradeId) => setExpandedSkipTradeId((current) => current === tradeId ? null : tradeId)}
-                  onQuickSkipTrade={(tradeId, reason) => {
-                    if (reason === 'Other') {
-                      setExpandedSkipTradeId(tradeId);
-                      return;
-                    }
-
-                    void handleTradeAction(tradeId, 'skipped', reason);
-                  }}
-                  onCustomSkipReasonChange={(tradeId, value) => setCustomSkipReasons((prev) => ({ ...prev, [tradeId]: value }))}
-                  onSubmitCustomSkipReason={(tradeId) => {
-                    const reason = (customSkipReasons[tradeId] ?? '').trim();
-                    if (!reason) {
-                      return;
-                    }
-
-                    void handleTradeAction(tradeId, 'skipped', reason);
-                  }}
-                />
+                <SetupCard result={topResult} expanded={expandedResult === topResult.id} onToggle={() => setExpandedResult(expandedResult === topResult.id ? null : topResult.id)} isTop />
               </CardContent>
-            </Card>
-          </div>
-        )}
-
-        <div className="mb-6">
-          <h2 className="mb-3 text-lg font-semibold">Active Setups</h2>
-          {activeResults.length === 0 ? (
-            <Card>
-              <CardContent className="p-8 text-center text-sm text-muted-foreground">
-                No active setups are waiting for entry right now.
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-3">
-              {activeResults
-                .filter((result) => !topResult || result.id !== topResult.id)
-                .map((result) => {
-                  const tradeDecision = tradeDecisionByResultId.get(result.id) ?? null;
-                  return (
-                    <Card key={result.id}>
-                      <CardContent className="p-4">
-                        <SetupCard
-                          result={result}
-                          expanded={expandedResult === result.id}
-                          onToggle={() => setExpandedResult(expandedResult === result.id ? null : result.id)}
-                          tradeDecision={tradeDecision}
-                          savingTradeId={savingTradeId}
-                          expandedSkipTradeId={expandedSkipTradeId}
-                          customSkipReason={customSkipReasons[tradeDecision?.tradeId ?? ''] ?? ''}
-                          onTakeTrade={(tradeId) => void handleTradeAction(tradeId, 'taken')}
-                          onToggleSkipTrade={(tradeId) => setExpandedSkipTradeId((current) => current === tradeId ? null : tradeId)}
-                          onQuickSkipTrade={(tradeId, reason) => {
-                            if (reason === 'Other') {
-                              setExpandedSkipTradeId(tradeId);
-                              return;
-                            }
-
-                            void handleTradeAction(tradeId, 'skipped', reason);
-                          }}
-                          onCustomSkipReasonChange={(tradeId, value) => setCustomSkipReasons((prev) => ({ ...prev, [tradeId]: value }))}
-                          onSubmitCustomSkipReason={(tradeId) => {
-                            const reason = (customSkipReasons[tradeId] ?? '').trim();
-                            if (!reason) {
-                              return;
-                            }
-
-                            void handleTradeAction(tradeId, 'skipped', reason);
-                          }}
-                        />
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-            </div>
-          )}
-        </div>
-
-        {tradeLog && (
-          <div className="mb-6">
-            <Card className="overflow-hidden border-cyan-400/15 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.12),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01))]">
-              <CardHeader className="flex flex-row items-center justify-between pb-3">
-                <CardTitle className="text-lg">Trade Log Insights</CardTitle>
-                <Button variant="ghost" size="sm" onClick={() => setShowTradeInsights((prev) => !prev)}>
-                  {showTradeInsights ? 'Hide insights' : 'Show insights'}
-                </Button>
-              </CardHeader>
-              <AnimatePresence initial={false}>
-                {showTradeInsights && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="overflow-hidden"
-                  >
-                    <CardContent className="space-y-5 pt-0">
-                      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                        <TradeLogStat label="Win Rate" value={`${tradeLog.stats.winRate.toFixed(1)}%`} helper={`${tradeLog.stats.takenWins}W / ${tradeLog.stats.takenLosses}L`} />
-                        <TradeLogStat label="Signals Logged" value={String(tradeLog.stats.totalSignals)} helper={`${tradeLog.stats.totalTaken} taken, ${tradeLog.stats.totalSkipped} skipped`} />
-                        <TradeLogStat label="Missed Winners" value={String(tradeLog.stats.missedWins)} helper={`${tradeLog.stats.missedLosses} skipped losses`} />
-                        <TradeLogStat label="All Signals" value={formatRValue(tradeLog.stats.allSignalsR)} helper="Resolved scanner expectancy" />
-                        <TradeLogStat label="Followed Trades" value={formatRValue(tradeLog.stats.followedSignalsR)} helper={`${tradeLog.stats.resolvedTaken} resolved taken trades`} />
-                        <TradeLogStat label="Unanswered" value={String(tradeLog.stats.unansweredSignals)} helper="Signals without a logged decision" />
-                      </div>
-
-                      <div className="rounded-2xl border border-white/10 bg-black/10 p-4">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300/80">Insight Engine</p>
-                        <div className="mt-3 grid gap-3 lg:grid-cols-3">
-                          {tradeLog.insights.map((insight) => (
-                            <div key={insight} className="rounded-xl border border-white/8 bg-white/5 p-4 text-sm leading-relaxed text-slate-100">
-                              {insight}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </Card>
           </div>
         )}
@@ -1082,29 +888,11 @@ function SetupCard({
   expanded,
   onToggle,
   isTop,
-  tradeDecision,
-  savingTradeId,
-  expandedSkipTradeId,
-  customSkipReason,
-  onTakeTrade,
-  onToggleSkipTrade,
-  onQuickSkipTrade,
-  onCustomSkipReasonChange,
-  onSubmitCustomSkipReason,
 }: {
   result: ScanResult;
   expanded: boolean;
   onToggle: () => void;
   isTop?: boolean;
-  tradeDecision?: ScannerTradeDecision | null;
-  savingTradeId?: string | null;
-  expandedSkipTradeId?: string | null;
-  customSkipReason?: string;
-  onTakeTrade?: (tradeId: string) => void;
-  onToggleSkipTrade?: (tradeId: string) => void;
-  onQuickSkipTrade?: (tradeId: string, reason: string) => void;
-  onCustomSkipReasonChange?: (tradeId: string, value: string) => void;
-  onSubmitCustomSkipReason?: (tradeId: string) => void;
 }) {
   const isBuy = result.direction === 'buy';
   const outcomeBadge = result.status === 'closed'
@@ -1116,10 +904,6 @@ function SetupCard({
       : null;
   const entryInstruction = getEntryInstruction(result);
   const livePulse = getLiveTradePulse(result);
-  const showTradeActions = result.status === 'active' && Boolean(tradeDecision);
-  const tradeId = tradeDecision?.tradeId ?? null;
-  const skipExpanded = tradeId != null && expandedSkipTradeId === tradeId;
-  const savingTrade = tradeId != null && savingTradeId === tradeId;
 
   return (
     <div>
@@ -1167,72 +951,6 @@ function SetupCard({
           )}
         </div>
       </button>
-
-      {showTradeActions && tradeDecision && tradeId ? (
-        <div className="mt-3 rounded-2xl border border-cyan-400/15 bg-cyan-400/5 p-3">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-300/80">Trade Decision</p>
-              <p className="mt-1 text-sm text-cyan-50">Did you take this setup?</p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Button size="sm" variant={tradeDecision.action === 'taken' ? 'default' : 'secondary'} onClick={() => onTakeTrade?.(tradeId)} disabled={savingTrade}>
-                {savingTrade && tradeDecision.action !== 'taken' ? 'Saving...' : 'YES'}
-              </Button>
-              <Button size="sm" variant={tradeDecision.action === 'skipped' || skipExpanded ? 'outline' : 'ghost'} onClick={() => onToggleSkipTrade?.(tradeId)} disabled={savingTrade}>
-                NO
-              </Button>
-            </div>
-          </div>
-
-          {tradeDecision.action === 'skipped' && tradeDecision.skipReason ? (
-            <p className="mt-3 text-sm text-amber-200">Skip reason: {tradeDecision.skipReason}</p>
-          ) : null}
-
-          <AnimatePresence initial={false}>
-            {skipExpanded && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.18 }}
-                className="overflow-hidden"
-              >
-                <div className="mt-3 rounded-2xl border border-white/10 bg-black/10 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Why did you skip?</p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {SKIP_REASON_OPTIONS.map((reason) => (
-                      <Button
-                        key={reason}
-                        variant={tradeDecision.skipReason === reason ? 'secondary' : 'outline'}
-                        size="sm"
-                        onClick={() => onQuickSkipTrade?.(tradeId, reason)}
-                        disabled={savingTrade}
-                      >
-                        {reason}
-                      </Button>
-                    ))}
-                  </div>
-
-                  <div className="mt-3 space-y-2">
-                    <textarea
-                      value={customSkipReason ?? ''}
-                      onChange={(event) => onCustomSkipReasonChange?.(tradeId, event.target.value)}
-                      placeholder="Other reason..."
-                      className="min-h-[88px] w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-foreground outline-none transition focus:border-cyan-400/40"
-                    />
-                    <div className="flex justify-end">
-                      <Button size="sm" variant="secondary" onClick={() => onSubmitCustomSkipReason?.(tradeId)} disabled={savingTrade || (customSkipReason ?? '').trim().length === 0}>
-                        Save skip reason
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      ) : null}
 
       {/* Expanded details */}
       <AnimatePresence>
@@ -1445,16 +1163,6 @@ function PotentialTradeCard({ trade }: { trade: ScannerPotentialTrade }) {
 }
 
 // ── Small components ──
-
-function TradeLogStat({ label, value, helper }: { label: string; value: string; helper: string }) {
-  return (
-    <div className="rounded-2xl border border-white/8 bg-white/5 p-4">
-      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
-      <p className="mt-3 text-2xl font-semibold">{value}</p>
-      <p className="mt-1 text-xs text-muted-foreground">{helper}</p>
-    </div>
-  );
-}
 
 function PriceRow({ label, value, color }: { label: string; value: string; color: string }) {
   return (
