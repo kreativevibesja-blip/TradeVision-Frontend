@@ -930,17 +930,7 @@ function SetupCard({
           ) : null}
         </div>
 
-        {/* Confidence */}
-        <div className="flex shrink-0 flex-col items-end gap-1">
-          <div className="flex items-center gap-2">
-            <div className="h-2 w-16 overflow-hidden rounded-full bg-zinc-800">
-              <div
-                className={`h-full rounded-full ${confidenceColor(result.confidenceScore)}`}
-                style={{ width: `${Math.min(100, result.confidenceScore)}%` }}
-              />
-            </div>
-            <span className="text-xs font-medium">{Math.round(result.confidenceScore)}%</span>
-          </div>
+        <div className="flex shrink-0 items-center self-start pt-1">
           {expanded ? (
             <ChevronUp className="h-4 w-4 text-muted-foreground" />
           ) : (
