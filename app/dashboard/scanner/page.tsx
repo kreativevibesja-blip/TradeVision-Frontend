@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/hooks/useAuth';
-import { api } from '@/lib/api';
+import { api, openScannerPanelsStream } from '@/lib/api';
 import type {
   ScanResult,
   ScannerPotentialTrade,
@@ -150,7 +150,6 @@ function getEntryInstruction(result: ScanResult) {
 
 // ── Scan interval ──
 
-const LIVE_RUNTIME_REFRESH_MS = 5_000;
 const BACKGROUND_REFRESH_MS = 45_000;
 const LIVE_FEED_MIN_CONFIDENCE = 75;
 
@@ -175,9 +174,7 @@ export default function ScannerPage() {
   const [showPotentialTrades, setShowPotentialTrades] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
 
-  const liveRuntimeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const backgroundIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const liveRefreshInFlightRef = useRef(false);
   const backgroundRefreshInFlightRef = useRef(false);
 
   // Check if user has a session enabled
@@ -253,15 +250,6 @@ export default function ScannerPage() {
     }
   }, [token]);
 
-  const loadLiveScannerPanels = useCallback(async () => {
-    if (!token) return;
-    try {
-      await Promise.all([loadResults(), loadPotentialTrades()]);
-    } catch {
-      // silent
-    }
-  }, [token, loadPotentialTrades, loadResults]);
-
   // ── Initial load ──
   useEffect(() => {
     if (!token || authLoading) return;
@@ -306,7 +294,7 @@ export default function ScannerPage() {
             return;
           }
 
-          void Promise.all([loadResults(), loadPotentialTrades(), loadHistoryResults(), loadSummary()]);
+          void Promise.all([loadHistoryResults(), loadSummary()]);
         },
       )
       .subscribe();
@@ -316,6 +304,51 @@ export default function ScannerPage() {
       void supabase?.removeChannel(resultsChannel);
     };
   }, [user, token, loadHistoryResults, loadPotentialTrades, loadResults, loadSummary]);
+
+  // ── Push-driven live feed and potentials ──
+  useEffect(() => {
+    if (!token || !user || user.subscription !== 'TOP_TIER') {
+      return;
+    }
+
+    const abortController = new AbortController();
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const connect = async () => {
+      try {
+        await openScannerPanelsStream(token, {
+          signal: abortController.signal,
+          onPanels: (payload) => {
+            setResults(payload.results);
+            setPotentialTrades(payload.potentials);
+          },
+        });
+
+        if (!abortController.signal.aborted) {
+          retryTimer = setTimeout(() => {
+            void connect();
+          }, 1500);
+        }
+      } catch {
+        if (abortController.signal.aborted) {
+          return;
+        }
+
+        retryTimer = setTimeout(() => {
+          void connect();
+        }, 3000);
+      }
+    };
+
+    void connect();
+
+    return () => {
+      abortController.abort();
+      if (retryTimer) {
+        clearTimeout(retryTimer);
+      }
+    };
+  }, [token, user]);
 
   // ── Passive refresh interval ──
   useEffect(() => {
@@ -336,10 +369,6 @@ export default function ScannerPage() {
       liveRefreshInFlightRef.current = true;
       try {
         await loadLiveScannerPanels();
-      } catch {
-        // silent
-      } finally {
-        liveRefreshInFlightRef.current = false;
       }
     };
 
@@ -352,7 +381,7 @@ export default function ScannerPage() {
       } catch {
         // silent
       } finally {
-        backgroundRefreshInFlightRef.current = false;
+            await Promise.all([loadStatus(), loadHistoryResults(), loadAlerts(), loadSummary()]);
         setScanning(false);
       }
     };
@@ -363,20 +392,15 @@ export default function ScannerPage() {
     liveRuntimeIntervalRef.current = setInterval(refreshLivePanels, LIVE_RUNTIME_REFRESH_MS);
     backgroundIntervalRef.current = setInterval(refreshScannerData, BACKGROUND_REFRESH_MS);
 
-    return () => {
       if (liveRuntimeIntervalRef.current) {
         clearInterval(liveRuntimeIntervalRef.current);
         liveRuntimeIntervalRef.current = null;
-      }
-      if (backgroundIntervalRef.current) {
-        clearInterval(backgroundIntervalRef.current);
-        backgroundIntervalRef.current = null;
       }
     };
   }, [token, loadAlerts, loadHistoryResults, loadLiveScannerPanels, loadPotentialTrades, loadResults, loadStatus, loadSummary]);
 
   // ── Toggle session ──
-  const handleToggleSession = async (type: ScannerSessionType) => {
+      }, [token, loadAlerts, loadHistoryResults, loadStatus, loadSummary]);
     if (!token) return;
     setTogglingSession(type);
     try {
