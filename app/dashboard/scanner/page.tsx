@@ -39,6 +39,7 @@ import {
   Eye,
   EyeOff,
   Trophy,
+  Sparkles,
 } from 'lucide-react';
 
 // ── Helpers ──
@@ -76,6 +77,70 @@ function formatPrice(price: number | null | undefined) {
   if (price >= 100) return price.toFixed(2);
   if (price >= 1) return price.toFixed(4);
   return price.toFixed(5);
+}
+
+function getLiveTradePulse(result: ScanResult) {
+  const livePrice = result.currentPrice;
+  if (livePrice == null || !Number.isFinite(livePrice)) {
+    return null;
+  }
+
+  const risk = Math.abs(result.entry - result.stopLoss);
+  if (!Number.isFinite(risk) || risk <= 0) {
+    return null;
+  }
+
+  const primaryReward = Math.abs(result.takeProfit - result.entry);
+  const signedMove = result.direction === 'buy' ? livePrice - result.entry : result.entry - livePrice;
+  const state: 'profit' | 'drawdown' | 'neutral' = signedMove > risk * 0.08
+    ? 'profit'
+    : signedMove < -risk * 0.08
+      ? 'drawdown'
+      : 'neutral';
+  const progressBase = result.direction === 'buy'
+    ? (livePrice - result.stopLoss) / Math.max(result.takeProfit - result.stopLoss, Number.EPSILON)
+    : (result.stopLoss - livePrice) / Math.max(result.stopLoss - result.takeProfit, Number.EPSILON);
+  const pathProgress = Math.max(0, Math.min(1, progressBase));
+
+  return {
+    livePrice,
+    state,
+    signedMove,
+    percentFromEntry: result.entry !== 0 ? (signedMove / result.entry) * 100 : 0,
+    moveInR: signedMove / risk,
+    pathProgress,
+    tpProgress: primaryReward > 0 ? Math.max(0, Math.min(1, Math.abs(signedMove) / primaryReward)) : 0,
+  };
+}
+
+function getTradePulseClasses(state: 'profit' | 'drawdown' | 'neutral') {
+  if (state === 'profit') {
+    return {
+      shell: 'border-emerald-400/25 bg-[linear-gradient(135deg,rgba(16,185,129,0.18),rgba(5,150,105,0.04)_52%,rgba(6,78,59,0.06))] text-emerald-50',
+      glow: 'from-emerald-400/45 via-cyan-300/20 to-transparent',
+      trail: 'from-emerald-300 via-emerald-400 to-cyan-300',
+      label: 'In Profit',
+      text: 'text-emerald-200',
+    };
+  }
+
+  if (state === 'drawdown') {
+    return {
+      shell: 'border-rose-400/25 bg-[linear-gradient(135deg,rgba(244,63,94,0.18),rgba(190,24,93,0.04)_52%,rgba(76,5,25,0.06))] text-rose-50',
+      glow: 'from-rose-400/45 via-orange-300/20 to-transparent',
+      trail: 'from-rose-300 via-rose-400 to-orange-300',
+      label: 'Drawdown',
+      text: 'text-rose-200',
+    };
+  }
+
+  return {
+    shell: 'border-cyan-400/20 bg-[linear-gradient(135deg,rgba(56,189,248,0.16),rgba(14,116,144,0.04)_52%,rgba(8,47,73,0.06))] text-cyan-50',
+    glow: 'from-cyan-300/40 via-blue-300/20 to-transparent',
+    trail: 'from-cyan-300 via-sky-300 to-blue-300',
+    label: 'Near Entry',
+    text: 'text-cyan-200',
+  };
 }
 
 function confidenceColor(score: number) {
@@ -819,6 +884,7 @@ function SetupCard({
       ? { label: 'No Entry', variant: 'outline' as const }
       : null;
   const entryInstruction = getEntryInstruction(result);
+  const livePulse = getLiveTradePulse(result);
 
   return (
     <div>
@@ -852,6 +918,10 @@ function SetupCard({
             </span>
           </div>
           <p className="mt-2 text-sm text-muted-foreground">{entryInstruction.message}</p>
+
+          {livePulse && (result.status === 'triggered' || result.status === 'active') ? (
+            <LiveTradePulse result={result} pulse={livePulse} />
+          ) : null}
         </div>
 
         {/* Confidence */}
@@ -884,11 +954,32 @@ function SetupCard({
             className="overflow-hidden"
           >
             <div className="mt-4 grid gap-3 border-t border-white/5 pt-4 sm:grid-cols-2 xl:grid-cols-4">
+              <PriceRow label="Live Price" value={formatPrice(result.currentPrice)} color="text-cyan-300" />
               <PriceRow label="Entry" value={formatPrice(result.entry)} color="text-foreground" />
               <PriceRow label="Stop Loss" value={formatPrice(result.stopLoss)} color="text-red-400" />
               <PriceRow label="TP1 (1:2)" value={formatPrice(result.takeProfit)} color="text-green-400" />
               <PriceRow label="TP2 (1:3)" value={formatPrice(result.takeProfit2)} color="text-emerald-300" />
             </div>
+
+            {livePulse && (result.status === 'triggered' || result.status === 'active') ? (
+              <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                <PriceRow
+                  label="Live Move"
+                  value={`${livePulse.signedMove >= 0 ? '+' : ''}${formatPrice(Math.abs(livePulse.signedMove))}`}
+                  color={livePulse.state === 'profit' ? 'text-emerald-300' : livePulse.state === 'drawdown' ? 'text-rose-300' : 'text-cyan-300'}
+                />
+                <PriceRow
+                  label="Return In R"
+                  value={`${livePulse.moveInR >= 0 ? '+' : ''}${livePulse.moveInR.toFixed(2)}R`}
+                  color={livePulse.state === 'profit' ? 'text-emerald-300' : livePulse.state === 'drawdown' ? 'text-rose-300' : 'text-cyan-300'}
+                />
+                <PriceRow
+                  label="Entry Drift"
+                  value={`${livePulse.percentFromEntry >= 0 ? '+' : ''}${livePulse.percentFromEntry.toFixed(2)}%`}
+                  color={livePulse.state === 'profit' ? 'text-emerald-300' : livePulse.state === 'drawdown' ? 'text-rose-300' : 'text-cyan-300'}
+                />
+              </div>
+            ) : null}
 
             {(result.triggeredAt || result.closedAt) && (
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -916,6 +1007,96 @@ function SetupCard({
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+function LiveTradePulse({
+  result,
+  pulse,
+}: {
+  result: ScanResult;
+  pulse: NonNullable<ReturnType<typeof getLiveTradePulse>>;
+}) {
+  const classes = getTradePulseClasses(pulse.state);
+  const signedPriceText = `${pulse.signedMove >= 0 ? '+' : '-'}${formatPrice(Math.abs(pulse.signedMove))}`;
+  const percentText = `${pulse.percentFromEntry >= 0 ? '+' : ''}${pulse.percentFromEntry.toFixed(2)}%`;
+  const rText = `${pulse.moveInR >= 0 ? '+' : ''}${pulse.moveInR.toFixed(2)}R`;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 6, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.22 }}
+      className={`relative mt-3 overflow-hidden rounded-2xl border px-3 py-3 ${classes.shell}`}
+    >
+      <motion.div
+        aria-hidden
+        className={`pointer-events-none absolute inset-y-0 -left-1/4 w-1/2 bg-gradient-to-r ${classes.glow} blur-2xl`}
+        animate={{ x: ['0%', '140%'] }}
+        transition={{ duration: 2.8, repeat: Infinity, ease: 'linear' }}
+      />
+
+      <div className="relative flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <motion.div
+              className={`h-2.5 w-2.5 rounded-full ${pulse.state === 'profit' ? 'bg-emerald-300' : pulse.state === 'drawdown' ? 'bg-rose-300' : 'bg-cyan-300'}`}
+              animate={{ scale: [1, 1.55, 1], opacity: [0.9, 0.45, 0.9] }}
+              transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+            />
+            <span className="text-[11px] font-semibold uppercase tracking-[0.24em] text-white/70">Live Position Pulse</span>
+            <Sparkles className="h-3.5 w-3.5 text-white/60" />
+          </div>
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+            <span className={`font-semibold ${classes.text}`}>{classes.label}</span>
+            <span className="text-white/80">at {formatPrice(result.currentPrice)}</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2 text-right text-[11px] sm:min-w-[16rem]">
+          <div>
+            <p className="text-white/45">Move</p>
+            <p className="font-semibold text-white">{signedPriceText}</p>
+          </div>
+          <div>
+            <p className="text-white/45">Entry Drift</p>
+            <p className="font-semibold text-white">{percentText}</p>
+          </div>
+          <div>
+            <p className="text-white/45">R</p>
+            <p className="font-semibold text-white">{rText}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="relative mt-3">
+        <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.18em] text-white/45">
+          <span>Stop</span>
+          <span>Entry</span>
+          <span>TP1</span>
+        </div>
+        <div className="relative mt-2 h-3 overflow-hidden rounded-full bg-black/25 ring-1 ring-white/10">
+          <motion.div
+            className={`absolute inset-y-0 left-0 rounded-full bg-gradient-to-r ${classes.trail}`}
+            animate={{ width: `${Math.max(4, pulse.pathProgress * 100)}%` }}
+            transition={{ duration: 0.45, ease: 'easeOut' }}
+          />
+          <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-white/25" />
+          <motion.div
+            className="absolute top-1/2 h-5 w-5 -translate-y-1/2 rounded-full border border-white/35 bg-white/90 shadow-[0_0_20px_rgba(255,255,255,0.3)]"
+            animate={{ left: `calc(${pulse.pathProgress * 100}% - 10px)`, scale: [1, 1.08, 1] }}
+            transition={{ left: { duration: 0.45, ease: 'easeOut' }, scale: { duration: 1.4, repeat: Infinity, ease: 'easeInOut' } }}
+          >
+            <div className={`absolute inset-1 rounded-full ${pulse.state === 'profit' ? 'bg-emerald-400' : pulse.state === 'drawdown' ? 'bg-rose-400' : 'bg-cyan-400'}`} />
+          </motion.div>
+        </div>
+        <div className="mt-2 flex items-center justify-between text-[11px] text-white/65">
+          <span>{formatPrice(result.stopLoss)}</span>
+          <span>{formatPrice(result.entry)}</span>
+          <span>{formatPrice(result.takeProfit)}</span>
+        </div>
+      </div>
+    </motion.div>
   );
 }
 
