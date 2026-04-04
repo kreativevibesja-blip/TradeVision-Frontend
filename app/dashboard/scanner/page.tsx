@@ -150,7 +150,8 @@ function getEntryInstruction(result: ScanResult) {
 
 // ── Scan interval ──
 
-const SCAN_INTERVAL_MS = 45_000; // passive refresh only; backend scanner runs independently
+const LIVE_RUNTIME_REFRESH_MS = 5_000;
+const BACKGROUND_REFRESH_MS = 45_000;
 const LIVE_FEED_MIN_CONFIDENCE = 75;
 
 export default function ScannerPage() {
@@ -174,8 +175,10 @@ export default function ScannerPage() {
   const [showPotentialTrades, setShowPotentialTrades] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
 
-  const scanIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const refreshInFlightRef = useRef(false);
+  const liveRuntimeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const backgroundIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const liveRefreshInFlightRef = useRef(false);
+  const backgroundRefreshInFlightRef = useRef(false);
 
   // Check if user has a session enabled
   const isSessionEnabled = useCallback(
@@ -250,6 +253,15 @@ export default function ScannerPage() {
     }
   }, [token]);
 
+  const loadLiveScannerPanels = useCallback(async () => {
+    if (!token) return;
+    try {
+      await Promise.all([loadResults(), loadPotentialTrades()]);
+    } catch {
+      // silent
+    }
+  }, [token, loadPotentialTrades, loadResults]);
+
   // ── Initial load ──
   useEffect(() => {
     if (!token || authLoading) return;
@@ -308,38 +320,60 @@ export default function ScannerPage() {
   // ── Passive refresh interval ──
   useEffect(() => {
     if (!token) {
-      if (scanIntervalRef.current) {
-        clearInterval(scanIntervalRef.current);
-        scanIntervalRef.current = null;
+      if (liveRuntimeIntervalRef.current) {
+        clearInterval(liveRuntimeIntervalRef.current);
+        liveRuntimeIntervalRef.current = null;
+      }
+      if (backgroundIntervalRef.current) {
+        clearInterval(backgroundIntervalRef.current);
+        backgroundIntervalRef.current = null;
       }
       return;
     }
 
+    const refreshLivePanels = async () => {
+      if (liveRefreshInFlightRef.current) return;
+      liveRefreshInFlightRef.current = true;
+      try {
+        await loadLiveScannerPanels();
+      } catch {
+        // silent
+      } finally {
+        liveRefreshInFlightRef.current = false;
+      }
+    };
+
     const refreshScannerData = async () => {
-      if (refreshInFlightRef.current) return;
-      refreshInFlightRef.current = true;
+      if (backgroundRefreshInFlightRef.current) return;
+      backgroundRefreshInFlightRef.current = true;
       setScanning(true);
       try {
         await Promise.all([loadStatus(), loadResults(), loadPotentialTrades(), loadHistoryResults(), loadAlerts(), loadSummary()]);
       } catch {
         // silent
       } finally {
-        refreshInFlightRef.current = false;
+        backgroundRefreshInFlightRef.current = false;
         setScanning(false);
       }
     };
 
+    void refreshLivePanels();
     void refreshScannerData();
 
-    scanIntervalRef.current = setInterval(refreshScannerData, SCAN_INTERVAL_MS);
+    liveRuntimeIntervalRef.current = setInterval(refreshLivePanels, LIVE_RUNTIME_REFRESH_MS);
+    backgroundIntervalRef.current = setInterval(refreshScannerData, BACKGROUND_REFRESH_MS);
 
     return () => {
-      if (scanIntervalRef.current) {
-        clearInterval(scanIntervalRef.current);
-        scanIntervalRef.current = null;
+      if (liveRuntimeIntervalRef.current) {
+        clearInterval(liveRuntimeIntervalRef.current);
+        liveRuntimeIntervalRef.current = null;
+      }
+      if (backgroundIntervalRef.current) {
+        clearInterval(backgroundIntervalRef.current);
+        backgroundIntervalRef.current = null;
       }
     };
-  }, [token, loadAlerts, loadHistoryResults, loadPotentialTrades, loadResults, loadStatus, loadSummary]);
+  }, [token, loadAlerts, loadHistoryResults, loadLiveScannerPanels, loadPotentialTrades, loadResults, loadStatus, loadSummary]);
 
   // ── Toggle session ──
   const handleToggleSession = async (type: ScannerSessionType) => {
