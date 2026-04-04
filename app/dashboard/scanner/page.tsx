@@ -216,8 +216,6 @@ function getEntryInstruction(result: ScanResult) {
 // ── Scan interval ──
 
 const BACKGROUND_REFRESH_MS = 45_000;
-const LIVE_FEED_MIN_CONFIDENCE = 75;
-
 export default function ScannerPage() {
   const { user, token, loading: authLoading } = useAuth();
 
@@ -525,9 +523,17 @@ export default function ScannerPage() {
   }
 
   const topResult = results.find((r) => r.rank === 1 && r.status === 'active');
-  const liveResults = results.filter(
-    (r) => r.status === 'triggered' && r.confidenceScore >= LIVE_FEED_MIN_CONFIDENCE,
-  );
+  const liveResults = results
+    .filter((r) => r.status === 'triggered')
+    .sort((left, right) => {
+      if (left.confidenceScore !== right.confidenceScore) {
+        return right.confidenceScore - left.confidenceScore;
+      }
+
+      const leftTriggeredAt = left.triggeredAt ? new Date(left.triggeredAt).getTime() : 0;
+      const rightTriggeredAt = right.triggeredAt ? new Date(right.triggeredAt).getTime() : 0;
+      return rightTriggeredAt - leftTriggeredAt;
+    });
   const closedResults = results.filter((r) => r.status === 'closed');
 
   return (
@@ -696,7 +702,7 @@ export default function ScannerPage() {
                 <p className="text-muted-foreground">
                   {scanning
                     ? 'Refreshing triggered setups...'
-                    : 'No triggered signals at 75% confidence or higher are active right now. The scanner will keep monitoring.'}
+                    : 'No triggered live trades are active right now. The scanner will keep monitoring.'}
                 </p>
               </CardContent>
             </Card>
