@@ -251,6 +251,7 @@ export default function ScannerPage() {
   const [showAlerts, setShowAlerts] = useState(false);
   const [showPotentialTrades, setShowPotentialTrades] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [showTradeInsights, setShowTradeInsights] = useState(false);
   const [savingTradeId, setSavingTradeId] = useState<string | null>(null);
   const [expandedSkipTradeId, setExpandedSkipTradeId] = useState<string | null>(null);
   const [customSkipReasons, setCustomSkipReasons] = useState<Record<string, string>>({});
@@ -578,6 +579,15 @@ export default function ScannerPage() {
 
   const topResult = results.find((r) => r.rank === 1 && r.status === 'active');
   const activeTradeDecisions = tradeLog?.activeTrades ?? [];
+  const activeResults = results
+    .filter((r) => r.status === 'active')
+    .sort((left, right) => {
+      if ((left.rank ?? Number.MAX_SAFE_INTEGER) !== (right.rank ?? Number.MAX_SAFE_INTEGER)) {
+        return (left.rank ?? Number.MAX_SAFE_INTEGER) - (right.rank ?? Number.MAX_SAFE_INTEGER);
+      }
+
+      return right.confidenceScore - left.confidenceScore;
+    });
   const liveResults = results
     .filter((r) => r.status === 'triggered')
     .sort((left, right) => {
@@ -591,6 +601,7 @@ export default function ScannerPage() {
     });
   const closedResults = results.filter((r) => r.status === 'closed');
   const resultById = new Map(results.map((result) => [result.id, result]));
+  const tradeDecisionByResultId = new Map(activeTradeDecisions.map((trade) => [trade.scanResultId, trade]));
 
   return (
     <div>
@@ -733,94 +744,135 @@ export default function ScannerPage() {
                   <Flame className="h-5 w-5 text-orange-400" />
                   <span className="text-sm font-bold text-orange-400">#1 Best Setup</span>
                 </div>
-                <SetupCard result={topResult} expanded={expandedResult === topResult.id} onToggle={() => setExpandedResult(expandedResult === topResult.id ? null : topResult.id)} isTop />
+                <SetupCard
+                  result={topResult}
+                  expanded={expandedResult === topResult.id}
+                  onToggle={() => setExpandedResult(expandedResult === topResult.id ? null : topResult.id)}
+                  isTop
+                  tradeDecision={tradeDecisionByResultId.get(topResult.id) ?? null}
+                  savingTradeId={savingTradeId}
+                  expandedSkipTradeId={expandedSkipTradeId}
+                  customSkipReason={customSkipReasons[tradeDecisionByResultId.get(topResult.id)?.tradeId ?? ''] ?? ''}
+                  onTakeTrade={(tradeId) => void handleTradeAction(tradeId, 'taken')}
+                  onToggleSkipTrade={(tradeId) => setExpandedSkipTradeId((current) => current === tradeId ? null : tradeId)}
+                  onQuickSkipTrade={(tradeId, reason) => {
+                    if (reason === 'Other') {
+                      setExpandedSkipTradeId(tradeId);
+                      return;
+                    }
+
+                    void handleTradeAction(tradeId, 'skipped', reason);
+                  }}
+                  onCustomSkipReasonChange={(tradeId, value) => setCustomSkipReasons((prev) => ({ ...prev, [tradeId]: value }))}
+                  onSubmitCustomSkipReason={(tradeId) => {
+                    const reason = (customSkipReasons[tradeId] ?? '').trim();
+                    if (!reason) {
+                      return;
+                    }
+
+                    void handleTradeAction(tradeId, 'skipped', reason);
+                  }}
+                />
               </CardContent>
             </Card>
           </div>
         )}
 
         <div className="mb-6">
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <CardTitle className="text-lg">Trade Decisions</CardTitle>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Log whether you took the active setup with one tap. No popup friction.
-                  </p>
-                </div>
-                <Badge variant="outline">{activeTradeDecisions.length} active</Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {activeTradeDecisions.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 p-6 text-center text-sm text-muted-foreground">
-                  Active trade decisions will appear here as soon as the scanner logs a fresh setup.
-                </div>
-              ) : (
-                <div className="grid gap-3 lg:grid-cols-2">
-                  {activeTradeDecisions.map((trade) => (
-                    <TradeDecisionCard
-                      key={trade.tradeId}
-                      trade={trade}
-                      scanResult={resultById.get(trade.scanResultId) ?? null}
-                      saving={savingTradeId === trade.tradeId}
-                      skipExpanded={expandedSkipTradeId === trade.tradeId}
-                      customSkipReason={customSkipReasons[trade.tradeId] ?? ''}
-                      onTake={() => handleTradeAction(trade.tradeId, 'taken')}
-                      onToggleSkip={() => setExpandedSkipTradeId((current) => current === trade.tradeId ? null : trade.tradeId)}
-                      onQuickSkip={(reason) => {
-                        if (reason === 'Other') {
-                          setExpandedSkipTradeId(trade.tradeId);
-                          return;
-                        }
+          <h2 className="mb-3 text-lg font-semibold">Active Setups</h2>
+          {activeResults.length === 0 ? (
+            <Card>
+              <CardContent className="p-8 text-center text-sm text-muted-foreground">
+                No active setups are waiting for entry right now.
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {activeResults
+                .filter((result) => !topResult || result.id !== topResult.id)
+                .map((result) => {
+                  const tradeDecision = tradeDecisionByResultId.get(result.id) ?? null;
+                  return (
+                    <Card key={result.id}>
+                      <CardContent className="p-4">
+                        <SetupCard
+                          result={result}
+                          expanded={expandedResult === result.id}
+                          onToggle={() => setExpandedResult(expandedResult === result.id ? null : result.id)}
+                          tradeDecision={tradeDecision}
+                          savingTradeId={savingTradeId}
+                          expandedSkipTradeId={expandedSkipTradeId}
+                          customSkipReason={customSkipReasons[tradeDecision?.tradeId ?? ''] ?? ''}
+                          onTakeTrade={(tradeId) => void handleTradeAction(tradeId, 'taken')}
+                          onToggleSkipTrade={(tradeId) => setExpandedSkipTradeId((current) => current === tradeId ? null : tradeId)}
+                          onQuickSkipTrade={(tradeId, reason) => {
+                            if (reason === 'Other') {
+                              setExpandedSkipTradeId(tradeId);
+                              return;
+                            }
 
-                        void handleTradeAction(trade.tradeId, 'skipped', reason);
-                      }}
-                      onCustomReasonChange={(value) => setCustomSkipReasons((prev) => ({ ...prev, [trade.tradeId]: value }))}
-                      onCustomSkipSubmit={() => {
-                        const reason = (customSkipReasons[trade.tradeId] ?? '').trim();
-                        if (!reason) {
-                          return;
-                        }
+                            void handleTradeAction(tradeId, 'skipped', reason);
+                          }}
+                          onCustomSkipReasonChange={(tradeId, value) => setCustomSkipReasons((prev) => ({ ...prev, [tradeId]: value }))}
+                          onSubmitCustomSkipReason={(tradeId) => {
+                            const reason = (customSkipReasons[tradeId] ?? '').trim();
+                            if (!reason) {
+                              return;
+                            }
 
-                        void handleTradeAction(trade.tradeId, 'skipped', reason);
-                      }}
-                    />
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                            void handleTradeAction(tradeId, 'skipped', reason);
+                          }}
+                        />
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+            </div>
+          )}
         </div>
 
         {tradeLog && (
           <div className="mb-6">
             <Card className="overflow-hidden border-cyan-400/15 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.12),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01))]">
-              <CardHeader className="pb-3">
+              <CardHeader className="flex flex-row items-center justify-between pb-3">
                 <CardTitle className="text-lg">Trade Log Insights</CardTitle>
+                <Button variant="ghost" size="sm" onClick={() => setShowTradeInsights((prev) => !prev)}>
+                  {showTradeInsights ? 'Hide insights' : 'Show insights'}
+                </Button>
               </CardHeader>
-              <CardContent className="space-y-5">
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                  <TradeLogStat label="Win Rate" value={`${tradeLog.stats.winRate.toFixed(1)}%`} helper={`${tradeLog.stats.takenWins}W / ${tradeLog.stats.takenLosses}L`} />
-                  <TradeLogStat label="Signals Logged" value={String(tradeLog.stats.totalSignals)} helper={`${tradeLog.stats.totalTaken} taken, ${tradeLog.stats.totalSkipped} skipped`} />
-                  <TradeLogStat label="Missed Winners" value={String(tradeLog.stats.missedWins)} helper={`${tradeLog.stats.missedLosses} skipped losses`} />
-                  <TradeLogStat label="All Signals" value={formatRValue(tradeLog.stats.allSignalsR)} helper="Resolved scanner expectancy" />
-                  <TradeLogStat label="Followed Trades" value={formatRValue(tradeLog.stats.followedSignalsR)} helper={`${tradeLog.stats.resolvedTaken} resolved taken trades`} />
-                  <TradeLogStat label="Unanswered" value={String(tradeLog.stats.unansweredSignals)} helper="Signals without a logged decision" />
-                </div>
-
-                <div className="rounded-2xl border border-white/10 bg-black/10 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300/80">Insight Engine</p>
-                  <div className="mt-3 grid gap-3 lg:grid-cols-3">
-                    {tradeLog.insights.map((insight) => (
-                      <div key={insight} className="rounded-xl border border-white/8 bg-white/5 p-4 text-sm leading-relaxed text-slate-100">
-                        {insight}
+              <AnimatePresence initial={false}>
+                {showTradeInsights && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <CardContent className="space-y-5 pt-0">
+                      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                        <TradeLogStat label="Win Rate" value={`${tradeLog.stats.winRate.toFixed(1)}%`} helper={`${tradeLog.stats.takenWins}W / ${tradeLog.stats.takenLosses}L`} />
+                        <TradeLogStat label="Signals Logged" value={String(tradeLog.stats.totalSignals)} helper={`${tradeLog.stats.totalTaken} taken, ${tradeLog.stats.totalSkipped} skipped`} />
+                        <TradeLogStat label="Missed Winners" value={String(tradeLog.stats.missedWins)} helper={`${tradeLog.stats.missedLosses} skipped losses`} />
+                        <TradeLogStat label="All Signals" value={formatRValue(tradeLog.stats.allSignalsR)} helper="Resolved scanner expectancy" />
+                        <TradeLogStat label="Followed Trades" value={formatRValue(tradeLog.stats.followedSignalsR)} helper={`${tradeLog.stats.resolvedTaken} resolved taken trades`} />
+                        <TradeLogStat label="Unanswered" value={String(tradeLog.stats.unansweredSignals)} helper="Signals without a logged decision" />
                       </div>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
+
+                      <div className="rounded-2xl border border-white/10 bg-black/10 p-4">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300/80">Insight Engine</p>
+                        <div className="mt-3 grid gap-3 lg:grid-cols-3">
+                          {tradeLog.insights.map((insight) => (
+                            <div key={insight} className="rounded-xl border border-white/8 bg-white/5 p-4 text-sm leading-relaxed text-slate-100">
+                              {insight}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </Card>
           </div>
         )}
@@ -1017,11 +1069,29 @@ function SetupCard({
   expanded,
   onToggle,
   isTop,
+  tradeDecision,
+  savingTradeId,
+  expandedSkipTradeId,
+  customSkipReason,
+  onTakeTrade,
+  onToggleSkipTrade,
+  onQuickSkipTrade,
+  onCustomSkipReasonChange,
+  onSubmitCustomSkipReason,
 }: {
   result: ScanResult;
   expanded: boolean;
   onToggle: () => void;
   isTop?: boolean;
+  tradeDecision?: ScannerTradeDecision | null;
+  savingTradeId?: string | null;
+  expandedSkipTradeId?: string | null;
+  customSkipReason?: string;
+  onTakeTrade?: (tradeId: string) => void;
+  onToggleSkipTrade?: (tradeId: string) => void;
+  onQuickSkipTrade?: (tradeId: string, reason: string) => void;
+  onCustomSkipReasonChange?: (tradeId: string, value: string) => void;
+  onSubmitCustomSkipReason?: (tradeId: string) => void;
 }) {
   const isBuy = result.direction === 'buy';
   const outcomeBadge = result.status === 'closed'
@@ -1033,6 +1103,10 @@ function SetupCard({
       : null;
   const entryInstruction = getEntryInstruction(result);
   const livePulse = getLiveTradePulse(result);
+  const showTradeActions = result.status === 'active' && Boolean(tradeDecision);
+  const tradeId = tradeDecision?.tradeId ?? null;
+  const skipExpanded = tradeId != null && expandedSkipTradeId === tradeId;
+  const savingTrade = tradeId != null && savingTradeId === tradeId;
 
   return (
     <div>
@@ -1080,6 +1154,72 @@ function SetupCard({
           )}
         </div>
       </button>
+
+      {showTradeActions && tradeDecision && tradeId ? (
+        <div className="mt-3 rounded-2xl border border-cyan-400/15 bg-cyan-400/5 p-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-300/80">Trade Decision</p>
+              <p className="mt-1 text-sm text-cyan-50">Did you take this setup?</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" variant={tradeDecision.action === 'taken' ? 'default' : 'secondary'} onClick={() => onTakeTrade?.(tradeId)} disabled={savingTrade}>
+                {savingTrade && tradeDecision.action !== 'taken' ? 'Saving...' : 'YES'}
+              </Button>
+              <Button size="sm" variant={tradeDecision.action === 'skipped' || skipExpanded ? 'outline' : 'ghost'} onClick={() => onToggleSkipTrade?.(tradeId)} disabled={savingTrade}>
+                NO
+              </Button>
+            </div>
+          </div>
+
+          {tradeDecision.action === 'skipped' && tradeDecision.skipReason ? (
+            <p className="mt-3 text-sm text-amber-200">Skip reason: {tradeDecision.skipReason}</p>
+          ) : null}
+
+          <AnimatePresence initial={false}>
+            {skipExpanded && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.18 }}
+                className="overflow-hidden"
+              >
+                <div className="mt-3 rounded-2xl border border-white/10 bg-black/10 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Why did you skip?</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {SKIP_REASON_OPTIONS.map((reason) => (
+                      <Button
+                        key={reason}
+                        variant={tradeDecision.skipReason === reason ? 'secondary' : 'outline'}
+                        size="sm"
+                        onClick={() => onQuickSkipTrade?.(tradeId, reason)}
+                        disabled={savingTrade}
+                      >
+                        {reason}
+                      </Button>
+                    ))}
+                  </div>
+
+                  <div className="mt-3 space-y-2">
+                    <textarea
+                      value={customSkipReason ?? ''}
+                      onChange={(event) => onCustomSkipReasonChange?.(tradeId, event.target.value)}
+                      placeholder="Other reason..."
+                      className="min-h-[88px] w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-foreground outline-none transition focus:border-cyan-400/40"
+                    />
+                    <div className="flex justify-end">
+                      <Button size="sm" variant="secondary" onClick={() => onSubmitCustomSkipReason?.(tradeId)} disabled={savingTrade || (customSkipReason ?? '').trim().length === 0}>
+                        Save skip reason
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      ) : null}
 
       {/* Expanded details */}
       <AnimatePresence>
@@ -1307,134 +1447,6 @@ function PotentialTradeCard({ trade }: { trade: ScannerPotentialTrade }) {
           </div>
         </div>
       </div>
-    </div>
-  );
-}
-
-function TradeDecisionCard({
-  trade,
-  scanResult,
-  saving,
-  skipExpanded,
-  customSkipReason,
-  onTake,
-  onToggleSkip,
-  onQuickSkip,
-  onCustomReasonChange,
-  onCustomSkipSubmit,
-}: {
-  trade: ScannerTradeDecision;
-  scanResult: ScanResult | null;
-  saving: boolean;
-  skipExpanded: boolean;
-  customSkipReason: string;
-  onTake: () => void;
-  onToggleSkip: () => void;
-  onQuickSkip: (reason: string) => void;
-  onCustomReasonChange: (value: string) => void;
-  onCustomSkipSubmit: () => void;
-}) {
-  const isBuy = trade.direction === 'buy';
-  const actionLabel = trade.action === 'taken'
-    ? 'Taken'
-    : trade.action === 'skipped'
-      ? 'Skipped'
-      : 'Awaiting decision';
-  const actionTone = trade.action === 'taken'
-    ? 'text-emerald-300'
-    : trade.action === 'skipped'
-      ? 'text-amber-300'
-      : 'text-cyan-300';
-
-  return (
-    <div className="rounded-2xl border border-white/10 bg-[linear-gradient(135deg,rgba(255,255,255,0.04),rgba(255,255,255,0.015))] p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-300/80">Trade Active</p>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <span className="text-lg font-semibold">{trade.symbol}</span>
-            <Badge variant={isBuy ? 'success' : 'destructive'}>{trade.direction.toUpperCase()}</Badge>
-            {trade.sessionType ? <Badge variant="outline">{SESSION_LABELS[trade.sessionType]}</Badge> : null}
-          </div>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Entry {formatPrice(trade.entry)}
-            {trade.strategy ? ` • ${trade.strategy}` : ''}
-          </p>
-        </div>
-
-        <div className="rounded-xl border border-white/10 bg-black/15 px-3 py-2 text-right">
-          <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Status</p>
-          <p className={`mt-1 text-sm font-semibold ${actionTone}`}>{actionLabel}</p>
-        </div>
-      </div>
-
-      <div className="mt-4 grid gap-3 sm:grid-cols-3">
-        <PriceRow label="Entry" value={formatPrice(trade.entry)} color="text-foreground" />
-        <PriceRow label="SL" value={formatPrice(trade.stopLoss)} color="text-red-400" />
-        <PriceRow label="Final TP" value={formatPrice(trade.takeProfit)} color="text-emerald-300" />
-      </div>
-
-      {scanResult?.currentPrice != null ? (
-        <div className="mt-3 rounded-xl border border-cyan-400/15 bg-cyan-400/5 px-3 py-2 text-sm text-cyan-100">
-          Live price: <span className="font-semibold">{formatPrice(scanResult.currentPrice)}</span>
-        </div>
-      ) : null}
-
-      <div className="mt-4 flex flex-wrap gap-2">
-        <Button variant={trade.action === 'taken' ? 'default' : 'secondary'} size="sm" onClick={onTake} disabled={saving}>
-          {saving && trade.action !== 'taken' ? 'Saving...' : 'YES'}
-        </Button>
-        <Button variant={trade.action === 'skipped' || skipExpanded ? 'outline' : 'ghost'} size="sm" onClick={onToggleSkip} disabled={saving}>
-          NO
-        </Button>
-      </div>
-
-      {trade.action === 'skipped' && trade.skipReason ? (
-        <p className="mt-3 text-sm text-amber-200">Skip reason: {trade.skipReason}</p>
-      ) : null}
-
-      <AnimatePresence initial={false}>
-        {skipExpanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.18 }}
-            className="overflow-hidden"
-          >
-            <div className="mt-4 rounded-2xl border border-white/10 bg-black/10 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Why did you skip?</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {SKIP_REASON_OPTIONS.map((reason) => (
-                  <Button
-                    key={reason}
-                    variant={trade.skipReason === reason ? 'secondary' : 'outline'}
-                    size="sm"
-                    onClick={() => onQuickSkip(reason)}
-                    disabled={saving}
-                  >
-                    {reason}
-                  </Button>
-                ))}
-              </div>
-
-              <div className="mt-3 space-y-2">
-                <textarea
-                  value={customSkipReason}
-                  onChange={(event) => onCustomReasonChange(event.target.value)}
-                  placeholder="Other reason..."
-                  className="min-h-[88px] w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-foreground outline-none transition focus:border-cyan-400/40"
-                />
-                <div className="flex justify-end">
-                  <Button size="sm" variant="secondary" onClick={onCustomSkipSubmit} disabled={saving || customSkipReason.trim().length === 0}>
-                    Save skip reason
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
