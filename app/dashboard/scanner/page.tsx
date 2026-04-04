@@ -353,10 +353,6 @@ export default function ScannerPage() {
   // ── Passive refresh interval ──
   useEffect(() => {
     if (!token) {
-      if (liveRuntimeIntervalRef.current) {
-        clearInterval(liveRuntimeIntervalRef.current);
-        liveRuntimeIntervalRef.current = null;
-      }
       if (backgroundIntervalRef.current) {
         clearInterval(backgroundIntervalRef.current);
         backgroundIntervalRef.current = null;
@@ -364,43 +360,35 @@ export default function ScannerPage() {
       return;
     }
 
-    const refreshLivePanels = async () => {
-      if (liveRefreshInFlightRef.current) return;
-      liveRefreshInFlightRef.current = true;
-      try {
-        await loadLiveScannerPanels();
-      }
-    };
-
     const refreshScannerData = async () => {
       if (backgroundRefreshInFlightRef.current) return;
       backgroundRefreshInFlightRef.current = true;
       setScanning(true);
       try {
-        await Promise.all([loadStatus(), loadResults(), loadPotentialTrades(), loadHistoryResults(), loadAlerts(), loadSummary()]);
+        await Promise.all([loadStatus(), loadHistoryResults(), loadAlerts(), loadSummary()]);
       } catch {
         // silent
       } finally {
-            await Promise.all([loadStatus(), loadHistoryResults(), loadAlerts(), loadSummary()]);
+        backgroundRefreshInFlightRef.current = false;
         setScanning(false);
       }
     };
 
-    void refreshLivePanels();
     void refreshScannerData();
 
-    liveRuntimeIntervalRef.current = setInterval(refreshLivePanels, LIVE_RUNTIME_REFRESH_MS);
     backgroundIntervalRef.current = setInterval(refreshScannerData, BACKGROUND_REFRESH_MS);
 
-      if (liveRuntimeIntervalRef.current) {
-        clearInterval(liveRuntimeIntervalRef.current);
-        liveRuntimeIntervalRef.current = null;
+    return () => {
+      if (backgroundIntervalRef.current) {
+        clearInterval(backgroundIntervalRef.current);
+        backgroundIntervalRef.current = null;
       }
     };
-  }, [token, loadAlerts, loadHistoryResults, loadLiveScannerPanels, loadPotentialTrades, loadResults, loadStatus, loadSummary]);
+
+  }, [token, loadAlerts, loadHistoryResults, loadStatus, loadSummary]);
 
   // ── Toggle session ──
-      }, [token, loadAlerts, loadHistoryResults, loadStatus, loadSummary]);
+  const handleToggleSession = async (type: ScannerSessionType) => {
     if (!token) return;
     setTogglingSession(type);
     try {
