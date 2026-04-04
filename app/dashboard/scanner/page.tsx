@@ -15,6 +15,8 @@ import type {
   ScannerSession,
   ScannerSessionType,
   ScannerSessionSummary,
+  ScannerTradeDecision,
+  ScannerTradeLogOverview,
 } from '@/lib/api';
 import { supabase } from '@/lib/supabase';
 import {
@@ -56,6 +58,14 @@ const SESSION_HOURS: Record<ScannerSessionType, string> = {
   volatility: 'Runs 24/7 on Volatility 10-100 and 10s-100s',
 };
 
+const SKIP_REASON_OPTIONS = [
+  'Missed it',
+  'Didn’t trust setup',
+  'Risk too high',
+  'Already in trade',
+  'Other',
+] as const;
+
 function getSessionStatusText(sessionType: ScannerSessionType, windowActive: boolean) {
   if (sessionType === 'volatility') {
     return SESSION_HOURS[sessionType];
@@ -77,6 +87,10 @@ function formatPrice(price: number | null | undefined) {
   if (price >= 100) return price.toFixed(2);
   if (price >= 1) return price.toFixed(4);
   return price.toFixed(5);
+}
+
+function formatRValue(value: number) {
+  return `${value >= 0 ? '+' : ''}${value.toFixed(2)}R`;
 }
 
 function getLiveTradePulse(result: ScanResult) {
@@ -229,6 +243,7 @@ export default function ScannerPage() {
   const [historyResults, setHistoryResults] = useState<ScanResult[]>([]);
   const [alerts, setAlerts] = useState<ScannerAlert[]>([]);
   const [summary, setSummary] = useState<ScannerSessionSummary | null>(null);
+  const [tradeLog, setTradeLog] = useState<ScannerTradeLogOverview | null>(null);
   const [scanning, setScanning] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [togglingSession, setTogglingSession] = useState<ScannerSessionType | null>(null);
@@ -236,6 +251,9 @@ export default function ScannerPage() {
   const [showAlerts, setShowAlerts] = useState(false);
   const [showPotentialTrades, setShowPotentialTrades] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [savingTradeId, setSavingTradeId] = useState<string | null>(null);
+  const [expandedSkipTradeId, setExpandedSkipTradeId] = useState<string | null>(null);
+  const [customSkipReasons, setCustomSkipReasons] = useState<Record<string, string>>({});
 
   const backgroundIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const backgroundRefreshInFlightRef = useRef(false);
@@ -313,13 +331,23 @@ export default function ScannerPage() {
     }
   }, [token]);
 
+  const loadTradeLog = useCallback(async () => {
+    if (!token) return;
+    try {
+      const data = await api.scanner.getTradeLog(token);
+      setTradeLog(data);
+    } catch {
+      // silent
+    }
+  }, [token]);
+
   // ── Initial load ──
   useEffect(() => {
     if (!token || authLoading) return;
-    Promise.all([loadStatus(), loadResults(), loadPotentialTrades(), loadHistoryResults(), loadAlerts(), loadSummary()]).finally(() =>
+    Promise.all([loadStatus(), loadResults(), loadPotentialTrades(), loadHistoryResults(), loadAlerts(), loadSummary(), loadTradeLog()]).finally(() =>
       setInitialLoading(false),
     );
-  }, [token, authLoading, loadStatus, loadResults, loadPotentialTrades, loadHistoryResults, loadAlerts, loadSummary]);
+  }, [token, authLoading, loadStatus, loadResults, loadPotentialTrades, loadHistoryResults, loadAlerts, loadSummary, loadTradeLog]);
 
   // ── Realtime alerts via Supabase ──
   useEffect(() => {
@@ -357,7 +385,7 @@ export default function ScannerPage() {
             return;
           }
 
-          void Promise.all([loadHistoryResults(), loadSummary()]);
+          void Promise.all([loadHistoryResults(), loadSummary(), loadTradeLog()]);
         },
       )
       .subscribe();
@@ -428,7 +456,7 @@ export default function ScannerPage() {
       backgroundRefreshInFlightRef.current = true;
       setScanning(true);
       try {
-        await Promise.all([loadStatus(), loadHistoryResults(), loadAlerts(), loadSummary()]);
+        await Promise.all([loadStatus(), loadHistoryResults(), loadAlerts(), loadSummary(), loadTradeLog()]);
       } catch {
         // silent
       } finally {
@@ -448,7 +476,33 @@ export default function ScannerPage() {
       }
     };
 
-  }, [token, loadAlerts, loadHistoryResults, loadStatus, loadSummary]);
+  }, [token, loadAlerts, loadHistoryResults, loadStatus, loadSummary, loadTradeLog]);
+
+  const handleTradeAction = useCallback(async (tradeId: string, action: 'taken' | 'skipped', skipReason?: string) => {
+    if (!token) return;
+
+    setSavingTradeId(tradeId);
+    try {
+      await api.scanner.saveTradeAction(
+        {
+          tradeId,
+          action,
+          ...(skipReason ? { skipReason } : {}),
+        },
+        token,
+      );
+      await loadTradeLog();
+      if (action === 'taken') {
+        setExpandedSkipTradeId((current) => current === tradeId ? null : current);
+      } else {
+        setExpandedSkipTradeId(null);
+      }
+    } catch {
+      // silent
+    } finally {
+      setSavingTradeId(null);
+    }
+  }, [token, loadTradeLog]);
 
   // ── Toggle session ──
   const handleToggleSession = async (type: ScannerSessionType) => {
@@ -523,6 +577,7 @@ export default function ScannerPage() {
   }
 
   const topResult = results.find((r) => r.rank === 1 && r.status === 'active');
+  const activeTradeDecisions = tradeLog?.activeTrades ?? [];
   const liveResults = results
     .filter((r) => r.status === 'triggered')
     .sort((left, right) => {
@@ -535,6 +590,7 @@ export default function ScannerPage() {
       return rightTriggeredAt - leftTriggeredAt;
     });
   const closedResults = results.filter((r) => r.status === 'closed');
+  const resultById = new Map(results.map((result) => [result.id, result]));
 
   return (
     <div>
@@ -678,6 +734,92 @@ export default function ScannerPage() {
                   <span className="text-sm font-bold text-orange-400">#1 Best Setup</span>
                 </div>
                 <SetupCard result={topResult} expanded={expandedResult === topResult.id} onToggle={() => setExpandedResult(expandedResult === topResult.id ? null : topResult.id)} isTop />
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        <div className="mb-6">
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <CardTitle className="text-lg">Trade Decisions</CardTitle>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Log whether you took the active setup with one tap. No popup friction.
+                  </p>
+                </div>
+                <Badge variant="outline">{activeTradeDecisions.length} active</Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {activeTradeDecisions.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 p-6 text-center text-sm text-muted-foreground">
+                  Active trade decisions will appear here as soon as the scanner logs a fresh setup.
+                </div>
+              ) : (
+                <div className="grid gap-3 lg:grid-cols-2">
+                  {activeTradeDecisions.map((trade) => (
+                    <TradeDecisionCard
+                      key={trade.tradeId}
+                      trade={trade}
+                      scanResult={resultById.get(trade.scanResultId) ?? null}
+                      saving={savingTradeId === trade.tradeId}
+                      skipExpanded={expandedSkipTradeId === trade.tradeId}
+                      customSkipReason={customSkipReasons[trade.tradeId] ?? ''}
+                      onTake={() => handleTradeAction(trade.tradeId, 'taken')}
+                      onToggleSkip={() => setExpandedSkipTradeId((current) => current === trade.tradeId ? null : trade.tradeId)}
+                      onQuickSkip={(reason) => {
+                        if (reason === 'Other') {
+                          setExpandedSkipTradeId(trade.tradeId);
+                          return;
+                        }
+
+                        void handleTradeAction(trade.tradeId, 'skipped', reason);
+                      }}
+                      onCustomReasonChange={(value) => setCustomSkipReasons((prev) => ({ ...prev, [trade.tradeId]: value }))}
+                      onCustomSkipSubmit={() => {
+                        const reason = (customSkipReasons[trade.tradeId] ?? '').trim();
+                        if (!reason) {
+                          return;
+                        }
+
+                        void handleTradeAction(trade.tradeId, 'skipped', reason);
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {tradeLog && (
+          <div className="mb-6">
+            <Card className="overflow-hidden border-cyan-400/15 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.12),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01))]">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Trade Log Insights</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                  <TradeLogStat label="Win Rate" value={`${tradeLog.stats.winRate.toFixed(1)}%`} helper={`${tradeLog.stats.takenWins}W / ${tradeLog.stats.takenLosses}L`} />
+                  <TradeLogStat label="Signals Logged" value={String(tradeLog.stats.totalSignals)} helper={`${tradeLog.stats.totalTaken} taken, ${tradeLog.stats.totalSkipped} skipped`} />
+                  <TradeLogStat label="Missed Winners" value={String(tradeLog.stats.missedWins)} helper={`${tradeLog.stats.missedLosses} skipped losses`} />
+                  <TradeLogStat label="All Signals" value={formatRValue(tradeLog.stats.allSignalsR)} helper="Resolved scanner expectancy" />
+                  <TradeLogStat label="Followed Trades" value={formatRValue(tradeLog.stats.followedSignalsR)} helper={`${tradeLog.stats.resolvedTaken} resolved taken trades`} />
+                  <TradeLogStat label="Unanswered" value={String(tradeLog.stats.unansweredSignals)} helper="Signals without a logged decision" />
+                </div>
+
+                <div className="rounded-2xl border border-white/10 bg-black/10 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300/80">Insight Engine</p>
+                  <div className="mt-3 grid gap-3 lg:grid-cols-3">
+                    {tradeLog.insights.map((insight) => (
+                      <div key={insight} className="rounded-xl border border-white/8 bg-white/5 p-4 text-sm leading-relaxed text-slate-100">
+                        {insight}
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -1169,7 +1311,145 @@ function PotentialTradeCard({ trade }: { trade: ScannerPotentialTrade }) {
   );
 }
 
+function TradeDecisionCard({
+  trade,
+  scanResult,
+  saving,
+  skipExpanded,
+  customSkipReason,
+  onTake,
+  onToggleSkip,
+  onQuickSkip,
+  onCustomReasonChange,
+  onCustomSkipSubmit,
+}: {
+  trade: ScannerTradeDecision;
+  scanResult: ScanResult | null;
+  saving: boolean;
+  skipExpanded: boolean;
+  customSkipReason: string;
+  onTake: () => void;
+  onToggleSkip: () => void;
+  onQuickSkip: (reason: string) => void;
+  onCustomReasonChange: (value: string) => void;
+  onCustomSkipSubmit: () => void;
+}) {
+  const isBuy = trade.direction === 'buy';
+  const actionLabel = trade.action === 'taken'
+    ? 'Taken'
+    : trade.action === 'skipped'
+      ? 'Skipped'
+      : 'Awaiting decision';
+  const actionTone = trade.action === 'taken'
+    ? 'text-emerald-300'
+    : trade.action === 'skipped'
+      ? 'text-amber-300'
+      : 'text-cyan-300';
+
+  return (
+    <div className="rounded-2xl border border-white/10 bg-[linear-gradient(135deg,rgba(255,255,255,0.04),rgba(255,255,255,0.015))] p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-300/80">Trade Active</p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <span className="text-lg font-semibold">{trade.symbol}</span>
+            <Badge variant={isBuy ? 'success' : 'destructive'}>{trade.direction.toUpperCase()}</Badge>
+            {trade.sessionType ? <Badge variant="outline">{SESSION_LABELS[trade.sessionType]}</Badge> : null}
+          </div>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Entry {formatPrice(trade.entry)}
+            {trade.strategy ? ` • ${trade.strategy}` : ''}
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-white/10 bg-black/15 px-3 py-2 text-right">
+          <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Status</p>
+          <p className={`mt-1 text-sm font-semibold ${actionTone}`}>{actionLabel}</p>
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        <PriceRow label="Entry" value={formatPrice(trade.entry)} color="text-foreground" />
+        <PriceRow label="SL" value={formatPrice(trade.stopLoss)} color="text-red-400" />
+        <PriceRow label="Final TP" value={formatPrice(trade.takeProfit)} color="text-emerald-300" />
+      </div>
+
+      {scanResult?.currentPrice != null ? (
+        <div className="mt-3 rounded-xl border border-cyan-400/15 bg-cyan-400/5 px-3 py-2 text-sm text-cyan-100">
+          Live price: <span className="font-semibold">{formatPrice(scanResult.currentPrice)}</span>
+        </div>
+      ) : null}
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Button variant={trade.action === 'taken' ? 'default' : 'secondary'} size="sm" onClick={onTake} disabled={saving}>
+          {saving && trade.action !== 'taken' ? 'Saving...' : 'YES'}
+        </Button>
+        <Button variant={trade.action === 'skipped' || skipExpanded ? 'outline' : 'ghost'} size="sm" onClick={onToggleSkip} disabled={saving}>
+          NO
+        </Button>
+      </div>
+
+      {trade.action === 'skipped' && trade.skipReason ? (
+        <p className="mt-3 text-sm text-amber-200">Skip reason: {trade.skipReason}</p>
+      ) : null}
+
+      <AnimatePresence initial={false}>
+        {skipExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            className="overflow-hidden"
+          >
+            <div className="mt-4 rounded-2xl border border-white/10 bg-black/10 p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Why did you skip?</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {SKIP_REASON_OPTIONS.map((reason) => (
+                  <Button
+                    key={reason}
+                    variant={trade.skipReason === reason ? 'secondary' : 'outline'}
+                    size="sm"
+                    onClick={() => onQuickSkip(reason)}
+                    disabled={saving}
+                  >
+                    {reason}
+                  </Button>
+                ))}
+              </div>
+
+              <div className="mt-3 space-y-2">
+                <textarea
+                  value={customSkipReason}
+                  onChange={(event) => onCustomReasonChange(event.target.value)}
+                  placeholder="Other reason..."
+                  className="min-h-[88px] w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-foreground outline-none transition focus:border-cyan-400/40"
+                />
+                <div className="flex justify-end">
+                  <Button size="sm" variant="secondary" onClick={onCustomSkipSubmit} disabled={saving || customSkipReason.trim().length === 0}>
+                    Save skip reason
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 // ── Small components ──
+
+function TradeLogStat({ label, value, helper }: { label: string; value: string; helper: string }) {
+  return (
+    <div className="rounded-2xl border border-white/8 bg-white/5 p-4">
+      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
+      <p className="mt-3 text-2xl font-semibold">{value}</p>
+      <p className="mt-1 text-xs text-muted-foreground">{helper}</p>
+    </div>
+  );
+}
 
 function PriceRow({ label, value, color }: { label: string; value: string; color: string }) {
   return (
