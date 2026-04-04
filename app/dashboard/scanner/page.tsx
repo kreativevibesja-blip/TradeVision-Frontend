@@ -345,9 +345,24 @@ export default function ScannerPage() {
   // ── Initial load ──
   useEffect(() => {
     if (!token || authLoading) return;
-    Promise.all([loadStatus(), loadResults(), loadPotentialTrades(), loadHistoryResults(), loadAlerts(), loadSummary(), loadTradeLog()]).finally(() =>
-      setInitialLoading(false),
-    );
+
+    let active = true;
+
+    const bootstrap = async () => {
+      await Promise.allSettled([loadStatus(), loadResults(), loadSummary()]);
+
+      if (active) {
+        setInitialLoading(false);
+      }
+
+      void Promise.allSettled([loadPotentialTrades(), loadHistoryResults(), loadAlerts(), loadTradeLog()]);
+    };
+
+    void bootstrap();
+
+    return () => {
+      active = false;
+    };
   }, [token, authLoading, loadStatus, loadResults, loadPotentialTrades, loadHistoryResults, loadAlerts, loadSummary, loadTradeLog]);
 
   // ── Realtime alerts via Supabase ──
@@ -395,7 +410,7 @@ export default function ScannerPage() {
       void supabase?.removeChannel(alertsChannel);
       void supabase?.removeChannel(resultsChannel);
     };
-  }, [user, token, loadHistoryResults, loadPotentialTrades, loadResults, loadSummary]);
+  }, [user, token, loadHistoryResults, loadSummary, loadTradeLog]);
 
   // ── Push-driven live feed and potentials ──
   useEffect(() => {
@@ -465,8 +480,6 @@ export default function ScannerPage() {
         setScanning(false);
       }
     };
-
-    void refreshScannerData();
 
     backgroundIntervalRef.current = setInterval(refreshScannerData, BACKGROUND_REFRESH_MS);
 
