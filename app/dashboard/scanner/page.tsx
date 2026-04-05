@@ -53,10 +53,35 @@ const SESSION_LABELS: Record<ScannerSessionType, string> = {
 };
 
 const SESSION_HOURS: Record<ScannerSessionType, string> = {
-  london: '2:00 AM – 11:00 AM EST',
-  newyork: '8:00 AM – 5:00 PM EST',
+  london: '2:00 AM – 11:00 AM ET',
+  newyork: '8:00 AM – 5:00 PM ET',
   volatility: '24/7 on Volatility 10-100',
 };
+
+const SESSION_WINDOWS: Record<'london' | 'newyork', { startHour: number; endHour: number }> = {
+  london: { startHour: 2, endHour: 11 },
+  newyork: { startHour: 8, endHour: 17 },
+};
+
+/** Client-side session window check — mirrors the backend logic. */
+function isSessionWindowOpen(sessionType: ScannerSessionType): boolean {
+  if (sessionType === 'volatility') return true;
+
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    weekday: 'short',
+    hour: 'numeric',
+    hour12: false,
+  });
+  const parts = formatter.formatToParts(new Date());
+  const weekday = parts.find((p) => p.type === 'weekday')?.value ?? 'Sun';
+  const hour = parseInt(parts.find((p) => p.type === 'hour')?.value ?? '0', 10) % 24;
+
+  if (weekday === 'Sat' || weekday === 'Sun') return false;
+
+  const window = SESSION_WINDOWS[sessionType as 'london' | 'newyork'];
+  return hour >= window.startHour && hour < window.endHour;
+}
 
 function getSessionStatusText(sessionType: ScannerSessionType, windowActive: boolean) {
   if (sessionType === 'volatility') {
@@ -260,8 +285,8 @@ export default function ScannerPage() {
 
   // Scanner state
   const [sessions, setSessions] = useState<ScannerSession[]>([]);
-  const [londonWindowActive, setLondonWindowActive] = useState(false);
-  const [newyorkWindowActive, setNewyorkWindowActive] = useState(false);
+  const [londonWindowActive, setLondonWindowActive] = useState(() => isSessionWindowOpen('london'));
+  const [newyorkWindowActive, setNewyorkWindowActive] = useState(() => isSessionWindowOpen('newyork'));
   const [volatilityWindowActive, setVolatilityWindowActive] = useState(true);
   const [results, setResults] = useState<ScanResult[]>([]);
   const [potentialTrades, setPotentialTrades] = useState<ScannerPotentialTrade[]>([]);
@@ -467,6 +492,16 @@ export default function ScannerPage() {
       }
     };
   }, [token, user]);
+
+  // ── Re-evaluate session windows every minute (client-side) ──
+  useEffect(() => {
+    const tick = () => {
+      setLondonWindowActive(isSessionWindowOpen('london'));
+      setNewyorkWindowActive(isSessionWindowOpen('newyork'));
+    };
+    const id = setInterval(tick, 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   // ── Passive refresh interval ──
   useEffect(() => {
