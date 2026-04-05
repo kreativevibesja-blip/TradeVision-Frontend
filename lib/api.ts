@@ -1335,6 +1335,20 @@ export type ScannerSessionType = 'london' | 'newyork' | 'volatility';
 export type ScanResultStatus = 'active' | 'triggered' | 'closed' | 'invalidated' | 'expired';
 export type ScannerAlertType = 'info' | 'trade' | 'warning';
 
+export interface ScanResultConfirmationMap {
+  liquiditySweep: boolean;
+  engulfing: boolean;
+  rejection: boolean;
+  bos: boolean;
+  poiReclaim: boolean;
+  emaAligned: boolean;
+  zoneReaction: boolean;
+  displacement: boolean;
+  momentum: boolean;
+}
+
+export type ScanResultConfirmations = ScanResultConfirmationMap | string[];
+
 export interface ScannerSession {
   id: string;
   userId: string;
@@ -1356,7 +1370,7 @@ export interface ScanResult {
   takeProfit2: number | null;
   confidenceScore: number;
   strategy: string | null;
-  confirmations: string[];
+  confirmations: ScanResultConfirmations;
   sessionType: ScannerSessionType;
   status: ScanResultStatus;
   closeReason: 'tp' | 'sl' | null;
