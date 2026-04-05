@@ -41,6 +41,7 @@ import {
   EyeOff,
   Trophy,
   Sparkles,
+  X,
 } from 'lucide-react';
 
 // ── Helpers ──
@@ -178,6 +179,18 @@ function confidenceLabel(score: number) {
   if (score >= 7) return 'High';
   if (score >= 4) return 'Medium';
   return 'Low';
+}
+
+function getMarketRegimeBadge(regime: ScanResult['marketRegime']) {
+  if (regime === 'range') {
+    return { label: 'Range', className: 'border-cyan-400/30 bg-cyan-500/10 text-cyan-200' };
+  }
+
+  if (regime === 'reversal') {
+    return { label: 'Reversal', className: 'border-amber-400/30 bg-amber-500/10 text-amber-200' };
+  }
+
+  return { label: 'Trend', className: 'border-emerald-400/30 bg-emerald-500/10 text-emerald-200' };
 }
 
 function formatTimeframeLabel(timeframe: string) {
@@ -941,6 +954,7 @@ function SetupCard({
   isTop?: boolean;
 }) {
   const isBuy = result.direction === 'buy';
+  const regimeBadge = getMarketRegimeBadge(result.marketRegime);
   const outcomeBadge = result.status === 'closed'
     ? result.closeReason === 'tp'
       ? { label: 'Win', variant: 'success' as const }
@@ -951,6 +965,7 @@ function SetupCard({
   const entryInstruction = getEntryInstruction(result);
   const livePulse = getLiveTradePulse(result);
   const showWhyThisTrade = result.status === 'triggered' || result.status === 'closed';
+  const [showWhyThisTradeAnswer, setShowWhyThisTradeAnswer] = useState(false);
 
   return (
     <div>
@@ -970,6 +985,7 @@ function SetupCard({
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-semibold">{result.symbol}</span>
             <Badge variant={isBuy ? 'success' : 'destructive'}>{result.direction.toUpperCase()}</Badge>
+            <Badge variant="outline" className={regimeBadge.className}>{regimeBadge.label}</Badge>
             <Badge variant={entryInstruction.badgeVariant}>{entryInstruction.badgeLabel}</Badge>
             {outcomeBadge ? <Badge variant={outcomeBadge.variant}>{outcomeBadge.label}</Badge> : null}
             {result.rank && result.rank <= 3 && (
@@ -1024,15 +1040,53 @@ function SetupCard({
             )}
 
             {showWhyThisTrade ? (
-              <WhyThisTradePanel
-                confirmations={result.confirmations}
-                confidenceScore={result.confidenceScore}
-              />
+              <div className="relative mt-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowWhyThisTradeAnswer((current) => !current)}
+                  className="h-8 rounded-full border-white/15 bg-white/5 px-3 text-xs text-white/85 hover:bg-white/10"
+                >
+                  <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+                  Why this trade?
+                </Button>
+
+                <AnimatePresence>
+                  {showWhyThisTradeAnswer ? (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 6, scale: 0.98 }}
+                      transition={{ duration: 0.18, ease: 'easeOut' }}
+                      className="relative z-10 mt-3"
+                    >
+                      <div className="absolute right-3 top-3 z-20">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setShowWhyThisTradeAnswer(false)}
+                          className="h-7 w-7 rounded-full text-white/60 hover:bg-white/10 hover:text-white"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <WhyThisTradePanel
+                        confirmations={result.confirmations}
+                        confidenceScore={result.confidenceScore}
+                        className="mt-0 pr-12"
+                      />
+                    </motion.div>
+                  ) : null}
+                </AnimatePresence>
+              </div>
             ) : null}
 
             <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
               <span>Timeframe: {result.timeframe}</span>
               <span>Mode: {SESSION_LABELS[result.sessionType]}</span>
+              <span>Regime: {regimeBadge.label}</span>
               <span>Confidence: {confidenceLabel(result.confidenceScore)} ({result.confidenceScore}/9)</span>
             </div>
           </motion.div>
@@ -1241,6 +1295,7 @@ function LiveTradePulse({
 
 function PotentialTradeCard({ trade }: { trade: ScannerPotentialTrade }) {
   const isBuy = trade.direction === 'buy';
+  const regimeBadge = getMarketRegimeBadge(trade.marketRegime);
 
   return (
     <div className="space-y-4">
@@ -1250,6 +1305,7 @@ function PotentialTradeCard({ trade }: { trade: ScannerPotentialTrade }) {
             <span className="font-semibold">{trade.symbol}</span>
             <Badge variant={isBuy ? 'success' : 'destructive'}>{trade.direction.toUpperCase()}</Badge>
             <Badge variant="outline">{SESSION_LABELS[trade.sessionType]}</Badge>
+            <Badge variant="outline" className={regimeBadge.className}>{regimeBadge.label}</Badge>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">{trade.strategy}</p>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{trade.narrative}</p>
