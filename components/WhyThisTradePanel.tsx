@@ -14,6 +14,8 @@ const CONFIRMATION_ITEMS: Array<{ key: keyof ScanResultConfirmationMap; label: s
   { key: 'zoneReaction', label: 'Zone Reaction' },
   { key: 'displacement', label: 'Displacement' },
   { key: 'momentum', label: 'Momentum' },
+  { key: 'edgeBase', label: 'Edge Consolidation Base' },
+  { key: 'breakerBlock', label: 'Breaker Block' },
 ];
 
 const EMPTY_CONFIRMATIONS: ScanResultConfirmationMap = {
@@ -26,6 +28,8 @@ const EMPTY_CONFIRMATIONS: ScanResultConfirmationMap = {
   zoneReaction: false,
   displacement: false,
   momentum: false,
+  edgeBase: false,
+  breakerBlock: false,
 };
 
 function normalizeLegacyConfirmations(labels: string[]): ScanResultConfirmationMap {
@@ -41,6 +45,8 @@ function normalizeLegacyConfirmations(labels: string[]): ScanResultConfirmationM
     zoneReaction: normalized.some((label) => label.includes('zone') || label.includes('demand') || label.includes('supply') || label.includes('reaction')),
     displacement: normalized.some((label) => label.includes('displacement')),
     momentum: normalized.some((label) => label.includes('momentum')),
+    edgeBase: normalized.some((label) => label.includes('consolidation base') || label.includes('edge base')),
+    breakerBlock: normalized.some((label) => label.includes('breaker block') || label.includes('breaker')),
   };
 }
 
