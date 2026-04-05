@@ -1111,17 +1111,21 @@ function LiveTradePulse({
           <span>Entry</span>
           <span>TP1</span>
         </div>
-        <div className="relative mt-2 h-3 overflow-hidden rounded-full bg-black/25 ring-1 ring-white/10">
-          <motion.div
-            className={`absolute inset-y-0 left-0 rounded-full bg-gradient-to-r ${classes.trail}`}
-            animate={{ width: `${Math.max(4, pulse.pathProgress * 100)}%` }}
-            transition={{ duration: runnerAnimation.travelDuration, ease: 'easeOut' }}
-          />
-          <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-white/25" />
-          <div className="absolute inset-y-[-9px] right-2 flex w-4 items-end justify-between" aria-hidden>
-            <div className="h-6 w-[2px] rounded-full bg-white/65" />
-            <div className="relative h-6 w-3 overflow-hidden rounded-sm border border-white/20 bg-white/10">
-              <div className="absolute inset-0 grid grid-cols-2">
+        <div className="relative mt-2 h-3">
+          {/* Track bar (clipped) */}
+          <div className="absolute inset-0 overflow-hidden rounded-full bg-black/25 ring-1 ring-white/10">
+            <motion.div
+              className={`absolute inset-y-0 left-0 rounded-full bg-gradient-to-r ${classes.trail}`}
+              animate={{ width: `${Math.max(4, pulse.pathProgress * 100)}%` }}
+              transition={{ duration: runnerAnimation.travelDuration, ease: 'easeOut' }}
+            />
+            <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-white/25" />
+          </div>
+          {/* Finish line flag (above track, not clipped) */}
+          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex h-7 w-4 items-end justify-between" aria-hidden>
+            <div className="h-7 w-[2px] rounded-full bg-white/65" />
+            <div className="relative h-5 w-3 overflow-hidden rounded-sm border border-white/20 bg-white/10">
+              <div className="absolute inset-0 grid grid-cols-2 grid-rows-2">
                 <div className="bg-white/80" />
                 <div className="bg-slate-900/90" />
                 <div className="bg-slate-900/90" />
@@ -1129,61 +1133,72 @@ function LiveTradePulse({
               </div>
             </div>
           </div>
+          {/* Runner (not clipped, floats above the bar) */}
           <motion.div
-            className="absolute top-1/2 h-8 w-8 -translate-y-1/2"
+            className="absolute h-8 w-8"
+            style={{ top: '50%', marginTop: '-16px' }}
             animate={{
               left: `calc(${pulse.pathProgress * 100}% - 16px)`,
-              y: [0, -3, 0],
+              y: [0, -4, 0],
             }}
             transition={{
               left: { duration: runnerAnimation.travelDuration, ease: 'easeOut' },
               y: { duration: runnerAnimation.bounceDuration, repeat: Infinity, ease: 'easeInOut' },
             }}
           >
-            <div className={`absolute inset-0 rounded-full bg-black/10 ${runnerAnimation.glowClass}`} />
-            <svg viewBox="0 0 32 32" className="h-8 w-8 overflow-visible">
+            <div className={`absolute inset-0 rounded-full ${runnerAnimation.glowClass}`} />
+            <svg viewBox="0 0 32 32" className="h-8 w-8 overflow-visible drop-shadow-lg">
+              {/* Head */}
               <motion.circle
                 cx="20"
-                cy="7"
-                r="3"
+                cy="6"
+                r="3.5"
                 className={pulse.state === 'profit' ? 'fill-emerald-300' : pulse.state === 'drawdown' ? 'fill-rose-300' : 'fill-cyan-300'}
               />
+              {/* Body + front leg */}
               <motion.path
-                d="M19 11 L15.5 16 L20 19"
+                d="M19 10 L15.5 16 L20 20"
                 stroke="currentColor"
-                strokeWidth="2.2"
+                strokeWidth="2.4"
                 strokeLinecap="round"
                 strokeLinejoin="round"
+                fill="none"
                 className={pulse.state === 'profit' ? 'text-emerald-200' : pulse.state === 'drawdown' ? 'text-rose-200' : 'text-cyan-200'}
                 animate={{ rotate: pulse.state === 'drawdown' ? [8, 2, 8] : [-4, -10, -4] }}
                 transition={{ duration: runnerAnimation.limbDuration, repeat: Infinity, ease: 'easeInOut' }}
                 style={{ transformOrigin: '16px 15px' }}
               />
+              {/* Arm */}
               <motion.path
-                d="M15.5 16 L10.5 13"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                className={pulse.state === 'profit' ? 'text-emerald-100' : pulse.state === 'drawdown' ? 'text-rose-100' : 'text-cyan-100'}
-                animate={{ rotate: [-24, 18, -24] }}
-                transition={{ duration: runnerAnimation.limbDuration, repeat: Infinity, ease: 'easeInOut' }}
-                style={{ transformOrigin: '15.5px 16px' }}
-              />
-              <motion.path
-                d="M15.5 16 L10.5 21"
+                d="M15.5 14 L10 11"
                 stroke="currentColor"
                 strokeWidth="2.2"
                 strokeLinecap="round"
+                fill="none"
+                className={pulse.state === 'profit' ? 'text-emerald-100' : pulse.state === 'drawdown' ? 'text-rose-100' : 'text-cyan-100'}
+                animate={{ rotate: [-28, 22, -28] }}
+                transition={{ duration: runnerAnimation.limbDuration, repeat: Infinity, ease: 'easeInOut' }}
+                style={{ transformOrigin: '15.5px 14px' }}
+              />
+              {/* Back leg */}
+              <motion.path
+                d="M15.5 16 L10 22"
+                stroke="currentColor"
+                strokeWidth="2.4"
+                strokeLinecap="round"
+                fill="none"
                 className={pulse.state === 'profit' ? 'text-emerald-100' : pulse.state === 'drawdown' ? 'text-rose-100' : 'text-cyan-100'}
                 animate={{ rotate: pulse.state === 'drawdown' ? [-10, 10, -10] : [-30, 26, -30] }}
                 transition={{ duration: runnerAnimation.limbDuration, repeat: Infinity, ease: 'easeInOut' }}
                 style={{ transformOrigin: '15.5px 16px' }}
               />
+              {/* Front leg */}
               <motion.path
-                d="M15.5 16 L21.5 23"
+                d="M15.5 16 L22 23"
                 stroke="currentColor"
-                strokeWidth="2.2"
+                strokeWidth="2.4"
                 strokeLinecap="round"
+                fill="none"
                 className={pulse.state === 'profit' ? 'text-emerald-100' : pulse.state === 'drawdown' ? 'text-rose-100' : 'text-cyan-100'}
                 animate={{ rotate: pulse.state === 'drawdown' ? [10, -8, 10] : [24, -22, 24] }}
                 transition={{ duration: runnerAnimation.limbDuration, repeat: Infinity, ease: 'easeInOut' }}
