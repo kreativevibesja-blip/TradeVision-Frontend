@@ -1348,6 +1348,11 @@ export interface ScanResultConfirmationMap {
   momentum: boolean;
   edgeBase: boolean;
   breakerBlock: boolean;
+  fvgReaction: boolean;
+  equalLevelSweep: boolean;
+  premiumDiscount: boolean;
+  ote: boolean;
+  mss: boolean;
 }
 
 export type ScanResultConfirmations = ScanResultConfirmationMap | string[];
