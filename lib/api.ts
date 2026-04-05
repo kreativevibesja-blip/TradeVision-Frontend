@@ -1334,6 +1334,7 @@ export interface RiskSettings {
 export type ScannerSessionType = 'london' | 'newyork' | 'volatility';
 export type ScanResultStatus = 'active' | 'triggered' | 'closed' | 'invalidated' | 'expired';
 export type ScannerAlertType = 'info' | 'trade' | 'warning';
+export type ScanMarketRegime = 'range' | 'trend' | 'reversal';
 
 export interface ScanResultConfirmationMap {
   liquiditySweep: boolean;
@@ -1369,6 +1370,7 @@ export interface ScanResult {
   takeProfit: number;
   takeProfit2: number | null;
   confidenceScore: number;
+  marketRegime: ScanMarketRegime;
   strategy: string | null;
   confirmations: ScanResultConfirmations;
   sessionType: ScannerSessionType;
@@ -1419,6 +1421,7 @@ export interface ScannerPotentialTrade {
   takeProfit: number;
   takeProfit2: number | null;
   activationProbability: number;
+  marketRegime: ScanMarketRegime;
   strategy: string;
   narrative: string;
   fulfilledConditions: string[];
