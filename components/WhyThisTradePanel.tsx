@@ -16,6 +16,11 @@ const CONFIRMATION_ITEMS: Array<{ key: keyof ScanResultConfirmationMap; label: s
   { key: 'momentum', label: 'Momentum' },
   { key: 'edgeBase', label: 'Edge Consolidation Base' },
   { key: 'breakerBlock', label: 'Breaker Block' },
+  { key: 'fvgReaction', label: 'FVG Reaction' },
+  { key: 'equalLevelSweep', label: 'Equal Level Sweep' },
+  { key: 'premiumDiscount', label: 'Premium/Discount' },
+  { key: 'ote', label: 'Optimal Trade Entry' },
+  { key: 'mss', label: 'Market Structure Shift' },
 ];
 
 const EMPTY_CONFIRMATIONS: ScanResultConfirmationMap = {
@@ -30,6 +35,11 @@ const EMPTY_CONFIRMATIONS: ScanResultConfirmationMap = {
   momentum: false,
   edgeBase: false,
   breakerBlock: false,
+  fvgReaction: false,
+  equalLevelSweep: false,
+  premiumDiscount: false,
+  ote: false,
+  mss: false,
 };
 
 function normalizeLegacyConfirmations(labels: string[]): ScanResultConfirmationMap {
@@ -47,6 +57,11 @@ function normalizeLegacyConfirmations(labels: string[]): ScanResultConfirmationM
     momentum: normalized.some((label) => label.includes('momentum')),
     edgeBase: normalized.some((label) => label.includes('consolidation base') || label.includes('edge base')),
     breakerBlock: normalized.some((label) => label.includes('breaker block') || label.includes('breaker')),
+    fvgReaction: normalized.some((label) => label.includes('fvg') || label.includes('imbalance')),
+    equalLevelSweep: normalized.some((label) => label.includes('equal') || label.includes('eql') || label.includes('eqh')),
+    premiumDiscount: normalized.some((label) => label.includes('premium') || label.includes('discount')),
+    ote: normalized.some((label) => label.includes('optimal trade entry') || label.includes('ote') || label.includes('62') || label.includes('fib')),
+    mss: normalized.some((label) => label.includes('market structure shift') || label.includes('mss')),
   };
 }
 
