@@ -47,13 +47,13 @@ import {
 const SESSION_LABELS: Record<ScannerSessionType, string> = {
   london: 'London',
   newyork: 'New York',
-  volatility: 'Volatility 24/7',
+  volatility: 'Volatility Session',
 };
 
 const SESSION_HOURS: Record<ScannerSessionType, string> = {
   london: '2:00 AM – 11:00 AM EST',
   newyork: '8:00 AM – 5:00 PM EST',
-  volatility: 'Runs 24/7 on Volatility 10-100 and 10s-100s',
+  volatility: '2:00 AM – 5:00 PM EST daily on Volatility 10-100 and 10s-100s',
 };
 
 function getSessionStatusText(sessionType: ScannerSessionType, windowActive: boolean) {
