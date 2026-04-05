@@ -212,7 +212,7 @@ export default function BillingPage() {
                 {!billing || billing.recentPayments.length === 0 ? (
                   <div className="text-sm text-muted-foreground">No payment records yet.</div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="max-h-[26rem] space-y-3 overflow-y-auto pr-2">
                     {billing.recentPayments.map((payment) => (
                       <div key={payment.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
                         <div className="mb-2 flex items-center justify-between gap-3">
