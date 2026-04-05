@@ -53,7 +53,7 @@ const SESSION_LABELS: Record<ScannerSessionType, string> = {
 const SESSION_HOURS: Record<ScannerSessionType, string> = {
   london: '2:00 AM – 11:00 AM EST',
   newyork: '8:00 AM – 5:00 PM EST',
-  volatility: '2:00 AM – 5:00 PM EST daily',
+  volatility: '2:00 AM – 5:00 PM EST daily on Volatility 10-100 and 10s-100s',
 };
 
 function getSessionStatusText(sessionType: ScannerSessionType, windowActive: boolean) {
@@ -140,6 +140,33 @@ function getTradePulseClasses(state: 'profit' | 'drawdown' | 'neutral') {
     trail: 'from-cyan-300 via-sky-300 to-blue-300',
     label: 'Near Entry',
     text: 'text-cyan-200',
+  };
+}
+
+function getTradeRunnerAnimation(state: 'profit' | 'drawdown' | 'neutral') {
+  if (state === 'profit') {
+    return {
+      travelDuration: 0.35,
+      bounceDuration: 0.55,
+      limbDuration: 0.34,
+      glowClass: 'shadow-[0_0_18px_rgba(52,211,153,0.45)]',
+    };
+  }
+
+  if (state === 'drawdown') {
+    return {
+      travelDuration: 0.75,
+      bounceDuration: 1.1,
+      limbDuration: 0.9,
+      glowClass: 'shadow-[0_0_14px_rgba(251,113,133,0.38)]',
+    };
+  }
+
+  return {
+    travelDuration: 0.5,
+    bounceDuration: 0.8,
+    limbDuration: 0.55,
+    glowClass: 'shadow-[0_0_16px_rgba(103,232,249,0.36)]',
   };
 }
 
@@ -1026,6 +1053,7 @@ function LiveTradePulse({
   pulse: NonNullable<ReturnType<typeof getLiveTradePulse>>;
 }) {
   const classes = getTradePulseClasses(pulse.state);
+  const runnerAnimation = getTradeRunnerAnimation(pulse.state);
   const signedPriceText = `${pulse.signedMove >= 0 ? '+' : '-'}${formatPrice(Math.abs(pulse.signedMove))}`;
   const percentText = `${pulse.percentFromEntry >= 0 ? '+' : ''}${pulse.percentFromEntry.toFixed(2)}%`;
   const rText = `${pulse.moveInR >= 0 ? '+' : ''}${pulse.moveInR.toFixed(2)}R`;
@@ -1087,15 +1115,81 @@ function LiveTradePulse({
           <motion.div
             className={`absolute inset-y-0 left-0 rounded-full bg-gradient-to-r ${classes.trail}`}
             animate={{ width: `${Math.max(4, pulse.pathProgress * 100)}%` }}
-            transition={{ duration: 0.45, ease: 'easeOut' }}
+            transition={{ duration: runnerAnimation.travelDuration, ease: 'easeOut' }}
           />
           <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-white/25" />
+          <div className="absolute inset-y-[-9px] right-2 flex w-4 items-end justify-between" aria-hidden>
+            <div className="h-6 w-[2px] rounded-full bg-white/65" />
+            <div className="relative h-6 w-3 overflow-hidden rounded-sm border border-white/20 bg-white/10">
+              <div className="absolute inset-0 grid grid-cols-2">
+                <div className="bg-white/80" />
+                <div className="bg-slate-900/90" />
+                <div className="bg-slate-900/90" />
+                <div className="bg-white/80" />
+              </div>
+            </div>
+          </div>
           <motion.div
-            className="absolute top-1/2 h-5 w-5 -translate-y-1/2 rounded-full border border-white/35 bg-white/90 shadow-[0_0_20px_rgba(255,255,255,0.3)]"
-            animate={{ left: `calc(${pulse.pathProgress * 100}% - 10px)`, scale: [1, 1.08, 1] }}
-            transition={{ left: { duration: 0.45, ease: 'easeOut' }, scale: { duration: 1.4, repeat: Infinity, ease: 'easeInOut' } }}
+            className="absolute top-1/2 h-8 w-8 -translate-y-1/2"
+            animate={{
+              left: `calc(${pulse.pathProgress * 100}% - 16px)`,
+              y: [0, -3, 0],
+            }}
+            transition={{
+              left: { duration: runnerAnimation.travelDuration, ease: 'easeOut' },
+              y: { duration: runnerAnimation.bounceDuration, repeat: Infinity, ease: 'easeInOut' },
+            }}
           >
-            <div className={`absolute inset-1 rounded-full ${pulse.state === 'profit' ? 'bg-emerald-400' : pulse.state === 'drawdown' ? 'bg-rose-400' : 'bg-cyan-400'}`} />
+            <div className={`absolute inset-0 rounded-full bg-black/10 ${runnerAnimation.glowClass}`} />
+            <svg viewBox="0 0 32 32" className="h-8 w-8 overflow-visible">
+              <motion.circle
+                cx="20"
+                cy="7"
+                r="3"
+                className={pulse.state === 'profit' ? 'fill-emerald-300' : pulse.state === 'drawdown' ? 'fill-rose-300' : 'fill-cyan-300'}
+              />
+              <motion.path
+                d="M19 11 L15.5 16 L20 19"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className={pulse.state === 'profit' ? 'text-emerald-200' : pulse.state === 'drawdown' ? 'text-rose-200' : 'text-cyan-200'}
+                animate={{ rotate: pulse.state === 'drawdown' ? [8, 2, 8] : [-4, -10, -4] }}
+                transition={{ duration: runnerAnimation.limbDuration, repeat: Infinity, ease: 'easeInOut' }}
+                style={{ transformOrigin: '16px 15px' }}
+              />
+              <motion.path
+                d="M15.5 16 L10.5 13"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                className={pulse.state === 'profit' ? 'text-emerald-100' : pulse.state === 'drawdown' ? 'text-rose-100' : 'text-cyan-100'}
+                animate={{ rotate: [-24, 18, -24] }}
+                transition={{ duration: runnerAnimation.limbDuration, repeat: Infinity, ease: 'easeInOut' }}
+                style={{ transformOrigin: '15.5px 16px' }}
+              />
+              <motion.path
+                d="M15.5 16 L10.5 21"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                className={pulse.state === 'profit' ? 'text-emerald-100' : pulse.state === 'drawdown' ? 'text-rose-100' : 'text-cyan-100'}
+                animate={{ rotate: pulse.state === 'drawdown' ? [-10, 10, -10] : [-30, 26, -30] }}
+                transition={{ duration: runnerAnimation.limbDuration, repeat: Infinity, ease: 'easeInOut' }}
+                style={{ transformOrigin: '15.5px 16px' }}
+              />
+              <motion.path
+                d="M15.5 16 L21.5 23"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                className={pulse.state === 'profit' ? 'text-emerald-100' : pulse.state === 'drawdown' ? 'text-rose-100' : 'text-cyan-100'}
+                animate={{ rotate: pulse.state === 'drawdown' ? [10, -8, 10] : [24, -22, 24] }}
+                transition={{ duration: runnerAnimation.limbDuration, repeat: Infinity, ease: 'easeInOut' }}
+                style={{ transformOrigin: '15.5px 16px' }}
+              />
+            </svg>
           </motion.div>
         </div>
         <div className="mt-2 flex items-center justify-between text-[11px] text-white/65">
