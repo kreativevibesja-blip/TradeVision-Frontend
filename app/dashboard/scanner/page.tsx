@@ -235,6 +235,7 @@ export default function ScannerPage() {
   const [expandedResult, setExpandedResult] = useState<string | null>(null);
   const [showAlerts, setShowAlerts] = useState(false);
   const [showPotentialTrades, setShowPotentialTrades] = useState(false);
+  const [showClosedTrades, setShowClosedTrades] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
 
   const backgroundIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -790,28 +791,47 @@ export default function ScannerPage() {
 
         {/* ── Closed Trades ── */}
         <div className="mb-6">
-          <h2 className="mb-3 text-lg font-semibold">Closed Trades</h2>
-          {closedResults.length === 0 ? (
-            <Card>
-              <CardContent className="p-6 text-center text-sm text-muted-foreground">
-                Closed trades will appear here after TP or SL is hit.
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-3">
-              {closedResults.slice(0, 10).map((result) => (
-                <Card key={result.id}>
-                  <CardContent className="p-4">
-                    <SetupCard
-                      result={result}
-                      expanded={expandedResult === result.id}
-                      onToggle={() => setExpandedResult(expandedResult === result.id ? null : result.id)}
-                    />
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-lg">Closed Trades</CardTitle>
+              <Button variant="ghost" size="sm" onClick={() => setShowClosedTrades((prev) => !prev)}>
+                {showClosedTrades ? 'Hide closed trades' : 'View closed trades'}
+              </Button>
+            </CardHeader>
+            <AnimatePresence initial={false}>
+              {showClosedTrades && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden"
+                >
+                  <CardContent className="pt-0">
+                    {closedResults.length === 0 ? (
+                      <div className="rounded-xl bg-white/5 p-6 text-center text-sm text-muted-foreground">
+                        Closed trades will appear here after TP or SL is hit.
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {closedResults.slice(0, 10).map((result) => (
+                          <Card key={result.id}>
+                            <CardContent className="p-4">
+                              <SetupCard
+                                result={result}
+                                expanded={expandedResult === result.id}
+                                onToggle={() => setExpandedResult(expandedResult === result.id ? null : result.id)}
+                              />
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </Card>
         </div>
 
         {/* ── History Panel ── */}
