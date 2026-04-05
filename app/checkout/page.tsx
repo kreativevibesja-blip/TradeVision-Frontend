@@ -352,6 +352,7 @@ function CheckoutPageContent() {
   const isSuccess = searchParams.get('success') === 'true';
   const isCanceled = searchParams.get('canceled') === 'true';
   const requestedPlan = searchParams.get('plan')?.toUpperCase();
+  const requestedCoupon = searchParams.get('coupon') || '';
   const planKey: PlanKey = requestedPlan === 'FREE' || requestedPlan === 'TOP_TIER' || requestedPlan === 'PRO' ? requestedPlan : 'PRO';
   const plan = planCatalog[planKey];
   const activeBillingAddress = sameAsShipping ? shippingAddress : billingAddress;
@@ -428,6 +429,25 @@ function CheckoutPageContent() {
       })
       .catch(() => {});
   }, [token, planKey]);
+
+  // Auto-apply coupon from URL query param (?coupon=CODE)
+  useEffect(() => {
+    if (!requestedCoupon || !token || couponApplied) return;
+    setCouponCode(requestedCoupon.toUpperCase());
+    setCouponLoading(true);
+    api.validateCoupon(requestedCoupon.trim(), token)
+      .then((result) => {
+        if (result.valid && result.discount) {
+          setCouponApplied({ type: result.discount.type, value: result.discount.value, message: result.message || 'Coupon applied!' });
+        } else {
+          setCouponError(result.message || 'Invalid coupon code');
+        }
+      })
+      .catch((err: any) => {
+        setCouponError(err.message || 'Failed to validate coupon');
+      })
+      .finally(() => setCouponLoading(false));
+  }, [requestedCoupon, token]);
 
   useEffect(() => {
     if (isSuccess && token) {
