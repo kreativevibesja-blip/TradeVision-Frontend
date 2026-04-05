@@ -1346,6 +1346,8 @@ export interface ScanResultConfirmationMap {
   zoneReaction: boolean;
   displacement: boolean;
   momentum: boolean;
+  edgeBase: boolean;
+  breakerBlock: boolean;
 }
 
 export type ScanResultConfirmations = ScanResultConfirmationMap | string[];
