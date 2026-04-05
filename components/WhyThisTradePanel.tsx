@@ -93,9 +93,11 @@ function getConfidenceTone(confidenceScore: number) {
 export default function WhyThisTradePanel({
   confirmations,
   confidenceScore,
+  className = '',
 }: {
   confirmations: ScanResultConfirmations;
   confidenceScore: number;
+  className?: string;
 }) {
   const normalized = normalizeScanResultConfirmations(confirmations);
   const activeItems = CONFIRMATION_ITEMS.filter((item) => normalized[item.key]);
@@ -111,7 +113,7 @@ export default function WhyThisTradePanel({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.22, ease: 'easeOut' }}
-      className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4 shadow-[0_18px_40px_rgba(0,0,0,0.24)]"
+      className={`mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4 shadow-[0_18px_40px_rgba(0,0,0,0.24)] ${className}`}
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
