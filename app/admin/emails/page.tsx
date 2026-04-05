@@ -138,7 +138,7 @@ export default function EmailCampaignsPage() {
 
       {/* Table */}
       <Card className="border-white/10 overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="max-h-[30rem] overflow-x-auto overflow-y-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-white/10 text-left text-muted-foreground">
