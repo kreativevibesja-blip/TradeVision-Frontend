@@ -147,8 +147,7 @@ function getTradeRunnerAnimation(state: 'profit' | 'drawdown' | 'neutral') {
   if (state === 'profit') {
     return {
       travelDuration: 0.35,
-      bounceDuration: 0.55,
-      limbDuration: 0.34,
+      limbDuration: 0.28,
       glowClass: 'shadow-[0_0_18px_rgba(52,211,153,0.45)]',
     };
   }
@@ -156,16 +155,14 @@ function getTradeRunnerAnimation(state: 'profit' | 'drawdown' | 'neutral') {
   if (state === 'drawdown') {
     return {
       travelDuration: 0.75,
-      bounceDuration: 1.1,
-      limbDuration: 0.9,
+      limbDuration: 0.85,
       glowClass: 'shadow-[0_0_14px_rgba(251,113,133,0.38)]',
     };
   }
 
   return {
     travelDuration: 0.5,
-    bounceDuration: 0.8,
-    limbDuration: 0.55,
+    limbDuration: 0.5,
     glowClass: 'shadow-[0_0_16px_rgba(103,232,249,0.36)]',
   };
 }
@@ -1135,74 +1132,99 @@ function LiveTradePulse({
           </div>
           {/* Runner (not clipped, floats above the bar) */}
           <motion.div
-            className="absolute h-8 w-8"
-            style={{ top: '50%', marginTop: '-16px' }}
+            className="absolute h-10 w-10"
+            style={{ top: '50%', marginTop: '-20px' }}
             animate={{
-              left: `calc(${pulse.pathProgress * 100}% - 16px)`,
-              y: [0, -4, 0],
+              left: `calc(${pulse.pathProgress * 100}% - 20px)`,
+              y: [0, -1.5, 0, -1.5, 0],
             }}
             transition={{
               left: { duration: runnerAnimation.travelDuration, ease: 'easeOut' },
-              y: { duration: runnerAnimation.bounceDuration, repeat: Infinity, ease: 'easeInOut' },
+              y: { duration: runnerAnimation.limbDuration, repeat: Infinity, ease: 'linear' },
             }}
           >
             <div className={`absolute inset-0 rounded-full ${runnerAnimation.glowClass}`} />
-            <svg viewBox="0 0 32 32" className="h-8 w-8 overflow-visible drop-shadow-lg">
+            <svg viewBox="0 0 40 40" className="h-10 w-10 overflow-visible drop-shadow-lg">
               {/* Head */}
               <motion.circle
-                cx="20"
+                cx="22"
                 cy="6"
                 r="3.5"
                 className={pulse.state === 'profit' ? 'fill-emerald-300' : pulse.state === 'drawdown' ? 'fill-rose-300' : 'fill-cyan-300'}
               />
-              {/* Body + front leg */}
-              <motion.path
-                d="M19 10 L15.5 16 L20 20"
+              {/* Torso — leaning forward */}
+              <line
+                x1="21" y1="10" x2="18" y2="20"
                 stroke="currentColor"
-                strokeWidth="2.4"
+                strokeWidth="2.5"
                 strokeLinecap="round"
-                strokeLinejoin="round"
-                fill="none"
                 className={pulse.state === 'profit' ? 'text-emerald-200' : pulse.state === 'drawdown' ? 'text-rose-200' : 'text-cyan-200'}
-                animate={{ rotate: pulse.state === 'drawdown' ? [8, 2, 8] : [-4, -10, -4] }}
-                transition={{ duration: runnerAnimation.limbDuration, repeat: Infinity, ease: 'easeInOut' }}
-                style={{ transformOrigin: '16px 15px' }}
               />
-              {/* Arm */}
-              <motion.path
-                d="M15.5 14 L10 11"
+              {/* Left arm (pumps forward when right leg is forward) */}
+              <motion.line
+                x1="20" y1="12" x2="14" y2="16"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                className={pulse.state === 'profit' ? 'text-emerald-100' : pulse.state === 'drawdown' ? 'text-rose-100' : 'text-cyan-100'}
+                animate={{ rotate: [-35, 35, -35] }}
+                transition={{ duration: runnerAnimation.limbDuration, repeat: Infinity, ease: 'easeInOut' }}
+                style={{ transformOrigin: '20px 12px' }}
+              />
+              {/* Right arm (opposite of left) */}
+              <motion.line
+                x1="20" y1="12" x2="26" y2="16"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                className={pulse.state === 'profit' ? 'text-emerald-100' : pulse.state === 'drawdown' ? 'text-rose-100' : 'text-cyan-100'}
+                animate={{ rotate: [35, -35, 35] }}
+                transition={{ duration: runnerAnimation.limbDuration, repeat: Infinity, ease: 'easeInOut' }}
+                style={{ transformOrigin: '20px 12px' }}
+              />
+              {/* Left thigh */}
+              <motion.line
+                x1="18" y1="20" x2="13" y2="27"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                className={pulse.state === 'profit' ? 'text-emerald-200' : pulse.state === 'drawdown' ? 'text-rose-200' : 'text-cyan-200'}
+                animate={{ rotate: [-40, 40, -40] }}
+                transition={{ duration: runnerAnimation.limbDuration, repeat: Infinity, ease: 'easeInOut' }}
+                style={{ transformOrigin: '18px 20px' }}
+              />
+              {/* Left shin */}
+              <motion.line
+                x1="13" y1="27" x2="11" y2="34"
                 stroke="currentColor"
                 strokeWidth="2.2"
                 strokeLinecap="round"
-                fill="none"
                 className={pulse.state === 'profit' ? 'text-emerald-100' : pulse.state === 'drawdown' ? 'text-rose-100' : 'text-cyan-100'}
-                animate={{ rotate: [-28, 22, -28] }}
+                animate={{ rotate: [-40, 40, -40] }}
                 transition={{ duration: runnerAnimation.limbDuration, repeat: Infinity, ease: 'easeInOut' }}
-                style={{ transformOrigin: '15.5px 14px' }}
+                style={{ transformOrigin: '13px 27px' }}
               />
-              {/* Back leg */}
-              <motion.path
-                d="M15.5 16 L10 22"
+              {/* Right thigh (opposite phase) */}
+              <motion.line
+                x1="18" y1="20" x2="23" y2="27"
                 stroke="currentColor"
-                strokeWidth="2.4"
+                strokeWidth="2.5"
                 strokeLinecap="round"
-                fill="none"
-                className={pulse.state === 'profit' ? 'text-emerald-100' : pulse.state === 'drawdown' ? 'text-rose-100' : 'text-cyan-100'}
-                animate={{ rotate: pulse.state === 'drawdown' ? [-10, 10, -10] : [-30, 26, -30] }}
+                className={pulse.state === 'profit' ? 'text-emerald-200' : pulse.state === 'drawdown' ? 'text-rose-200' : 'text-cyan-200'}
+                animate={{ rotate: [40, -40, 40] }}
                 transition={{ duration: runnerAnimation.limbDuration, repeat: Infinity, ease: 'easeInOut' }}
-                style={{ transformOrigin: '15.5px 16px' }}
+                style={{ transformOrigin: '18px 20px' }}
               />
-              {/* Front leg */}
-              <motion.path
-                d="M15.5 16 L22 23"
+              {/* Right shin (opposite phase) */}
+              <motion.line
+                x1="23" y1="27" x2="25" y2="34"
                 stroke="currentColor"
-                strokeWidth="2.4"
+                strokeWidth="2.2"
                 strokeLinecap="round"
-                fill="none"
                 className={pulse.state === 'profit' ? 'text-emerald-100' : pulse.state === 'drawdown' ? 'text-rose-100' : 'text-cyan-100'}
-                animate={{ rotate: pulse.state === 'drawdown' ? [10, -8, 10] : [24, -22, 24] }}
+                animate={{ rotate: [40, -40, 40] }}
                 transition={{ duration: runnerAnimation.limbDuration, repeat: Infinity, ease: 'easeInOut' }}
-                style={{ transformOrigin: '15.5px 16px' }}
+                style={{ transformOrigin: '23px 27px' }}
               />
             </svg>
           </motion.div>
