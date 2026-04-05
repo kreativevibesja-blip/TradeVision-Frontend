@@ -1398,7 +1398,7 @@ export interface ScannerPotentialTrade {
   entry: number;
   stopLoss: number;
   takeProfit: number;
-  takeProfit2: number;
+  takeProfit2: number | null;
   activationProbability: number;
   strategy: string;
   narrative: string;
