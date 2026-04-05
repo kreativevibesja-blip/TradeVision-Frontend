@@ -966,8 +966,7 @@ function SetupCard({
               <PriceRow label="Live Price" value={formatPrice(result.currentPrice)} color="text-cyan-300" />
               <PriceRow label="Entry" value={formatPrice(result.entry)} color="text-foreground" />
               <PriceRow label="Stop Loss" value={formatPrice(result.stopLoss)} color="text-red-400" />
-              <PriceRow label="TP1 (1:2)" value={formatPrice(result.takeProfit)} color="text-green-400" />
-              <PriceRow label="TP2 (1:3)" value={formatPrice(result.takeProfit2)} color="text-emerald-300" />
+              <PriceRow label="Final TP (1:2)" value={formatPrice(result.takeProfit)} color="text-green-400" />
             </div>
 
             {(result.triggeredAt || result.closedAt) && (
@@ -1116,8 +1115,7 @@ function PotentialTradeCard({ trade }: { trade: ScannerPotentialTrade }) {
         <PriceRow label="Current Price" value={formatPrice(trade.currentPrice)} color="text-foreground" />
         <PriceRow label="Projected Entry" value={formatPrice(trade.entry)} color="text-foreground" />
         <PriceRow label="Projected Stop" value={formatPrice(trade.stopLoss)} color="text-red-400" />
-        <PriceRow label="Projected TP1 (1:2)" value={formatPrice(trade.takeProfit)} color="text-green-400" />
-        <PriceRow label="Projected TP2 (1:3)" value={formatPrice(trade.takeProfit2)} color="text-emerald-300" />
+        <PriceRow label="Projected Final TP (1:2)" value={formatPrice(trade.takeProfit)} color="text-green-400" />
       </div>
 
       {trade.contextLabels.length > 0 && (
