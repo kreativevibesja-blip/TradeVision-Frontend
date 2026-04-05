@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import WhyThisTradePanel, { hasScanResultConfirmation } from '@/components/WhyThisTradePanel';
 import { useAuth } from '@/hooks/useAuth';
 import { api, openScannerPanelsStream } from '@/lib/api';
 import type {
@@ -168,14 +169,14 @@ function getTradeRunnerAnimation(state: 'profit' | 'drawdown' | 'neutral') {
 }
 
 function confidenceColor(score: number) {
-  if (score >= 80) return 'bg-green-500';
-  if (score >= 60) return 'bg-yellow-500';
+  if (score >= 7) return 'bg-green-500';
+  if (score >= 4) return 'bg-yellow-500';
   return 'bg-red-500';
 }
 
 function confidenceLabel(score: number) {
-  if (score >= 80) return 'High';
-  if (score >= 60) return 'Medium';
+  if (score >= 7) return 'High';
+  if (score >= 4) return 'Medium';
   return 'Low';
 }
 
@@ -185,8 +186,7 @@ function formatTimeframeLabel(timeframe: string) {
 
 function getEntryInstruction(result: ScanResult) {
   const timeframeLabel = formatTimeframeLabel(result.timeframe);
-  const engulfingLabel = result.direction === 'buy' ? 'Bullish engulfing' : 'Bearish engulfing';
-  const hasDirectionalEngulfing = result.confirmations.includes(engulfingLabel);
+  const hasDirectionalEngulfing = hasScanResultConfirmation(result.confirmations, 'engulfing');
 
   if (result.status === 'triggered') {
     return {
@@ -198,10 +198,12 @@ function getEntryInstruction(result: ScanResult) {
 
   if (result.status === 'active') {
     if (!hasDirectionalEngulfing) {
+      const directionalEngulfingLabel = result.direction === 'buy' ? 'bullish engulfing' : 'bearish engulfing';
+
       return {
         badgeLabel: 'Await Candle Close',
         badgeVariant: 'secondary' as const,
-        message: `Enter after the current ${timeframeLabel} candle closes with a ${engulfingLabel.toLowerCase()} confirmation.`,
+        message: `Enter after the current ${timeframeLabel} candle closes with a ${directionalEngulfingLabel} confirmation.`,
       };
     }
 
@@ -948,6 +950,7 @@ function SetupCard({
       : null;
   const entryInstruction = getEntryInstruction(result);
   const livePulse = getLiveTradePulse(result);
+  const showWhyThisTrade = result.status === 'triggered' || result.status === 'closed';
 
   return (
     <div>
@@ -1020,20 +1023,17 @@ function SetupCard({
               </div>
             )}
 
-            {result.confirmations.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {result.confirmations.map((c, i) => (
-                  <Badge key={i} variant="outline" className="text-xs">
-                    {c}
-                  </Badge>
-                ))}
-              </div>
-            )}
+            {showWhyThisTrade ? (
+              <WhyThisTradePanel
+                confirmations={result.confirmations}
+                confidenceScore={result.confidenceScore}
+              />
+            ) : null}
 
             <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
               <span>Timeframe: {result.timeframe}</span>
               <span>Mode: {SESSION_LABELS[result.sessionType]}</span>
-              <span>Confidence: {confidenceLabel(result.confidenceScore)}</span>
+              <span>Confidence: {confidenceLabel(result.confidenceScore)} ({result.confidenceScore}/9)</span>
             </div>
           </motion.div>
         )}
