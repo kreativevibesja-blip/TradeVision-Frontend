@@ -290,6 +290,8 @@ export interface AdminAnalyticsResponse {
   };
 }
 
+export type AnnouncementType = 'update' | 'maintenance' | 'discount' | 'new_feature' | 'security' | 'event';
+
 export interface Announcement {
   id: string;
   title: string;
@@ -297,6 +299,9 @@ export interface Announcement {
   isActive: boolean;
   isExpired?: boolean;
   expiresAt?: string | null;
+  type: AnnouncementType;
+  couponCode?: string | null;
+  targetPlan?: 'PRO' | 'TOP_TIER' | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -794,7 +799,7 @@ export const api = {
       }),
     getAnnouncements: (token: string) =>
       apiFetch<{ announcements: Announcement[] }>('/admin/announcements', { token }),
-    createAnnouncement: (data: { title: string; content: string; durationValue?: number; durationUnit?: 'hours' | 'days' }, token: string) =>
+    createAnnouncement: (data: { title: string; content: string; durationValue?: number; durationUnit?: 'hours' | 'days'; type?: AnnouncementType; couponCode?: string; targetPlan?: 'PRO' | 'TOP_TIER' }, token: string) =>
       apiFetch<{ announcement: Announcement }>('/admin/announcements', {
         method: 'POST',
         body: JSON.stringify(data),
