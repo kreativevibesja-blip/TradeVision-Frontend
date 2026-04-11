@@ -264,6 +264,38 @@ export interface AdminUserListItem {
   };
 }
 
+export interface AdminUserDetails {
+  id: string;
+  billing: {
+    currentPlan: 'FREE' | 'PRO' | 'TOP_TIER';
+    status: 'free' | 'active' | 'expired' | 'cancelled';
+    expiresAt: string | null;
+    lastPaymentAt: string | null;
+    canceledAt: string | null;
+    recentPayments: Array<{
+      id: string;
+      amount: number;
+      currency: string;
+      status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
+      paymentMethod: 'PAYPAL' | 'CARD' | 'BANK_TRANSFER' | 'COUPON';
+      bankTransferBank: 'SCOTIABANK' | 'NCB' | null;
+      plan: 'FREE' | 'PRO' | 'TOP_TIER';
+      verifiedAt: string | null;
+      createdAt: string;
+    }>;
+  };
+  openTickets: Array<{
+    id: string;
+    ticketNumber: string;
+    subject: string;
+    category: TicketCategory;
+    priority: TicketPriority;
+    status: TicketStatus;
+    createdAt: string;
+  }>;
+  openTicketCount: number;
+}
+
 export interface LivePlatformMetrics {
   currentVisitors: number;
   totalVisitorsToday: number;
@@ -724,6 +756,8 @@ export const api = {
 
       return apiFetch<{ users: AdminUserListItem[]; total: number; page: number; pages: number }>(`/admin/users?${params.toString()}`, { token });
     },
+    getUserDetails: (id: string, token: string) =>
+      apiFetch<{ user: AdminUserDetails }>(`/admin/users/${encodeURIComponent(id)}`, { token }),
     updateUser: (id: string, data: any, token: string) =>
       apiFetch<any>(`/admin/users/${encodeURIComponent(id)}`, {
         method: 'PATCH',
