@@ -1388,6 +1388,7 @@ export interface ScanResult {
   rank: number | null;
   createdAt: string;
   currentPrice?: number | null;
+  snapshotUrl?: string | null;
 }
 
 export interface ScannerAlert {
