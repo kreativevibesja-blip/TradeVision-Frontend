@@ -22,6 +22,7 @@ import {
   Percent,
   Gift,
   Mail,
+  MessageSquare,
 } from 'lucide-react';
 
 const adminNav = [
@@ -37,6 +38,7 @@ const adminNav = [
   { label: 'Tickets', href: '/admin/tickets', icon: LifeBuoy, badgeKey: 'tickets' as const },
   { label: 'Email Campaigns', href: '/admin/emails', icon: Mail },
   { label: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
+  { label: 'Feedback', href: '/admin/feedback', icon: MessageSquare },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

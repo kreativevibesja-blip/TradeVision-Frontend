@@ -1,9 +1,11 @@
 'use client';
 
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import PushNotificationPrompt from '@/components/PushNotificationPrompt';
+import { FeedbackModal } from '@/components/FeedbackModal';
 import { useAuth } from '@/hooks/useAuth';
 import { CandlestickChart, CreditCard, LayoutDashboard, RadioTower, Users, Bot, Radar } from 'lucide-react';
 
@@ -22,6 +24,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { user, token } = useAuth();
   const isLiveWorkspace = pathname === '/dashboard/tradingview' || pathname === '/dashboard/deriv';
   const showPushPrompt = user?.subscription === 'TOP_TIER' && Boolean(token);
+
+  const [showFeedback, setShowFeedback] = useState(false);
+  const feedbackShown = useRef(false);
+
+  useEffect(() => {
+    if (!user || feedbackShown.current) return;
+    const shown = sessionStorage.getItem('feedback_shown');
+    if (shown) return;
+    const timer = setTimeout(() => {
+      feedbackShown.current = true;
+      sessionStorage.setItem('feedback_shown', '1');
+      setShowFeedback(true);
+    }, 60_000);
+    return () => clearTimeout(timer);
+  }, [user]);
 
   if (isLiveWorkspace) {
     return <div className="h-[calc(100svh-5rem)] overflow-hidden md:h-[calc(100svh-4rem)]">{children}</div>;
@@ -60,6 +77,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </div>
       </div>
+      {user && <FeedbackModal open={showFeedback} onClose={() => setShowFeedback(false)} userId={user.id} />}
     </div>
   );
 }
