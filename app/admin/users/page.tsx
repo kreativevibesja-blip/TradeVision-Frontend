@@ -50,6 +50,7 @@ export default function AdminUsersPage() {
   const [selectedUser, setSelectedUser] = useState<AdminUserListItem | null>(null);
   const [selectedUserDetails, setSelectedUserDetails] = useState<AdminUserDetails | null>(null);
   const [loadingUserDetails, setLoadingUserDetails] = useState(false);
+  const [resettingUsage, setResettingUsage] = useState(false);
 
   useEffect(() => {
     if (token) loadUsers();
@@ -156,6 +157,39 @@ export default function AdminUsersPage() {
         setSelectedUserDetails(data.user);
       }
     } catch {
+    }
+  };
+
+  const resetUsage = async (id: string) => {
+    if (!token) {
+      return;
+    }
+
+    try {
+      setResettingUsage(true);
+      await api.admin.resetUserUsage(id, token);
+      await loadUsers();
+      const details = await api.admin.getUserDetails(id, token);
+      setSelectedUserDetails(details.user);
+      setSelectedUser((current) => {
+        if (!current || current.id !== id) {
+          return current;
+        }
+
+        return {
+          ...current,
+          lastUsageReset: new Date().toISOString(),
+          usage: current.usage
+            ? {
+                ...current.usage,
+                current: 0,
+              }
+            : current.usage,
+        };
+      });
+    } catch {
+    } finally {
+      setResettingUsage(false);
     }
   };
 
@@ -419,6 +453,15 @@ export default function AdminUsersPage() {
                     <span className="ml-1 text-sm text-muted-foreground">/ {selectedUser.usage?.limit ?? 0}</span>
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">Reset basis: {selectedUser.usage?.period === 'month' ? 'monthly' : 'daily'}</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => resetUsage(selectedUser.id)}
+                    disabled={resettingUsage}
+                    className="mt-3"
+                  >
+                    {resettingUsage ? 'Resetting...' : 'Reset Usage'}
+                  </Button>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="rounded-xl border border-white/10 bg-white/5 p-4">
