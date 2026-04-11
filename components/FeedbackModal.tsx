@@ -82,11 +82,9 @@ export function FeedbackModal({ open, onClose, userId }: FeedbackModalProps) {
                 animate={{ scale: 1, opacity: 1 }}
                 className="flex flex-col items-center gap-3 py-6 text-center"
               >
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/20">
-                  <Star className="h-6 w-6 text-emerald-400" fill="currentColor" />
-                </div>
-                <p className="text-lg font-semibold">Thank you!</p>
-                <p className="text-sm text-muted-foreground">Your feedback helps us improve.</p>
+                <span className="text-5xl">🙌</span>
+                <p className="text-lg font-semibold">Thanks for the feedback!</p>
+                <p className="text-sm text-muted-foreground">We appreciate you taking the time.</p>
               </motion.div>
             ) : (
               <>
