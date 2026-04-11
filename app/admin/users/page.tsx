@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
-import { api, type AdminUserListItem } from '@/lib/api';
+import { api, type AdminUserDetails, type AdminUserListItem } from '@/lib/api';
 import { addDaysToDateInputValue, formatJamaicaDate, formatJamaicaDateTime, getEndOfJamaicaDayIso, getJamaicaDateInputValue, getStartOfJamaicaDayIso } from '@/lib/jamaica-time';
 import { Users, Search, Crown, Ban, ShieldCheck, Zap, X, CalendarRange } from 'lucide-react';
 
@@ -48,6 +48,8 @@ export default function AdminUsersPage() {
   const [customDateFrom, setCustomDateFrom] = useState('');
   const [customDateTo, setCustomDateTo] = useState('');
   const [selectedUser, setSelectedUser] = useState<AdminUserListItem | null>(null);
+  const [selectedUserDetails, setSelectedUserDetails] = useState<AdminUserDetails | null>(null);
+  const [loadingUserDetails, setLoadingUserDetails] = useState(false);
 
   useEffect(() => {
     if (token) loadUsers();
@@ -63,6 +65,38 @@ export default function AdminUsersPage() {
       setSelectedUser(updatedSelectedUser);
     }
   }, [users, selectedUser]);
+
+  useEffect(() => {
+    if (!selectedUser || !token) {
+      setSelectedUserDetails(null);
+      setLoadingUserDetails(false);
+      return;
+    }
+
+    let cancelled = false;
+    setLoadingUserDetails(true);
+
+    api.admin.getUserDetails(selectedUser.id, token)
+      .then((data) => {
+        if (!cancelled) {
+          setSelectedUserDetails(data.user);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setSelectedUserDetails(null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoadingUserDetails(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedUser, token]);
 
   const loadUsers = async () => {
     try {
@@ -116,8 +150,24 @@ export default function AdminUsersPage() {
           ...updates,
         };
       });
+
+      if (selectedUser?.id === id) {
+        const data = await api.admin.getUserDetails(id, token!);
+        setSelectedUserDetails(data.user);
+      }
     } catch {
     }
+  };
+
+  const paymentMethodLabel = (payment: AdminUserDetails['billing']['recentPayments'][number]) => {
+    if (payment.paymentMethod === 'BANK_TRANSFER' && payment.bankTransferBank) {
+      return `Bank Transfer (${payment.bankTransferBank})`;
+    }
+
+    if (payment.paymentMethod === 'PAYPAL') return 'PayPal';
+    if (payment.paymentMethod === 'CARD') return 'Card';
+    if (payment.paymentMethod === 'COUPON') return 'Coupon';
+    return 'Bank Transfer';
   };
 
   return (
@@ -315,7 +365,7 @@ export default function AdminUsersPage() {
 
       {selectedUser ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setSelectedUser(null)}>
-          <div className="w-full max-w-2xl rounded-2xl border border-white/10 bg-slate-950 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+          <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl border border-white/10 bg-slate-950 shadow-2xl" onClick={(event) => event.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">User Details</p>
@@ -386,6 +436,27 @@ export default function AdminUsersPage() {
                     {selectedUser.lastUsageReset ? formatJamaicaDateTime(selectedUser.lastUsageReset) : 'Not available'}
                   </p>
                 </div>
+                <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Subscription expiry</p>
+                      <p className="mt-1 text-sm font-medium">
+                        {loadingUserDetails
+                          ? 'Loading...'
+                          : selectedUserDetails?.billing.expiresAt
+                            ? formatJamaicaDateTime(selectedUserDetails.billing.expiresAt)
+                            : selectedUser.subscription === 'FREE'
+                              ? 'Free plan'
+                              : 'Not available'}
+                      </p>
+                    </div>
+                    {selectedUserDetails ? (
+                      <Badge variant={selectedUserDetails.billing.status === 'active' ? 'success' : 'outline'}>
+                        {selectedUserDetails.billing.status.toUpperCase()}
+                      </Badge>
+                    ) : null}
+                  </div>
+                </div>
                 <div className="flex flex-wrap gap-2 pt-2">
                   {selectedUser.subscription === 'FREE' ? (
                     <Button onClick={() => updateUser(selectedUser.id, { subscription: 'PRO' })}>
@@ -407,6 +478,82 @@ export default function AdminUsersPage() {
                     {selectedUser.banned ? <ShieldCheck className="mr-2 h-4 w-4" /> : <Ban className="mr-2 h-4 w-4" />}
                     {selectedUser.banned ? 'Unban user' : 'Ban user'}
                   </Button>
+                </div>
+              </div>
+
+              <div className="space-y-4 md:col-span-2">
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-medium">Recent payments</p>
+                        <p className="text-xs text-muted-foreground">Payment method, amount, and latest activity</p>
+                      </div>
+                      <Badge variant="outline">{selectedUser._count?.payments ?? 0} total</Badge>
+                    </div>
+
+                    <div className="mt-4 space-y-3">
+                      {loadingUserDetails ? (
+                        <p className="text-sm text-muted-foreground">Loading payments...</p>
+                      ) : selectedUserDetails?.billing.recentPayments.length ? (
+                        selectedUserDetails.billing.recentPayments.map((payment) => (
+                          <div key={payment.id} className="rounded-lg border border-white/10 bg-black/20 p-3">
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <p className="text-sm font-medium">{paymentMethodLabel(payment)}</p>
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                  {payment.plan} plan • {payment.currency} {payment.amount.toFixed(2)}
+                                </p>
+                              </div>
+                              <Badge variant={payment.status === 'COMPLETED' ? 'success' : payment.status === 'FAILED' ? 'destructive' : 'outline'}>
+                                {payment.status}
+                              </Badge>
+                            </div>
+                            <p className="mt-2 text-xs text-muted-foreground">
+                              {formatJamaicaDateTime(payment.verifiedAt || payment.createdAt)}
+                            </p>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-muted-foreground">No recent payments found.</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-medium">Open tickets</p>
+                        <p className="text-xs text-muted-foreground">Support requests still awaiting resolution</p>
+                      </div>
+                      <Badge variant={selectedUserDetails?.openTicketCount ? 'destructive' : 'outline'}>
+                        {loadingUserDetails ? '...' : selectedUserDetails?.openTicketCount ?? 0}
+                      </Badge>
+                    </div>
+
+                    <div className="mt-4 space-y-3">
+                      {loadingUserDetails ? (
+                        <p className="text-sm text-muted-foreground">Loading tickets...</p>
+                      ) : selectedUserDetails?.openTickets.length ? (
+                        selectedUserDetails.openTickets.map((ticket) => (
+                          <div key={ticket.id} className="rounded-lg border border-white/10 bg-black/20 p-3">
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <p className="text-sm font-medium">{ticket.ticketNumber}</p>
+                                <p className="mt-1 text-sm text-white/85">{ticket.subject}</p>
+                              </div>
+                              <Badge variant="outline">{ticket.status}</Badge>
+                            </div>
+                            <p className="mt-2 text-xs text-muted-foreground">
+                              {ticket.category} • {ticket.priority} • {formatJamaicaDateTime(ticket.createdAt)}
+                            </p>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-muted-foreground">No open tickets.</p>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
