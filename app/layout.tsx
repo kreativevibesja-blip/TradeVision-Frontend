@@ -10,6 +10,7 @@ import { GlobalUpdatesModal } from '@/components/GlobalUpdatesModal';
 import { VisitorHeartbeat } from '@/components/VisitorHeartbeat';
 import { WhatsAppSupportButton } from '@/components/WhatsAppSupportButton';
 import { ReferralCapture } from '@/components/ReferralCapture';
+import { FeedbackTrigger } from '@/components/FeedbackTrigger';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -45,6 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <GlobalUpdatesModal />
             <main className="flex-1 pt-16 pb-20 md:pb-0">{children}</main>
             <WhatsAppSupportButton />
+            <FeedbackTrigger />
           </div>
           <Footer />
         </AuthProvider>

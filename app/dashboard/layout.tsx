@@ -1,13 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import PushNotificationPrompt from '@/components/PushNotificationPrompt';
-import { FeedbackModal } from '@/components/FeedbackModal';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/lib/supabase';
 import { CandlestickChart, CreditCard, LayoutDashboard, RadioTower, Users, Bot, Radar } from 'lucide-react';
 
 const dashboardNav = [
@@ -25,37 +22,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { user, token } = useAuth();
   const isLiveWorkspace = pathname === '/dashboard/tradingview' || pathname === '/dashboard/deriv';
   const showPushPrompt = user?.subscription === 'TOP_TIER' && Boolean(token);
-
-  const [showFeedback, setShowFeedback] = useState(false);
-  const feedbackChecked = useRef(false);
-
-  useEffect(() => {
-    if (!user || !supabase || feedbackChecked.current) return;
-    feedbackChecked.current = true;
-
-    let cancelled = false;
-    const sb = supabase;
-    const check = async () => {
-      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-      const { data } = await sb
-        .from('feedback')
-        .select('id')
-        .eq('user_id', user.id)
-        .gte('created_at', sevenDaysAgo)
-        .limit(1);
-
-      if (cancelled || (data && data.length > 0)) return;
-
-      const timer = setTimeout(() => {
-        if (!cancelled) setShowFeedback(true);
-      }, 60_000);
-      return () => clearTimeout(timer);
-    };
-
-    let cleanup: (() => void) | undefined;
-    check().then((c) => { cleanup = c; });
-    return () => { cancelled = true; cleanup?.(); };
-  }, [user]);
 
   if (isLiveWorkspace) {
     return <div className="h-[calc(100svh-5rem)] overflow-hidden md:h-[calc(100svh-4rem)]">{children}</div>;
@@ -94,7 +60,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </div>
       </div>
-      {user && <FeedbackModal open={showFeedback} onClose={() => setShowFeedback(false)} userId={user.id} />}
     </div>
   );
 }
