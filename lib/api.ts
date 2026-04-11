@@ -758,6 +758,11 @@ export const api = {
     },
     getUserDetails: (id: string, token: string) =>
       apiFetch<{ user: AdminUserDetails }>(`/admin/users/${encodeURIComponent(id)}`, { token }),
+    resetUserUsage: (id: string, token: string) =>
+      apiFetch<{ user: AdminUserListItem; resetAt: string }>(`/admin/users/${encodeURIComponent(id)}/reset-usage`, {
+        method: 'POST',
+        token,
+      }),
     updateUser: (id: string, data: any, token: string) =>
       apiFetch<any>(`/admin/users/${encodeURIComponent(id)}`, {
         method: 'PATCH',
