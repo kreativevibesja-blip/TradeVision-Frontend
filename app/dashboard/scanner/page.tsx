@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import WhyThisTradePanel, { hasScanResultConfirmation } from '@/components/WhyThisTradePanel';
+import { TradeChartModal } from '@/components/TradeChartModal';
 import { useAuth } from '@/hooks/useAuth';
 import { api, openScannerPanelsStream } from '@/lib/api';
 import type {
@@ -1001,6 +1002,7 @@ function SetupCard({
   const livePulse = getLiveTradePulse(result);
   const showWhyThisTrade = result.status === 'triggered' || result.status === 'closed';
   const [showWhyThisTradeAnswer, setShowWhyThisTradeAnswer] = useState(false);
+  const [showSnapshot, setShowSnapshot] = useState(false);
 
   return (
     <div>
@@ -1075,7 +1077,7 @@ function SetupCard({
             )}
 
             {showWhyThisTrade ? (
-              <div className="relative mt-3">
+              <div className="relative mt-3 flex flex-wrap items-center gap-2">
                 <Button
                   type="button"
                   variant="outline"
@@ -1086,6 +1088,19 @@ function SetupCard({
                   <Sparkles className="mr-1.5 h-3.5 w-3.5" />
                   Why this trade?
                 </Button>
+
+                {result.snapshotUrl && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowSnapshot(true)}
+                    className="h-8 rounded-full border-white/15 bg-white/5 px-3 text-xs text-white/85 hover:bg-white/10"
+                  >
+                    <BarChart3 className="mr-1.5 h-3.5 w-3.5" />
+                    View Chart
+                  </Button>
+                )}
 
                 <AnimatePresence>
                   {showWhyThisTradeAnswer ? (
@@ -1127,6 +1142,22 @@ function SetupCard({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {result.snapshotUrl && (
+        <TradeChartModal
+          open={showSnapshot}
+          onClose={() => setShowSnapshot(false)}
+          snapshotUrl={result.snapshotUrl}
+          symbol={result.symbol}
+          direction={result.direction}
+          entry={result.entry}
+          stopLoss={result.stopLoss}
+          takeProfit={result.takeProfit}
+          takeProfit2={result.takeProfit2}
+          status={result.status}
+          closeReason={result.closeReason}
+        />
+      )}
     </div>
   );
 }
