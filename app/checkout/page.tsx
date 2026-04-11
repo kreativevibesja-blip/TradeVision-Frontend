@@ -101,10 +101,10 @@ const planCatalog: Record<PlanKey, {
     name: 'PRO+',
     price: 39.95,
     period: '/month',
-    description: '300 analyses per month plus One-Tap Trade and instant execution setups.',
+    description: '500 analyses per month plus One-Tap Trade and instant execution setups.',
     icon: Crown,
     color: 'from-fuchsia-500 via-violet-500 to-cyan-500',
-    features: ['300 analyses per month', 'Instant trade setups', 'One-tap execution', 'Priority signal generation', 'Advanced entry precision', 'Smart Session Scanner'],
+    features: ['500 analyses per month', 'Instant trade setups', 'One-tap execution', 'Priority signal generation', 'Advanced entry precision', 'Smart Session Scanner'],
   },
 };
 

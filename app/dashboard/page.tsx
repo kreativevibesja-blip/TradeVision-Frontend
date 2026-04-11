@@ -79,8 +79,9 @@ export default function DashboardPage() {
 
   const isPaidPlan = user.subscription !== 'FREE';
   const isTopTier = user.subscription === 'TOP_TIER';
+  const monthlyLimitLabel = isTopTier ? '500 analyses per month' : '300 analyses per month';
   const usageLabel = isPaidPlan ? 'Monthly Usage' : 'Daily Usage';
-  const usageValue = isPaidPlan ? '300 analyses per month' : '2';
+  const usageValue = isPaidPlan ? monthlyLimitLabel : '2';
   const usagePercent = isPaidPlan ? 0 : ((user.dailyUsage || 0) / 2) * 100;
 
   return (
@@ -129,7 +130,7 @@ export default function DashboardPage() {
                   <Progress value={usagePercent} className="h-2 mt-2" indicatorClassName={usagePercent >= 100 ? 'bg-red-500' : 'bg-primary'} />
                 )}
                 {isPaidPlan && (
-                  <p className="text-2xl font-bold text-green-400 mt-2">300 / month</p>
+                  <p className="text-2xl font-bold text-green-400 mt-2">{isTopTier ? '500 / month' : '300 / month'}</p>
                 )}
               </CardContent>
             </Card>

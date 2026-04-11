@@ -21,7 +21,7 @@ type DisplayPlan = PricingPlan & {
 };
 
 const oneTapProFeatures = [
-  '300 analyses per month',
+  '500 analyses per month',
   'Instant trade setups',
   'One-tap execution',
   'Priority signal generation',
@@ -56,7 +56,7 @@ const fallbackPlanDetails: Record<'FREE' | 'PRO' | 'TOP_TIER', Omit<DisplayPlan,
     description: 'Instant trade setups with One-Tap Trade, Smart Session Scanner, advanced entry precision, and faster response time.',
     icon: Crown,
     color: 'from-fuchsia-500 via-violet-500 to-cyan-500',
-    cta: 'Upgrade to One-Tap Pro+',
+    cta: 'Upgrade to PRO+',
     ctaLink: '/checkout?plan=TOP_TIER',
     popular: true,
     badge: 'One-Tap Trade',
@@ -90,7 +90,7 @@ const defaultFallbackPlans: DisplayPlan[] = [
   },
   {
     id: 'fallback-top-tier',
-    name: 'One-Tap Pro+',
+    name: 'PRO+',
     tier: 'TOP_TIER',
     price: 39.95,
     features: oneTapProFeatures,
@@ -106,7 +106,7 @@ const toDisplayPlan = (plan: PricingPlan): DisplayPlan => ({
   ...plan,
   ...(plan.tier === 'TOP_TIER'
     ? {
-        name: 'One-Tap Pro+',
+        name: 'PRO+',
         features: oneTapProFeatures,
       }
     : plan.tier !== 'FREE'
