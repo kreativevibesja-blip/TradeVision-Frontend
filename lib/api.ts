@@ -222,6 +222,11 @@ export interface DerivLiveChartMarketData {
   source: 'deriv-backend';
 }
 
+export interface PublicSupportSettings {
+  whatsappNumber: string;
+  whatsappMessage: string;
+}
+
 export interface AdminAnalysisLog {
   id: string;
   pair: string;
@@ -597,6 +602,9 @@ export const api = {
 
   getPublicPricingPlans: () =>
     apiFetch<{ plans: PricingPlan[] }>('/admin/public-pricing-plans'),
+
+  getPublicSupportSettings: () =>
+    apiFetch<PublicSupportSettings>('/admin/public-support-settings'),
 
   // Analysis
   analyzeChartUpload: (formData: FormData, token: string) =>
