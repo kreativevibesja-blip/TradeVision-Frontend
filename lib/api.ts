@@ -1127,6 +1127,9 @@ export const api = {
       return apiFetch<{ results: ScanResult[] }>(`/scanner/results${query ? `?${query}` : ''}`, { token });
     },
 
+    getReplay: (scanResultId: string, token: string) =>
+      apiFetch<{ replay: ScannerTradeReplay }>(`/scanner/results/${encodeURIComponent(scanResultId)}/replay`, { token }),
+
     getAlerts: (token: string, unreadOnly = false) =>
       apiFetch<{ alerts: ScannerAlert[] }>(`/scanner/alerts${unreadOnly ? '?unreadOnly=true' : ''}`, { token }),
 
@@ -1374,6 +1377,8 @@ export type ScannerSessionType = 'london' | 'newyork' | 'volatility';
 export type ScanResultStatus = 'active' | 'triggered' | 'closed' | 'invalidated' | 'expired';
 export type ScannerAlertType = 'info' | 'trade' | 'warning';
 export type ScanMarketRegime = 'range' | 'trend' | 'reversal';
+export type ScannerReplayOutcome = 'open' | 'tp' | 'sl';
+export type ScannerReplayCandle = [number, number, number, number, number];
 
 export interface ScanResultConfirmationMap {
   liquiditySweep: boolean;
@@ -1429,6 +1434,26 @@ export interface ScanResult {
   createdAt: string;
   currentPrice?: number | null;
   snapshotUrl?: string | null;
+}
+
+export interface ScannerTradeReplay {
+  id: string;
+  scanResultId: string;
+  userId: string;
+  symbol: string;
+  timeframe: string;
+  direction: SignalDirection;
+  entry: number;
+  stopLoss: number;
+  takeProfit: number;
+  takeProfit2: number | null;
+  triggeredAt: string;
+  closedAt: string | null;
+  outcome: ScannerReplayOutcome;
+  preEntryCandles: ScannerReplayCandle[];
+  replayCandles: ScannerReplayCandle[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ScannerAlert {
