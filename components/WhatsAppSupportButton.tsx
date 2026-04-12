@@ -4,18 +4,44 @@ import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 import { TicketForm } from '@/components/TicketForm';
+import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ChevronUp, LifeBuoy, MessageCircle, PlusCircle, X } from 'lucide-react';
 
-const whatsappUrl = 'https://wa.me/18762797956?text=Hi%20TradeVision%20AI%2C%20I%20need%20support.';
+const DEFAULT_SUPPORT_WHATSAPP_NUMBER = '18762797956';
+const DEFAULT_SUPPORT_WHATSAPP_MESSAGE = 'Hi TradeVision AI, I need support.';
+
+const normalizeWhatsAppNumber = (value: string) => value.replace(/[^\d]/g, '');
+
+const buildWhatsAppUrl = (number: string, message: string) => {
+  const normalizedNumber = normalizeWhatsAppNumber(number) || DEFAULT_SUPPORT_WHATSAPP_NUMBER;
+  const normalizedMessage = message.trim() || DEFAULT_SUPPORT_WHATSAPP_MESSAGE;
+  return `https://wa.me/${normalizedNumber}?text=${encodeURIComponent(normalizedMessage)}`;
+};
 
 export function WhatsAppSupportButton() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [whatsappUrl, setWhatsappUrl] = useState(() => buildWhatsAppUrl(DEFAULT_SUPPORT_WHATSAPP_NUMBER, DEFAULT_SUPPORT_WHATSAPP_MESSAGE));
   const menuRef = useRef<HTMLDivElement | null>(null);
   const isLiveWorkspace = pathname === '/dashboard/tradingview' || pathname === '/dashboard/deriv';
+
+  useEffect(() => {
+    let active = true;
+
+    api.getPublicSupportSettings()
+      .then((settings) => {
+        if (!active) return;
+        setWhatsappUrl(buildWhatsAppUrl(settings.whatsappNumber, settings.whatsappMessage));
+      })
+      .catch(() => {});
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!menuOpen && !modalOpen) {
