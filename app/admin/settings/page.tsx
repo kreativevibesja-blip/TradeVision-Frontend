@@ -11,7 +11,6 @@ import { Settings, Save, Loader2 } from 'lucide-react';
 
 export default function AdminSettingsPage() {
   const { token } = useAuth();
-  const [settings, setSettings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [aiPrompt, setAiPrompt] = useState('');
@@ -23,6 +22,8 @@ export default function AdminSettingsPage() {
   const [freeOpenAiEnabled, setFreeOpenAiEnabled] = useState(false);
   const [proGeminiEnabled, setProGeminiEnabled] = useState(true);
   const [proOpenAiEnabled, setProOpenAiEnabled] = useState(false);
+  const [supportWhatsappNumber, setSupportWhatsappNumber] = useState('18762797956');
+  const [supportWhatsappMessage, setSupportWhatsappMessage] = useState('Hi TradeVision AI, I need support.');
 
   useEffect(() => {
     if (token) loadSettings();
@@ -31,7 +32,6 @@ export default function AdminSettingsPage() {
   const loadSettings = async () => {
     try {
       const data = await api.admin.getSettings(token!);
-      setSettings(data.settings);
       const prompt = data.settings.find((s: any) => s.key === 'ai_prompt');
       const free = data.settings.find((s: any) => s.key === 'free_daily_limit');
       const pro = data.settings.find((s: any) => s.key === 'pro_daily_limit');
@@ -41,6 +41,8 @@ export default function AdminSettingsPage() {
       const freeOpenAi = data.settings.find((s: any) => s.key === 'ai_model_openai_free_enabled');
       const proGemini = data.settings.find((s: any) => s.key === 'ai_model_gemini_pro_enabled');
       const proOpenAi = data.settings.find((s: any) => s.key === 'ai_model_openai_pro_enabled');
+      const whatsappNumber = data.settings.find((s: any) => s.key === 'support_whatsapp_number');
+      const whatsappMessage = data.settings.find((s: any) => s.key === 'support_whatsapp_message');
       if (prompt) setAiPrompt(prompt.value);
       if (free) setFreeLimit(String(free.value));
       if (pro) setProLimit(String(pro.value));
@@ -50,6 +52,8 @@ export default function AdminSettingsPage() {
       if (freeOpenAi) setFreeOpenAiEnabled(Boolean(freeOpenAi.value));
       if (proGemini) setProGeminiEnabled(Boolean(proGemini.value));
       if (proOpenAi) setProOpenAiEnabled(Boolean(proOpenAi.value));
+      if (whatsappNumber?.value) setSupportWhatsappNumber(String(whatsappNumber.value));
+      if (whatsappMessage?.value) setSupportWhatsappMessage(String(whatsappMessage.value));
     } catch {
     } finally {
       setLoading(false);
@@ -66,11 +70,59 @@ export default function AdminSettingsPage() {
     }
   };
 
+  const connectedWhatsappNumber = supportWhatsappNumber.trim() || 'Not configured';
+
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
       <h1 className="text-2xl font-bold mb-6">System Settings</h1>
 
       <div className="grid gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Settings className="h-5 w-5 text-primary" />
+              WhatsApp Support Settings
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="rounded-lg border border-white/10 bg-background/50 p-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Current connected number</p>
+              <p className="mt-2 text-lg font-semibold">{connectedWhatsappNumber}</p>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <label className="text-sm text-muted-foreground">WhatsApp number</label>
+                <Input
+                  value={supportWhatsappNumber}
+                  onChange={(e) => setSupportWhatsappNumber(e.target.value)}
+                  placeholder="18762797956"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-muted-foreground">Support message</label>
+                <Input
+                  value={supportWhatsappMessage}
+                  onChange={(e) => setSupportWhatsappMessage(e.target.value)}
+                  placeholder="Hi TradeVision AI, I need support."
+                />
+              </div>
+            </div>
+
+            <Button
+              size="sm"
+              onClick={async () => {
+                await saveSetting('support_whatsapp_number', supportWhatsappNumber.trim());
+                await saveSetting('support_whatsapp_message', supportWhatsappMessage.trim());
+              }}
+              disabled={saving}
+            >
+              {saving ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Save className="h-3 w-3 mr-1" />}
+              Save WhatsApp Settings
+            </Button>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
