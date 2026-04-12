@@ -7,11 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import WhyThisTradePanel, { hasScanResultConfirmation } from '@/components/WhyThisTradePanel';
-import { TradeChartModal } from '@/components/TradeChartModal';
+import { TradeReplayModal } from '@/components/TradeReplayModal';
 import { useAuth } from '@/hooks/useAuth';
 import { api, openScannerPanelsStream } from '@/lib/api';
 import type {
   ScanResult,
+  ScannerTradeReplay,
   ScannerPotentialTrade,
   ScannerAlert,
   ScannerSession,
@@ -766,7 +767,7 @@ export default function ScannerPage() {
                   <Flame className="h-5 w-5 text-orange-400" />
                   <span className="text-sm font-bold text-orange-400">#1 Best Setup</span>
                 </div>
-                <SetupCard result={topResult} expanded={expandedResult === topResult.id} onToggle={() => setExpandedResult(expandedResult === topResult.id ? null : topResult.id)} isTop />
+                <SetupCard result={topResult} token={token} expanded={expandedResult === topResult.id} onToggle={() => setExpandedResult(expandedResult === topResult.id ? null : topResult.id)} isTop />
               </CardContent>
             </Card>
           </div>
@@ -805,6 +806,7 @@ export default function ScannerPage() {
                     <CardContent className="p-4">
                       <SetupCard
                         result={result}
+                        token={token}
                         expanded={expandedResult === result.id}
                         onToggle={() => setExpandedResult(expandedResult === result.id ? null : result.id)}
                       />
@@ -894,6 +896,7 @@ export default function ScannerPage() {
                             <CardContent className="p-4">
                               <SetupCard
                                 result={result}
+                                token={token}
                                 expanded={expandedResult === result.id}
                                 onToggle={() => setExpandedResult(expandedResult === result.id ? null : result.id)}
                               />
@@ -939,6 +942,7 @@ export default function ScannerPage() {
                             <CardContent className="p-4">
                               <SetupCard
                                 result={result}
+                                token={token}
                                 expanded={expandedResult === result.id}
                                 onToggle={() => setExpandedResult(expandedResult === result.id ? null : result.id)}
                               />
@@ -980,11 +984,13 @@ export default function ScannerPage() {
 
 function SetupCard({
   result,
+  token,
   expanded,
   onToggle,
   isTop,
 }: {
   result: ScanResult;
+  token: string | null;
   expanded: boolean;
   onToggle: () => void;
   isTop?: boolean;
@@ -1002,7 +1008,38 @@ function SetupCard({
   const livePulse = getLiveTradePulse(result);
   const showWhyThisTrade = result.status === 'triggered' || result.status === 'closed';
   const [showWhyThisTradeAnswer, setShowWhyThisTradeAnswer] = useState(false);
-  const [showSnapshot, setShowSnapshot] = useState(false);
+  const [showReplay, setShowReplay] = useState(false);
+  const [replay, setReplay] = useState<ScannerTradeReplay | null>(null);
+  const [replayLoading, setReplayLoading] = useState(false);
+  const [replayError, setReplayError] = useState<string | null>(null);
+
+  const loadReplay = useCallback(async () => {
+    if (!token) {
+      setReplayError('Sign in again to load this replay.');
+      return;
+    }
+
+    setReplayLoading(true);
+    setReplayError(null);
+
+    try {
+      const data = await api.scanner.getReplay(result.id, token);
+      setReplay(data.replay);
+    } catch (error: any) {
+      setReplayError(error?.message || 'Replay is not available for this trade yet.');
+    } finally {
+      setReplayLoading(false);
+    }
+  }, [result.id, token]);
+
+  const handleOpenReplay = async () => {
+    setShowReplay(true);
+    if (replay || replayLoading) {
+      return;
+    }
+
+    await loadReplay();
+  };
 
   return (
     <div>
@@ -1089,16 +1126,16 @@ function SetupCard({
                   Why this trade?
                 </Button>
 
-                {result.snapshotUrl && (
+                {showWhyThisTrade && (
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => setShowSnapshot(true)}
+                    onClick={() => void handleOpenReplay()}
                     className="h-8 rounded-full border-white/15 bg-white/5 px-3 text-xs text-white/85 hover:bg-white/10"
                   >
                     <BarChart3 className="mr-1.5 h-3.5 w-3.5" />
-                    View Chart
+                    View Trade
                   </Button>
                 )}
 
@@ -1143,21 +1180,14 @@ function SetupCard({
         )}
       </AnimatePresence>
 
-      {result.snapshotUrl && (
-        <TradeChartModal
-          open={showSnapshot}
-          onClose={() => setShowSnapshot(false)}
-          snapshotUrl={result.snapshotUrl}
-          symbol={result.symbol}
-          direction={result.direction}
-          entry={result.entry}
-          stopLoss={result.stopLoss}
-          takeProfit={result.takeProfit}
-          takeProfit2={result.takeProfit2}
-          status={result.status}
-          closeReason={result.closeReason}
-        />
-      )}
+      <TradeReplayModal
+        open={showReplay}
+        onClose={() => setShowReplay(false)}
+        replay={replay}
+        loading={replayLoading}
+        error={replayError}
+        onRetry={() => void loadReplay()}
+      />
     </div>
   );
 }
