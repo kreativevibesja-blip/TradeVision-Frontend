@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api';
+import { supabase } from '@/lib/supabase';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   LayoutDashboard,
@@ -38,19 +39,42 @@ const adminNav = [
   { label: 'Tickets', href: '/admin/tickets', icon: LifeBuoy, badgeKey: 'tickets' as const },
   { label: 'Email Campaigns', href: '/admin/emails', icon: Mail },
   { label: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
-  { label: 'Feedback', href: '/admin/feedback', icon: MessageSquare },
+  { label: 'Feedback', href: '/admin/feedback', icon: MessageSquare, badgeKey: 'feedback' as const },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, token, loading } = useAuth();
   const pathname = usePathname();
   const [openTicketCount, setOpenTicketCount] = useState(0);
+  const [feedbackCount, setFeedbackCount] = useState(0);
 
   useEffect(() => {
     if (!token) return;
     let active = true;
-    const load = () =>
-      api.admin.getOpenTicketCount(token).then((res) => { if (active) setOpenTicketCount(res.count); }).catch(() => {});
+    const loadFeedbackCount = async () => {
+      if (!supabase) return 0;
+
+      try {
+        const result = await supabase
+          .from('feedback')
+          .select('id', { count: 'exact', head: true });
+        return result.count ?? 0;
+      } catch {
+        return 0;
+      }
+    };
+
+    const load = async () => {
+      const [ticketResult, feedbackResult] = await Promise.all([
+        api.admin.getOpenTicketCount(token).catch(() => null),
+        loadFeedbackCount(),
+      ]);
+
+      if (!active) return;
+      setOpenTicketCount(ticketResult?.count ?? 0);
+      setFeedbackCount(feedbackResult ?? 0);
+    };
+
     load();
     const interval = setInterval(load, 60_000);
     return () => { active = false; clearInterval(interval); };
@@ -94,7 +118,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <nav className="space-y-1">
             {adminNav.map((item) => {
               const isActive = pathname === item.href;
-              const badgeCount = item.badgeKey === 'tickets' ? openTicketCount : 0;
+              const badgeCount = item.badgeKey === 'tickets'
+                ? openTicketCount
+                : item.badgeKey === 'feedback'
+                  ? feedbackCount
+                  : 0;
               return (
                 <Link key={item.href} href={item.href}>
                   <div
@@ -122,7 +150,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="flex gap-1 min-w-max">
             {adminNav.map((item) => {
               const isActive = pathname === item.href;
-              const badgeCount = item.badgeKey === 'tickets' ? openTicketCount : 0;
+              const badgeCount = item.badgeKey === 'tickets'
+                ? openTicketCount
+                : item.badgeKey === 'feedback'
+                  ? feedbackCount
+                  : 0;
               return (
                 <Link key={item.href} href={item.href}>
                   <div
