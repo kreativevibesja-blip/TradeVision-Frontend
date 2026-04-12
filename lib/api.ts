@@ -1413,6 +1413,7 @@ export interface ScanResult {
   direction: SignalDirection;
   entry: number;
   stopLoss: number;
+  slReason?: string | null;
   takeProfit: number;
   takeProfit2: number | null;
   confidenceScore: number;
