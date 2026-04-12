@@ -8,15 +8,30 @@ import { supabase } from '@/lib/supabase';
 export function FeedbackTrigger() {
   const { user } = useAuth();
   const [show, setShow] = useState(false);
-  const checked = useRef(false);
+  const checkedUserId = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!user || !supabase || checked.current) return;
-    checked.current = true;
+    if (!user) {
+      checkedUserId.current = null;
+      setShow(false);
+      return;
+    }
+
+    if (!supabase || checkedUserId.current === user.id) return;
+    checkedUserId.current = user.id;
 
     let cancelled = false;
     const sb = supabase;
     const check = async () => {
+      const {
+        data: { user: authUser },
+      } = await sb.auth.getUser();
+
+      const createdAt = authUser?.created_at ? new Date(authUser.created_at).getTime() : NaN;
+      if (!Number.isFinite(createdAt) || Date.now() - createdAt < 7 * 24 * 60 * 60 * 1000) {
+        return;
+      }
+
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
       const { data } = await sb
         .from('feedback')
@@ -29,7 +44,7 @@ export function FeedbackTrigger() {
 
       const timer = setTimeout(() => {
         if (!cancelled) setShow(true);
-      }, 60_000);
+      }, 5_000);
       return () => clearTimeout(timer);
     };
 
