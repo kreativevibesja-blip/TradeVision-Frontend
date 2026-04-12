@@ -30,7 +30,7 @@ const adminNav = [
   { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { label: 'Users', href: '/admin/users', icon: Users },
   { label: 'Analyses', href: '/admin/analyses', icon: FileText },
-  { label: 'Payments', href: '/admin/payments', icon: CreditCard },
+  { label: 'Payments', href: '/admin/payments', icon: CreditCard, badgeKey: 'payments' as const },
   { label: 'Referrals', href: '/admin/referrals', icon: Gift },
   { label: 'Pricing Plans', href: '/admin/pricing', icon: Tag },
   { label: 'Coupons', href: '/admin/coupons', icon: Percent },
@@ -47,6 +47,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const [openTicketCount, setOpenTicketCount] = useState(0);
   const [feedbackCount, setFeedbackCount] = useState(0);
+  const [pendingBankTransferCount, setPendingBankTransferCount] = useState(0);
 
   useEffect(() => {
     if (!token) return;
@@ -64,15 +65,32 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       }
     };
 
+    const loadPendingBankTransferCount = async () => {
+      if (!supabase) return 0;
+
+      try {
+        const result = await supabase
+          .from('Payment')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'PENDING')
+          .eq('paymentMethod', 'BANK_TRANSFER');
+        return result.count ?? 0;
+      } catch {
+        return 0;
+      }
+    };
+
     const load = async () => {
-      const [ticketResult, feedbackResult] = await Promise.all([
+      const [ticketResult, feedbackResult, paymentResult] = await Promise.all([
         api.admin.getOpenTicketCount(token).catch(() => null),
         loadFeedbackCount(),
+        loadPendingBankTransferCount(),
       ]);
 
       if (!active) return;
       setOpenTicketCount(ticketResult?.count ?? 0);
       setFeedbackCount(feedbackResult ?? 0);
+      setPendingBankTransferCount(paymentResult ?? 0);
     };
 
     load();
@@ -120,6 +138,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               const isActive = pathname === item.href;
               const badgeCount = item.badgeKey === 'tickets'
                 ? openTicketCount
+                : item.badgeKey === 'payments'
+                  ? pendingBankTransferCount
                 : item.badgeKey === 'feedback'
                   ? feedbackCount
                   : 0;
@@ -152,6 +172,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               const isActive = pathname === item.href;
               const badgeCount = item.badgeKey === 'tickets'
                 ? openTicketCount
+                : item.badgeKey === 'payments'
+                  ? pendingBankTransferCount
                 : item.badgeKey === 'feedback'
                   ? feedbackCount
                   : 0;
