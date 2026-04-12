@@ -18,29 +18,37 @@ export function FeedbackTrigger() {
     }
 
     if (!supabase || checkedUserId.current === user.id) return;
-    checkedUserId.current = user.id;
 
     let cancelled = false;
     const sb = supabase;
     const check = async () => {
       const {
-        data: { user: authUser },
-      } = await sb.auth.getUser();
+        data: { session },
+      } = await sb.auth.getSession();
 
-      const createdAt = authUser?.created_at ? new Date(authUser.created_at).getTime() : NaN;
+      const authUser = session?.user ?? null;
+
+      if (!authUser?.created_at) {
+        return;
+      }
+
+      const {
+        data,
+      } = await sb
+        .from('feedback')
+        .select('id')
+        .eq('user_id', user.id)
+        .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
+        .limit(1);
+
+      const createdAt = new Date(authUser.created_at).getTime();
       if (!Number.isFinite(createdAt) || Date.now() - createdAt < 7 * 24 * 60 * 60 * 1000) {
         return;
       }
 
-      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-      const { data } = await sb
-        .from('feedback')
-        .select('id')
-        .eq('user_id', user.id)
-        .gte('created_at', sevenDaysAgo)
-        .limit(1);
-
       if (cancelled || (data && data.length > 0)) return;
+
+      checkedUserId.current = user.id;
 
       const timer = setTimeout(() => {
         if (!cancelled) setShow(true);
