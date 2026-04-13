@@ -193,6 +193,16 @@ export interface AnalysisResult {
   createdAt?: string;
 }
 
+export interface UploadErrorLogPayload {
+  errorType: 'INVALID_TYPE' | 'FILE_TOO_LARGE' | 'CORRUPTED_FILE' | 'READ_ERROR' | 'EMPTY_IMAGE';
+  fileType?: string | null;
+  fileSize?: number | null;
+  source?: string;
+  stage?: string;
+  message?: string;
+  metadata?: Record<string, unknown> | null;
+}
+
 export interface LiveChartMarketCandle {
   timestamp: string;
   open: number;
@@ -605,6 +615,13 @@ export const api = {
 
   getPublicSupportSettings: () =>
     apiFetch<PublicSupportSettings>('/admin/public-support-settings'),
+
+  logUploadError: (payload: UploadErrorLogPayload) =>
+    apiFetch<{ success: boolean }>('/upload-errors', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      keepalive: true,
+    }),
 
   // Analysis
   analyzeChartUpload: (formData: FormData, token: string) =>
