@@ -2,7 +2,7 @@
 
 import { Suspense, useCallback, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useDropzone } from 'react-dropzone';
+import { useDropzone, type FileRejection } from 'react-dropzone';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,13 @@ import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { api, resolveAssetUrl, type AnalysisResult } from '@/lib/api';
 import { buildAutoTraderSignalFromAnalysis } from '@/lib/autotrader-signal';
+import {
+  classifyChartUploadError,
+  fileToDataUrlWithFallback,
+  getChartUploadErrorMessage,
+  prepareChartUploadFile,
+  type ChartUploadErrorType,
+} from '@/lib/chart-upload';
 import { AuthModal } from '@/components/AuthModal';
 import { ChartLightbox } from '@/components/ChartLightbox';
 import {
@@ -83,20 +90,14 @@ interface StoredAnalyzeDraft {
   secondaryChart: StoredAnalyzeFile | null;
 }
 
-const fileToDataUrl = (file: File) =>
-  new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        resolve(reader.result);
-        return;
-      }
+type UploadTarget = 'primary' | 'secondary';
 
-      reject(new Error('Could not read chart file'));
-    };
-    reader.onerror = () => reject(new Error('Could not read chart file'));
-    reader.readAsDataURL(file);
-  });
+interface UploadIssue {
+  target: UploadTarget;
+  type: ChartUploadErrorType;
+  message: string;
+  file: File | null;
+}
 
 const dataUrlToFile = async ({ name, type, dataUrl }: StoredAnalyzeFile) => {
   const response = await fetch(dataUrl);
@@ -112,21 +113,24 @@ const saveAnalyzeDraft = async (draft: {
   file: File;
   file2: File | null;
 }) => {
+  const primaryChart = await fileToDataUrlWithFallback(draft.file);
+  const secondaryChart = draft.file2 ? await fileToDataUrlWithFallback(draft.file2) : null;
+
   const payload: StoredAnalyzeDraft = {
     pair: draft.pair,
     timeframe: draft.timeframe,
     timeframe2: draft.timeframe2,
     currentPrice: draft.currentPrice,
     primaryChart: {
-      name: draft.file.name,
-      type: draft.file.type,
-      dataUrl: await fileToDataUrl(draft.file),
+      name: primaryChart.file.name,
+      type: primaryChart.file.type,
+      dataUrl: primaryChart.dataUrl,
     },
-    secondaryChart: draft.file2
+    secondaryChart: secondaryChart
       ? {
-          name: draft.file2.name,
-          type: draft.file2.type,
-          dataUrl: await fileToDataUrl(draft.file2),
+          name: secondaryChart.file.name,
+          type: secondaryChart.file.type,
+          dataUrl: secondaryChart.dataUrl,
         }
       : null,
   };
@@ -319,6 +323,10 @@ function AnalyzePageContent() {
   const [preview, setPreview] = useState<string | null>(null);
   const [file2, setFile2] = useState<File | null>(null);
   const [preview2, setPreview2] = useState<string | null>(null);
+  const [primaryPreviewConfirmed, setPrimaryPreviewConfirmed] = useState(false);
+  const [secondaryPreviewConfirmed, setSecondaryPreviewConfirmed] = useState(false);
+  const [uploadIssue, setUploadIssue] = useState<UploadIssue | null>(null);
+  const [preparingTarget, setPreparingTarget] = useState<UploadTarget | null>(null);
   const [pair, setPair] = useState('');
   const [timeframe, setTimeframe] = useState('');
   const [timeframe2, setTimeframe2] = useState('');
@@ -337,17 +345,129 @@ function AnalyzePageContent() {
   const [queueStarting, setQueueStarting] = useState(false);
   const analysisId = searchParams.get('analysisId');
 
+  const reportUploadFailure = useCallback(async (
+    type: ChartUploadErrorType,
+    target: UploadTarget,
+    nextFile: File | null,
+    message?: string,
+    stage = 'frontend-prepare',
+  ) => {
+    const friendlyMessage = message || getChartUploadErrorMessage(type);
+    setUploadIssue({
+      target,
+      type,
+      message: friendlyMessage,
+      file: nextFile,
+    });
+
+    try {
+      await api.logUploadError({
+        errorType: type,
+        fileType: nextFile?.type || null,
+        fileSize: nextFile?.size || null,
+        source: 'analyze-page',
+        stage,
+        message: friendlyMessage,
+        metadata: {
+          target,
+          pair: pair || null,
+          timeframe: target === 'primary' ? timeframe || null : timeframe2 || null,
+        },
+      });
+    } catch {
+      // Upload logging is best-effort only.
+    }
+  }, [pair, timeframe, timeframe2]);
+
+  const clearUploadTarget = useCallback((target: UploadTarget) => {
+    if (target === 'primary') {
+      setFile(null);
+      setPreview(null);
+      setPrimaryPreviewConfirmed(false);
+    } else {
+      setFile2(null);
+      setPreview2(null);
+      setSecondaryPreviewConfirmed(false);
+      setTimeframe2('');
+    }
+
+    setAnalysis(null);
+    setError('');
+    setUploadIssue((current) => current?.target === target ? null : current);
+  }, []);
+
+  const handlePreparedFile = useCallback(async (nextFile: File, target: UploadTarget) => {
+    setPreparingTarget(target);
+    setError('');
+
+    try {
+      const prepared = await prepareChartUploadFile(nextFile);
+
+      if (target === 'primary') {
+        setFile(prepared.file);
+        setPreview(prepared.previewUrl);
+        setPrimaryPreviewConfirmed(false);
+      } else {
+        setFile2(prepared.file);
+        setPreview2(prepared.previewUrl);
+        setSecondaryPreviewConfirmed(false);
+      }
+
+      setAnalysis(null);
+      setUploadIssue((current) => current?.target === target ? null : current);
+
+      if (prepared.usedRecovery) {
+        await api.logUploadError({
+          errorType: 'READ_ERROR',
+          fileType: nextFile.type || null,
+          fileSize: nextFile.size || null,
+          source: 'analyze-page',
+          stage: 'frontend-recovery-success',
+          message: 'Image recovered successfully by converting to PNG before analysis.',
+          metadata: { target },
+        }).catch(() => {});
+      }
+    } catch (uploadError) {
+      const type = classifyChartUploadError(uploadError);
+      clearUploadTarget(target);
+      await reportUploadFailure(type, target, nextFile, getChartUploadErrorMessage(type));
+    } finally {
+      setPreparingTarget(null);
+    }
+  }, [clearUploadTarget, reportUploadFailure]);
+
+  const retryUpload = useCallback(async () => {
+    if (!uploadIssue?.file) {
+      return;
+    }
+
+    await handlePreparedFile(uploadIssue.file, uploadIssue.target);
+  }, [handlePreparedFile, uploadIssue]);
+
+  const handleDropRejected = useCallback(async (target: UploadTarget, rejections: readonly FileRejection[]) => {
+    const rejection = rejections[0];
+    if (!rejection) {
+      return;
+    }
+
+    const type: ChartUploadErrorType = rejection.errors.some((error) => error.code === 'file-too-large')
+      ? 'FILE_TOO_LARGE'
+      : rejection.errors.some((error) => error.code === 'file-invalid-type')
+        ? 'INVALID_TYPE'
+        : 'READ_ERROR';
+
+    clearUploadTarget(target);
+    await reportUploadFailure(type, target, rejection.file, getChartUploadErrorMessage(type), 'dropzone-reject');
+  }, [clearUploadTarget, reportUploadFailure]);
+
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const nextFile = acceptedFiles[0];
     if (!nextFile) {
       return;
     }
 
-    setFile(nextFile);
-    setPreview(URL.createObjectURL(nextFile));
-    setAnalysis(null);
-    setError('');
-  }, []);
+    void handlePreparedFile(nextFile, 'primary');
+  }, [handlePreparedFile]);
 
   const onDrop2 = useCallback((acceptedFiles: File[]) => {
     const nextFile = acceptedFiles[0];
@@ -355,24 +475,23 @@ function AnalyzePageContent() {
       return;
     }
 
-    setFile2(nextFile);
-    setPreview2(URL.createObjectURL(nextFile));
-    setAnalysis(null);
-    setError('');
-  }, []);
+    void handlePreparedFile(nextFile, 'secondary');
+  }, [handlePreparedFile]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
+    onDropRejected: (rejections) => { void handleDropRejected('primary', rejections); },
     accept: { 'image/png': ['.png'], 'image/jpeg': ['.jpg', '.jpeg'], 'image/webp': ['.webp'] },
     maxFiles: 1,
-    maxSize: 10 * 1024 * 1024,
+    maxSize: 5 * 1024 * 1024,
   });
 
   const { getRootProps: getRootProps2, getInputProps: getInputProps2, isDragActive: isDragActive2 } = useDropzone({
     onDrop: onDrop2,
+    onDropRejected: (rejections) => { void handleDropRejected('secondary', rejections); },
     accept: { 'image/png': ['.png'], 'image/jpeg': ['.jpg', '.jpeg'], 'image/webp': ['.webp'] },
     maxFiles: 1,
-    maxSize: 10 * 1024 * 1024,
+    maxSize: 5 * 1024 * 1024,
   });
 
   const isDualChart = Boolean(file2);
@@ -405,14 +524,17 @@ function AnalyzePageContent() {
 
         setFile(restoredPrimary);
         setPreview(draft.primaryChart.dataUrl);
+        setPrimaryPreviewConfirmed(true);
         setFile2(restoredSecondary);
         setPreview2(draft.secondaryChart?.dataUrl || null);
+        setSecondaryPreviewConfirmed(Boolean(restoredSecondary));
         setPair(draft.pair || '');
         setTimeframe(draft.timeframe || '');
         setTimeframe2(draft.timeframe2 || '');
         setCurrentPrice(draft.currentPrice || '');
         setAnalysis(null);
         setError('');
+        setUploadIssue(null);
 
         router.replace('/analyze');
       } catch {
@@ -507,8 +629,23 @@ function AnalyzePageContent() {
       return;
     }
 
+    if (uploadIssue?.target === 'primary' || uploadIssue?.target === 'secondary') {
+      setError(uploadIssue.message);
+      return;
+    }
+
+    if (!primaryPreviewConfirmed) {
+      setError('Please preview the uploaded chart and confirm “Use this image” before analysis.');
+      return;
+    }
+
     if (file2 && !timeframe2) {
       setError('Please select a timeframe for the second chart.');
+      return;
+    }
+
+    if (file2 && !secondaryPreviewConfirmed) {
+      setError('Please confirm the second chart preview before analysis.');
       return;
     }
 
@@ -648,21 +785,78 @@ function AnalyzePageContent() {
                     }`}
                   >
                     <input {...getInputProps()} />
-                    {preview ? (
+                    {preparingTarget === 'primary' ? (
+                      <div className="space-y-4 py-10">
+                        <Loader2 className="mx-auto h-10 w-10 animate-spin text-primary" />
+                        <div>
+                          <p className="font-medium">Preparing chart upload…</p>
+                          <p className="text-sm text-muted-foreground">Validating the file and attempting recovery if needed.</p>
+                        </div>
+                      </div>
+                    ) : preview ? (
                       <div className="space-y-4">
                         <img src={preview} alt="Chart preview" className="mx-auto h-auto max-h-[400px] w-full rounded-xl object-contain md:max-h-[600px]" />
-                        <p className="text-sm text-muted-foreground">Click or drag to replace</p>
+                        <div className="flex flex-wrap items-center justify-center gap-2">
+                          <Button
+                            type="button"
+                            variant={primaryPreviewConfirmed ? 'outline' : 'default'}
+                            size="sm"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setPrimaryPreviewConfirmed(true);
+                              setUploadIssue((current) => current?.target === 'primary' ? null : current);
+                              setError('');
+                            }}
+                          >
+                            {primaryPreviewConfirmed ? 'Image confirmed' : 'Use this image'}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              clearUploadTarget('primary');
+                            }}
+                          >
+                            Upload another image
+                          </Button>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {primaryPreviewConfirmed ? 'Ready for analysis.' : 'Confirm the preview or click/drag to replace it.'}
+                        </p>
                       </div>
                     ) : (
                       <div className="space-y-4 py-8">
                         <ImageIcon className="h-12 w-12 mx-auto text-muted-foreground" />
                         <div>
                           <p className="font-medium mb-1">Drag & drop your chart screenshot</p>
-                          <p className="text-sm text-muted-foreground">PNG, JPG, or WebP up to 10MB</p>
+                          <p className="text-sm text-muted-foreground">PNG, JPG, or WebP up to 5MB</p>
                         </div>
                       </div>
                     )}
                   </div>
+
+                  {uploadIssue?.target === 'primary' ? (
+                    <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 space-y-3">
+                      <div className="flex items-start gap-2 text-sm text-amber-200">
+                        <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                        <div>
+                          <p className="font-medium">Upload fallback</p>
+                          <p>{uploadIssue.message}</p>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <Button type="button" size="sm" variant="outline" onClick={() => void retryUpload()} disabled={!uploadIssue.file || preparingTarget !== null}>
+                          Try again
+                        </Button>
+                        <Button type="button" size="sm" variant="ghost" onClick={() => clearUploadTarget('primary')}>
+                          Upload another image
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">Please upload a clear chart screenshot (PNG or JPG under 5MB).</p>
+                    </div>
+                  ) : null}
 
                   {isPro && (
                     <div className="space-y-2">
@@ -671,7 +865,12 @@ function AnalyzePageContent() {
                         Chart 2 — Lower Timeframe
                         <span className="text-xs text-muted-foreground">(Optional)</span>
                       </label>
-                      {preview2 ? (
+                      {preparingTarget === 'secondary' ? (
+                        <div className="rounded-2xl border-2 border-dashed border-white/10 p-4 text-center">
+                          <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
+                          <p className="mt-2 text-sm text-muted-foreground">Preparing second chart…</p>
+                        </div>
+                      ) : preview2 ? (
                         <div className="relative">
                           <div
                             {...getRootProps2()}
@@ -683,11 +882,37 @@ function AnalyzePageContent() {
                           >
                             <input {...getInputProps2()} />
                             <img src={preview2} alt="Chart 2 preview" className="mx-auto h-auto max-h-[250px] w-full rounded-xl object-contain" />
-                            <p className="mt-2 text-sm text-muted-foreground">Click or drag to replace</p>
+                            <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+                              <Button
+                                type="button"
+                                variant={secondaryPreviewConfirmed ? 'outline' : 'default'}
+                                size="sm"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  setSecondaryPreviewConfirmed(true);
+                                  setUploadIssue((current) => current?.target === 'secondary' ? null : current);
+                                  setError('');
+                                }}
+                              >
+                                {secondaryPreviewConfirmed ? 'Image confirmed' : 'Use this image'}
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  clearUploadTarget('secondary');
+                                }}
+                              >
+                                Upload another image
+                              </Button>
+                            </div>
+                            <p className="mt-2 text-sm text-muted-foreground">{secondaryPreviewConfirmed ? 'Second chart confirmed.' : 'Confirm the preview or click/drag to replace.'}</p>
                           </div>
                           <button
                             type="button"
-                            onClick={(e) => { e.stopPropagation(); setFile2(null); setPreview2(null); setTimeframe2(''); }}
+                            onClick={(e) => { e.stopPropagation(); clearUploadTarget('secondary'); }}
                             className="absolute top-2 right-2 rounded-full bg-red-500/80 hover:bg-red-500 p-1 text-white text-xs"
                           >
                             ✕
@@ -709,6 +934,26 @@ function AnalyzePageContent() {
                           </div>
                         </div>
                       )}
+
+                      {uploadIssue?.target === 'secondary' ? (
+                        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 space-y-3">
+                          <div className="flex items-start gap-2 text-sm text-amber-200">
+                            <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                            <div>
+                              <p className="font-medium">Second chart fallback</p>
+                              <p>{uploadIssue.message}</p>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            <Button type="button" size="sm" variant="outline" onClick={() => void retryUpload()} disabled={!uploadIssue.file || preparingTarget !== null}>
+                              Try again
+                            </Button>
+                            <Button type="button" size="sm" variant="ghost" onClick={() => clearUploadTarget('secondary')}>
+                              Upload another image
+                            </Button>
+                          </div>
+                        </div>
+                      ) : null}
                     </div>
                   )}
                 </CardContent>
@@ -937,14 +1182,17 @@ function AnalyzePageContent() {
                       setAnalysis(null);
                       setFile(null);
                       setPreview(null);
+                      setPrimaryPreviewConfirmed(false);
                       setFile2(null);
                       setPreview2(null);
+                      setSecondaryPreviewConfirmed(false);
                       setTimeframe2('');
                       setActiveChart('ltf');
                       setShowAiZones(true);
                       setProgress(0);
                       setCurrentStage(ANALYSIS_STEPS[0]);
                       setError('');
+                      setUploadIssue(null);
                     }}
                   >
                     New Analysis
