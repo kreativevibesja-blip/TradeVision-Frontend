@@ -425,7 +425,7 @@ export type AdminPaymentStatusFilter = AdminPayment['status'] | 'ALL';
 export type AdminPaymentPlanFilter = AdminPayment['plan'] | 'ALL';
 export type AdminPaymentMethodFilter = AdminPayment['paymentMethod'] | 'ALL';
 export type AdminPaymentDateRangeFilter = '7d' | '30d' | '90d' | 'all';
-export type AdminPaymentScope = 'COMPLETED_CHECKOUTS' | 'BANK_TRANSFERS';
+export type AdminPaymentScope = 'COMPLETED_CHECKOUTS' | 'BANK_TRANSFERS' | 'ALL_PAYMENTS';
 
 export interface PricingPlan {
   id: string;
@@ -825,6 +825,12 @@ export const api = {
       apiFetch<{ payment: AdminPayment }>(`/admin/payments/${encodeURIComponent(id)}`, {
         method: 'PATCH',
         body: JSON.stringify({ status }),
+        token,
+      }),
+    sendPaymentReminder: (id: string, token: string, opts?: { couponCode?: string; discountLabel?: string }) =>
+      apiFetch<{ success: boolean; message: string }>(`/admin/payments/${encodeURIComponent(id)}/send-reminder`, {
+        method: 'POST',
+        body: JSON.stringify(opts || {}),
         token,
       }),
     getAnalytics: (token: string, range?: { from?: string; to?: string }) => {
