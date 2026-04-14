@@ -142,6 +142,44 @@ function getLiveTradePulse(result: ScanResult) {
   };
 }
 
+function getFinalTakeProfit(result: ScanResult) {
+  return result.takeProfit2 != null && Number.isFinite(result.takeProfit2)
+    ? result.takeProfit2
+    : result.takeProfit;
+}
+
+function getBreakevenSignal(result: ScanResult) {
+  const livePrice = result.currentPrice;
+  if ((result.status !== 'triggered' && result.status !== 'active') || livePrice == null || !Number.isFinite(livePrice)) {
+    return null;
+  }
+
+  const finalTakeProfit = getFinalTakeProfit(result);
+  const risk = Math.abs(result.entry - result.stopLoss);
+  const finalReward = Math.abs(finalTakeProfit - result.entry);
+  if (!Number.isFinite(risk) || risk <= 0 || !Number.isFinite(finalReward) || finalReward <= 0) {
+    return null;
+  }
+
+  const signedMove = result.direction === 'buy' ? livePrice - result.entry : result.entry - livePrice;
+  const halfwayToFinalTp = finalReward * 0.5;
+  const breakevenMoveRequirement = Math.max(halfwayToFinalTp, risk * 1.1);
+  const triggered = signedMove >= breakevenMoveRequirement;
+
+  return {
+    triggered,
+    livePrice,
+    signedMove,
+    halfwayPrice: result.direction === 'buy'
+      ? result.entry + halfwayToFinalTp
+      : result.entry - halfwayToFinalTp,
+    moveRequirementPrice: result.direction === 'buy'
+      ? result.entry + breakevenMoveRequirement
+      : result.entry - breakevenMoveRequirement,
+    progress: Math.max(0, Math.min(1, signedMove / Math.max(breakevenMoveRequirement, Number.EPSILON))),
+  };
+}
+
 function getTradePulseClasses(state: 'profit' | 'drawdown' | 'neutral') {
   if (state === 'profit') {
     return {
@@ -303,9 +341,18 @@ export default function ScannerPage() {
   const [showPotentialTrades, setShowPotentialTrades] = useState(false);
   const [showClosedTrades, setShowClosedTrades] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
 
   const backgroundIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const backgroundRefreshInFlightRef = useRef(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('Notification' in window)) {
+      return;
+    }
+
+    setNotificationPermission(window.Notification.permission);
+  }, []);
 
   // Check if user has a session enabled
   const isSessionEnabled = useCallback(
@@ -449,6 +496,42 @@ export default function ScannerPage() {
       void supabase?.removeChannel(resultsChannel);
     };
   }, [user, token, loadHistoryResults, loadSummary]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('Notification' in window) || notificationPermission !== 'granted') {
+      return;
+    }
+
+    for (const result of results) {
+      const breakevenSignal = getBreakevenSignal(result);
+      if (!breakevenSignal?.triggered) {
+        continue;
+      }
+
+      const alertKey = `scanner-breakeven-alert:${result.id}`;
+      if (window.localStorage.getItem(alertKey) === 'sent') {
+        continue;
+      }
+
+      const notification = new window.Notification('TradeVision AI Breakeven Alert', {
+        body: `${result.symbol} ${result.direction.toUpperCase()} reached breakeven-protect zone. Move SL to entry.`,
+        tag: alertKey,
+      });
+      notification.onclick = () => {
+        window.focus();
+      };
+      window.localStorage.setItem(alertKey, 'sent');
+    }
+  }, [results, notificationPermission]);
+
+  const requestDeviceAlerts = useCallback(async () => {
+    if (typeof window === 'undefined' || !('Notification' in window)) {
+      return;
+    }
+
+    const permission = await window.Notification.requestPermission();
+    setNotificationPermission(permission);
+  }, []);
 
   // ── Push-driven live feed and potentials ──
   useEffect(() => {
@@ -648,22 +731,35 @@ export default function ScannerPage() {
               </div>
             </div>
 
-            {/* Alert bell */}
-            <button
-              onClick={() => setShowAlerts(!showAlerts)}
-              className="relative rounded-xl p-3 transition-colors hover:bg-white/5"
-            >
-              {unreadAlertCount > 0 ? (
-                <>
-                  <Bell className="h-5 w-5 text-yellow-400" />
-                  <span className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                    {unreadAlertCount > 9 ? '9+' : unreadAlertCount}
-                  </span>
-                </>
-              ) : (
-                <BellOff className="h-5 w-5 text-muted-foreground" />
-              )}
-            </button>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => void requestDeviceAlerts()}
+                disabled={notificationPermission === 'granted'}
+                className="gap-2 border-white/10 bg-white/5"
+              >
+                {notificationPermission === 'granted' ? <Bell className="h-4 w-4 text-emerald-400" /> : <BellOff className="h-4 w-4" />}
+                {notificationPermission === 'granted' ? 'Device Alerts On' : 'Enable Device Alerts'}
+              </Button>
+
+              <button
+                onClick={() => setShowAlerts(!showAlerts)}
+                className="relative rounded-xl p-3 transition-colors hover:bg-white/5"
+              >
+                {unreadAlertCount > 0 ? (
+                  <>
+                    <Bell className="h-5 w-5 text-yellow-400" />
+                    <span className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                      {unreadAlertCount > 9 ? '9+' : unreadAlertCount}
+                    </span>
+                  </>
+                ) : (
+                  <BellOff className="h-5 w-5 text-muted-foreground" />
+                )}
+              </button>
+            </div>
           </div>
 
           {/* Scanning indicator */}
@@ -997,6 +1093,8 @@ function SetupCard({
 }) {
   const isBuy = result.direction === 'buy';
   const regimeBadge = getMarketRegimeBadge(result.marketRegime);
+  const breakevenSignal = getBreakevenSignal(result);
+  const showBreakevenAlert = Boolean(breakevenSignal?.triggered);
   const outcomeBadge = result.status === 'closed'
     ? result.closeReason === 'tp'
       ? { label: 'Win', variant: 'success' as const }
@@ -1078,6 +1176,18 @@ function SetupCard({
           {livePulse && (result.status === 'triggered' || result.status === 'active') ? (
             <LiveTradePulse result={result} pulse={livePulse} />
           ) : null}
+
+          {showBreakevenAlert && breakevenSignal ? (
+            <div className="mt-3 rounded-xl border border-emerald-400/25 bg-emerald-500/10 px-3 py-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="success">Move SL To Breakeven</Badge>
+                <span className="text-xs font-medium text-emerald-100">Price has cleared the breakeven protect zone.</span>
+              </div>
+              <p className="mt-1 text-xs text-emerald-100/85">
+                Live price {formatPrice(breakevenSignal.livePrice)} is beyond the halfway-to-final-TP / 1:1.1 threshold. Consider moving stop loss to entry at {formatPrice(result.entry)}.
+              </p>
+            </div>
+          ) : null}
         </div>
 
         <div className="flex shrink-0 items-center self-start pt-1">
@@ -1105,6 +1215,25 @@ function SetupCard({
               <PriceRow label="Stop Loss" value={formatPrice(result.stopLoss)} color="text-red-400" />
               <PriceRow label="Final TP (1:2)" value={formatPrice(result.takeProfit)} color="text-green-400" />
             </div>
+
+            {breakevenSignal ? (
+              <div className={`mt-3 rounded-xl border px-4 py-3 ${showBreakevenAlert ? 'border-emerald-400/25 bg-emerald-500/10' : 'border-white/10 bg-white/5'}`}>
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <div className={`text-sm font-semibold ${showBreakevenAlert ? 'text-emerald-100' : 'text-white/90'}`}>Breakeven Alert</div>
+                    <div className="mt-1 text-xs text-muted-foreground">Trigger once price passes halfway to final TP and at least 1:1.1.</div>
+                  </div>
+                  <Badge variant={showBreakevenAlert ? 'success' : 'outline'}>
+                    {showBreakevenAlert ? 'Ready Now' : `${Math.round(breakevenSignal.progress * 100)}%`}
+                  </Badge>
+                </div>
+                <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                  <PriceRow label="Breakeven Trigger" value={formatPrice(breakevenSignal.moveRequirementPrice)} color={showBreakevenAlert ? 'text-emerald-300' : 'text-amber-300'} />
+                  <PriceRow label="Halfway To Final TP" value={formatPrice(breakevenSignal.halfwayPrice)} color="text-cyan-300" />
+                  <PriceRow label="Move SL To" value={formatPrice(result.entry)} color="text-foreground" />
+                </div>
+              </div>
+            ) : null}
 
             {(result.triggeredAt || result.closedAt) && (
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
