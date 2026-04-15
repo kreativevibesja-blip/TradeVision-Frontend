@@ -254,7 +254,7 @@ export interface AdminAnalysisLog {
   user: {
     email: string | null;
     name: string | null;
-    subscription: 'FREE' | 'PRO' | 'TOP_TIER';
+    subscription: 'FREE' | 'PRO' | 'TOP_TIER' | 'VIP_AUTO_TRADER';
   } | null;
 }
 
@@ -263,7 +263,7 @@ export interface AdminUserListItem {
   email: string;
   name: string | null;
   role: string;
-  subscription: 'FREE' | 'PRO' | 'TOP_TIER';
+  subscription: 'FREE' | 'PRO' | 'TOP_TIER' | 'VIP_AUTO_TRADER';
   banned: boolean;
   dailyUsage?: number | null;
   lastUsageReset?: string | null;
@@ -282,7 +282,7 @@ export interface AdminUserListItem {
 export interface AdminUserDetails {
   id: string;
   billing: {
-    currentPlan: 'FREE' | 'PRO' | 'TOP_TIER';
+    currentPlan: 'FREE' | 'PRO' | 'TOP_TIER' | 'VIP_AUTO_TRADER';
     status: 'free' | 'active' | 'expired' | 'cancelled';
     expiresAt: string | null;
     lastPaymentAt: string | null;
@@ -294,7 +294,7 @@ export interface AdminUserDetails {
       status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
       paymentMethod: 'PAYPAL' | 'CARD' | 'BANK_TRANSFER' | 'COUPON';
       bankTransferBank: 'SCOTIABANK' | 'NCB' | null;
-      plan: 'FREE' | 'PRO' | 'TOP_TIER';
+      plan: 'FREE' | 'PRO' | 'TOP_TIER' | 'VIP_AUTO_TRADER';
       verifiedAt: string | null;
       createdAt: string;
     }>;
@@ -380,7 +380,7 @@ export interface SupportTicket {
 }
 
 export interface BillingSummary {
-  currentPlan: 'FREE' | 'PRO' | 'TOP_TIER';
+  currentPlan: 'FREE' | 'PRO' | 'TOP_TIER' | 'VIP_AUTO_TRADER';
   status: 'free' | 'active' | 'expired' | 'cancelled';
   expiresAt: string | null;
   lastPaymentAt: string | null;
@@ -395,7 +395,7 @@ export interface BillingSummary {
     status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
     paymentMethod: 'PAYPAL' | 'CARD' | 'BANK_TRANSFER' | 'COUPON';
     bankTransferBank: 'SCOTIABANK' | 'NCB' | null;
-    plan: 'FREE' | 'PRO' | 'TOP_TIER';
+    plan: 'FREE' | 'PRO' | 'TOP_TIER' | 'VIP_AUTO_TRADER';
     verifiedAt: string | null;
     createdAt: string;
     updatedAt: string;
@@ -411,7 +411,7 @@ export interface AdminPayment {
   status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
   paymentMethod: 'PAYPAL' | 'CARD' | 'BANK_TRANSFER' | 'COUPON';
   bankTransferBank: 'SCOTIABANK' | 'NCB' | null;
-  plan: 'FREE' | 'PRO' | 'TOP_TIER';
+  plan: 'FREE' | 'PRO' | 'TOP_TIER' | 'VIP_AUTO_TRADER';
   verifiedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -430,7 +430,7 @@ export type AdminPaymentScope = 'COMPLETED_CHECKOUTS' | 'BANK_TRANSFERS' | 'ALL_
 export interface PricingPlan {
   id: string;
   name: string;
-  tier: 'FREE' | 'PRO' | 'TOP_TIER';
+  tier: 'FREE' | 'PRO' | 'TOP_TIER' | 'VIP_AUTO_TRADER';
   price: number;
   features: string[];
   dailyLimit: number;
@@ -759,7 +759,7 @@ export const api = {
       options?: {
         search?: string;
         page?: number;
-        subscription?: 'FREE' | 'PRO' | 'TOP_TIER';
+        subscription?: 'FREE' | 'PRO' | 'TOP_TIER' | 'VIP_AUTO_TRADER';
         createdFrom?: string;
         createdTo?: string;
       }
