@@ -32,7 +32,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
-type PlanKey = 'FREE' | 'PRO' | 'TOP_TIER';
+type PlanKey = 'FREE' | 'PRO' | 'TOP_TIER' | 'VIP_AUTO_TRADER';
 type CheckoutMethod = 'paypal' | 'card' | 'bank-transfer';
 type BankTransferBank = 'SCOTIABANK' | 'NCB';
 
@@ -105,6 +105,15 @@ const planCatalog: Record<PlanKey, {
     icon: Crown,
     color: 'from-fuchsia-500 via-violet-500 to-cyan-500',
     features: ['500 analyses per month', 'Instant trade setups', 'One-tap execution', 'Priority signal generation', 'Advanced entry precision', 'Smart Session Scanner'],
+  },
+  VIP_AUTO_TRADER: {
+    name: 'VIP Auto Trader',
+    price: 99,
+    period: '/month',
+    description: 'Full automated trading via cTrader. AI places and manages trades for you.',
+    icon: Crown,
+    color: 'from-amber-500 via-yellow-500 to-orange-500',
+    features: ['Full Auto Trading (cTrader)', 'Gold (XAUUSD) optimized execution', 'Smart Session Scanner access', 'High-confidence trades only', 'Risk management controls', 'Auto / Semi / Assisted modes', 'Performance analytics dashboard'],
   },
 };
 

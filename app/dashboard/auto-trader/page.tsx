@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense, useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
@@ -258,13 +259,16 @@ function AutoTraderContent() {
     );
   }
 
-  if (!user || user.subscription !== 'TOP_TIER') {
+  if (!user || !['TOP_TIER', 'VIP_AUTO_TRADER'].includes(user.subscription)) {
     return (
       <Card>
         <CardContent className="p-8 text-center">
           <Crown className="mx-auto mb-4 h-10 w-10 text-amber-400" />
-          <h2 className="mb-2 text-lg font-bold">Top Tier Required</h2>
-          <p className="text-sm text-muted-foreground">Auto Trading is available for Top Tier subscribers.</p>
+          <h2 className="mb-2 text-lg font-bold">PRO+ or VIP Required</h2>
+          <p className="text-sm text-muted-foreground mb-4">Auto Trading is available for PRO+ and VIP Auto Trader subscribers.</p>
+          <Link href="/checkout?plan=VIP_AUTO_TRADER">
+            <Button variant="gradient" size="lg">Upgrade to VIP Auto Trader</Button>
+          </Link>
         </CardContent>
       </Card>
     );

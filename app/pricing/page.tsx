@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { api, type PricingPlan } from '@/lib/api';
-import { CheckCircle2, X, Zap, Crown } from 'lucide-react';
+import { CheckCircle2, X, Zap, Crown, Bot } from 'lucide-react';
 
 type DisplayPlan = PricingPlan & {
   period: string;
@@ -30,7 +30,20 @@ const oneTapProFeatures = [
   'Smart Session Scanner',
 ];
 
-const fallbackPlanDetails: Record<'FREE' | 'PRO' | 'TOP_TIER', Omit<DisplayPlan, 'id' | 'name' | 'tier' | 'price' | 'features' | 'dailyLimit' | 'isActive' | 'createdAt' | 'updatedAt'>> = {
+const vipAutoTraderFeatures = [
+  'Full Auto Trading (cTrader)',
+  'Gold (XAUUSD) optimized execution',
+  'Smart Session Scanner access',
+  'High-confidence trades only',
+  'Risk management controls',
+  'Auto / Semi / Assisted modes',
+  'Trade replay & history',
+  'Performance analytics dashboard',
+  'Instant trade alerts',
+  'Priority execution speed',
+];
+
+const fallbackPlanDetails: Record<'FREE' | 'PRO' | 'TOP_TIER' | 'VIP_AUTO_TRADER', Omit<DisplayPlan, 'id' | 'name' | 'tier' | 'price' | 'features' | 'dailyLimit' | 'isActive' | 'createdAt' | 'updatedAt'>> = {
   FREE: {
     period: '/month',
     description: 'Perfect for trying out AI chart analysis',
@@ -60,6 +73,16 @@ const fallbackPlanDetails: Record<'FREE' | 'PRO' | 'TOP_TIER', Omit<DisplayPlan,
     ctaLink: '/checkout?plan=TOP_TIER',
     popular: true,
     badge: 'One-Tap Trade',
+  },
+  VIP_AUTO_TRADER: {
+    period: '/month',
+    description: 'Full automated trading via cTrader. AI places and manages trades for you — hands-free.',
+    icon: Bot,
+    color: 'from-amber-500 via-yellow-500 to-orange-500',
+    cta: 'Start Auto Trading',
+    ctaLink: '/checkout?plan=VIP_AUTO_TRADER',
+    popular: false,
+    badge: 'MOST POWERFUL',
   },
 };
 
@@ -100,6 +123,18 @@ const defaultFallbackPlans: DisplayPlan[] = [
     updatedAt: '',
     ...fallbackPlanDetails.TOP_TIER,
   },
+  {
+    id: 'fallback-vip-auto-trader',
+    name: 'VIP Auto Trader',
+    tier: 'VIP_AUTO_TRADER',
+    price: 99,
+    features: vipAutoTraderFeatures,
+    dailyLimit: 999999,
+    isActive: true,
+    createdAt: '',
+    updatedAt: '',
+    ...fallbackPlanDetails.VIP_AUTO_TRADER,
+  },
 ];
 
 const toDisplayPlan = (plan: PricingPlan): DisplayPlan => ({
@@ -109,14 +144,19 @@ const toDisplayPlan = (plan: PricingPlan): DisplayPlan => ({
         name: 'PRO+',
         features: oneTapProFeatures,
       }
-    : plan.tier !== 'FREE'
+    : plan.tier === 'VIP_AUTO_TRADER'
       ? {
-          features: plan.features.map((feature) =>
-            /unlimited|fair use|300 analyses per month/i.test(feature) ? '300 analyses per month' : feature
-          ),
+          name: 'VIP Auto Trader',
+          features: vipAutoTraderFeatures,
         }
-      : {}),
-  ...fallbackPlanDetails[plan.tier],
+      : plan.tier !== 'FREE'
+        ? {
+            features: plan.features.map((feature) =>
+              /unlimited|fair use|300 analyses per month/i.test(feature) ? '300 analyses per month' : feature
+            ),
+          }
+        : {}),
+  ...fallbackPlanDetails[plan.tier as keyof typeof fallbackPlanDetails],
 });
 
 export default function PricingPage() {
@@ -157,8 +197,10 @@ export default function PricingPage() {
           </p>
         </motion.div>
 
-        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 md:gap-6 lg:gap-8">
-          {plans.map((plan, i) => (
+        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4 md:gap-6 lg:gap-8">
+          {plans.map((plan, i) => {
+            const isVip = plan.tier === 'VIP_AUTO_TRADER';
+            return (
             <motion.div
               key={plan.id}
               initial={false}
@@ -166,9 +208,9 @@ export default function PricingPage() {
               transition={{ delay: i * 0.15 }}
               whileHover={{ y: -8, scale: 1.015 }}
             >
-              <Card className={`relative h-full overflow-hidden transition-all duration-300 hover:shadow-[0_22px_80px_rgba(15,23,42,0.28)] ${plan.popular ? 'border-fuchsia-400/40 shadow-[0_0_50px_rgba(217,70,239,0.14)]' : 'hover:border-white/20'}`}>
-                {plan.popular && (
-                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-fuchsia-500 via-violet-500 to-cyan-400" />
+              <Card className={`relative h-full overflow-hidden transition-all duration-300 hover:shadow-[0_22px_80px_rgba(15,23,42,0.28)] ${isVip ? 'border-amber-400/40 shadow-[0_0_50px_rgba(245,158,11,0.18)]' : plan.popular ? 'border-fuchsia-400/40 shadow-[0_0_50px_rgba(217,70,239,0.14)]' : 'hover:border-white/20'}`}>
+                {(plan.popular || isVip) && (
+                  <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${isVip ? 'from-amber-500 via-yellow-500 to-orange-500' : 'from-fuchsia-500 via-violet-500 to-cyan-400'}`} />
                 )}
                 <CardContent className="p-5 sm:p-6 lg:p-8">
                   <div className="flex items-center gap-3 mb-4">
@@ -205,9 +247,9 @@ export default function PricingPage() {
 
                   <Link href={plan.ctaLink}>
                     <Button
-                      variant={plan.popular ? 'gradient' : 'outline'}
+                      variant={plan.popular || isVip ? 'gradient' : 'outline'}
                       size="lg"
-                      className="w-full"
+                      className={`w-full ${isVip ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0' : ''}`}
                     >
                       {plan.cta}
                     </Button>
@@ -215,7 +257,8 @@ export default function PricingPage() {
                 </CardContent>
               </Card>
             </motion.div>
-          ))}
+          );
+          })}
         </div>
 
         {!loading && plans.length === 0 ? (
@@ -223,6 +266,61 @@ export default function PricingPage() {
             No active pricing plans are available right now.
           </div>
         ) : null}
+
+        {/* Feature Comparison Table */}
+        <motion.div
+          initial={false}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+          className="mx-auto mt-16 max-w-5xl sm:mt-20"
+        >
+          <h2 className="text-2xl font-bold text-center mb-8">Feature Comparison</h2>
+          <Card className="overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-white/10">
+                    <th className="text-left p-4 font-semibold">Feature</th>
+                    <th className="text-center p-4 font-semibold">Free</th>
+                    <th className="text-center p-4 font-semibold">Pro</th>
+                    <th className="text-center p-4 font-semibold text-fuchsia-400">PRO+</th>
+                    <th className="text-center p-4 font-semibold text-amber-400">VIP Auto Trader</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {[
+                    { feature: 'AI Chart Analysis', free: '2/day', pro: '300/mo', top: '500/mo', vip: '500/mo' },
+                    { feature: 'Smart Money Concepts', free: false, pro: true, top: true, vip: true },
+                    { feature: 'Priority Processing', free: false, pro: true, top: true, vip: true },
+                    { feature: 'Smart Session Scanner', free: false, pro: false, top: true, vip: true },
+                    { feature: 'One-Tap Trade Setups', free: false, pro: false, top: true, vip: true },
+                    { feature: 'Auto Trading (cTrader)', free: false, pro: false, top: false, vip: true },
+                    { feature: 'Gold (XAUUSD) Optimized', free: false, pro: false, top: false, vip: true },
+                    { feature: 'Auto / Semi / Assisted Modes', free: false, pro: false, top: false, vip: true },
+                    { feature: 'Risk Management Controls', free: false, pro: false, top: false, vip: true },
+                    { feature: 'Performance Analytics', free: false, pro: false, top: false, vip: true },
+                    { feature: 'Trade Replay & History', free: false, pro: false, top: false, vip: true },
+                  ].map((row) => (
+                    <tr key={row.feature} className="hover:bg-white/[0.02]">
+                      <td className="p-4 font-medium">{row.feature}</td>
+                      {[row.free, row.pro, row.top, row.vip].map((val, i) => (
+                        <td key={i} className="p-4 text-center">
+                          {typeof val === 'string' ? (
+                            <span className="text-muted-foreground">{val}</span>
+                          ) : val ? (
+                            <CheckCircle2 className="h-4 w-4 text-green-500 mx-auto" />
+                          ) : (
+                            <X className="h-4 w-4 text-muted-foreground/30 mx-auto" />
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </motion.div>
 
         {/* FAQ */}
         <motion.div
