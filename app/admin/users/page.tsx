@@ -11,7 +11,7 @@ import { api, type AdminUserDetails, type AdminUserListItem } from '@/lib/api';
 import { addDaysToDateInputValue, formatJamaicaDate, formatJamaicaDateTime, getEndOfJamaicaDayIso, getJamaicaDateInputValue, getStartOfJamaicaDayIso } from '@/lib/jamaica-time';
 import { Users, Search, Crown, Ban, ShieldCheck, Zap, X, CalendarRange } from 'lucide-react';
 
-type SubscriptionFilter = 'ALL' | 'FREE' | 'PRO' | 'TOP_TIER';
+type SubscriptionFilter = 'ALL' | 'FREE' | 'PRO' | 'TOP_TIER' | 'VIP_AUTO_TRADER';
 type DateFilter = 'ALL' | 'TODAY' | 'LAST_7_DAYS' | 'LAST_30_DAYS' | 'CUSTOM';
 
 const buildDateRange = (filter: DateFilter, customFrom: string, customTo: string) => {
@@ -231,6 +231,7 @@ export default function AdminUsersPage() {
                 <option value="FREE">Free users</option>
                 <option value="PRO">Pro users</option>
                 <option value="TOP_TIER">PRO+ users</option>
+                <option value="VIP_AUTO_TRADER">VIP Auto Trader</option>
               </select>
             </div>
             <div className="flex flex-col gap-2 lg:w-48">
@@ -350,15 +351,40 @@ export default function AdminUsersPage() {
                             >
                               <Crown className="h-3 w-3 text-amber-400" />
                             </Button>
+                          ) : u.subscription === 'TOP_TIER' ? (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  updateUser(u.id, { subscription: 'VIP_AUTO_TRADER' });
+                                }}
+                                title="Upgrade to VIP Auto Trader"
+                              >
+                                <Crown className="h-3 w-3 text-orange-400" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  updateUser(u.id, { subscription: 'PRO' });
+                                }}
+                                title="Downgrade to Pro"
+                              >
+                                <Zap className="h-3 w-3" />
+                              </Button>
+                            </>
                           ) : (
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={(event) => {
                                 event.stopPropagation();
-                                updateUser(u.id, { subscription: 'PRO' });
+                                updateUser(u.id, { subscription: 'TOP_TIER' });
                               }}
-                              title="Downgrade to Pro"
+                              title="Downgrade to PRO+"
                             >
                               <Zap className="h-3 w-3" />
                             </Button>
@@ -511,10 +537,21 @@ export default function AdminUsersPage() {
                       <Crown className="mr-2 h-4 w-4" />
                       Upgrade to PRO+
                     </Button>
+                  ) : selectedUser.subscription === 'TOP_TIER' ? (
+                    <>
+                      <Button onClick={() => updateUser(selectedUser.id, { subscription: 'VIP_AUTO_TRADER' })}>
+                        <Crown className="mr-2 h-4 w-4" />
+                        Upgrade to VIP
+                      </Button>
+                      <Button variant="outline" onClick={() => updateUser(selectedUser.id, { subscription: 'PRO' })}>
+                        <Zap className="mr-2 h-4 w-4" />
+                        Downgrade to Pro
+                      </Button>
+                    </>
                   ) : (
-                    <Button variant="outline" onClick={() => updateUser(selectedUser.id, { subscription: 'PRO' })}>
+                    <Button variant="outline" onClick={() => updateUser(selectedUser.id, { subscription: 'TOP_TIER' })}>
                       <Zap className="mr-2 h-4 w-4" />
-                      Downgrade to Pro
+                      Downgrade to PRO+
                     </Button>
                   )}
                   <Button variant={selectedUser.banned ? 'outline' : 'destructive'} onClick={() => updateUser(selectedUser.id, { banned: !selectedUser.banned })}>
