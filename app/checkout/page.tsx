@@ -362,7 +362,7 @@ function CheckoutPageContent() {
   const isCanceled = searchParams.get('canceled') === 'true';
   const requestedPlan = searchParams.get('plan')?.toUpperCase();
   const requestedCoupon = searchParams.get('coupon') || '';
-  const planKey: PlanKey = requestedPlan === 'FREE' || requestedPlan === 'TOP_TIER' || requestedPlan === 'PRO' ? requestedPlan : 'PRO';
+  const planKey: PlanKey = requestedPlan === 'FREE' || requestedPlan === 'TOP_TIER' || requestedPlan === 'PRO' || requestedPlan === 'VIP_AUTO_TRADER' ? requestedPlan : 'PRO';
   const plan = planCatalog[planKey];
   const activeBillingAddress = sameAsShipping ? shippingAddress : billingAddress;
   const formReady = isAddressComplete(shippingAddress) && isAddressComplete(activeBillingAddress);
@@ -489,8 +489,8 @@ function CheckoutPageContent() {
       return;
     }
 
-    if ((planKey === 'TOP_TIER' && user.subscription === 'TOP_TIER') || (planKey === 'PRO' && (user.subscription === 'PRO' || user.subscription === 'TOP_TIER'))) {
-      setError(planKey === 'TOP_TIER' ? 'You already have PRO+' : 'You already have this plan or higher');
+    if ((planKey === 'VIP_AUTO_TRADER' && user.subscription === 'VIP_AUTO_TRADER') || (planKey === 'TOP_TIER' && user.subscription === 'TOP_TIER') || (planKey === 'PRO' && (user.subscription === 'PRO' || user.subscription === 'TOP_TIER'))) {
+      setError(planKey === 'VIP_AUTO_TRADER' ? 'You already have VIP Auto Trader' : planKey === 'TOP_TIER' ? 'You already have PRO+' : 'You already have this plan or higher');
       return;
     }
 
@@ -536,8 +536,8 @@ function CheckoutPageContent() {
       return;
     }
 
-    if ((planKey === 'TOP_TIER' && user.subscription === 'TOP_TIER') || (planKey === 'PRO' && (user.subscription === 'PRO' || user.subscription === 'TOP_TIER'))) {
-      setError(planKey === 'TOP_TIER' ? 'You already have PRO+' : 'You already have this plan or higher');
+    if ((planKey === 'VIP_AUTO_TRADER' && user.subscription === 'VIP_AUTO_TRADER') || (planKey === 'TOP_TIER' && user.subscription === 'TOP_TIER') || (planKey === 'PRO' && (user.subscription === 'PRO' || user.subscription === 'TOP_TIER'))) {
+      setError(planKey === 'VIP_AUTO_TRADER' ? 'You already have VIP Auto Trader' : planKey === 'TOP_TIER' ? 'You already have PRO+' : 'You already have this plan or higher');
       return;
     }
 
