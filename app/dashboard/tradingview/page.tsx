@@ -351,7 +351,7 @@ export default function TradingViewDashboardPage() {
                 <Link href={`/analyze?analysisId=${encodeURIComponent(cachedAnalysis.analysisId)}`}>
                   <Button variant="outline" className="h-10 border-slate-700 bg-slate-900/70 px-4">Open Result</Button>
                 </Link>
-                {user?.subscription === 'TOP_TIER' ? (
+                {user?.subscription === 'TOP_TIER' || user?.subscription === 'VIP_AUTO_TRADER' ? (
                   <Button onClick={() => void handleSendToAutotrader()} disabled={sendingToAutotrader} className="h-10 bg-emerald-600 px-4 text-white hover:bg-emerald-500">
                     {sendingToAutotrader ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Zap className="mr-2 h-4 w-4" />}
                     Analyze with One-Tap
@@ -443,7 +443,7 @@ export default function TradingViewDashboardPage() {
                       {analyzing ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Zap className="mr-1.5 h-4 w-4" />}
                       {analyzing ? 'Analyzing...' : 'Analyze'}
                     </Button>
-                    {user?.subscription === 'TOP_TIER' ? (
+                    {user?.subscription === 'TOP_TIER' || user?.subscription === 'VIP_AUTO_TRADER' ? (
                       <Button onClick={() => void handleSendToAutotrader()} disabled={sendingToAutotrader} className="h-10 bg-emerald-600 px-3 text-sm text-white hover:bg-emerald-500 sm:h-11 sm:px-4">
                         {sendingToAutotrader ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Zap className="mr-1.5 h-4 w-4" />}
                         One-Tap

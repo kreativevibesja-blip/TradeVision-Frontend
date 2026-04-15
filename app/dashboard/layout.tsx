@@ -22,7 +22,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const { user, token } = useAuth();
   const isLiveWorkspace = pathname === '/dashboard/tradingview' || pathname === '/dashboard/deriv';
-  const showPushPrompt = user?.subscription === 'TOP_TIER' && Boolean(token);
+  const showPushPrompt = (user?.subscription === 'TOP_TIER' || user?.subscription === 'VIP_AUTO_TRADER') && Boolean(token);
 
   if (isLiveWorkspace) {
     return <div className="h-[calc(100svh-5rem)] overflow-hidden md:h-[calc(100svh-4rem)]">{children}</div>;

@@ -317,7 +317,7 @@ function AnalyzePageContent() {
   const searchParams = useSearchParams();
   const { user, token, refreshUser } = useAuth();
   const isPro = user?.subscription !== 'FREE';
-  const isTopTier = user?.subscription === 'TOP_TIER';
+  const isTopTier = user?.subscription === 'TOP_TIER' || user?.subscription === 'VIP_AUTO_TRADER';
   const retryMode = searchParams.get('retry') === '1';
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -619,7 +619,7 @@ function AnalyzePageContent() {
       return;
     }
 
-    if (mode === 'one-tap' && user.subscription !== 'TOP_TIER') {
+    if (mode === 'one-tap' && user.subscription !== 'TOP_TIER' && user.subscription !== 'VIP_AUTO_TRADER') {
       setError('Analyze with One-Tap is available only on the PRO+ plan.');
       return;
     }

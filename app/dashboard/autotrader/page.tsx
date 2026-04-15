@@ -400,7 +400,7 @@ function OneTapTradeContent() {
     );
   }
 
-  if (user.subscription !== 'TOP_TIER') {
+  if (user.subscription !== 'TOP_TIER' && user.subscription !== 'VIP_AUTO_TRADER') {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <Card className="max-w-3xl w-full overflow-hidden border-fuchsia-500/20 bg-[radial-gradient(circle_at_top,_rgba(168,85,247,0.18),_transparent_35%),linear-gradient(180deg,rgba(15,23,42,0.98),rgba(2,6,23,1))]">

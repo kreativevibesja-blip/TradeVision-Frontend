@@ -535,7 +535,7 @@ export default function ScannerPage() {
 
   // ── Push-driven live feed and potentials ──
   useEffect(() => {
-    if (!token || !user || user.subscription !== 'TOP_TIER') {
+    if (!token || !user || (user.subscription !== 'TOP_TIER' && user.subscription !== 'VIP_AUTO_TRADER')) {
       return;
     }
 
@@ -675,7 +675,7 @@ export default function ScannerPage() {
     );
   }
 
-  if (user.subscription !== 'TOP_TIER') {
+  if (user.subscription !== 'TOP_TIER' && user.subscription !== 'VIP_AUTO_TRADER') {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <Card className="max-w-md w-full">

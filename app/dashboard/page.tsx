@@ -78,7 +78,7 @@ export default function DashboardPage() {
   }
 
   const isPaidPlan = user.subscription !== 'FREE';
-  const isTopTier = user.subscription === 'TOP_TIER';
+  const isTopTier = user.subscription === 'TOP_TIER' || user.subscription === 'VIP_AUTO_TRADER';
   const monthlyLimitLabel = isTopTier ? '500 analyses per month' : '300 analyses per month';
   const usageLabel = isPaidPlan ? 'Monthly Usage' : 'Daily Usage';
   const usageValue = isPaidPlan ? monthlyLimitLabel : '2';
