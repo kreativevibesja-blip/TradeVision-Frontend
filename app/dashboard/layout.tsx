@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import PushNotificationPrompt from '@/components/PushNotificationPrompt';
 import { useAuth } from '@/hooks/useAuth';
-import { CandlestickChart, CreditCard, LayoutDashboard, RadioTower, Users, Bot, Radar } from 'lucide-react';
+import { CandlestickChart, CreditCard, LayoutDashboard, RadioTower, Users, Bot, Radar, Zap } from 'lucide-react';
 
 const dashboardNav = [
   { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
@@ -13,6 +13,7 @@ const dashboardNav = [
   { href: '/dashboard/deriv', label: 'Deriv Live', icon: RadioTower },
   { href: '/dashboard/scanner', label: 'Scanner', icon: Radar },
   { href: '/dashboard/autotrader', label: 'One-Tap Trade', icon: Bot },
+  { href: '/dashboard/auto-trader', label: 'Auto Trader', icon: Zap },
   { href: '/dashboard/billing', label: 'Billing', icon: CreditCard },
   { href: '/dashboard/referrals', label: 'Referrals', icon: Users },
 ];
