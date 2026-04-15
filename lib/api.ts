@@ -1038,6 +1038,32 @@ export const api = {
         `/admin/users/search?query=${encodeURIComponent(query)}`,
         { token }
       ),
+    autoTradingOverview: (token: string) =>
+      apiFetch<{
+        users: Array<{
+          userId: string;
+          email: string;
+          name: string | null;
+          autoMode: string;
+          isActive: boolean;
+          connected: boolean;
+          performance: AutoPerformance | null;
+        }>;
+        system: {
+          totalTradesToday: number;
+          totalProfitToday: number;
+          recentLogs: AutoTradeLog[];
+        };
+      }>('/admin/auto-trading/overview', { token }),
+    autoTradingUserDetail: (userId: string, token: string) =>
+      apiFetch<{
+        settings: AutoTradeSettings | null;
+        performance: AutoPerformance | null;
+        trades: AutoTrade[];
+        logs: AutoTradeLog[];
+      }>(`/admin/auto-trading/users/${encodeURIComponent(userId)}`, { token }),
+    autoTradingDisableUser: (userId: string, token: string) =>
+      apiFetch<{ success: boolean }>(`/admin/auto-trading/users/${encodeURIComponent(userId)}/disable`, { method: 'POST', token }),
   },
 
   // ── Referral (User) ──
@@ -1129,6 +1155,67 @@ export const api = {
         body: JSON.stringify({ enabled }),
         token,
       }),
+  },
+
+  // ── Auto Trading (cTrader) ──
+  autoTrading: {
+    getSettings: (token: string) =>
+      apiFetch<{ settings: AutoTradeSettings | null; performance: AutoPerformance | null }>('/auto-trading/settings', { token }),
+
+    updateSettings: (data: Partial<AutoTradeSettings>, token: string) =>
+      apiFetch<{ settings: AutoTradeSettings }>('/auto-trading/settings', {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+        token,
+      }),
+
+    connect: (apiToken: string, accountId: string, token: string) =>
+      apiFetch<{ success: boolean; balance: number; currency: string }>('/auto-trading/connect', {
+        method: 'POST',
+        body: JSON.stringify({ apiToken, accountId }),
+        token,
+      }),
+
+    disconnect: (token: string) =>
+      apiFetch<{ success: boolean }>('/auto-trading/disconnect', { method: 'POST', token }),
+
+    getBalance: (token: string) =>
+      apiFetch<{ balance: number; equity: number; freeMargin: number; currency: string }>('/auto-trading/balance', { token }),
+
+    getTrades: (token: string, status?: AutoTradeStatus) =>
+      apiFetch<{ trades: AutoTrade[] }>(`/auto-trading/trades${status ? `?status=${status}` : ''}`, { token }),
+
+    getActiveTrades: (token: string) =>
+      apiFetch<{ trades: AutoTrade[] }>('/auto-trading/trades/active', { token }),
+
+    getPending: (token: string) =>
+      apiFetch<{ trades: AutoTrade[] }>('/auto-trading/trades/pending', { token }),
+
+    approveTrade: (id: string, token: string) =>
+      apiFetch<{ action: string; tradeId?: string }>(`/auto-trading/trades/${encodeURIComponent(id)}/approve`, { method: 'POST', token }),
+
+    closeTrade: (id: string, profit: number, token: string) =>
+      apiFetch<{ success: boolean }>(`/auto-trading/trades/${encodeURIComponent(id)}/close`, {
+        method: 'POST',
+        body: JSON.stringify({ profit }),
+        token,
+      }),
+
+    getPositions: (token: string) =>
+      apiFetch<{ positions: CTraderPosition[] }>('/auto-trading/positions', { token }),
+
+    emergencyStop: (closePositions: boolean, token: string) =>
+      apiFetch<{ success: boolean; closedCount: number }>('/auto-trading/emergency-stop', {
+        method: 'POST',
+        body: JSON.stringify({ closePositions }),
+        token,
+      }),
+
+    getLogs: (token: string) =>
+      apiFetch<{ logs: AutoTradeLog[] }>('/auto-trading/logs', { token }),
+
+    getPerformance: (token: string) =>
+      apiFetch<{ performance: AutoPerformance | null }>('/auto-trading/performance', { token }),
   },
 
   // ── Scanner ──
@@ -1400,6 +1487,75 @@ export interface RiskSettings {
   maxTradesPerDay: number;
   autoMode: AutoMode;
   killSwitch: boolean;
+}
+
+// ── Auto Trading Types (cTrader) ──
+
+export type AutoTradeMode = 'off' | 'assisted' | 'semi' | 'full';
+export type AutoTradeStatus = 'pending' | 'executed' | 'closed' | 'rejected';
+export type AutoTradeResult = 'win' | 'loss' | 'breakeven';
+
+export interface AutoTradeSettings {
+  autoMode: AutoTradeMode;
+  riskPerTrade: number;
+  maxDailyLoss: number;
+  maxTradesPerDay: number;
+  allowedSessions: string[];
+  goldOnly: boolean;
+  isActive: boolean;
+  connected: boolean;
+  ctraderAccountId: string | null;
+}
+
+export interface AutoTrade {
+  id: string;
+  userId: string;
+  symbol: string;
+  direction: 'buy' | 'sell';
+  entryPrice: number;
+  sl: number;
+  tp: number;
+  lotSize: number;
+  status: AutoTradeStatus;
+  result: AutoTradeResult | null;
+  profit: number | null;
+  ctraderOrderId: string | null;
+  confidence: string | null;
+  marketState: string | null;
+  createdAt: string;
+  closedAt: string | null;
+}
+
+export interface AutoTradeLog {
+  id: string;
+  userId: string;
+  tradeId: string | null;
+  action: string;
+  reason: string | null;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+}
+
+export interface AutoPerformance {
+  totalTrades: number;
+  wins: number;
+  losses: number;
+  winRate: number;
+  totalProfit: number;
+  drawdown: number;
+}
+
+export interface CTraderPosition {
+  orderId: string;
+  symbol: string;
+  direction: 'buy' | 'sell';
+  entryPrice: number;
+  currentPrice: number;
+  lotSize: number;
+  sl: number;
+  tp: number;
+  profit: number;
+  openTime: string;
 }
 
 // ── Scanner Types ──
