@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
@@ -58,6 +58,14 @@ const MODE_COLORS: Record<AutoTradeMode, string> = {
 };
 
 export default function AutoTraderPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>}>
+      <AutoTraderContent />
+    </Suspense>
+  );
+}
+
+function AutoTraderContent() {
   const { user, token, loading: authLoading } = useAuth();
   const searchParams = useSearchParams();
   const router = useRouter();
