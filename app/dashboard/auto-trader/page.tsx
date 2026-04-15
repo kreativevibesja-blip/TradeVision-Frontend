@@ -259,15 +259,15 @@ function AutoTraderContent() {
     );
   }
 
-  if (!user || !['TOP_TIER', 'VIP_AUTO_TRADER'].includes(user.subscription)) {
+  if (!user || user.subscription !== 'VIP_AUTO_TRADER') {
     return (
       <Card>
         <CardContent className="p-8 text-center">
           <Crown className="mx-auto mb-4 h-10 w-10 text-amber-400" />
-          <h2 className="mb-2 text-lg font-bold">PRO+ or VIP Required</h2>
-          <p className="text-sm text-muted-foreground mb-4">Auto Trading is available for PRO+ and VIP Auto Trader subscribers.</p>
+          <h2 className="mb-2 text-lg font-bold">VIP Auto Trader Required</h2>
+          <p className="text-sm text-muted-foreground mb-4">Auto Trading is exclusively available for VIP Auto Trader subscribers.</p>
           <Link href="/checkout?plan=VIP_AUTO_TRADER">
-            <Button variant="gradient" size="lg">Upgrade to VIP Auto Trader</Button>
+            <Button variant="gradient" size="lg">Upgrade to VIP Auto Trader — $99/mo</Button>
           </Link>
         </CardContent>
       </Card>
