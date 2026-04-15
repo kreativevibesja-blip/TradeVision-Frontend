@@ -13,7 +13,7 @@ import { Tag, Save, Plus, Trash2 } from 'lucide-react';
 type AdminPlan = {
   id: string;
   name: string;
-  tier: 'FREE' | 'PRO' | 'TOP_TIER';
+  tier: 'FREE' | 'PRO' | 'TOP_TIER' | 'VIP_AUTO_TRADER';
   price: number;
   dailyLimit: number;
   isActive: boolean;
@@ -22,7 +22,7 @@ type AdminPlan = {
 
 const emptyNewPlan = {
   name: '',
-  tier: 'PRO' as 'FREE' | 'PRO' | 'TOP_TIER',
+  tier: 'PRO' as 'FREE' | 'PRO' | 'TOP_TIER' | 'VIP_AUTO_TRADER',
   price: '0',
   dailyLimit: '0',
 };
@@ -35,7 +35,7 @@ export default function AdminPricingPage() {
   const [editPrice, setEditPrice] = useState('');
   const [editLimit, setEditLimit] = useState('');
   const [editName, setEditName] = useState('');
-  const [editTier, setEditTier] = useState<'FREE' | 'PRO' | 'TOP_TIER'>('PRO');
+  const [editTier, setEditTier] = useState<'FREE' | 'PRO' | 'TOP_TIER' | 'VIP_AUTO_TRADER'>('PRO');
   const [newPlan, setNewPlan] = useState(emptyNewPlan);
   const [saving, setSaving] = useState(false);
 
@@ -127,11 +127,12 @@ export default function AdminPricingPage() {
           <select
             className="flex h-10 w-full rounded-lg border border-input bg-background/50 px-3 py-2 text-sm"
             value={newPlan.tier}
-            onChange={(e) => setNewPlan((current) => ({ ...current, tier: e.target.value as 'FREE' | 'PRO' | 'TOP_TIER' }))}
+            onChange={(e) => setNewPlan((current) => ({ ...current, tier: e.target.value as 'FREE' | 'PRO' | 'TOP_TIER' | 'VIP_AUTO_TRADER' }))}
           >
             <option value="FREE">FREE</option>
             <option value="PRO">PRO</option>
             <option value="TOP_TIER">TOP_TIER</option>
+            <option value="VIP_AUTO_TRADER">VIP_AUTO_TRADER</option>
           </select>
           <Input
             placeholder="Price"
@@ -211,11 +212,12 @@ export default function AdminPricingPage() {
                       <select
                         className="mt-2 flex h-10 w-full rounded-lg border border-input bg-background/50 px-3 py-2 text-sm"
                         value={editTier}
-                        onChange={(e) => setEditTier(e.target.value as 'FREE' | 'PRO' | 'TOP_TIER')}
+                        onChange={(e) => setEditTier(e.target.value as 'FREE' | 'PRO' | 'TOP_TIER' | 'VIP_AUTO_TRADER')}
                       >
                         <option value="FREE">FREE</option>
                         <option value="PRO">PRO</option>
                         <option value="TOP_TIER">TOP_TIER</option>
+                        <option value="VIP_AUTO_TRADER">VIP_AUTO_TRADER</option>
                       </select>
                     </div>
                     <div>
