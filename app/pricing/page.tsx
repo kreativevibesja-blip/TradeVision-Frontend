@@ -200,7 +200,7 @@ export default function PricingPage() {
         <div className="mx-auto grid max-w-7xl grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4 md:gap-6 lg:gap-8">
           {plans.map((plan, i) => {
             const isVip = plan.tier === 'VIP_AUTO_TRADER';
-            const previewFeatures = plan.features.slice(0, isVip ? 6 : 5);
+            const previewFeatures = plan.features.slice(0, 3);
             const remainingFeatures = plan.features.length - previewFeatures.length;
             return (
             <motion.div
@@ -211,7 +211,7 @@ export default function PricingPage() {
               whileHover={{ y: -8, scale: 1.015 }}
               className="h-full"
             >
-              <Card className={`relative h-full overflow-hidden transition-all duration-300 hover:shadow-[0_22px_80px_rgba(15,23,42,0.28)] xl:aspect-square ${isVip ? 'border-amber-400/40 shadow-[0_0_50px_rgba(245,158,11,0.18)]' : plan.popular ? 'border-fuchsia-400/40 shadow-[0_0_50px_rgba(217,70,239,0.14)]' : 'hover:border-white/20'}`}>
+              <Card className={`relative h-full min-h-[34rem] overflow-hidden transition-all duration-300 hover:shadow-[0_22px_80px_rgba(15,23,42,0.28)] xl:min-h-[36rem] ${isVip ? 'border-amber-400/40 shadow-[0_0_50px_rgba(245,158,11,0.18)]' : plan.popular ? 'border-fuchsia-400/40 shadow-[0_0_50px_rgba(217,70,239,0.14)]' : 'hover:border-white/20'}`}>
                 {(plan.popular || isVip) && (
                   <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${isVip ? 'from-amber-500 via-yellow-500 to-orange-500' : 'from-fuchsia-500 via-violet-500 to-cyan-400'}`} />
                 )}
@@ -233,7 +233,7 @@ export default function PricingPage() {
                     <span className="text-muted-foreground">{plan.period}</span>
                   </div>
 
-                  <p className="text-sm text-muted-foreground mb-8">{plan.description}</p>
+                  <p className="text-sm text-muted-foreground mb-6">{plan.description}</p>
 
                   <ul className="space-y-3 mb-6 text-sm">
                     {previewFeatures.map((feature) => (
