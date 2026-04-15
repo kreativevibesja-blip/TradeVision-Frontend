@@ -200,6 +200,8 @@ export default function PricingPage() {
         <div className="mx-auto grid max-w-7xl grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4 md:gap-6 lg:gap-8">
           {plans.map((plan, i) => {
             const isVip = plan.tier === 'VIP_AUTO_TRADER';
+            const previewFeatures = plan.features.slice(0, isVip ? 6 : 5);
+            const remainingFeatures = plan.features.length - previewFeatures.length;
             return (
             <motion.div
               key={plan.id}
@@ -207,12 +209,13 @@ export default function PricingPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.15 }}
               whileHover={{ y: -8, scale: 1.015 }}
+              className="h-full"
             >
-              <Card className={`relative h-full overflow-hidden transition-all duration-300 hover:shadow-[0_22px_80px_rgba(15,23,42,0.28)] ${isVip ? 'border-amber-400/40 shadow-[0_0_50px_rgba(245,158,11,0.18)]' : plan.popular ? 'border-fuchsia-400/40 shadow-[0_0_50px_rgba(217,70,239,0.14)]' : 'hover:border-white/20'}`}>
+              <Card className={`relative h-full overflow-hidden transition-all duration-300 hover:shadow-[0_22px_80px_rgba(15,23,42,0.28)] xl:aspect-square ${isVip ? 'border-amber-400/40 shadow-[0_0_50px_rgba(245,158,11,0.18)]' : plan.popular ? 'border-fuchsia-400/40 shadow-[0_0_50px_rgba(217,70,239,0.14)]' : 'hover:border-white/20'}`}>
                 {(plan.popular || isVip) && (
                   <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${isVip ? 'from-amber-500 via-yellow-500 to-orange-500' : 'from-fuchsia-500 via-violet-500 to-cyan-400'}`} />
                 )}
-                <CardContent className="p-5 sm:p-6 lg:p-8">
+                <CardContent className="flex h-full flex-col p-5 sm:p-6 lg:p-8">
                   <div className="flex items-center gap-3 mb-4">
                     <div className={`p-2.5 rounded-xl bg-gradient-to-br ${plan.color}`}>
                       <plan.icon className="h-5 w-5 text-white" />
@@ -232,8 +235,8 @@ export default function PricingPage() {
 
                   <p className="text-sm text-muted-foreground mb-8">{plan.description}</p>
 
-                  <ul className="space-y-3 mb-8">
-                    {plan.features.map((feature) => (
+                  <ul className="space-y-3 mb-6 text-sm">
+                    {previewFeatures.map((feature) => (
                       <li key={feature} className="flex items-center gap-3 text-sm">
                         {true ? (
                           <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
@@ -245,7 +248,13 @@ export default function PricingPage() {
                     ))}
                   </ul>
 
-                  <Link href={plan.ctaLink}>
+                  {remainingFeatures > 0 ? (
+                    <p className="mb-6 text-xs text-muted-foreground">
+                      +{remainingFeatures} more features in the comparison table below
+                    </p>
+                  ) : <div className="mb-6" />}
+
+                  <Link href={plan.ctaLink} className="mt-auto">
                     <Button
                       variant={plan.popular || isVip ? 'gradient' : 'outline'}
                       size="lg"
