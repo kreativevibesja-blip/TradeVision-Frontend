@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -58,6 +59,8 @@ const MODE_COLORS: Record<AutoTradeMode, string> = {
 
 export default function AutoTraderPage() {
   const { user, token, loading: authLoading } = useAuth();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [settings, setSettings] = useState<AutoTradeSettings | null>(null);
   const [performance, setPerformance] = useState<AutoPerformance | null>(null);
   const [activeTrades, setActiveTrades] = useState<AutoTrade[]>([]);
@@ -69,9 +72,17 @@ export default function AutoTraderPage() {
   const [loading, setLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [showConnect, setShowConnect] = useState(false);
-  const [connectForm, setConnectForm] = useState({ apiToken: '', accountId: '' });
   const [connectLoading, setConnectLoading] = useState(false);
   const [connectError, setConnectError] = useState('');
+  const [oauthAccounts, setOauthAccounts] = useState<Array<{
+    accountId: string;
+    accountNumber: number;
+    live: boolean;
+    brokerName: string;
+    balance: number;
+    currency: string;
+  }> | null>(null);
+  const [tempTokens, setTempTokens] = useState<{ access: string; refresh: string } | null>(null);
   const [saving, setSaving] = useState(false);
   const [stopping, setStopping] = useState(false);
   const [tab, setTab] = useState<'active' | 'history' | 'logs'>('active');
@@ -143,13 +154,64 @@ export default function AutoTraderPage() {
     setConnectLoading(true);
     setConnectError('');
     try {
-      const res = await api.autoTrading.connect(connectForm.apiToken, connectForm.accountId, token);
-      setBalance({ balance: res.balance, equity: res.balance, currency: res.currency });
+      const { url } = await api.autoTrading.getOAuthUrl(token);
+      window.location.href = url;
+    } catch (err: any) {
+      setConnectError(err?.message || 'Failed to start OAuth');
+      setConnectLoading(false);
+    }
+  };
+
+  const handleOAuthCallback = useCallback(async (code: string) => {
+    if (!token) return;
+    setConnectLoading(true);
+    setConnectError('');
+    try {
+      const res = await api.autoTrading.connect(code, token);
+      if (res.needsAccountSelection && res.accounts) {
+        setOauthAccounts(res.accounts);
+        setTempTokens({
+          access: res.tempAccessToken!,
+          refresh: res.tempRefreshToken!,
+        });
+        setShowConnect(true);
+        setConnectLoading(false);
+        return;
+      }
+      if (res.balance != null) {
+        setBalance({ balance: res.balance, equity: res.balance, currency: res.currency! });
+      }
       setShowConnect(false);
-      setConnectForm({ apiToken: '', accountId: '' });
       await load();
     } catch (err: any) {
       setConnectError(err?.message || 'Failed to connect');
+      setShowConnect(true);
+    }
+    setConnectLoading(false);
+  }, [token, load]);
+
+  // Handle OAuth callback — read ?code= from URL
+  useEffect(() => {
+    const code = searchParams.get('code');
+    if (code && token) {
+      router.replace('/dashboard/auto-trader', { scroll: false });
+      handleOAuthCallback(code);
+    }
+  }, [searchParams, token, router, handleOAuthCallback]);
+
+  const handleSelectAccount = async (accountId: string) => {
+    if (!token || !tempTokens) return;
+    setConnectLoading(true);
+    setConnectError('');
+    try {
+      const res = await api.autoTrading.selectAccount(accountId, tempTokens.access, tempTokens.refresh, token);
+      setBalance({ balance: res.balance, equity: res.balance, currency: res.currency });
+      setShowConnect(false);
+      setOauthAccounts(null);
+      setTempTokens(null);
+      await load();
+    } catch (err: any) {
+      setConnectError(err?.message || 'Failed to select account');
     }
     setConnectLoading(false);
   };
@@ -626,7 +688,7 @@ export default function AutoTraderPage() {
         </div>
       )}
 
-      {/* Connect Modal */}
+      {/* Connect / Account Selection Modal */}
       <AnimatePresence>
         {showConnect && (
           <motion.div
@@ -634,7 +696,7 @@ export default function AutoTraderPage() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-            onClick={() => setShowConnect(false)}
+            onClick={() => { setShowConnect(false); setOauthAccounts(null); setTempTokens(null); }}
           >
             <motion.div
               initial={{ scale: 0.95 }}
@@ -643,49 +705,55 @@ export default function AutoTraderPage() {
               className="w-full max-w-md rounded-2xl border border-white/10 bg-zinc-900 p-6"
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 className="mb-4 text-lg font-bold">Connect cTrader Account</h3>
-              <div className="space-y-3">
-                <div>
-                  <label className="text-xs text-muted-foreground">Account ID</label>
-                  <input
-                    type="text"
-                    value={connectForm.accountId}
-                    onChange={(e) => setConnectForm((f) => ({ ...f, accountId: e.target.value }))}
-                    placeholder="Your cTrader account ID"
-                    className="mt-1 w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">API Token</label>
-                  <input
-                    type="password"
-                    value={connectForm.apiToken}
-                    onChange={(e) => setConnectForm((f) => ({ ...f, apiToken: e.target.value }))}
-                    placeholder="Your cTrader API access token"
-                    className="mt-1 w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm"
-                  />
-                </div>
-                {connectError && (
-                  <p className="text-xs text-red-400">{connectError}</p>
-                )}
-                <div className="flex gap-2 pt-2">
-                  <Button variant="outline" className="flex-1" onClick={() => setShowConnect(false)}>Cancel</Button>
-                  <Button
-                    className="flex-1"
-                    onClick={handleConnect}
-                    disabled={connectLoading || !connectForm.apiToken || !connectForm.accountId}
-                  >
-                    {connectLoading ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Link2 className="mr-1.5 h-3.5 w-3.5" />}
-                    Connect
+              {oauthAccounts ? (
+                <>
+                  <h3 className="mb-4 text-lg font-bold">Select Trading Account</h3>
+                  <p className="mb-3 text-xs text-muted-foreground">Choose the account you want to connect for auto trading:</p>
+                  <div className="max-h-60 space-y-2 overflow-y-auto">
+                    {oauthAccounts.map((acc) => (
+                      <button
+                        key={acc.accountId}
+                        onClick={() => handleSelectAccount(acc.accountId)}
+                        disabled={connectLoading}
+                        className="flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] p-3 text-left transition-colors hover:border-primary/40 hover:bg-white/[0.06] disabled:opacity-50"
+                      >
+                        <div>
+                          <p className="text-sm font-medium">#{acc.accountNumber}</p>
+                          <p className="text-[10px] text-muted-foreground">{acc.brokerName} · {acc.live ? 'Live' : 'Demo'}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-bold">{acc.currency} {acc.balance.toFixed(2)}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                  {connectError && <p className="mt-2 text-xs text-red-400">{connectError}</p>}
+                  <Button variant="outline" className="mt-4 w-full" onClick={() => { setShowConnect(false); setOauthAccounts(null); setTempTokens(null); }}>
+                    Cancel
                   </Button>
-                </div>
-              </div>
-              <div className="mt-4 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3">
-                <p className="text-[10px] text-amber-300/80">
-                  <Shield className="mr-1 inline h-3 w-3" />
-                  Your API token is encrypted with AES-256 before storage. We never store plaintext credentials.
-                </p>
-              </div>
+                </>
+              ) : (
+                <>
+                  <h3 className="mb-4 text-lg font-bold">Connect cTrader Account</h3>
+                  <p className="mb-4 text-sm text-muted-foreground">
+                    Click below to securely connect your cTrader account via OAuth. You will be redirected to cTrader to authorize access.
+                  </p>
+                  {connectError && <p className="mb-3 text-xs text-red-400">{connectError}</p>}
+                  <div className="flex gap-2">
+                    <Button variant="outline" className="flex-1" onClick={() => setShowConnect(false)}>Cancel</Button>
+                    <Button className="flex-1" onClick={handleConnect} disabled={connectLoading}>
+                      {connectLoading ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Link2 className="mr-1.5 h-3.5 w-3.5" />}
+                      Connect cTrader
+                    </Button>
+                  </div>
+                  <div className="mt-4 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3">
+                    <p className="text-[10px] text-amber-300/80">
+                      <Shield className="mr-1 inline h-3 w-3" />
+                      Your tokens are encrypted with AES-256 before storage. We never store plaintext credentials.
+                    </p>
+                  </div>
+                </>
+              )}
             </motion.div>
           </motion.div>
         )}
