@@ -1169,10 +1169,35 @@ export const api = {
         token,
       }),
 
-    connect: (apiToken: string, accountId: string, token: string) =>
-      apiFetch<{ success: boolean; balance: number; currency: string }>('/auto-trading/connect', {
+    getOAuthUrl: (token: string) =>
+      apiFetch<{ url: string }>('/auto-trading/oauth-url', { token }),
+
+    connect: (code: string, token: string, accountId?: string) =>
+      apiFetch<{
+        success: boolean;
+        balance?: number;
+        currency?: string;
+        needsAccountSelection?: boolean;
+        accounts?: Array<{
+          accountId: string;
+          accountNumber: number;
+          live: boolean;
+          brokerName: string;
+          balance: number;
+          currency: string;
+        }>;
+        tempAccessToken?: string;
+        tempRefreshToken?: string;
+      }>('/auto-trading/connect', {
         method: 'POST',
-        body: JSON.stringify({ apiToken, accountId }),
+        body: JSON.stringify({ code, accountId }),
+        token,
+      }),
+
+    selectAccount: (accountId: string, encryptedAccessToken: string, encryptedRefreshToken: string, token: string) =>
+      apiFetch<{ success: boolean; balance: number; currency: string }>('/auto-trading/select-account', {
+        method: 'POST',
+        body: JSON.stringify({ accountId, encryptedAccessToken, encryptedRefreshToken }),
         token,
       }),
 
