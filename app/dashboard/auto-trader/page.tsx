@@ -7,14 +7,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/hooks/useAuth';
 import {
   api,
+  type AllowedTradingSession,
   type AutoTradeSettings,
   type AutoTrade,
   type AutoTradeLog,
   type AutoPerformance,
   type AutoTradeMode,
+  type StrategyMode,
   type CTraderPosition,
 } from '@/lib/api';
 import {
@@ -56,6 +59,67 @@ const MODE_COLORS: Record<AutoTradeMode, string> = {
   assisted: 'border-amber-500/40 bg-amber-500/10 text-amber-300',
   semi: 'border-cyan-500/40 bg-cyan-500/10 text-cyan-300',
   full: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300',
+};
+
+const STRATEGY_MODE_LABELS: Record<StrategyMode, string> = {
+  standard: 'Standard Trading',
+  gold_scalper: 'Gold Scalper (High Frequency)',
+};
+
+const getLiveTradeState = (trade: AutoTrade, position?: CTraderPosition | null) => {
+  if (!position) {
+    return {
+      label: 'Running',
+      progress: 10,
+      detail: 'Waiting for live position data',
+      indicatorClassName: 'bg-cyan-400',
+    };
+  }
+
+  const targetDistance = trade.direction === 'buy'
+    ? trade.tp - trade.entryPrice
+    : trade.entryPrice - trade.tp;
+  const adverseDistance = trade.direction === 'buy'
+    ? trade.entryPrice - trade.sl
+    : trade.sl - trade.entryPrice;
+  const progressedDistance = trade.direction === 'buy'
+    ? position.currentPrice - trade.entryPrice
+    : trade.entryPrice - position.currentPrice;
+  const adverseProgress = trade.direction === 'buy'
+    ? trade.entryPrice - position.currentPrice
+    : position.currentPrice - trade.entryPrice;
+
+  const targetProgress = targetDistance > 0
+    ? Math.max(0, Math.min(100, (progressedDistance / targetDistance) * 100))
+    : 0;
+  const riskProgress = adverseDistance > 0
+    ? Math.max(0, Math.min(100, (adverseProgress / adverseDistance) * 100))
+    : 0;
+
+  if (riskProgress >= 60) {
+    return {
+      label: 'At Risk',
+      progress: riskProgress,
+      detail: `Current: ${position.currentPrice.toFixed(2)}`,
+      indicatorClassName: 'bg-red-400',
+    };
+  }
+
+  if (targetProgress >= 75) {
+    return {
+      label: 'Approaching TP',
+      progress: targetProgress,
+      detail: `Current: ${position.currentPrice.toFixed(2)}`,
+      indicatorClassName: 'bg-emerald-400',
+    };
+  }
+
+  return {
+    label: 'Running',
+    progress: Math.max(targetProgress, 8),
+    detail: `Current: ${position.currentPrice.toFixed(2)}`,
+    indicatorClassName: 'bg-cyan-400',
+  };
 };
 
 export default function AutoTraderPage() {
@@ -288,6 +352,11 @@ function AutoTraderContent() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Link href="/dashboard/auto-trader/settings">
+            <Button size="sm" variant="outline">
+              <Shield className="mr-1.5 h-3.5 w-3.5" /> Controls
+            </Button>
+          </Link>
           <Button size="sm" variant="outline" onClick={load}>
             <RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Refresh
           </Button>
@@ -414,6 +483,23 @@ function AutoTraderContent() {
                 <h3 className="text-sm font-semibold">Risk Management</h3>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   <div>
+                    <label className="text-xs text-muted-foreground">Strategy Mode</label>
+                    <select
+                      value={settings?.strategyMode ?? 'standard'}
+                      onChange={(e) => updateSetting('strategyMode', e.target.value as StrategyMode)}
+                      className="mt-1 w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm"
+                    >
+                      {Object.entries(STRATEGY_MODE_LABELS).map(([value, label]) => (
+                        <option key={value} value={value}>{label}</option>
+                      ))}
+                    </select>
+                    <p className="mt-1 text-[10px] text-muted-foreground" title="Gold scalper focuses on fast trades during high volatility sessions">
+                      Gold scalper focuses on fast trades during high volatility sessions.
+                    </p>
+                  </div>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  <div>
                     <label className="text-xs text-muted-foreground">Risk Per Trade (%)</label>
                     <input
                       type="number"
@@ -454,7 +540,7 @@ function AutoTraderContent() {
                   <div>
                     <label className="text-xs text-muted-foreground">Allowed Sessions</label>
                     <div className="mt-1 flex gap-2">
-                      {['london', 'newyork'].map((session) => {
+                      {(['london', 'newyork'] as AllowedTradingSession[]).map((session) => {
                         const active = settings?.allowedSessions?.includes(session);
                         return (
                           <button
@@ -462,7 +548,7 @@ function AutoTraderContent() {
                             onClick={() => {
                               const current = settings?.allowedSessions ?? [];
                               const next = active
-                                ? current.filter((s: string) => s !== session)
+                                ? current.filter((s) => s !== session)
                                 : [...current, session];
                               updateSetting('allowedSessions', next);
                             }}
@@ -557,6 +643,12 @@ function AutoTraderContent() {
             activeTrades.map((trade) => (
               <Card key={trade.id} className="mobile-card">
                 <CardContent className="p-4">
+                  {(() => {
+                    const livePosition = positions.find((position) => position.orderId === trade.ctraderOrderId) ?? null;
+                    const liveState = getLiveTradeState(trade, livePosition);
+
+                    return (
+                      <>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       {trade.direction === 'buy' ? (
@@ -576,10 +668,22 @@ function AutoTraderContent() {
                       </div>
                     </div>
                     <Badge className={`text-[10px] ${
-                      trade.status === 'executed' ? 'border-cyan-500/30 bg-cyan-500/10 text-cyan-300' : 'border-amber-500/30 bg-amber-500/10 text-amber-300'
+                      liveState.label === 'Approaching TP'
+                        ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
+                        : liveState.label === 'At Risk'
+                          ? 'border-red-500/30 bg-red-500/10 text-red-300'
+                          : 'border-cyan-500/30 bg-cyan-500/10 text-cyan-300'
                     }`}>
-                      {trade.status}
+                      {liveState.label}
                     </Badge>
+                  </div>
+                  <div className="mt-3 space-y-2 rounded-xl border border-white/5 bg-white/[0.02] p-3">
+                    <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                      <span>Trade status</span>
+                      <span>{Math.round(liveState.progress)}%</span>
+                    </div>
+                    <Progress value={liveState.progress} indicatorClassName={liveState.indicatorClassName} className="h-2 bg-white/5" />
+                    <p className="text-[11px] text-muted-foreground">{liveState.detail}</p>
                   </div>
                   <div className="mt-3 grid grid-cols-3 gap-2 text-center">
                     <div>
@@ -595,6 +699,9 @@ function AutoTraderContent() {
                       <p className="text-xs font-medium text-emerald-400">{trade.tp}</p>
                     </div>
                   </div>
+                      </>
+                    );
+                  })()}
                 </CardContent>
               </Card>
             ))
