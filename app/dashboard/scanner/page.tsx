@@ -1029,7 +1029,7 @@ export default function ScannerPage() {
                   <CardContent className="pt-0">
                     {historyResults.length === 0 ? (
                       <div className="rounded-xl bg-white/5 p-6 text-center text-sm text-muted-foreground">
-                        Older signals will appear here after the trading day rolls over.
+                        Older signals and still-running trades from previous days will appear here after the trading day rolls over.
                       </div>
                     ) : (
                       <div className="max-h-[32rem] space-y-3 overflow-y-auto pr-2">
