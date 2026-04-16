@@ -31,7 +31,7 @@ const oneTapProFeatures = [
 ];
 
 const vipAutoTraderFeatures = [
-  'Full Auto Trading (cTrader)',
+  'Full Auto Trading (MT5)',
   'Gold (XAUUSD) optimized execution',
   'Smart Session Scanner access',
   'High-confidence trades only',
@@ -76,7 +76,7 @@ const fallbackPlanDetails: Record<'FREE' | 'PRO' | 'TOP_TIER' | 'VIP_AUTO_TRADER
   },
   VIP_AUTO_TRADER: {
     period: '/month',
-    description: 'Full automated trading via cTrader. AI places and manages trades for you — hands-free.',
+    description: 'Full automated trading via MT5 using MetaAPI. AI places and manages trades for you — hands-free.',
     icon: Bot,
     color: 'from-amber-500 via-yellow-500 to-orange-500',
     cta: 'Start Auto Trading',
@@ -303,7 +303,7 @@ export default function PricingPage() {
                     { feature: 'Priority Processing', free: false, pro: true, top: true, vip: true },
                     { feature: 'Smart Session Scanner', free: false, pro: false, top: true, vip: true },
                     { feature: 'One-Tap Trade Setups', free: false, pro: false, top: true, vip: true },
-                    { feature: 'Auto Trading (cTrader)', free: false, pro: false, top: false, vip: true },
+                    { feature: 'Auto Trading (MT5)', free: false, pro: false, top: false, vip: true },
                     { feature: 'Gold (XAUUSD) Optimized', free: false, pro: false, top: false, vip: true },
                     { feature: 'Auto / Semi / Assisted Modes', free: false, pro: false, top: false, vip: true },
                     { feature: 'Risk Management Controls', free: false, pro: false, top: false, vip: true },
@@ -343,7 +343,7 @@ export default function PricingPage() {
             {[
               {
                 q: 'What chart platforms are supported?',
-                a: 'We support screenshots from TradingView, cTrader, Deriv (including Boom, Crash, and Volatility indices), and any other trading platform.',
+                a: 'We support screenshots from TradingView, MetaTrader 5, Deriv (including Boom, Crash, and Volatility indices), and any other trading platform.',
               },
               {
                 q: 'How accurate is the AI analysis?',

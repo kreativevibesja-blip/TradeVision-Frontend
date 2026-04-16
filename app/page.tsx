@@ -205,7 +205,7 @@ export default function HomePage() {
             transition={{ duration: 0.28, delay: 0.12 }}
           >
             Upload any chart screenshot and get professional trading analysis instantly.
-            Support for cTrader, TradingView, and Deriv charts including Boom, Crash, and Volatility indices.
+            Support for MetaTrader 5, TradingView, and Deriv charts including Boom, Crash, and Volatility indices.
           </motion.p>
 
           <motion.div
@@ -278,7 +278,7 @@ export default function HomePage() {
               {
                 icon: Upload,
                 title: 'Upload Chart',
-                desc: 'Drag and drop any chart screenshot from TradingView, cTrader, or Deriv.',
+                desc: 'Drag and drop any chart screenshot from TradingView, MetaTrader 5, or Deriv.',
                 color: 'from-blue-500 to-cyan-500',
                 step: '01',
               },
@@ -546,7 +546,7 @@ export default function HomePage() {
                   <div className="text-4xl font-bold mb-4">$99<span className="text-lg text-muted-foreground font-normal">/month</span></div>
                   <ul className="space-y-3 mb-8">
                     {[
-                      'Full Auto Trading (cTrader)',
+                      'Full Auto Trading (MT5)',
                       'Gold (XAUUSD) optimized',
                       'Smart Session Scanner',
                       'Risk management controls',
@@ -588,7 +588,7 @@ export default function HomePage() {
                       Trade Without Watching <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">Charts</span>
                     </h2>
                     <p className="text-muted-foreground max-w-lg mb-6">
-                      Let our AI detect high-probability setups and execute trades on your cTrader account automatically. Choose full auto, semi-auto, or assisted mode.
+                      Let our AI detect high-probability setups and execute trades on your MT5 account automatically through MetaAPI. Choose full auto, semi-auto, or assisted mode.
                     </p>
                     <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8 text-sm">
                       {['Gold (XAUUSD) optimized', 'Risk management built-in', 'Trade replay & history', 'Performance dashboard'].map((f) => (

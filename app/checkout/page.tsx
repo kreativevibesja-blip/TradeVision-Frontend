@@ -110,10 +110,10 @@ const planCatalog: Record<PlanKey, {
     name: 'VIP Auto Trader',
     price: 99,
     period: '/month',
-    description: 'Full automated trading via cTrader. AI places and manages trades for you.',
+    description: 'Full automated trading via MT5 using MetaAPI. AI places and manages trades for you.',
     icon: Crown,
     color: 'from-amber-500 via-yellow-500 to-orange-500',
-    features: ['Full Auto Trading (cTrader)', 'Gold (XAUUSD) optimized execution', 'Smart Session Scanner access', 'High-confidence trades only', 'Risk management controls', 'Auto / Semi / Assisted modes', 'Performance analytics dashboard'],
+    features: ['Full Auto Trading (MT5)', 'Gold (XAUUSD) optimized execution', 'Smart Session Scanner access', 'High-confidence trades only', 'Risk management controls', 'Auto / Semi / Assisted modes', 'Performance analytics dashboard'],
   },
 };
 
