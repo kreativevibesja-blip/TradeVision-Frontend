@@ -30,7 +30,8 @@ const DEFAULT_SETTINGS: AutoTradeSettings = {
   goldOnly: false,
   isActive: false,
   connected: false,
-  ctraderAccountId: null,
+  mt5AccountId: null,
+  mt5Status: null,
 };
 
 const PERSONALITY_COPY: Record<TradingPersonality, { title: string; description: string; className: string }> = {
