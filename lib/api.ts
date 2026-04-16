@@ -1517,15 +1517,25 @@ export interface RiskSettings {
 // ── Auto Trading Types (cTrader) ──
 
 export type AutoTradeMode = 'off' | 'assisted' | 'semi' | 'full';
+export type StrategyMode = 'standard' | 'gold_scalper';
+export type TradingPersonality = 'conservative' | 'balanced' | 'aggressive';
+export type AllowedTradingSession = 'london' | 'newyork';
+export type AllowedTradingAsset = 'gold' | 'indices' | 'forex';
 export type AutoTradeStatus = 'pending' | 'executed' | 'closed' | 'rejected';
 export type AutoTradeResult = 'win' | 'loss' | 'breakeven';
 
 export interface AutoTradeSettings {
   autoMode: AutoTradeMode;
+  strategyMode: StrategyMode;
   riskPerTrade: number;
   maxDailyLoss: number;
   maxTradesPerDay: number;
-  allowedSessions: string[];
+  allowedSessions: AllowedTradingSession[];
+  allowedAssets: AllowedTradingAsset[];
+  personality: TradingPersonality;
+  minConfidence: number;
+  autoPauseEnabled: boolean;
+  maxLossesInRow: number;
   goldOnly: boolean;
   isActive: boolean;
   connected: boolean;
