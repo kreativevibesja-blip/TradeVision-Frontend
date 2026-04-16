@@ -1157,7 +1157,7 @@ export const api = {
       }),
   },
 
-  // ── Auto Trading (cTrader) ──
+  // ── Auto Trading (MT5) ──
   autoTrading: {
     getSettings: (token: string) =>
       apiFetch<{ settings: AutoTradeSettings | null; performance: AutoPerformance | null }>('/auto-trading/settings', { token }),
@@ -1166,38 +1166,6 @@ export const api = {
       apiFetch<{ settings: AutoTradeSettings }>('/auto-trading/settings', {
         method: 'PATCH',
         body: JSON.stringify(data),
-        token,
-      }),
-
-    getOAuthUrl: (token: string) =>
-      apiFetch<{ url: string }>('/auto-trading/oauth-url', { token }),
-
-    connect: (code: string, token: string, accountId?: string) =>
-      apiFetch<{
-        success: boolean;
-        balance?: number;
-        currency?: string;
-        needsAccountSelection?: boolean;
-        accounts?: Array<{
-          accountId: string;
-          accountNumber: number;
-          live: boolean;
-          brokerName: string;
-          balance: number;
-          currency: string;
-        }>;
-        tempAccessToken?: string;
-        tempRefreshToken?: string;
-      }>('/auto-trading/connect', {
-        method: 'POST',
-        body: JSON.stringify({ code, accountId }),
-        token,
-      }),
-
-    selectAccount: (accountId: string, encryptedAccessToken: string, encryptedRefreshToken: string, token: string) =>
-      apiFetch<{ success: boolean; balance: number; currency: string }>('/auto-trading/select-account', {
-        method: 'POST',
-        body: JSON.stringify({ accountId, encryptedAccessToken, encryptedRefreshToken }),
         token,
       }),
 
@@ -1227,7 +1195,7 @@ export const api = {
       }),
 
     getPositions: (token: string) =>
-      apiFetch<{ positions: CTraderPosition[] }>('/auto-trading/positions', { token }),
+      apiFetch<{ positions: MT5Position[] }>('/auto-trading/positions', { token }),
 
     emergencyStop: (closePositions: boolean, token: string) =>
       apiFetch<{ success: boolean; closedCount: number }>('/auto-trading/emergency-stop', {
@@ -1241,6 +1209,22 @@ export const api = {
 
     getPerformance: (token: string) =>
       apiFetch<{ performance: AutoPerformance | null }>('/auto-trading/performance', { token }),
+  },
+
+  mt5: {
+    connect: (data: { login: string; password: string; server: string }, token: string) =>
+      apiFetch<MT5ConnectResponse>('/mt5/connect', {
+        method: 'POST',
+        body: JSON.stringify(data),
+        token,
+      }),
+
+    trade: (data: { symbol: string; type: 'buy' | 'sell'; sl?: number; tp?: number; volume?: number }, token: string) =>
+      apiFetch<{ success: boolean; orderId: string }>('/mt5/trade', {
+        method: 'POST',
+        body: JSON.stringify(data),
+        token,
+      }),
   },
 
   // ── Scanner ──
@@ -1514,7 +1498,7 @@ export interface RiskSettings {
   killSwitch: boolean;
 }
 
-// ── Auto Trading Types (cTrader) ──
+// ── Auto Trading Types (MT5) ──
 
 export type AutoTradeMode = 'off' | 'assisted' | 'semi' | 'full';
 export type StrategyMode = 'standard' | 'gold_scalper';
@@ -1539,7 +1523,8 @@ export interface AutoTradeSettings {
   goldOnly: boolean;
   isActive: boolean;
   connected: boolean;
-  ctraderAccountId: string | null;
+  mt5AccountId: string | null;
+  mt5Status: 'connecting' | 'connected' | 'failed' | null;
 }
 
 export interface AutoTrade {
@@ -1554,7 +1539,7 @@ export interface AutoTrade {
   status: AutoTradeStatus;
   result: AutoTradeResult | null;
   profit: number | null;
-  ctraderOrderId: string | null;
+  mt5OrderId: string | null;
   confidence: string | null;
   marketState: string | null;
   createdAt: string;
@@ -1580,7 +1565,7 @@ export interface AutoPerformance {
   drawdown: number;
 }
 
-export interface CTraderPosition {
+export interface MT5Position {
   orderId: string;
   symbol: string;
   direction: 'buy' | 'sell';
@@ -1591,6 +1576,15 @@ export interface CTraderPosition {
   tp: number;
   profit: number;
   openTime: string;
+}
+
+export interface MT5ConnectResponse {
+  success: boolean;
+  accountId: string;
+  status: 'connecting' | 'connected' | 'failed';
+  balance: number;
+  equity: number;
+  currency: string;
 }
 
 // ── Scanner Types ──
