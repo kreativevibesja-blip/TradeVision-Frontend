@@ -246,6 +246,11 @@ export interface AdminAnalysisLog {
   bias: string | null;
   confidence: number | null;
   strategy: string | null;
+  marketCondition?: AnalysisResult['marketCondition'] | string | null;
+  primaryStrategy?: AnalysisResult['primaryStrategy'] | string | null;
+  signalType?: AnalysisResult['signalType'] | null;
+  counterTrendPlan?: AnalysisResult['counterTrendPlan'] | null;
+  leftSidePlan?: AnalysisResult['leftSidePlan'] | null;
   errorMessage: string | null;
   failureReason: string | null;
   modelUsed: string | null;
