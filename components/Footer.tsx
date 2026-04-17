@@ -55,7 +55,6 @@ export function Footer() {
               <h4 className="mb-4 font-semibold">Supported</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>TradingView</li>
-                <li>MetaTrader 5 (MT5)</li>
                 <li>Deriv (Boom/Crash/Volatility)</li>
               </ul>
             </div>
