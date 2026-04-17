@@ -1582,9 +1582,9 @@ export interface MT5ConnectResponse {
   success: boolean;
   accountId: string;
   status: 'connecting' | 'connected' | 'failed';
-  balance: number;
-  equity: number;
-  currency: string;
+  balance?: number;
+  equity?: number;
+  currency?: string;
 }
 
 // ── Scanner Types ──
