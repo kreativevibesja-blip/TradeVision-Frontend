@@ -2,13 +2,14 @@
 
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import { AlertTriangle, ArrowRight, CheckCircle2, Clock, Crown, Loader2, ShieldAlert, Target, Zap } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { AlertTriangle, ArrowRight, CandlestickChart, CheckCircle2, ChevronRight, Clock, Crown, Loader2, ShieldAlert, Target, Zap } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { api, type AnalysisResult } from '@/lib/api';
+import { formatJamaicaDateTime } from '@/lib/jamaica-time';
 
 const formatPrice = (value: number | null | undefined, pair: string) => {
   if (typeof value !== 'number' || Number.isNaN(value)) {
@@ -56,18 +57,59 @@ type OneTapPlan = {
   warning?: string;
 };
 
+const hasCounterTrendPlan = (analysis: AnalysisResult) => !!analysis.counterTrendPlan?.bias && analysis.counterTrendPlan.bias !== 'none';
+const hasLeftSidePlan = (analysis: AnalysisResult) => !!analysis.leftSidePlan?.bias && analysis.leftSidePlan.bias !== 'none';
+
 function OneTapPageContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const { user, token, loading: authLoading } = useAuth();
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [recentAnalyses, setRecentAnalyses] = useState<AnalysisResult[]>([]);
+  const [loadingAnalysis, setLoadingAnalysis] = useState(true);
+  const [loadingRecent, setLoadingRecent] = useState(true);
   const [error, setError] = useState('');
 
   const analysisId = searchParams.get('analysisId');
 
   useEffect(() => {
+    if (!token) {
+      setLoadingRecent(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadRecent = async () => {
+      try {
+        setLoadingRecent(true);
+        const result = await api.getAnalyses(token, 1);
+        if (!cancelled) {
+          setRecentAnalyses(result.analyses.filter((item) => !!item.id).slice(0, 8));
+        }
+      } catch {
+        if (!cancelled) {
+          setRecentAnalyses([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingRecent(false);
+        }
+      }
+    };
+
+    void loadRecent();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
+
+  useEffect(() => {
     if (!token || !analysisId) {
-      setLoading(false);
+      setAnalysis(null);
+      setError('');
+      setLoadingAnalysis(false);
       return;
     }
 
@@ -75,18 +117,20 @@ function OneTapPageContent() {
 
     const load = async () => {
       try {
-        setLoading(true);
+        setLoadingAnalysis(true);
+        setError('');
         const result = await api.getAnalysis(analysisId, token);
         if (!cancelled) {
           setAnalysis(result.analysis);
         }
       } catch (loadError: any) {
         if (!cancelled) {
+          setAnalysis(null);
           setError(loadError?.message || 'Unable to load the selected analysis.');
         }
       } finally {
         if (!cancelled) {
-          setLoading(false);
+          setLoadingAnalysis(false);
         }
       }
     };
@@ -162,7 +206,9 @@ function OneTapPageContent() {
     return nextPlans;
   }, [analysis]);
 
-  if (authLoading || loading) {
+  const selectedAnalysisHasPlans = analysis ? plans.length > 0 : false;
+
+  if (authLoading || loadingAnalysis) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -204,42 +250,6 @@ function OneTapPageContent() {
     );
   }
 
-  if (!analysisId) {
-    return (
-      <Card className="mobile-card max-w-2xl">
-        <CardContent className="p-8 space-y-4 text-center">
-          <Zap className="mx-auto h-10 w-10 text-violet-300" />
-          <div>
-            <h1 className="text-2xl font-semibold">Open One-Tap from an analysis</h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Start from a saved analysis result so the workspace can load the correct entry, stop, and targets.
-            </p>
-          </div>
-          <Link href="/dashboard">
-            <Button variant="outline">Back to Dashboard</Button>
-          </Link>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (error || !analysis) {
-    return (
-      <Card className="mobile-card max-w-2xl border-red-500/20 bg-red-500/5">
-        <CardContent className="p-8 space-y-4 text-center">
-          <AlertTriangle className="mx-auto h-10 w-10 text-red-300" />
-          <div>
-            <h1 className="text-2xl font-semibold">Unable to load One-Tap</h1>
-            <p className="mt-2 text-sm text-muted-foreground">{error || 'The selected analysis could not be loaded.'}</p>
-          </div>
-          <Link href="/dashboard">
-            <Button variant="outline">Back to Dashboard</Button>
-          </Link>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <div className="space-y-6">
       <Card className="mobile-card overflow-hidden border-violet-500/20 bg-violet-500/5">
@@ -251,17 +261,18 @@ function OneTapPageContent() {
                 One-Tap Manual Workspace
               </div>
               <div>
-                <h1 className="text-2xl font-semibold sm:text-3xl">{analysis.pair} {analysis.timeframe}</h1>
+                <h1 className="text-2xl font-semibold sm:text-3xl">{analysis ? `${analysis.pair} ${analysis.timeframe}` : 'One-Tap Workspace'}</h1>
                 <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-                  Use this screen as your manual execution checklist. Nothing is auto-sent to a broker here.
+                  Use this screen as your manual execution desk. Pick a saved analysis below or open One-Tap from Analyze, TradingView, or Deriv.
                 </p>
               </div>
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <Badge variant="outline" className="capitalize">{analysis.bias || 'neutral'}</Badge>
-              {analysis.marketCondition ? <Badge variant="outline" className="capitalize">{analysis.marketCondition}</Badge> : null}
-              <Badge variant="outline">{analysis.confidence}/100</Badge>
+              <Badge variant="outline">Manual review only</Badge>
+              {analysis?.bias ? <Badge variant="outline" className="capitalize">{analysis.bias}</Badge> : null}
+              {analysis?.marketCondition ? <Badge variant="outline" className="capitalize">{analysis.marketCondition}</Badge> : null}
+              {analysis?.confidence != null ? <Badge variant="outline">{analysis.confidence}/100</Badge> : null}
             </div>
           </div>
         </CardContent>
@@ -269,6 +280,58 @@ function OneTapPageContent() {
 
       <div className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
         <div className="space-y-6">
+          {!analysisId ? (
+            <Card className="mobile-card border-violet-500/20 bg-violet-500/5">
+              <CardContent className="p-8">
+                <div className="mx-auto max-w-2xl text-center">
+                  <Zap className="mx-auto h-10 w-10 text-violet-300" />
+                  <h2 className="mt-4 text-2xl font-semibold">Your standalone One-Tap page is still here</h2>
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    Choose any saved analysis to load its primary, counter-trend, and left-side trade plans into this workspace.
+                  </p>
+                  <div className="mt-6 flex flex-wrap justify-center gap-3">
+                    <Link href="/analyze">
+                      <Button variant="outline" className="gap-2">
+                        <CandlestickChart className="h-4 w-4" />
+                        Analyze a Chart
+                      </Button>
+                    </Link>
+                    <Link href="/dashboard/tradingview">
+                      <Button variant="outline">TradingView Live</Button>
+                    </Link>
+                    <Link href="/dashboard/deriv">
+                      <Button variant="outline">Deriv Live</Button>
+                    </Link>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
+
+          {error && !analysis ? (
+            <Card className="mobile-card border-red-500/20 bg-red-500/5">
+              <CardContent className="p-8 space-y-4 text-center">
+                <AlertTriangle className="mx-auto h-10 w-10 text-red-300" />
+                <div>
+                  <h2 className="text-2xl font-semibold">Unable to load One-Tap</h2>
+                  <p className="mt-2 text-sm text-muted-foreground">{error}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
+
+          {analysis && !selectedAnalysisHasPlans ? (
+            <Card className="mobile-card border-amber-500/20 bg-amber-500/5">
+              <CardContent className="p-8 text-center">
+                <AlertTriangle className="mx-auto h-10 w-10 text-amber-300" />
+                <h2 className="mt-4 text-2xl font-semibold">This analysis has no One-Tap plan yet</h2>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Open another saved analysis or generate a fresh one with entry, stop, and target levels.
+                </p>
+              </CardContent>
+            </Card>
+          ) : null}
+
           {plans.map((plan) => (
             <Card
               key={plan.key}
@@ -333,6 +396,50 @@ function OneTapPageContent() {
         <div className="space-y-6">
           <Card className="mobile-card">
             <CardHeader>
+              <CardTitle className="text-lg">Recent Analyses</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {loadingRecent ? (
+                <div className="flex items-center justify-center py-8 text-muted-foreground">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                </div>
+              ) : recentAnalyses.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-white/10 p-4 text-sm text-muted-foreground">
+                  No saved analyses yet. Run a chart analysis first, then open it here.
+                </div>
+              ) : (
+                recentAnalyses.map((item) => {
+                  const isSelected = item.id === analysis?.id;
+
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => router.push(`/dashboard/one-tap?analysisId=${encodeURIComponent(item.id)}`)}
+                      className={`w-full rounded-2xl border p-4 text-left transition ${isSelected ? 'border-violet-400/50 bg-violet-500/10' : 'border-white/10 bg-white/5 hover:bg-white/10'}`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-medium text-white">{item.pair} {item.timeframe}</p>
+                          <p className="mt-1 text-xs text-muted-foreground">{item.createdAt ? formatJamaicaDateTime(item.createdAt) : 'Saved analysis'}</p>
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Badge variant="outline" className="capitalize">{item.bias || 'neutral'}</Badge>
+                        {item.marketCondition ? <Badge variant="outline" className="capitalize">{item.marketCondition}</Badge> : null}
+                        {hasCounterTrendPlan(item) ? <Badge variant="outline" className="border-rose-400/30 text-rose-200">Counter</Badge> : null}
+                        {hasLeftSidePlan(item) ? <Badge variant="outline" className="border-amber-400/30 text-amber-200">Left-side</Badge> : null}
+                      </div>
+                    </button>
+                  );
+                })
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="mobile-card">
+            <CardHeader>
               <CardTitle className="text-lg">Execution Checklist</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm text-muted-foreground">
@@ -343,22 +450,24 @@ function OneTapPageContent() {
             </CardContent>
           </Card>
 
-          <Card className="mobile-card">
-            <CardHeader>
-              <CardTitle className="text-lg">Open Full Analysis</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Need the full structure breakdown, support and resistance zones, or markup image again?
-              </p>
-              <Link href={`/analyze?analysisId=${encodeURIComponent(analysis.id)}`}>
-                <Button variant="outline" className="w-full gap-2">
-                  View Full Analysis
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
+          {analysis ? (
+            <Card className="mobile-card">
+              <CardHeader>
+                <CardTitle className="text-lg">Open Full Analysis</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Need the full structure breakdown, support and resistance zones, or markup image again?
+                </p>
+                <Link href={`/analyze?analysisId=${encodeURIComponent(analysis.id)}`}>
+                  <Button variant="outline" className="w-full gap-2">
+                    View Full Analysis
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          ) : null}
         </div>
       </div>
     </div>
