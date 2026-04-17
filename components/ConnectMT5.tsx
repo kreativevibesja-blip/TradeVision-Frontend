@@ -28,7 +28,7 @@ export default function ConnectMT5({ token, onConnected, onCancel }: ConnectMT5P
 
     try {
       const response = await api.mt5.connect({ login, password, server }, token);
-      setStatus('connected');
+      setStatus(response.status === 'failed' ? 'failed' : response.status === 'connected' ? 'connected' : 'connecting');
       setPassword('');
       await onConnected(response);
     } catch (connectError: any) {
