@@ -207,7 +207,13 @@ function AutoTraderContent() {
   };
 
   const handleConnected = useCallback(async (response: MT5ConnectResponse) => {
-    setBalance({ balance: response.balance, equity: response.equity, currency: response.currency });
+    if (
+      typeof response.balance === 'number' &&
+      typeof response.equity === 'number' &&
+      typeof response.currency === 'string'
+    ) {
+      setBalance({ balance: response.balance, equity: response.equity, currency: response.currency });
+    }
     setShowConnect(false);
     await load();
   }, [load]);
