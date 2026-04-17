@@ -99,6 +99,7 @@ const readCachedAnalysis = (): CachedAnalysis | null => {
 export default function DerivDashboardPage() {
   const router = useRouter();
   const { user, token, loading: authLoading } = useAuth();
+  const canUseOneTap = user?.subscription === 'TOP_TIER' || user?.subscription === 'VIP_AUTO_TRADER';
   const [symbol, setSymbol] = useState('R_75');
   const [timeframe, setTimeframe] = useState('15m');
   const [workspaceReady, setWorkspaceReady] = useState(false);
@@ -387,6 +388,14 @@ export default function DerivDashboardPage() {
                   <Link href={`/analyze?analysisId=${encodeURIComponent(analysis.analysisId)}`}>
                     <Button variant="outline" className="h-10 border-slate-700 bg-slate-900/70 px-4">Open Full Result</Button>
                   </Link>
+                  {canUseOneTap ? (
+                    <Link href={`/dashboard/one-tap?analysisId=${encodeURIComponent(analysis.analysisId)}`}>
+                      <Button variant="outline" className="h-10 border-violet-500/40 bg-violet-500/10 px-4 text-violet-100 hover:bg-violet-500/20">
+                        <Zap className="mr-2 h-4 w-4" />
+                        One-Tap
+                      </Button>
+                    </Link>
+                  ) : null}
                 </div>
               ) : null}
             </div>

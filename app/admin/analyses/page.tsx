@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { api, resolveAssetUrl, type AdminAnalysisLog, type AnalysisResult } from '@/lib/api';
 import { formatJamaicaDateTime } from '@/lib/jamaica-time';
-import { TrendingUp, TrendingDown, Minus, Eye, X, Search } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Eye, X, Search, Target, Zap } from 'lucide-react';
 
 const getStatusBadge = (analysis: AdminAnalysisLog) => {
   if (analysis.status === 'COMPLETED') {
@@ -137,7 +137,9 @@ export default function AdminAnalysesPage() {
                       <th className="text-left p-4 font-medium text-muted-foreground">Pair</th>
                       <th className="text-left p-4 font-medium text-muted-foreground">TF</th>
                       <th className="text-left p-4 font-medium text-muted-foreground">Bias</th>
+                      <th className="text-left p-4 font-medium text-muted-foreground">Market</th>
                       <th className="text-left p-4 font-medium text-muted-foreground">Score</th>
+                      <th className="text-left p-4 font-medium text-muted-foreground">One-Tap</th>
                       <th className="text-left p-4 font-medium text-muted-foreground">Failure Reason</th>
                       <th className="text-left p-4 font-medium text-muted-foreground">Date</th>
                       <th className="text-left p-4 font-medium text-muted-foreground">View</th>
@@ -146,7 +148,7 @@ export default function AdminAnalysesPage() {
                   <tbody>
                     {analyses.length === 0 ? (
                       <tr>
-                        <td colSpan={10} className="p-8 text-center text-sm text-muted-foreground">
+                        <td colSpan={12} className="p-8 text-center text-sm text-muted-foreground">
                           {searchQuery ? 'No analysis logs found for that user.' : 'No analysis logs found.'}
                         </td>
                       </tr>
@@ -183,7 +185,19 @@ export default function AdminAnalysesPage() {
                               {biasBadge.label}
                             </Badge>
                           </td>
+                          <td className="p-4 min-w-[120px] text-xs text-muted-foreground capitalize">{a.marketCondition || '-'}</td>
                           <td className="p-4 text-muted-foreground">{a.confidence ?? '-'}{a.confidence !== null ? '/100' : ''}</td>
+                          <td className="p-4 min-w-[140px]">
+                            <div className="flex flex-wrap gap-1">
+                              <Badge variant="outline" className="text-[10px]">Primary</Badge>
+                              {a.counterTrendPlan?.bias && a.counterTrendPlan.bias !== 'none' ? (
+                                <Badge variant="outline" className="border-rose-400/30 text-[10px] text-rose-200">Counter</Badge>
+                              ) : null}
+                              {a.leftSidePlan?.bias && a.leftSidePlan.bias !== 'none' ? (
+                                <Badge variant="outline" className="border-amber-400/30 text-[10px] text-amber-200">Left-side</Badge>
+                              ) : null}
+                            </div>
+                          </td>
                           <td className="p-4 max-w-[320px] text-xs text-muted-foreground whitespace-normal break-words">{a.failureReason || '-'}</td>
                           <td className="p-4 text-xs text-muted-foreground whitespace-nowrap">{formatJamaicaDateTime(a.createdAt)}</td>
                           <td className="p-4">
@@ -288,6 +302,62 @@ export default function AdminAnalysesPage() {
                           <p className="text-xs uppercase tracking-wide text-slate-500">Strategy</p>
                           <p className="mt-1 text-sm text-white">{selectedAnalysis.strategy || '-'}</p>
                         </div>
+                        <div>
+                          <p className="text-xs uppercase tracking-wide text-slate-500">Market Condition</p>
+                          <p className="mt-1 text-sm capitalize text-white">{selectedAnalysis.marketCondition || '-'}</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  <div className="grid gap-6 lg:grid-cols-3">
+                    <Card>
+                      <CardContent className="p-4 space-y-3">
+                        <div className="flex items-center gap-2 text-sm font-medium text-white">
+                          <Zap className="h-4 w-4 text-violet-300" />
+                          Primary One-Tap
+                        </div>
+                        <div className="space-y-2 text-sm text-slate-300">
+                          <p><span className="text-slate-500">Entry:</span> {selectedAnalysis.entryZone ? `${selectedAnalysis.entryZone.min ?? '-'} - ${selectedAnalysis.entryZone.max ?? '-'}` : '-'}</p>
+                          <p><span className="text-slate-500">Stop:</span> {selectedAnalysis.stopLoss ?? '-'}</p>
+                          <p><span className="text-slate-500">TP1:</span> {selectedAnalysis.takeProfit1 ?? '-'}</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardContent className="p-4 space-y-3">
+                        <div className="flex items-center gap-2 text-sm font-medium text-white">
+                          <Zap className="h-4 w-4 text-rose-300" />
+                          Counter-Trend
+                        </div>
+                        {selectedAnalysis.counterTrendPlan?.bias && selectedAnalysis.counterTrendPlan.bias !== 'none' ? (
+                          <div className="space-y-2 text-sm text-slate-300">
+                            <p><span className="text-slate-500">Bias:</span> <span className="capitalize">{selectedAnalysis.counterTrendPlan.bias}</span></p>
+                            <p><span className="text-slate-500">Action:</span> <span className="capitalize">{selectedAnalysis.counterTrendPlan.action}</span></p>
+                            <p><span className="text-slate-500">Reason:</span> {selectedAnalysis.counterTrendPlan.reason}</p>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-slate-500">No counter-trend One-Tap plan.</p>
+                        )}
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardContent className="p-4 space-y-3">
+                        <div className="flex items-center gap-2 text-sm font-medium text-white">
+                          <Target className="h-4 w-4 text-amber-300" />
+                          Left-Side Setup
+                        </div>
+                        {selectedAnalysis.leftSidePlan?.bias && selectedAnalysis.leftSidePlan.bias !== 'none' ? (
+                          <div className="space-y-2 text-sm text-slate-300">
+                            <p><span className="text-slate-500">Bias:</span> <span className="capitalize">{selectedAnalysis.leftSidePlan.bias}</span></p>
+                            <p><span className="text-slate-500">Action:</span> <span className="capitalize">{selectedAnalysis.leftSidePlan.action}</span></p>
+                            <p><span className="text-slate-500">Reason:</span> {selectedAnalysis.leftSidePlan.reason}</p>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-slate-500">No left-side One-Tap plan.</p>
+                        )}
                       </CardContent>
                     </Card>
                   </div>

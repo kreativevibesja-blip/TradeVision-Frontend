@@ -66,6 +66,7 @@ const readCachedAnalysis = (): CachedAnalysis | null => {
 export default function TradingViewDashboardPage() {
   const router = useRouter();
   const { user, token, loading: authLoading } = useAuth();
+  const canUseOneTap = user?.subscription === 'TOP_TIER' || user?.subscription === 'VIP_AUTO_TRADER';
   const [symbol, setSymbol] = useState('EURUSD');
   const [timeframe, setTimeframe] = useState('M15');
   const [analyzing, setAnalyzing] = useState(false);
@@ -287,6 +288,14 @@ export default function TradingViewDashboardPage() {
                 <Link href={`/analyze?analysisId=${encodeURIComponent(cachedAnalysis.analysisId)}`}>
                   <Button variant="outline" className="h-10 border-slate-700 bg-slate-900/70 px-4">Open Result</Button>
                 </Link>
+                {canUseOneTap ? (
+                  <Link href={`/dashboard/one-tap?analysisId=${encodeURIComponent(cachedAnalysis.analysisId)}`}>
+                    <Button variant="outline" className="h-10 border-violet-500/40 bg-violet-500/10 px-4 text-violet-100 hover:bg-violet-500/20">
+                      <Zap className="mr-2 h-4 w-4" />
+                      One-Tap
+                    </Button>
+                  </Link>
+                ) : null}
                 <Button onClick={() => void startAnalysis(true)} disabled={analyzing} className="h-10 bg-blue-500 px-4 text-white hover:bg-blue-600">
                   <RefreshCcw className={`mr-2 h-4 w-4 ${analyzing ? 'animate-spin' : ''}`} />
                   Re-analyze

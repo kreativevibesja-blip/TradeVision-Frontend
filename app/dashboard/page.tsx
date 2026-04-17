@@ -318,6 +318,11 @@ export default function DashboardPage() {
                             <Badge variant={a.bias === 'BULLISH' ? 'success' : a.bias === 'BEARISH' ? 'destructive' : 'warning'} className="text-xs">
                               {a.bias}
                             </Badge>
+                            {a.marketCondition ? (
+                              <Badge variant="outline" className="text-[10px] capitalize">
+                                {a.marketCondition}
+                              </Badge>
+                            ) : null}
                           </div>
                           <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                             <span>{a.timeframe}</span>
@@ -328,14 +333,29 @@ export default function DashboardPage() {
                             {a.confidence && (
                               <span>Score: {a.confidence}/100</span>
                             )}
+                            {a.counterTrendPlan?.bias && a.counterTrendPlan.bias !== 'none' ? (
+                              <span className="text-rose-300">Counter plan</span>
+                            ) : null}
+                            {a.leftSidePlan?.bias && a.leftSidePlan.bias !== 'none' ? (
+                              <span className="text-amber-300">Left-side plan</span>
+                            ) : null}
                           </div>
                         </div>
                       </div>
-                      <Link href={`/analyze?analysisId=${encodeURIComponent(a.id)}`} className="shrink-0">
-                        <Button variant="ghost" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </Link>
+                      <div className="flex shrink-0 items-center gap-1">
+                        {isTopTier ? (
+                          <Link href={`/dashboard/one-tap?analysisId=${encodeURIComponent(a.id)}`}>
+                            <Button variant="ghost" size="sm" className="text-violet-200 hover:text-violet-100">
+                              <Zap className="h-4 w-4" />
+                            </Button>
+                          </Link>
+                        ) : null}
+                        <Link href={`/analyze?analysisId=${encodeURIComponent(a.id)}`} className="shrink-0">
+                          <Button variant="ghost" size="sm">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </Link>
+                      </div>
                     </motion.div>
                   ))}
                 </div>
