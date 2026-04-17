@@ -1461,6 +1461,40 @@ function AnalyzePageContent() {
                     </CardContent>
                   </Card>
 
+                  {isTopTier && analysis.id ? (
+                    <Card className="mobile-card border-violet-500/30 bg-violet-500/5">
+                      <CardContent className="p-6 space-y-4">
+                        <div className="flex items-center gap-2">
+                          <Zap className="h-4 w-4 text-violet-300" />
+                          <span className="text-sm font-medium text-violet-100">One-Tap Workspace</span>
+                          <Badge variant="outline" className="border-violet-400/40 text-violet-200">PRO+</Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Open the execution workspace for this analysis to review the primary setup, alternate counter-trend idea, and left-side plan in one place.
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            type="button"
+                            className="bg-violet-600 text-white hover:bg-violet-500"
+                            onClick={() => router.push(`/dashboard/one-tap?analysisId=${encodeURIComponent(analysis.id)}`)}
+                          >
+                            <Zap className="mr-2 h-4 w-4" />
+                            Open One-Tap
+                          </Button>
+                          {analysis.counterTrendPlan?.bias && analysis.counterTrendPlan.bias !== 'none' ? (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => setShowOneTapCounterTrend((current) => !current)}
+                            >
+                              {showOneTapCounterTrend ? 'Hide Counter-Trend' : 'Show Counter-Trend'}
+                            </Button>
+                          ) : null}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ) : null}
+
                   {isPro && (analysis.stopLoss || analysis.takeProfit1) ? (
                     <Card className="mobile-card border-amber-500/30 bg-amber-500/5">
                       <CardContent className="p-6 space-y-4">

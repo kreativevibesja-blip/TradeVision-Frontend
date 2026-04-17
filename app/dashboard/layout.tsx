@@ -5,22 +5,24 @@ import { usePathname } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import PushNotificationPrompt from '@/components/PushNotificationPrompt';
 import { useAuth } from '@/hooks/useAuth';
-import { CandlestickChart, CreditCard, LayoutDashboard, RadioTower, Users, Radar } from 'lucide-react';
-
-const dashboardNav = [
-  { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
-  { href: '/dashboard/tradingview', label: 'Live Chart', icon: CandlestickChart },
-  { href: '/dashboard/deriv', label: 'Deriv Live', icon: RadioTower },
-  { href: '/dashboard/scanner', label: 'Scanner', icon: Radar },
-  { href: '/dashboard/billing', label: 'Billing', icon: CreditCard },
-  { href: '/dashboard/referrals', label: 'Referrals', icon: Users },
-];
+import { CandlestickChart, CreditCard, LayoutDashboard, RadioTower, Users, Radar, Zap } from 'lucide-react';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, token } = useAuth();
   const isLiveWorkspace = pathname === '/dashboard/tradingview' || pathname === '/dashboard/deriv';
   const showPushPrompt = user?.subscription === 'TOP_TIER' && Boolean(token);
+  const dashboardNav = [
+    { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
+    { href: '/dashboard/tradingview', label: 'Live Chart', icon: CandlestickChart },
+    { href: '/dashboard/deriv', label: 'Deriv Live', icon: RadioTower },
+    ...(user?.subscription === 'TOP_TIER' || user?.subscription === 'VIP_AUTO_TRADER'
+      ? [{ href: '/dashboard/one-tap', label: 'One-Tap', icon: Zap }]
+      : []),
+    { href: '/dashboard/scanner', label: 'Scanner', icon: Radar },
+    { href: '/dashboard/billing', label: 'Billing', icon: CreditCard },
+    { href: '/dashboard/referrals', label: 'Referrals', icon: Users },
+  ];
 
   if (isLiveWorkspace) {
     return <div className="h-[calc(100svh-5rem)] overflow-hidden md:h-[calc(100svh-4rem)]">{children}</div>;
