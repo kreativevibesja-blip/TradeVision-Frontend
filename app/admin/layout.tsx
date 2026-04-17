@@ -24,7 +24,6 @@ import {
   Gift,
   Mail,
   MessageSquare,
-  Zap,
 } from 'lucide-react';
 
 const adminNav = [
@@ -41,7 +40,6 @@ const adminNav = [
   { label: 'Email Campaigns', href: '/admin/emails', icon: Mail },
   { label: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
   { label: 'Feedback', href: '/admin/feedback', icon: MessageSquare, badgeKey: 'feedback' as const },
-  { label: 'Auto Trading', href: '/admin/auto-trader', icon: Zap },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

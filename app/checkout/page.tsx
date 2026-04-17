@@ -32,7 +32,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
-type PlanKey = 'FREE' | 'PRO' | 'TOP_TIER' | 'VIP_AUTO_TRADER';
+type PlanKey = 'FREE' | 'PRO' | 'TOP_TIER';
 type CheckoutMethod = 'paypal' | 'card' | 'bank-transfer';
 type BankTransferBank = 'SCOTIABANK' | 'NCB';
 
@@ -101,19 +101,10 @@ const planCatalog: Record<PlanKey, {
     name: 'PRO+',
     price: 39.95,
     period: '/month',
-    description: '500 analyses per month plus One-Tap Trade and instant execution setups.',
+    description: '500 analyses per month plus instant trade setups and Smart Session Scanner access.',
     icon: Crown,
     color: 'from-fuchsia-500 via-violet-500 to-cyan-500',
-    features: ['500 analyses per month', 'Instant trade setups', 'One-tap execution', 'Priority signal generation', 'Advanced entry precision', 'Smart Session Scanner'],
-  },
-  VIP_AUTO_TRADER: {
-    name: 'VIP Auto Trader',
-    price: 99,
-    period: '/month',
-    description: 'Full automated trading via MT5 using MetaAPI. AI places and manages trades for you.',
-    icon: Crown,
-    color: 'from-amber-500 via-yellow-500 to-orange-500',
-    features: ['Full Auto Trading (MT5)', 'Gold (XAUUSD) optimized execution', 'Smart Session Scanner access', 'High-confidence trades only', 'Risk management controls', 'Auto / Semi / Assisted modes', 'Performance analytics dashboard'],
+    features: ['500 analyses per month', 'Instant trade setups', 'Priority signal generation', 'Advanced entry precision', 'Smart Session Scanner'],
   },
 };
 
@@ -362,7 +353,7 @@ function CheckoutPageContent() {
   const isCanceled = searchParams.get('canceled') === 'true';
   const requestedPlan = searchParams.get('plan')?.toUpperCase();
   const requestedCoupon = searchParams.get('coupon') || '';
-  const planKey: PlanKey = requestedPlan === 'FREE' || requestedPlan === 'TOP_TIER' || requestedPlan === 'PRO' || requestedPlan === 'VIP_AUTO_TRADER' ? requestedPlan : 'PRO';
+  const planKey: PlanKey = requestedPlan === 'FREE' || requestedPlan === 'TOP_TIER' || requestedPlan === 'PRO' ? requestedPlan : 'PRO';
   const plan = planCatalog[planKey];
   const activeBillingAddress = sameAsShipping ? shippingAddress : billingAddress;
   const formReady = isAddressComplete(shippingAddress) && isAddressComplete(activeBillingAddress);
@@ -489,8 +480,8 @@ function CheckoutPageContent() {
       return;
     }
 
-    if ((planKey === 'VIP_AUTO_TRADER' && user.subscription === 'VIP_AUTO_TRADER') || (planKey === 'TOP_TIER' && user.subscription === 'TOP_TIER') || (planKey === 'PRO' && (user.subscription === 'PRO' || user.subscription === 'TOP_TIER'))) {
-      setError(planKey === 'VIP_AUTO_TRADER' ? 'You already have VIP Auto Trader' : planKey === 'TOP_TIER' ? 'You already have PRO+' : 'You already have this plan or higher');
+    if ((planKey === 'TOP_TIER' && user.subscription === 'TOP_TIER') || (planKey === 'PRO' && (user.subscription === 'PRO' || user.subscription === 'TOP_TIER'))) {
+      setError(planKey === 'TOP_TIER' ? 'You already have PRO+' : 'You already have this plan or higher');
       return;
     }
 
@@ -536,8 +527,8 @@ function CheckoutPageContent() {
       return;
     }
 
-    if ((planKey === 'VIP_AUTO_TRADER' && user.subscription === 'VIP_AUTO_TRADER') || (planKey === 'TOP_TIER' && user.subscription === 'TOP_TIER') || (planKey === 'PRO' && (user.subscription === 'PRO' || user.subscription === 'TOP_TIER'))) {
-      setError(planKey === 'VIP_AUTO_TRADER' ? 'You already have VIP Auto Trader' : planKey === 'TOP_TIER' ? 'You already have PRO+' : 'You already have this plan or higher');
+    if ((planKey === 'TOP_TIER' && user.subscription === 'TOP_TIER') || (planKey === 'PRO' && (user.subscription === 'PRO' || user.subscription === 'TOP_TIER'))) {
+      setError(planKey === 'TOP_TIER' ? 'You already have PRO+' : 'You already have this plan or higher');
       return;
     }
 
@@ -641,7 +632,7 @@ function CheckoutPageContent() {
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="font-semibold">{plan.name}</p>
-                          {planKey === 'TOP_TIER' ? <Badge variant="default">Includes One-Tap Trade</Badge> : planKey === 'PRO' ? <Badge variant="outline">Premium</Badge> : <Badge variant="secondary">Starter</Badge>}
+                          {planKey === 'TOP_TIER' ? <Badge variant="default">Includes Smart Session Scanner</Badge> : planKey === 'PRO' ? <Badge variant="outline">Premium</Badge> : <Badge variant="secondary">Starter</Badge>}
                         </div>
                         <p className="text-sm text-muted-foreground">{plan.description}</p>
                       </div>

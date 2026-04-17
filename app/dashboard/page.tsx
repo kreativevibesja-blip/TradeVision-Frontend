@@ -235,42 +235,6 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            <Card className="mobile-card overflow-hidden">
-              <CardContent className="flex h-full flex-col justify-between gap-5 p-6">
-                <div className="space-y-3">
-                  <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-amber-400/20 bg-amber-400/10 text-amber-300">
-                    <Crown className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-semibold">One-Tap Trade</h2>
-                    <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-                      Turn your best setups into clean manual trade plans with premium trade cards, precise entry levels, and opportunistic setup generation.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-3">
-                  {isTopTier ? (
-                    <Link href="/dashboard/autotrader">
-                      <Button variant="gradient" className="gap-2">
-                        <Crown className="h-4 w-4" />
-                        Open One-Tap Trade
-                      </Button>
-                    </Link>
-                  ) : (
-                    <>
-                      <Link href="/checkout?plan=TOP_TIER">
-                        <Button className="gap-2 bg-amber-600 text-white hover:bg-amber-500">
-                          <Crown className="h-4 w-4" />
-                          Upgrade to PRO+
-                        </Button>
-                      </Link>
-                      <p className="text-xs text-muted-foreground">One-Tap Trade is available only on the PRO+ plan.</p>
-                    </>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
           </div>
 
           <Card className="mobile-card">

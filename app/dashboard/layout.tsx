@@ -5,15 +5,13 @@ import { usePathname } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import PushNotificationPrompt from '@/components/PushNotificationPrompt';
 import { useAuth } from '@/hooks/useAuth';
-import { CandlestickChart, CreditCard, LayoutDashboard, RadioTower, Users, Bot, Radar, Zap } from 'lucide-react';
+import { CandlestickChart, CreditCard, LayoutDashboard, RadioTower, Users, Radar } from 'lucide-react';
 
 const dashboardNav = [
   { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
   { href: '/dashboard/tradingview', label: 'Live Chart', icon: CandlestickChart },
   { href: '/dashboard/deriv', label: 'Deriv Live', icon: RadioTower },
   { href: '/dashboard/scanner', label: 'Scanner', icon: Radar },
-  { href: '/dashboard/autotrader', label: 'One-Tap Trade', icon: Bot },
-  { href: '/dashboard/auto-trader', label: 'Auto Trader', icon: Zap },
   { href: '/dashboard/billing', label: 'Billing', icon: CreditCard },
   { href: '/dashboard/referrals', label: 'Referrals', icon: Users },
 ];
@@ -22,7 +20,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const { user, token } = useAuth();
   const isLiveWorkspace = pathname === '/dashboard/tradingview' || pathname === '/dashboard/deriv';
-  const showPushPrompt = (user?.subscription === 'TOP_TIER' || user?.subscription === 'VIP_AUTO_TRADER') && Boolean(token);
+  const showPushPrompt = user?.subscription === 'TOP_TIER' && Boolean(token);
 
   if (isLiveWorkspace) {
     return <div className="h-[calc(100svh-5rem)] overflow-hidden md:h-[calc(100svh-4rem)]">{children}</div>;

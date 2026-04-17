@@ -132,7 +132,6 @@ export default function AdminPricingPage() {
             <option value="FREE">FREE</option>
             <option value="PRO">PRO</option>
             <option value="TOP_TIER">TOP_TIER</option>
-            <option value="VIP_AUTO_TRADER">VIP_AUTO_TRADER</option>
           </select>
           <Input
             placeholder="Price"
@@ -217,7 +216,6 @@ export default function AdminPricingPage() {
                         <option value="FREE">FREE</option>
                         <option value="PRO">PRO</option>
                         <option value="TOP_TIER">TOP_TIER</option>
-                        <option value="VIP_AUTO_TRADER">VIP_AUTO_TRADER</option>
                       </select>
                     </div>
                     <div>

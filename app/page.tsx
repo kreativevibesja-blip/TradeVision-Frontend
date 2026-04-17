@@ -23,7 +23,6 @@ import {
   ChevronDown,
   Star,
   CheckCircle2,
-  Bot,
 } from 'lucide-react';
 
 const StrategyShowcase = dynamic(() => import('@/components/StrategyShowcase'), {
@@ -510,14 +509,13 @@ export default function HomePage() {
                 <CardContent className="p-8">
                   <div className="flex items-center gap-2 mb-2">
                     <h3 className="text-xl font-semibold">PRO+</h3>
-                    <Badge variant="default">One-Tap Trade</Badge>
+                    <Badge variant="default">Smart Scanner</Badge>
                   </div>
                   <div className="text-4xl font-bold mb-4">$39.95<span className="text-lg text-muted-foreground font-normal">/month</span></div>
                   <ul className="space-y-3 mb-8">
                     {[
                       '500 analyses per month',
                       'Instant trade setups',
-                      'One-tap execution',
                       'Priority signal generation',
                       'Advanced entry precision',
                       'Faster response time',
@@ -534,81 +532,7 @@ export default function HomePage() {
                 </CardContent>
               </Card>
             </FadeInSection>
-
-            <FadeInSection delay={0.45}>
-              <Card className="h-full border-amber-400/30 relative overflow-hidden">
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 via-yellow-500 to-orange-500" />
-                <CardContent className="p-8">
-                  <div className="flex items-center gap-2 mb-2">
-                    <h3 className="text-xl font-semibold">VIP Auto Trader</h3>
-                    <Badge variant="default" className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">MOST POWERFUL</Badge>
-                  </div>
-                  <div className="text-4xl font-bold mb-4">$99<span className="text-lg text-muted-foreground font-normal">/month</span></div>
-                  <ul className="space-y-3 mb-8">
-                    {[
-                      'Full Auto Trading (MT5)',
-                      'Gold (XAUUSD) optimized',
-                      'Smart Session Scanner',
-                      'Risk management controls',
-                      'Auto / Semi / Assisted modes',
-                      'Performance analytics',
-                    ].map((f) => (
-                      <li key={f} className="flex items-center gap-2 text-sm">
-                        <CheckCircle2 className="h-4 w-4 text-amber-500 flex-shrink-0" />
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                  <Link href="/checkout?plan=VIP_AUTO_TRADER" className="block">
-                    <Button variant="gradient" size="lg" className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0">Start Auto Trading</Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            </FadeInSection>
           </div>
-        </div>
-      </section>
-
-      {/* ═══════ AUTO TRADER PROMO ═══════ */}
-      <section className="py-16 sm:py-20 lg:py-24">
-        <div className="page-shell">
-          <FadeInSection>
-            <Card className="max-w-5xl mx-auto overflow-hidden relative border-amber-500/20">
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-600/10 via-yellow-600/5 to-orange-600/10" />
-              <CardContent className="relative z-10 px-5 py-12 sm:px-8 sm:py-16">
-                <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
-                  <div className="flex-1 text-center lg:text-left">
-                    <div className="inline-flex items-center gap-2 mb-4">
-                      <div className="p-2.5 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500">
-                        <Bot className="h-6 w-6 text-white" />
-                      </div>
-                      <Badge variant="outline" className="border-amber-500/40 text-amber-400">NEW</Badge>
-                    </div>
-                    <h2 className="mb-4 text-2xl font-bold sm:text-3xl md:text-4xl">
-                      Trade Without Watching <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">Charts</span>
-                    </h2>
-                    <p className="text-muted-foreground max-w-lg mb-6">
-                      Let our AI detect high-probability setups and execute trades on your MT5 account automatically through MetaAPI. Choose full auto, semi-auto, or assisted mode.
-                    </p>
-                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8 text-sm">
-                      {['Gold (XAUUSD) optimized', 'Risk management built-in', 'Trade replay & history', 'Performance dashboard'].map((f) => (
-                        <li key={f} className="flex items-center gap-2">
-                          <CheckCircle2 className="h-4 w-4 text-amber-500 flex-shrink-0" />
-                          {f}
-                        </li>
-                      ))}
-                    </ul>
-                    <Link href="/checkout?plan=VIP_AUTO_TRADER" className="inline-flex w-full sm:w-auto">
-                      <Button variant="glow" size="xl" className="w-full gap-2 sm:w-auto bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 border-0">
-                        Start Auto Trading — $99/mo
-                        <ArrowRight className="h-5 w-5" />
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </FadeInSection>
         </div>
       </section>
 

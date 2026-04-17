@@ -7,7 +7,6 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api';
-import { buildAutoTraderSignalFromAnalysis } from '@/lib/autotrader-signal';
 import {
   Zap,
   Clock,
@@ -54,8 +53,6 @@ function QueuePageContent() {
   const [messageIndex, setMessageIndex] = useState(0);
   const [simulatedProgress, setSimulatedProgress] = useState(0);
   const [cancelling, setCancelling] = useState(false);
-  const [finalizingOneTap, setFinalizingOneTap] = useState(false);
-
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const messageRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const progressRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -103,31 +100,6 @@ function QueuePageContent() {
 
         completionHandledRef.current = true;
         setSimulatedProgress(100);
-
-        if (workflow === 'one-tap') {
-          setFinalizingOneTap(true);
-
-          try {
-            const completedAnalysis = data.result ?? (data.analysisId ? (await api.getAnalysis(data.analysisId, token)).analysis : null);
-            const draft = completedAnalysis ? buildAutoTraderSignalFromAnalysis(completedAnalysis) : null;
-
-            if (!draft) {
-              throw new Error('NO TRADE: One-Tap analyzed this chart but did not find a valid opportunistic setup. The market state, confirmations, or score were not strong enough.');
-            }
-
-            const { signal } = await api.autotrader.createSignal(draft, token);
-            window.setTimeout(() => {
-              router.replace(`/dashboard/autotrader?signalId=${encodeURIComponent(signal.id)}&workflow=one-tap&source=${encodeURIComponent(source)}`);
-            }, 800);
-            return;
-          } catch (finalizeError: any) {
-            setStatus('failed');
-            setError(finalizeError?.message || GENERIC_FAILURE_MESSAGE);
-            setFinalizingOneTap(false);
-            completionHandledRef.current = false;
-            return;
-          }
-        }
 
         // Redirect to the analysis page after a short delay for the animation
         setTimeout(() => {
@@ -193,17 +165,13 @@ function QueuePageContent() {
 
   const currentMessage = ROTATING_MESSAGES[messageIndex];
   const MessageIcon = currentMessage.icon;
-  const pageTitle = workflow === 'one-tap' ? 'Preparing One-Tap Trade' : 'Analyzing Your Chart';
-  const pageSubtitle = workflow === 'one-tap'
-    ? 'Your analysis is queued. As soon as it finishes, we will build the One-Tap setup and open the trade plan automatically.'
-    : 'Our AI is processing your chart with Smart Money Concepts';
-  const statusLabel = finalizingOneTap
-    ? 'Building One-Tap trade...'
-    : status === 'processing'
-      ? 'Processing...'
-      : status === 'completed'
-        ? 'Done!'
-        : 'In queue';
+  const pageTitle = 'Analyzing Your Chart';
+  const pageSubtitle = 'Our AI is processing your chart with Smart Money Concepts';
+  const statusLabel = status === 'processing'
+    ? 'Processing...'
+    : status === 'completed'
+      ? 'Done!'
+      : 'In queue';
 
   return (
     <div className="min-h-[calc(100svh-5rem)] flex items-center justify-center px-4 py-4 sm:px-6 sm:py-6">
@@ -296,7 +264,7 @@ function QueuePageContent() {
             </div>
           </div>
 
-          {(status === 'queued' || status === 'processing') && !finalizingOneTap && (
+          {(status === 'queued' || status === 'processing') && (
             <div className="flex justify-center">
               <button
                 type="button"
@@ -331,7 +299,7 @@ function QueuePageContent() {
           )}
 
           {/* Processing indicator */}
-          {(status === 'processing' || finalizingOneTap) && (
+          {status === 'processing' && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -344,9 +312,9 @@ function QueuePageContent() {
                 >
                   <Activity className="h-4 w-4 text-green-400" />
                 </motion.div>
-                <span className="text-sm font-medium text-green-400">{finalizingOneTap ? 'Building your One-Tap trade plan' : 'AI is analyzing your chart'}</span>
+                <span className="text-sm font-medium text-green-400">AI is analyzing your chart</span>
               </div>
-              <p className="text-xs text-muted-foreground">{finalizingOneTap ? 'Final checks are running before we open the trade plan page.' : 'This usually takes 8–15 seconds'}</p>
+              <p className="text-xs text-muted-foreground">This usually takes 8–15 seconds</p>
             </motion.div>
           )}
 

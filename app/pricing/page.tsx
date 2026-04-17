@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { api, type PricingPlan } from '@/lib/api';
-import { CheckCircle2, X, Zap, Crown, Bot } from 'lucide-react';
+import { CheckCircle2, X, Zap, Crown } from 'lucide-react';
 
 type DisplayPlan = PricingPlan & {
   period: string;
@@ -20,30 +20,16 @@ type DisplayPlan = PricingPlan & {
   badge: string | null;
 };
 
-const oneTapProFeatures = [
+const proPlusFeatures = [
   '500 analyses per month',
   'Instant trade setups',
-  'One-tap execution',
-  'Priority signal generation',
   'Advanced entry precision',
+  'Priority signal generation',
   'Faster response time',
   'Smart Session Scanner',
 ];
 
-const vipAutoTraderFeatures = [
-  'Full Auto Trading (MT5)',
-  'Gold (XAUUSD) optimized execution',
-  'Smart Session Scanner access',
-  'High-confidence trades only',
-  'Risk management controls',
-  'Auto / Semi / Assisted modes',
-  'Trade replay & history',
-  'Performance analytics dashboard',
-  'Instant trade alerts',
-  'Priority execution speed',
-];
-
-const fallbackPlanDetails: Record<'FREE' | 'PRO' | 'TOP_TIER' | 'VIP_AUTO_TRADER', Omit<DisplayPlan, 'id' | 'name' | 'tier' | 'price' | 'features' | 'dailyLimit' | 'isActive' | 'createdAt' | 'updatedAt'>> = {
+const fallbackPlanDetails: Record<'FREE' | 'PRO' | 'TOP_TIER', Omit<DisplayPlan, 'id' | 'name' | 'tier' | 'price' | 'features' | 'dailyLimit' | 'isActive' | 'createdAt' | 'updatedAt'>> = {
   FREE: {
     period: '/month',
     description: 'Perfect for trying out AI chart analysis',
@@ -66,23 +52,13 @@ const fallbackPlanDetails: Record<'FREE' | 'PRO' | 'TOP_TIER' | 'VIP_AUTO_TRADER
   },
   TOP_TIER: {
     period: '/month',
-    description: 'Instant trade setups with One-Tap Trade, Smart Session Scanner, advanced entry precision, and faster response time.',
+    description: 'Instant trade setups with Smart Session Scanner, advanced entry precision, and faster response time.',
     icon: Crown,
     color: 'from-fuchsia-500 via-violet-500 to-cyan-500',
     cta: 'Upgrade to PRO+',
     ctaLink: '/checkout?plan=TOP_TIER',
     popular: true,
-    badge: 'One-Tap Trade',
-  },
-  VIP_AUTO_TRADER: {
-    period: '/month',
-    description: 'Full automated trading via MT5 using MetaAPI. AI places and manages trades for you — hands-free.',
-    icon: Bot,
-    color: 'from-amber-500 via-yellow-500 to-orange-500',
-    cta: 'Start Auto Trading',
-    ctaLink: '/checkout?plan=VIP_AUTO_TRADER',
-    popular: false,
-    badge: 'MOST POWERFUL',
+    badge: 'PRO+',
   },
 };
 
@@ -116,38 +92,26 @@ const defaultFallbackPlans: DisplayPlan[] = [
     name: 'PRO+',
     tier: 'TOP_TIER',
     price: 39.95,
-    features: oneTapProFeatures,
+    features: proPlusFeatures,
     dailyLimit: 999999,
     isActive: true,
     createdAt: '',
     updatedAt: '',
     ...fallbackPlanDetails.TOP_TIER,
   },
-  {
-    id: 'fallback-vip-auto-trader',
-    name: 'VIP Auto Trader',
-    tier: 'VIP_AUTO_TRADER',
-    price: 99,
-    features: vipAutoTraderFeatures,
-    dailyLimit: 999999,
-    isActive: true,
-    createdAt: '',
-    updatedAt: '',
-    ...fallbackPlanDetails.VIP_AUTO_TRADER,
-  },
 ];
 
-const toDisplayPlan = (plan: PricingPlan): DisplayPlan => ({
-  ...plan,
-  ...(plan.tier === 'TOP_TIER'
-    ? {
-        name: 'PRO+',
-        features: oneTapProFeatures,
-      }
-    : plan.tier === 'VIP_AUTO_TRADER'
+const toDisplayPlan = (plan: PricingPlan): DisplayPlan | null => {
+  if (plan.tier === 'VIP_AUTO_TRADER') {
+    return null;
+  }
+
+  return {
+    ...plan,
+    ...(plan.tier === 'TOP_TIER'
       ? {
-          name: 'VIP Auto Trader',
-          features: vipAutoTraderFeatures,
+          name: 'PRO+',
+          features: proPlusFeatures,
         }
       : plan.tier !== 'FREE'
         ? {
@@ -156,8 +120,9 @@ const toDisplayPlan = (plan: PricingPlan): DisplayPlan => ({
             ),
           }
         : {}),
-  ...fallbackPlanDetails[plan.tier as keyof typeof fallbackPlanDetails],
-});
+    ...fallbackPlanDetails[plan.tier],
+  };
+};
 
 export default function PricingPage() {
   const [plans, setPlans] = useState<DisplayPlan[]>(defaultFallbackPlans);
@@ -168,7 +133,7 @@ export default function PricingPage() {
       try {
         const data = await api.getPublicPricingPlans();
         if (Array.isArray(data.plans) && data.plans.length > 0) {
-          setPlans(data.plans.map(toDisplayPlan));
+          setPlans(data.plans.map(toDisplayPlan).filter((plan): plan is DisplayPlan => plan !== null));
         }
       } catch {
       } finally {
@@ -197,9 +162,8 @@ export default function PricingPage() {
           </p>
         </motion.div>
 
-        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4 md:gap-6 lg:gap-8">
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 md:gap-6 lg:gap-8">
           {plans.map((plan, i) => {
-            const isVip = plan.tier === 'VIP_AUTO_TRADER';
             const previewFeatures = plan.features.slice(0, 3);
             const remainingFeatures = plan.features.length - previewFeatures.length;
             return (
@@ -211,9 +175,9 @@ export default function PricingPage() {
               whileHover={{ y: -8, scale: 1.015 }}
               className="h-full"
             >
-              <Card className={`relative h-full min-h-[34rem] overflow-hidden transition-all duration-300 hover:shadow-[0_22px_80px_rgba(15,23,42,0.28)] xl:min-h-[36rem] ${isVip ? 'border-amber-400/40 shadow-[0_0_50px_rgba(245,158,11,0.18)]' : plan.popular ? 'border-fuchsia-400/40 shadow-[0_0_50px_rgba(217,70,239,0.14)]' : 'hover:border-white/20'}`}>
-                {(plan.popular || isVip) && (
-                  <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${isVip ? 'from-amber-500 via-yellow-500 to-orange-500' : 'from-fuchsia-500 via-violet-500 to-cyan-400'}`} />
+              <Card className={`relative h-full min-h-[34rem] overflow-hidden transition-all duration-300 hover:shadow-[0_22px_80px_rgba(15,23,42,0.28)] xl:min-h-[36rem] ${plan.popular ? 'border-fuchsia-400/40 shadow-[0_0_50px_rgba(217,70,239,0.14)]' : 'hover:border-white/20'}`}>
+                {plan.popular && (
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-fuchsia-500 via-violet-500 to-cyan-400" />
                 )}
                 <CardContent className="flex h-full flex-col p-5 sm:p-6 lg:p-8">
                   <div className="flex items-center gap-3 mb-4">
@@ -256,9 +220,9 @@ export default function PricingPage() {
 
                   <Link href={plan.ctaLink} className="mt-auto">
                     <Button
-                      variant={plan.popular || isVip ? 'gradient' : 'outline'}
+                      variant={plan.popular ? 'gradient' : 'outline'}
                       size="lg"
-                      className={`w-full ${isVip ? 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0' : ''}`}
+                      className="w-full"
                     >
                       {plan.cta}
                     </Button>
@@ -293,26 +257,21 @@ export default function PricingPage() {
                     <th className="text-center p-4 font-semibold">Free</th>
                     <th className="text-center p-4 font-semibold">Pro</th>
                     <th className="text-center p-4 font-semibold text-fuchsia-400">PRO+</th>
-                    <th className="text-center p-4 font-semibold text-amber-400">VIP Auto Trader</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {[
-                    { feature: 'AI Chart Analysis', free: '2/day', pro: '300/mo', top: '500/mo', vip: '500/mo' },
-                    { feature: 'Smart Money Concepts', free: false, pro: true, top: true, vip: true },
-                    { feature: 'Priority Processing', free: false, pro: true, top: true, vip: true },
-                    { feature: 'Smart Session Scanner', free: false, pro: false, top: true, vip: true },
-                    { feature: 'One-Tap Trade Setups', free: false, pro: false, top: true, vip: true },
-                    { feature: 'Auto Trading (MT5)', free: false, pro: false, top: false, vip: true },
-                    { feature: 'Gold (XAUUSD) Optimized', free: false, pro: false, top: false, vip: true },
-                    { feature: 'Auto / Semi / Assisted Modes', free: false, pro: false, top: false, vip: true },
-                    { feature: 'Risk Management Controls', free: false, pro: false, top: false, vip: true },
-                    { feature: 'Performance Analytics', free: false, pro: false, top: false, vip: true },
-                    { feature: 'Trade Replay & History', free: false, pro: false, top: false, vip: true },
+                    { feature: 'AI Chart Analysis', free: '2/day', pro: '300/mo', top: '500/mo' },
+                    { feature: 'Smart Money Concepts', free: false, pro: true, top: true },
+                    { feature: 'Priority Processing', free: false, pro: true, top: true },
+                    { feature: 'Smart Session Scanner', free: false, pro: false, top: true },
+                    { feature: 'Instant Trade Setups', free: false, pro: false, top: true },
+                    { feature: 'Advanced Entry Precision', free: false, pro: false, top: true },
+                    { feature: 'Faster Response Time', free: false, pro: false, top: true },
                   ].map((row) => (
                     <tr key={row.feature} className="hover:bg-white/[0.02]">
                       <td className="p-4 font-medium">{row.feature}</td>
-                      {[row.free, row.pro, row.top, row.vip].map((val, i) => (
+                      {[row.free, row.pro, row.top].map((val, i) => (
                         <td key={i} className="p-4 text-center">
                           {typeof val === 'string' ? (
                             <span className="text-muted-foreground">{val}</span>

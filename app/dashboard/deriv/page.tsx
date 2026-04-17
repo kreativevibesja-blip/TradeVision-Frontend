@@ -9,10 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { LiveChart, type LiveChartStatus } from '@/components/LiveChart';
-import { OneTapWorkflowPanel } from '@/components/OneTapWorkflowPanel';
 import { useAuth } from '@/hooks/useAuth';
 import { api, type AnalysisResult } from '@/lib/api';
-import { buildAutoTraderSignalFromAnalysis, buildAutoTraderSignalFromDerivAnalysis } from '@/lib/autotrader-signal';
 import { DERIV_ANALYSIS_CANDLE_COUNT, DERIV_SYMBOLS, DERIV_TIMEFRAMES, mapPersistedAnalysisToDerivResult, type DerivAnalysisResult, type DerivCandle, getDerivSymbol, getDerivTimeframe } from '@/lib/deriv-live';
 import { mapAnalysisResultToChartOverlay, mapDerivAnalysisToChartOverlay, toChartCandles } from '@/lib/live-chart-drawings';
 
@@ -20,13 +18,6 @@ const STORAGE_KEY = 'dashboard_deriv_chart_state';
 const ANALYSIS_CACHE_KEY = 'dashboard_deriv_chart_analysis_cache';
 const ANALYZE_DEBOUNCE_MS = 1200;
 const ANALYSIS_CACHE_TTL_MS = 5 * 60 * 1000;
-const ONE_TAP_WORKFLOW_STEPS = [
-  'Reading the live candle flow...',
-  'Checking support, resistance, and confirmations...',
-  'Building your One-Tap trade plan...',
-  'Opening One-Tap Trade...',
-];
-
 interface StoredState {
   symbol: string;
   timeframe: string;
@@ -120,8 +111,6 @@ export default function DerivDashboardPage() {
   const [analyzing, setAnalyzing] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
   const [liveStatus, setLiveStatus] = useState<LiveChartStatus>({ connectionState: 'connecting', loadingHistory: true, candleCount: 0 });
-  const [autotraderMessage, setAutotraderMessage] = useState('');
-  const [sendingToAutotrader, setSendingToAutotrader] = useState(false);
   const lastAnalyzeAtRef = useRef(0);
 
   useEffect(() => {
@@ -331,83 +320,6 @@ export default function DerivDashboardPage() {
         : { label: 'Connecting', icon: Loader2, className: 'border-sky-500/30 bg-sky-500/10 text-sky-100', dot: 'bg-sky-300' };
   const StatusIcon = statusTone.icon;
 
-  const handleSendToAutotrader = async () => {
-    if (!token || sendingToAutotrader) {
-      return;
-    }
-
-    if (candles.length < 50) {
-      setAutotraderMessage('Not enough live candle data is loaded yet for One-Tap analysis.');
-      return;
-    }
-
-    try {
-      setSendingToAutotrader(true);
-      setAutotraderMessage('');
-
-      const response = await fetch('/api/analyze', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          symbol,
-          timeframe,
-          candles: candles.slice(-DERIV_ANALYSIS_CANDLE_COUNT),
-        }),
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'One-Tap analysis failed.');
-      }
-
-      if (data.queued && data.jobId) {
-        const queueParams = new URLSearchParams({
-          jobId: data.jobId,
-          analysisId: data.analysisId || '',
-          returnTo: '/dashboard/deriv',
-          workflow: 'one-tap',
-          source: 'deriv',
-        });
-        router.push(`/analyze/queue?${queueParams.toString()}`);
-        return;
-      }
-
-      if (!data.analysis?.id) {
-        throw new Error('One-Tap analysis did not return a persisted result.');
-      }
-
-      const mappedResult = mapPersistedAnalysisToDerivResult(data.analysis, candles.slice(-DERIV_ANALYSIS_CANDLE_COUNT));
-      const nextCache: CachedAnalysis = {
-        symbol,
-        timeframe,
-        savedAt: new Date().toISOString(),
-        analysisId: data.analysis.id,
-        result: mappedResult,
-      };
-
-      window.localStorage.setItem(ANALYSIS_CACHE_KEY, JSON.stringify(nextCache));
-      setAnalysis(mappedResult);
-      setPersistedAnalysis(data.analysis);
-      setShowOneTapCounterTrend(true);
-
-      const draft = buildAutoTraderSignalFromAnalysis(data.analysis);
-
-      if (!draft) {
-        throw new Error('NO TRADE: One-Tap only issues an opportunistic setup when the market state is valid, price is reacting at support or resistance, at least 2 confirmations are present, and the setup score is 5 or higher.');
-      }
-
-      const { signal } = await api.autotrader.createSignal(draft, token);
-      router.push(`/dashboard/autotrader?signalId=${encodeURIComponent(signal.id)}&workflow=one-tap&source=deriv`);
-    } catch (sendError: any) {
-      setAutotraderMessage(sendError?.message || 'Unable to analyze this Deriv chart with One-Tap Trade.');
-    } finally {
-      setSendingToAutotrader(false);
-    }
-  };
-
   const panelContent = (
     <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-800/90 bg-slate-900/80 backdrop-blur-xl">
       <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
@@ -475,15 +387,8 @@ export default function DerivDashboardPage() {
                   <Link href={`/analyze?analysisId=${encodeURIComponent(analysis.analysisId)}`}>
                     <Button variant="outline" className="h-10 border-slate-700 bg-slate-900/70 px-4">Open Full Result</Button>
                   </Link>
-                  {user?.subscription === 'TOP_TIER' || user?.subscription === 'VIP_AUTO_TRADER' ? (
-                    <Button onClick={() => void handleSendToAutotrader()} disabled={sendingToAutotrader} className="h-10 bg-emerald-600 px-4 text-white hover:bg-emerald-500">
-                      {sendingToAutotrader ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Zap className="mr-2 h-4 w-4" />}
-                      Analyze with One-Tap
-                    </Button>
-                  ) : null}
                 </div>
               ) : null}
-              {autotraderMessage ? <p className="mt-3 text-xs text-slate-400">{autotraderMessage}</p> : null}
             </div>
 
             <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
@@ -653,12 +558,6 @@ export default function DerivDashboardPage() {
                       {analyzing ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Zap className="mr-1.5 h-4 w-4" />}
                       {analyzing ? 'Analyzing...' : 'Analyze'}
                     </Button>
-                    {user?.subscription === 'TOP_TIER' || user?.subscription === 'VIP_AUTO_TRADER' ? (
-                      <Button onClick={() => void handleSendToAutotrader()} disabled={sendingToAutotrader || candles.length < 50} className="h-10 bg-emerald-600 px-3 text-sm text-white hover:bg-emerald-500 sm:h-11 sm:px-4">
-                        {sendingToAutotrader ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Zap className="mr-1.5 h-4 w-4" />}
-                        One-Tap
-                      </Button>
-                    ) : null}
                   </div>
                 </div>
               </div>
@@ -706,13 +605,6 @@ export default function DerivDashboardPage() {
         </div>
         <div className="h-[calc(58svh-3rem)]">{panelContent}</div>
       </motion.div>
-      <OneTapWorkflowPanel
-        open={sendingToAutotrader}
-        title="Analyzing this Deriv chart"
-        subtitle="One-Tap is reviewing the live candles, validating the setup, and loading the finished trade plan page."
-        steps={ONE_TAP_WORKFLOW_STEPS}
-        fullscreen
-      />
     </motion.section>
   );
 }

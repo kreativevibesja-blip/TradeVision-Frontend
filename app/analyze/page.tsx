@@ -12,7 +12,6 @@ import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { api, resolveAssetUrl, type AnalysisResult } from '@/lib/api';
-import { buildAutoTraderSignalFromAnalysis } from '@/lib/autotrader-signal';
 import {
   classifyChartUploadError,
   fileToDataUrlWithFallback,
@@ -612,15 +611,10 @@ function AnalyzePageContent() {
     };
   }, [analysis?.id, analysisId, token]);
 
-  const handleAnalyze = async (mode: 'standard' | 'one-tap' = 'standard') => {
+  const handleAnalyze = async () => {
     if (!user || !token) {
       setAuthMode('login');
       setAuthOpen(true);
-      return;
-    }
-
-    if (mode === 'one-tap' && user.subscription !== 'TOP_TIER' && user.subscription !== 'VIP_AUTO_TRADER') {
-      setError('Analyze with One-Tap is available only on the PRO+ plan.');
       return;
     }
 
@@ -686,12 +680,6 @@ function AnalyzePageContent() {
           analysisId: result.analysisId || '',
         });
 
-        if (mode === 'one-tap') {
-          queueParams.set('returnTo', '/analyze');
-          queueParams.set('workflow', 'one-tap');
-          queueParams.set('source', 'analyze');
-        }
-
         router.push(`/analyze/queue?${queueParams.toString()}`);
         return;
       }
@@ -701,24 +689,8 @@ function AnalyzePageContent() {
         setProgress(100);
         setCurrentStage(ANALYSIS_STEPS[ANALYSIS_STEPS.length - 1]);
         setAnalysis(result.analysis);
-        setShowOneTapCounterTrend(mode === 'one-tap');
+        setShowOneTapCounterTrend(false);
         setShowAiZones(Boolean(result.analysis.markedImageUrl));
-
-        if (mode === 'one-tap') {
-          setCurrentStage('Building One-Tap setup...');
-          setProgress(92);
-          const draft = buildAutoTraderSignalFromAnalysis(result.analysis);
-          if (!draft) {
-            setError('NO TRADE: One-Tap analyzed this chart but did not find a valid opportunistic setup. The market state, confirmations, or score were not strong enough.');
-          } else {
-            const { signal } = await api.autotrader.createSignal(draft, token);
-            setCurrentStage('Loading One-Tap Trade...');
-            setProgress(100);
-            await refreshUser().catch(() => {});
-            router.push(`/dashboard/autotrader?signalId=${encodeURIComponent(signal.id)}&workflow=one-tap&source=analyze`);
-            return;
-          }
-        }
 
         await refreshUser().catch(() => {});
       }
@@ -1084,7 +1056,7 @@ function AnalyzePageContent() {
                       variant="glow"
                       size="lg"
                       className="w-full gap-2"
-                      onClick={() => void handleAnalyze('standard')}
+                      onClick={() => void handleAnalyze()}
                       disabled={loading || !file}
                     >
                       {loading ? (
@@ -1100,34 +1072,7 @@ function AnalyzePageContent() {
                       )}
                     </Button>
 
-                    {isTopTier ? (
-                      <Button
-                        variant="gradient"
-                        size="lg"
-                        className="w-full gap-2"
-                        onClick={() => void handleAnalyze('one-tap')}
-                        disabled={loading || !file}
-                      >
-                        {loading ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Analyzing with One-Tap...
-                          </>
-                        ) : (
-                          <>
-                            <Bot className="h-5 w-5" />
-                            Analyze with One-Tap
-                          </>
-                        )}
-                      </Button>
-                    ) : null}
                   </div>
-
-                  {!isTopTier && user ? (
-                    <p className="text-xs text-center text-muted-foreground">
-                      Analyze with One-Tap is available only on the PRO+ plan.
-                    </p>
-                  ) : null}
 
                   {!user && (
                     <p className="text-xs text-center text-muted-foreground">

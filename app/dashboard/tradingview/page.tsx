@@ -8,11 +8,9 @@ import { AlertTriangle, Crown, Info, Loader2, PanelRightOpen, RefreshCcw, Wifi, 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { OneTapWorkflowPanel } from '@/components/OneTapWorkflowPanel';
 import { TradingViewAdvancedChart } from '@/components/TradingViewAdvancedChart';
 import { useAuth } from '@/hooks/useAuth';
 import { api, type AnalysisResult } from '@/lib/api';
-import { buildAutoTraderSignalFromAnalysis } from '@/lib/autotrader-signal';
 import { formatJamaicaDateTime } from '@/lib/jamaica-time';
 import { LIVE_CHART_SYMBOL_GROUPS, LIVE_CHART_SYMBOLS, LIVE_CHART_TIMEFRAMES, getLiveChartSymbol, getLiveChartTimeframe } from '@/lib/live-chart';
 
@@ -20,13 +18,6 @@ const STORAGE_KEY = 'dashboard_live_chart_state';
 const CACHE_KEY = 'dashboard_live_chart_analysis_cache';
 const CACHE_TTL_MS = 5 * 60 * 1000;
 const ANALYZE_DEBOUNCE_MS = 1200;
-const ONE_TAP_WORKFLOW_STEPS = [
-  'Reading the live chart structure...',
-  'Validating the opportunistic setup...',
-  'Building your One-Tap trade plan...',
-  'Opening One-Tap Trade...',
-];
-
 interface StoredState {
   symbol: string;
   timeframe: string;
@@ -82,8 +73,6 @@ export default function TradingViewDashboardPage() {
   const [cachedAnalysis, setCachedAnalysis] = useState<CachedAnalysis | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
   const [chartLoading, setChartLoading] = useState(true);
-  const [autotraderMessage, setAutotraderMessage] = useState('');
-  const [sendingToAutotrader, setSendingToAutotrader] = useState(false);
   const lastAnalyzeAtRef = useRef(0);
 
   useEffect(() => {
@@ -121,59 +110,6 @@ export default function TradingViewDashboardPage() {
   const selectedSymbol = useMemo(() => getLiveChartSymbol(symbol), [symbol]);
   const selectedTimeframe = useMemo(() => getLiveChartTimeframe(timeframe), [timeframe]);
   const cacheMatchesSelection = cachedAnalysis?.symbol === symbol && cachedAnalysis?.timeframe === timeframe;
-
-  const handleSendToAutotrader = async () => {
-    if (!token || !user || sendingToAutotrader) {
-      return;
-    }
-
-    try {
-      setSendingToAutotrader(true);
-      setAutotraderMessage('');
-      const result = await api.analyzeLiveChart({ source: 'tradingview-live', symbol, timeframe }, token);
-      if (result.queued && result.jobId) {
-        const queueParams = new URLSearchParams({
-          jobId: result.jobId,
-          analysisId: result.analysisId || '',
-          returnTo: '/dashboard/tradingview',
-          workflow: 'one-tap',
-          source: 'tradingview',
-        });
-        router.push(`/analyze/queue?${queueParams.toString()}`);
-        return;
-      }
-
-      if (!result.analysis) {
-        throw new Error('One-Tap analysis did not return a valid live chart result.');
-      }
-
-      const nextCache: CachedAnalysis = {
-        symbol,
-        timeframe,
-        analysisId: result.analysis.id,
-        createdAt: new Date().toISOString(),
-        pair: result.analysis.pair,
-        confidence: result.analysis.confidence,
-        signalType: result.analysis.signalType,
-        marketCondition: result.analysis.marketCondition,
-        primaryStrategy: result.analysis.primaryStrategy,
-      };
-
-      window.localStorage.setItem(CACHE_KEY, JSON.stringify(nextCache));
-      setCachedAnalysis(nextCache);
-
-      const draft = buildAutoTraderSignalFromAnalysis(result.analysis);
-      if (!draft) {
-        throw new Error('NO TRADE: One-Tap only issues an opportunistic setup when the market state is valid, price is reacting at support or resistance, at least 2 confirmations are present, and the setup score is 5 or higher.');
-      }
-      const { signal } = await api.autotrader.createSignal(draft, token);
-      router.push(`/dashboard/autotrader?signalId=${encodeURIComponent(signal.id)}&workflow=one-tap&source=tradingview`);
-    } catch (sendError: any) {
-      setAutotraderMessage(sendError?.message || 'Unable to analyze this live chart with One-Tap Trade.');
-    } finally {
-      setSendingToAutotrader(false);
-    }
-  };
 
   const startAnalysis = async (forceFresh = false) => {
     if (!token || !user || user.subscription === 'FREE' || analyzing) {
@@ -351,18 +287,11 @@ export default function TradingViewDashboardPage() {
                 <Link href={`/analyze?analysisId=${encodeURIComponent(cachedAnalysis.analysisId)}`}>
                   <Button variant="outline" className="h-10 border-slate-700 bg-slate-900/70 px-4">Open Result</Button>
                 </Link>
-                {user?.subscription === 'TOP_TIER' || user?.subscription === 'VIP_AUTO_TRADER' ? (
-                  <Button onClick={() => void handleSendToAutotrader()} disabled={sendingToAutotrader} className="h-10 bg-emerald-600 px-4 text-white hover:bg-emerald-500">
-                    {sendingToAutotrader ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Zap className="mr-2 h-4 w-4" />}
-                    Analyze with One-Tap
-                  </Button>
-                ) : null}
                 <Button onClick={() => void startAnalysis(true)} disabled={analyzing} className="h-10 bg-blue-500 px-4 text-white hover:bg-blue-600">
                   <RefreshCcw className={`mr-2 h-4 w-4 ${analyzing ? 'animate-spin' : ''}`} />
                   Re-analyze
                 </Button>
               </div>
-              {autotraderMessage ? <p className="text-xs text-slate-400">{autotraderMessage}</p> : null}
             </div>
           ) : (
             <p className="mt-3 text-slate-400">No cached result yet. Run the chart to save a fresh live analysis.</p>
@@ -443,12 +372,6 @@ export default function TradingViewDashboardPage() {
                       {analyzing ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Zap className="mr-1.5 h-4 w-4" />}
                       {analyzing ? 'Analyzing...' : 'Analyze'}
                     </Button>
-                    {user?.subscription === 'TOP_TIER' || user?.subscription === 'VIP_AUTO_TRADER' ? (
-                      <Button onClick={() => void handleSendToAutotrader()} disabled={sendingToAutotrader} className="h-10 bg-emerald-600 px-3 text-sm text-white hover:bg-emerald-500 sm:h-11 sm:px-4">
-                        {sendingToAutotrader ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Zap className="mr-1.5 h-4 w-4" />}
-                        One-Tap
-                      </Button>
-                    ) : null}
                   </div>
                 </div>
               </div>
@@ -491,13 +414,6 @@ export default function TradingViewDashboardPage() {
         </div>
         <div className="h-[calc(58svh-3rem)]">{panelContent}</div>
       </motion.div>
-      <OneTapWorkflowPanel
-        open={sendingToAutotrader}
-        title="Analyzing this live chart"
-        subtitle="One-Tap is reviewing structure, checking confirmations, and preparing the trade plan before opening the result page."
-        steps={ONE_TAP_WORKFLOW_STEPS}
-        fullscreen
-      />
     </motion.section>
   );
 }
