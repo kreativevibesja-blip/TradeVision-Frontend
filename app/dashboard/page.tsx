@@ -239,43 +239,6 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
-            <Card className="mobile-card overflow-hidden">
-              <CardContent className="flex h-full flex-col justify-between gap-5 p-6">
-                <div className="space-y-3">
-                  <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-violet-400/20 bg-violet-400/10 text-violet-300">
-                    <Zap className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-semibold">One-Tap Trade Plan</h2>
-                    <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-                      Open a focused execution workspace that turns your saved analysis into an entry, stop, target, and confirmation checklist you can act on manually.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-3">
-                  {isTopTier ? (
-                    <Link href="/dashboard/one-tap">
-                      <Button variant="gradient" className="gap-2">
-                        <Zap className="h-4 w-4" />
-                        Open One-Tap
-                      </Button>
-                    </Link>
-                  ) : (
-                    <>
-                      <Link href="/checkout?plan=TOP_TIER">
-                        <Button className="gap-2 bg-violet-600 text-white hover:bg-violet-500">
-                          <Crown className="h-4 w-4" />
-                          Unlock PRO+
-                        </Button>
-                      </Link>
-                      <p className="text-xs text-muted-foreground">One-Tap trade plans are available on the PRO+ plan.</p>
-                    </>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
           </div>
 
           {/* Command Center Info Banner */}
@@ -375,13 +338,6 @@ export default function DashboardPage() {
                           <Target className="h-3.5 w-3.5" />
                           <span className="hidden sm:inline">Command</span>
                         </Button>
-                        {isTopTier ? (
-                          <Link href={`/dashboard/one-tap?analysisId=${encodeURIComponent(a.id)}`}>
-                            <Button variant="ghost" size="sm" className="text-violet-200 hover:text-violet-100">
-                              <Zap className="h-4 w-4" />
-                            </Button>
-                          </Link>
-                        ) : null}
                         <Link href={`/analyze?analysisId=${encodeURIComponent(a.id)}`} className="shrink-0">
                           <Button variant="ghost" size="sm">
                             <Eye className="h-4 w-4" />

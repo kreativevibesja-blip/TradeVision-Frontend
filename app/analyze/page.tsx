@@ -338,7 +338,6 @@ function AnalyzePageContent() {
   const [progress, setProgress] = useState(0);
   const [currentStage, setCurrentStage] = useState(ANALYSIS_STEPS[0]);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
-  const [showOneTapCounterTrend, setShowOneTapCounterTrend] = useState(false);
   const [commandCenterOpen, setCommandCenterOpen] = useState(false);
   const [error, setError] = useState('');
   const [authOpen, setAuthOpen] = useState(false);
@@ -588,7 +587,6 @@ function AnalyzePageContent() {
         }
 
         setAnalysis(result.analysis);
-        setShowOneTapCounterTrend(false);
         setPair(result.analysis.pair);
         setTimeframe(result.analysis.timeframe);
         setCurrentPrice(String(result.analysis.currentPrice ?? ''));
@@ -692,7 +690,6 @@ function AnalyzePageContent() {
         setProgress(100);
         setCurrentStage(ANALYSIS_STEPS[ANALYSIS_STEPS.length - 1]);
         setAnalysis(result.analysis);
-        setShowOneTapCounterTrend(false);
         setShowAiZones(Boolean(result.analysis.markedImageUrl));
 
         await refreshUser().catch(() => {});
@@ -1472,40 +1469,6 @@ function AnalyzePageContent() {
                     </CardContent>
                   </Card>
 
-                  {isTopTier && analysis.id ? (
-                    <Card className="mobile-card border-violet-500/30 bg-violet-500/5">
-                      <CardContent className="p-6 space-y-4">
-                        <div className="flex items-center gap-2">
-                          <Zap className="h-4 w-4 text-violet-300" />
-                          <span className="text-sm font-medium text-violet-100">One-Tap Workspace</span>
-                          <Badge variant="outline" className="border-violet-400/40 text-violet-200">PRO+</Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          Open the execution workspace for this analysis to review the primary setup, alternate counter-trend idea, and left-side plan in one place.
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          <Button
-                            type="button"
-                            className="bg-violet-600 text-white hover:bg-violet-500"
-                            onClick={() => router.push(`/dashboard/one-tap?analysisId=${encodeURIComponent(analysis.id)}`)}
-                          >
-                            <Zap className="mr-2 h-4 w-4" />
-                            Open One-Tap
-                          </Button>
-                          {analysis.counterTrendPlan?.bias && analysis.counterTrendPlan.bias !== 'none' ? (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={() => setShowOneTapCounterTrend((current) => !current)}
-                            >
-                              {showOneTapCounterTrend ? 'Hide Counter-Trend' : 'Show Counter-Trend'}
-                            </Button>
-                          ) : null}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ) : null}
-
                   {isPro && (analysis.stopLoss || analysis.takeProfit1) ? (
                     <Card className="mobile-card border-amber-500/30 bg-amber-500/5">
                       <CardContent className="p-6 space-y-4">
@@ -1552,82 +1515,6 @@ function AnalyzePageContent() {
                             <p className="text-sm font-semibold pl-5">{formatPrice(analysis.takeProfit3, pair)}</p>
                           </div>
                         )}
-                      </CardContent>
-                    </Card>
-                  ) : null}
-
-                  {showOneTapCounterTrend && analysis.counterTrendPlan?.bias && analysis.counterTrendPlan.bias !== 'none' ? (
-                    <Card className="mobile-card border-rose-500/30 bg-rose-500/5">
-                      <CardContent className="p-6 space-y-4">
-                        <div className="flex items-center gap-2 mb-1">
-                          <AlertTriangle className="h-4 w-4 text-rose-300" />
-                          <span className="text-sm font-medium">Counter-Trend Idea</span>
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-rose-400/40 text-rose-200">
-                            AGGRESSIVE
-                          </Badge>
-                        </div>
-                        <p className="text-xs leading-relaxed text-rose-100/90">{analysis.counterTrendPlan.warning}</p>
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <Zap className="h-3.5 w-3.5 text-rose-300" />
-                            <span className="text-xs font-medium text-rose-200">Bias / Action</span>
-                          </div>
-                          <p className="text-sm font-semibold pl-5 capitalize">
-                            {analysis.counterTrendPlan.bias} · {analysis.counterTrendPlan.action}
-                          </p>
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <Target className="h-3.5 w-3.5 text-cyan-300" />
-                            <span className="text-xs font-medium text-cyan-200">Counter Entry Zone</span>
-                          </div>
-                          <p className="text-sm pl-5 text-muted-foreground">{formatStructuredZone(analysis.counterTrendPlan.entryZone, pair)}</p>
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <Clock className="h-3.5 w-3.5 text-amber-300" />
-                            <span className="text-xs font-medium text-amber-200">Wait For</span>
-                          </div>
-                          <p className="text-sm pl-5 text-muted-foreground capitalize">
-                            {analysis.counterTrendPlan.confirmation === 'none'
-                              ? 'Support or resistance rejection'
-                              : analysis.counterTrendPlan.confirmation}
-                          </p>
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <Sparkles className="h-3.5 w-3.5 text-purple-300" />
-                            <span className="text-xs font-medium text-purple-200">Reason</span>
-                          </div>
-                          <p className="text-sm pl-5 text-muted-foreground">{analysis.counterTrendPlan.reason}</p>
-                        </div>
-                        {analysis.counterTrendPlan.stopLoss != null ? (
-                          <div>
-                            <div className="flex items-center gap-2 mb-1">
-                              <ShieldAlert className="h-3.5 w-3.5 text-red-300" />
-                              <span className="text-xs font-medium text-red-200">Stop Loss</span>
-                            </div>
-                            <p className="text-sm font-semibold pl-5">{formatPrice(analysis.counterTrendPlan.stopLoss, pair)}</p>
-                          </div>
-                        ) : null}
-                        {analysis.counterTrendPlan.takeProfit1 != null ? (
-                          <div>
-                            <div className="flex items-center gap-2 mb-1">
-                              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-300" />
-                              <span className="text-xs font-medium text-emerald-200">Take Profit 1</span>
-                            </div>
-                            <p className="text-sm font-semibold pl-5">{formatPrice(analysis.counterTrendPlan.takeProfit1, pair)}</p>
-                          </div>
-                        ) : null}
-                        {analysis.counterTrendPlan.takeProfit2 != null ? (
-                          <div>
-                            <div className="flex items-center gap-2 mb-1">
-                              <CheckCircle2 className="h-3.5 w-3.5 text-teal-300" />
-                              <span className="text-xs font-medium text-teal-200">Take Profit 2</span>
-                            </div>
-                            <p className="text-sm font-semibold pl-5">{formatPrice(analysis.counterTrendPlan.takeProfit2, pair)}</p>
-                          </div>
-                        ) : null}
                       </CardContent>
                     </Card>
                   ) : null}

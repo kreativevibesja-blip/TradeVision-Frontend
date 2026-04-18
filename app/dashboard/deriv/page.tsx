@@ -99,14 +99,12 @@ const readCachedAnalysis = (): CachedAnalysis | null => {
 export default function DerivDashboardPage() {
   const router = useRouter();
   const { user, token, loading: authLoading } = useAuth();
-  const canUseOneTap = user?.subscription === 'TOP_TIER' || user?.subscription === 'VIP_AUTO_TRADER';
   const [symbol, setSymbol] = useState('R_75');
   const [timeframe, setTimeframe] = useState('15m');
   const [workspaceReady, setWorkspaceReady] = useState(false);
   const [candles, setCandles] = useState<DerivCandle[]>([]);
   const [analysis, setAnalysis] = useState<DerivAnalysisResult | null>(null);
   const [persistedAnalysis, setPersistedAnalysis] = useState<AnalysisResult | null>(null);
-  const [showOneTapCounterTrend, setShowOneTapCounterTrend] = useState(false);
   const [chartError, setChartError] = useState('');
   const [analysisError, setAnalysisError] = useState('');
   const [analyzing, setAnalyzing] = useState(false);
@@ -137,10 +135,8 @@ export default function DerivDashboardPage() {
     const cached = readCachedAnalysis();
     if (cached && cached.symbol === symbol && cached.timeframe === timeframe) {
       setAnalysis(cached.result);
-      setShowOneTapCounterTrend(false);
     } else {
       setAnalysis(null);
-      setShowOneTapCounterTrend(false);
     }
   }, [symbol, timeframe]);
 
@@ -257,7 +253,6 @@ export default function DerivDashboardPage() {
 
       window.localStorage.setItem(ANALYSIS_CACHE_KEY, JSON.stringify(nextCache));
       setAnalysis(mappedResult);
-      setShowOneTapCounterTrend(false);
     } catch (error: any) {
       setAnalysisError(error?.message || 'Unable to analyze this Deriv chart right now.');
     } finally {
@@ -388,14 +383,6 @@ export default function DerivDashboardPage() {
                   <Link href={`/analyze?analysisId=${encodeURIComponent(analysis.analysisId)}`}>
                     <Button variant="outline" className="h-10 border-slate-700 bg-slate-900/70 px-4">Open Full Result</Button>
                   </Link>
-                  {canUseOneTap ? (
-                    <Link href={`/dashboard/one-tap?analysisId=${encodeURIComponent(analysis.analysisId)}`}>
-                      <Button variant="outline" className="h-10 border-violet-500/40 bg-violet-500/10 px-4 text-violet-100 hover:bg-violet-500/20">
-                        <Zap className="mr-2 h-4 w-4" />
-                        One-Tap
-                      </Button>
-                    </Link>
-                  ) : null}
                 </div>
               ) : null}
             </div>
@@ -404,36 +391,6 @@ export default function DerivDashboardPage() {
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Reasoning</p>
               <p className="mt-3 leading-6 text-slate-300">{analysis.reasoning}</p>
             </div>
-
-            {showOneTapCounterTrend && analysis.counterTrendPlan && analysis.counterTrendPlan.bias !== 'none' ? (
-              <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-rose-300" />
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-rose-200/80">Counter-trend idea</p>
-                  <Badge variant="outline" className="border-rose-400/30 bg-rose-500/10 text-rose-100">Aggressive</Badge>
-                </div>
-                <p className="mt-3 text-xs leading-5 text-rose-100/90">{analysis.counterTrendPlan.warning}</p>
-                <div className="mt-4 grid grid-cols-1 gap-2">
-                  <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
-                    <p className="text-[11px] uppercase tracking-[0.14em] text-slate-500">Bias / Action</p>
-                    <p className="mt-2 text-sm font-semibold capitalize text-slate-100">{analysis.counterTrendPlan.bias} · {analysis.counterTrendPlan.action}</p>
-                  </div>
-                  <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
-                    <p className="text-[11px] uppercase tracking-[0.14em] text-slate-500">Entry</p>
-                    <p className="mt-2 text-sm font-semibold tabular-nums text-slate-100">{formatTradingPrice(analysis.counterTrendPlan.entry)}</p>
-                  </div>
-                  <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3">
-                    <p className="text-[11px] uppercase tracking-[0.14em] text-red-200/70">Stop</p>
-                    <p className="mt-2 text-sm font-semibold tabular-nums text-red-100">{formatTradingPrice(analysis.counterTrendPlan.stopLoss)}</p>
-                  </div>
-                  <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3">
-                    <p className="text-[11px] uppercase tracking-[0.14em] text-emerald-200/70">Target</p>
-                    <p className="mt-2 text-sm font-semibold tabular-nums text-emerald-100">{formatTradingPrice(analysis.counterTrendPlan.takeProfit)}</p>
-                  </div>
-                </div>
-                <p className="mt-3 text-sm leading-6 text-slate-300">{analysis.counterTrendPlan.reason}</p>
-              </div>
-            ) : null}
 
             {analysis.leftSidePlan && analysis.leftSidePlan.bias !== 'none' ? (
               <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">

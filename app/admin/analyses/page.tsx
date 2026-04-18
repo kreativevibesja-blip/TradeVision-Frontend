@@ -139,7 +139,7 @@ export default function AdminAnalysesPage() {
                       <th className="text-left p-4 font-medium text-muted-foreground">Bias</th>
                       <th className="text-left p-4 font-medium text-muted-foreground">Market</th>
                       <th className="text-left p-4 font-medium text-muted-foreground">Score</th>
-                      <th className="text-left p-4 font-medium text-muted-foreground">One-Tap</th>
+                      <th className="text-left p-4 font-medium text-muted-foreground">Plans</th>
                       <th className="text-left p-4 font-medium text-muted-foreground">Failure Reason</th>
                       <th className="text-left p-4 font-medium text-muted-foreground">Date</th>
                       <th className="text-left p-4 font-medium text-muted-foreground">View</th>
@@ -315,7 +315,7 @@ export default function AdminAnalysesPage() {
                       <CardContent className="p-4 space-y-3">
                         <div className="flex items-center gap-2 text-sm font-medium text-white">
                           <Zap className="h-4 w-4 text-violet-300" />
-                          Primary One-Tap
+                          Primary Trade Plan
                         </div>
                         <div className="space-y-2 text-sm text-slate-300">
                           <p><span className="text-slate-500">Entry:</span> {selectedAnalysis.entryZone ? `${selectedAnalysis.entryZone.min ?? '-'} - ${selectedAnalysis.entryZone.max ?? '-'}` : '-'}</p>
@@ -338,7 +338,7 @@ export default function AdminAnalysesPage() {
                             <p><span className="text-slate-500">Reason:</span> {selectedAnalysis.counterTrendPlan.reason}</p>
                           </div>
                         ) : (
-                          <p className="text-sm text-slate-500">No counter-trend One-Tap plan.</p>
+                          <p className="text-sm text-slate-500">No counter-trend plan.</p>
                         )}
                       </CardContent>
                     </Card>
@@ -356,7 +356,7 @@ export default function AdminAnalysesPage() {
                             <p><span className="text-slate-500">Reason:</span> {selectedAnalysis.leftSidePlan.reason}</p>
                           </div>
                         ) : (
-                          <p className="text-sm text-slate-500">No left-side One-Tap plan.</p>
+                          <p className="text-sm text-slate-500">No left-side plan.</p>
                         )}
                       </CardContent>
                     </Card>
