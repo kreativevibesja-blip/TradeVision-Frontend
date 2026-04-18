@@ -11,6 +11,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { LiveChart, type LiveChartStatus } from '@/components/LiveChart';
 import { useAuth } from '@/hooks/useAuth';
 import { api, type AnalysisResult } from '@/lib/api';
+import TrackSetupButton from '@/components/TrackSetupButton';
 import { DERIV_ANALYSIS_CANDLE_COUNT, DERIV_SYMBOLS, DERIV_TIMEFRAMES, mapPersistedAnalysisToDerivResult, type DerivAnalysisResult, type DerivCandle, getDerivSymbol, getDerivTimeframe } from '@/lib/deriv-live';
 import { mapAnalysisResultToChartOverlay, mapDerivAnalysisToChartOverlay, toChartCandles } from '@/lib/live-chart-drawings';
 
@@ -383,6 +384,7 @@ export default function DerivDashboardPage() {
                   <Link href={`/analyze?analysisId=${encodeURIComponent(analysis.analysisId)}`}>
                     <Button variant="outline" className="h-10 border-slate-700 bg-slate-900/70 px-4">Open Full Result</Button>
                   </Link>
+                  <TrackSetupButton analysisId={analysis.analysisId} />
                 </div>
               ) : null}
             </div>

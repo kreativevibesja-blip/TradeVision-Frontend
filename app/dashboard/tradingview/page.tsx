@@ -12,6 +12,7 @@ import { TradingViewAdvancedChart } from '@/components/TradingViewAdvancedChart'
 import { useAuth } from '@/hooks/useAuth';
 import { api, type AnalysisResult } from '@/lib/api';
 import { formatJamaicaDateTime } from '@/lib/jamaica-time';
+import TrackSetupButton from '@/components/TrackSetupButton';
 import { LIVE_CHART_SYMBOL_GROUPS, LIVE_CHART_SYMBOLS, LIVE_CHART_TIMEFRAMES, getLiveChartSymbol, getLiveChartTimeframe } from '@/lib/live-chart';
 
 const STORAGE_KEY = 'dashboard_live_chart_state';
@@ -287,6 +288,7 @@ export default function TradingViewDashboardPage() {
                 <Link href={`/analyze?analysisId=${encodeURIComponent(cachedAnalysis.analysisId)}`}>
                   <Button variant="outline" className="h-10 border-slate-700 bg-slate-900/70 px-4">Open Result</Button>
                 </Link>
+                <TrackSetupButton analysisId={cachedAnalysis.analysisId} />
                 <Button onClick={() => void startAnalysis(true)} disabled={analyzing} className="h-10 bg-blue-500 px-4 text-white hover:bg-blue-600">
                   <RefreshCcw className={`mr-2 h-4 w-4 ${analyzing ? 'animate-spin' : ''}`} />
                   Re-analyze
