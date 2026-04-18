@@ -24,7 +24,13 @@ export function FeedbackTrigger() {
     const check = async () => {
       const {
         data: { session },
+        error: sessionError,
       } = await sb.auth.getSession();
+
+      if (sessionError) {
+        console.error('Feedback session check error:', sessionError);
+        return;
+      }
 
       const authUser = session?.user ?? null;
 
@@ -32,14 +38,22 @@ export function FeedbackTrigger() {
         return;
       }
 
+      const feedbackUserId = authUser.id;
+
       const {
         data,
+        error: feedbackError,
       } = await sb
         .from('feedback')
         .select('id')
-        .eq('user_id', user.id)
+        .eq('user_id', feedbackUserId)
         .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
         .limit(1);
+
+      if (feedbackError) {
+        console.error('Feedback lookup error:', feedbackError);
+        return;
+      }
 
       const createdAt = new Date(authUser.created_at).getTime();
       if (!Number.isFinite(createdAt) || Date.now() - createdAt < 7 * 24 * 60 * 60 * 1000) {
@@ -48,7 +62,7 @@ export function FeedbackTrigger() {
 
       if (cancelled || (data && data.length > 0)) return;
 
-      checkedUserId.current = user.id;
+      checkedUserId.current = feedbackUserId;
 
       const timer = setTimeout(() => {
         if (!cancelled) setShow(true);

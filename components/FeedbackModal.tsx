@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, X, Send, Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -27,24 +27,60 @@ export function FeedbackModal({ open, onClose, userId }: FeedbackModalProps) {
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const showTextInput = reason === 'Other';
+
+  useEffect(() => {
+    if (!open) {
+      setRating(0);
+      setHoveredStar(0);
+      setReason('');
+      setMessage('');
+      setSubmitting(false);
+      setSubmitted(false);
+      setSubmitError(null);
+    }
+  }, [open]);
 
   const handleSubmit = async () => {
     if (!supabase || rating === 0 || !reason) return;
 
+    setSubmitError(null);
     setSubmitting(true);
     try {
-      await supabase.from('feedback').insert({
-        user_id: userId,
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+
+      if (sessionError) {
+        throw sessionError;
+      }
+
+      const authenticatedUserId = session?.user?.id ?? userId;
+
+      if (!authenticatedUserId) {
+        throw new Error('You need to be signed in to send feedback.');
+      }
+
+      const { error } = await supabase.from('feedback').insert({
+        user_id: authenticatedUserId,
         rating,
         reason,
         message: message.trim() || null,
       });
+
+      if (error) {
+        throw error;
+      }
+
       setSubmitted(true);
       setTimeout(onClose, 1500);
-    } catch {
-      // Silent fail — non-critical
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to submit feedback.';
+      console.error('Feedback submit error:', error);
+      setSubmitError(message);
     } finally {
       setSubmitting(false);
     }
@@ -157,6 +193,12 @@ export function FeedbackModal({ open, onClose, userId }: FeedbackModalProps) {
                     </motion.div>
                   )}
                 </AnimatePresence>
+
+                {submitError ? (
+                  <p className="mb-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+                    {submitError}
+                  </p>
+                ) : null}
 
                 {/* Submit */}
                 <button
