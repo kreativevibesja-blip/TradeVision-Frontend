@@ -1,8 +1,8 @@
 'use client';
 
-import { Fragment } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, RefreshCw, Shield, Target, Clock, TrendingUp, AlertTriangle, Zap, ChevronDown, ChevronUp } from 'lucide-react';
+import { Fragment, useRef, useEffect, useState } from 'react';
+import { motion, AnimatePresence, useDragControls } from 'framer-motion';
+import { X, RefreshCw, Shield, Target, Clock, TrendingUp, AlertTriangle, Zap, ChevronDown, ChevronUp, GripVertical } from 'lucide-react';
 import { useCommandCenter } from '@/hooks/useCommandCenter';
 import type { TradeState, LiveStatusMessage, CommandCenterSnapshot } from '@/lib/api';
 
@@ -198,13 +198,16 @@ function SnapshotContent({ snapshot, onRefresh }: { snapshot: CommandCenterSnaps
 
 export default function TradeCommandCenterModal({ tradeId, pair, currentPrice, open, onClose }: Props) {
   const { snapshot, loading, error, refresh } = useCommandCenter(open ? tradeId : null, currentPrice);
+  const dragControls = useDragControls();
+  const constraintsRef = useRef<HTMLDivElement>(null);
 
   return (
     <AnimatePresence>
       {open && (
         <Fragment>
-          {/* Backdrop */}
+          {/* Backdrop — also acts as drag constraint boundary */}
           <motion.div
+            ref={constraintsRef}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -212,22 +215,34 @@ export default function TradeCommandCenterModal({ tradeId, pair, currentPrice, o
             onClick={onClose}
           />
 
-          {/* Modal */}
+          {/* Draggable Modal */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            drag
+            dragControls={dragControls}
+            dragListener={false}
+            dragConstraints={constraintsRef}
+            dragElastic={0.05}
+            dragMomentum={false}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed inset-4 sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 z-50 w-auto sm:w-[420px] sm:max-h-[85vh] bg-[#0a0a0f] border border-white/10 rounded-2xl shadow-2xl shadow-blue-500/5 flex flex-col overflow-hidden"
+            className="fixed z-50 top-4 left-4 right-4 sm:top-[10%] sm:left-1/2 sm:-translate-x-1/2 sm:right-auto sm:w-[420px] max-h-[85vh] bg-[#0a0a0f] border border-white/10 rounded-2xl shadow-2xl shadow-blue-500/5 flex flex-col overflow-hidden"
           >
-            {/* Modal Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
-              <div>
-                <h2 className="text-sm font-bold text-white flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-blue-400" />
-                  Command Center
-                </h2>
-                <p className="text-xs text-gray-500 mt-0.5">{pair}</p>
+            {/* Drag Handle + Header */}
+            <div
+              onPointerDown={(e) => dragControls.start(e)}
+              className="flex items-center justify-between px-5 py-4 border-b border-white/5 cursor-grab active:cursor-grabbing select-none touch-none"
+            >
+              <div className="flex items-center gap-2">
+                <GripVertical className="w-4 h-4 text-gray-600 flex-shrink-0" />
+                <div>
+                  <h2 className="text-sm font-bold text-white flex items-center gap-2">
+                    <Zap className="w-4 h-4 text-blue-400" />
+                    Command Center
+                  </h2>
+                  <p className="text-xs text-gray-500 mt-0.5">{pair}</p>
+                </div>
               </div>
               <button
                 onClick={onClose}
