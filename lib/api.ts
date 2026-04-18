@@ -506,9 +506,12 @@ const sendRequest = async (endpoint: string, fetchOptions: RequestInit, token?: 
     headers['Content-Type'] = 'application/json';
   }
 
+  const method = (fetchOptions.method || 'GET').toUpperCase();
+
   return fetch(`${API_URL}${endpoint}`, {
     ...fetchOptions,
     headers,
+    cache: fetchOptions.cache ?? (method === 'GET' ? 'no-store' : undefined),
   });
 };
 
