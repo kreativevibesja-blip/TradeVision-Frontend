@@ -10,6 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api';
 import { formatJamaicaDate } from '@/lib/jamaica-time';
+import TradeCommandCenterModal from '@/components/TradeCommandCenterModal';
 import {
   BarChart3,
   Upload,
@@ -24,6 +25,7 @@ import {
   CreditCard,
   CandlestickChart,
   RadioTower,
+  Target,
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -31,6 +33,7 @@ export default function DashboardPage() {
   const [analyses, setAnalyses] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [commandCenterTarget, setCommandCenterTarget] = useState<{ id: string; pair: string; price?: number } | null>(null);
 
   useEffect(() => {
     if (token) {
@@ -350,6 +353,15 @@ export default function DashboardPage() {
                             </Button>
                           </Link>
                         ) : null}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-blue-300 hover:text-blue-200"
+                          onClick={() => setCommandCenterTarget({ id: a.id, pair: a.pair, price: a.currentPrice })}
+                          title="Command Center"
+                        >
+                          <Target className="h-4 w-4" />
+                        </Button>
                         <Link href={`/analyze?analysisId=${encodeURIComponent(a.id)}`} className="shrink-0">
                           <Button variant="ghost" size="sm">
                             <Eye className="h-4 w-4" />
@@ -363,6 +375,14 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </motion.div>
+
+      <TradeCommandCenterModal
+        tradeId={commandCenterTarget?.id ?? ''}
+        pair={commandCenterTarget?.pair ?? ''}
+        currentPrice={commandCenterTarget?.price}
+        open={commandCenterTarget !== null}
+        onClose={() => setCommandCenterTarget(null)}
+      />
     </div>
   );
 }

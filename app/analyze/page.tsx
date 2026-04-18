@@ -21,6 +21,7 @@ import {
 } from '@/lib/chart-upload';
 import { AuthModal } from '@/components/AuthModal';
 import { ChartLightbox } from '@/components/ChartLightbox';
+import TradeCommandCenterModal from '@/components/TradeCommandCenterModal';
 import {
   Upload,
   Image as ImageIcon,
@@ -337,6 +338,7 @@ function AnalyzePageContent() {
   const [currentStage, setCurrentStage] = useState(ANALYSIS_STEPS[0]);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [showOneTapCounterTrend, setShowOneTapCounterTrend] = useState(false);
+  const [commandCenterOpen, setCommandCenterOpen] = useState(false);
   const [error, setError] = useState('');
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
@@ -1142,6 +1144,14 @@ function AnalyzePageContent() {
                   >
                     New Analysis
                   </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setCommandCenterOpen(true)}
+                    className="gap-2 border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
+                  >
+                    <Zap className="h-4 w-4" />
+                    Command Center
+                  </Button>
                 </div>
               </div>
 
@@ -1776,6 +1786,15 @@ function AnalyzePageContent() {
             open={Boolean(lightboxSrc)}
             onClose={() => setLightboxSrc(null)}
           />
+          {analysis && (
+            <TradeCommandCenterModal
+              tradeId={analysis.id}
+              pair={analysis.pair}
+              currentPrice={analysis.currentPrice}
+              open={commandCenterOpen}
+              onClose={() => setCommandCenterOpen(false)}
+            />
+          )}
         </motion.div>
       </div>
     </div>

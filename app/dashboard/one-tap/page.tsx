@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { api, type AnalysisResult } from '@/lib/api';
 import { formatJamaicaDateTime } from '@/lib/jamaica-time';
+import TradeCommandCenterModal from '@/components/TradeCommandCenterModal';
 
 const formatPrice = (value: number | null | undefined, pair: string) => {
   if (typeof value !== 'number' || Number.isNaN(value)) {
@@ -69,6 +70,7 @@ function OneTapPageContent() {
   const [loadingAnalysis, setLoadingAnalysis] = useState(true);
   const [loadingRecent, setLoadingRecent] = useState(true);
   const [error, setError] = useState('');
+  const [commandCenterOpen, setCommandCenterOpen] = useState(false);
 
   const analysisId = searchParams.get('analysisId');
 
@@ -465,11 +467,29 @@ function OneTapPageContent() {
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
+                <Button
+                  variant="outline"
+                  className="w-full gap-2 border-blue-500/30 text-blue-400 hover:bg-blue-500/10 mt-2"
+                  onClick={() => setCommandCenterOpen(true)}
+                >
+                  <Target className="h-4 w-4" />
+                  Open Command Center
+                </Button>
               </CardContent>
             </Card>
           ) : null}
         </div>
       </div>
+
+      {analysis && (
+        <TradeCommandCenterModal
+          tradeId={analysis.id}
+          pair={analysis.pair}
+          currentPrice={analysis.currentPrice}
+          open={commandCenterOpen}
+          onClose={() => setCommandCenterOpen(false)}
+        />
+      )}
     </div>
   );
 }
