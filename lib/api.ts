@@ -1151,6 +1151,23 @@ export const api = {
       );
     },
   },
+
+  // ── Trade Radar ──
+  radar: {
+    list: (token: string) =>
+      apiFetch<{ trades: TrackedTrade[] }>('/radar', { token }),
+    add: (tradeId: string, token: string) =>
+      apiFetch<{ tracked: TrackedTrade }>('/radar/add', {
+        method: 'POST',
+        body: JSON.stringify({ tradeId }),
+        token,
+      }),
+    remove: (id: string, token: string) =>
+      apiFetch<{ success: boolean }>(`/radar/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        token,
+      }),
+  },
 };
 
 // ── Referral Types ──
@@ -1496,5 +1513,27 @@ export interface CommandCenterSnapshot {
   liveStatus: LiveStatusMessage;
   invalidation: CommandCenterInvalidation;
   currentPrice: number;
+  updatedAt: string;
+}
+
+// ── Trade Radar Types ──
+
+export type TrackedTradeState = 'TRACKING' | 'READY' | 'ACTIVE' | 'INVALID' | 'EXPIRED';
+
+export interface TrackedTrade {
+  id: string;
+  userId: string;
+  analysisId: string | null;
+  symbol: string;
+  direction: 'buy' | 'sell';
+  entryZoneMin: number;
+  entryZoneMax: number;
+  stopLoss: number;
+  takeProfit1: number;
+  confidence: number;
+  conditions: string[];
+  state: TrackedTradeState;
+  expiresAt: string;
+  createdAt: string;
   updatedAt: string;
 }
