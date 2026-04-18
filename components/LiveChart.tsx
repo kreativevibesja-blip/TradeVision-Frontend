@@ -30,7 +30,7 @@ export interface LiveChartStatus {
 
 const CACHE_TTL_MS = 30_000;
 const MAX_CANDLES = DERIV_ANALYSIS_CANDLE_COUNT;
-const SNAPSHOT_LIMIT = Math.min(MAX_CANDLES, 1500);
+const SNAPSHOT_LIMIT = MAX_CANDLES;
 const POLL_INTERVAL_MS = 5000;
 
 const readCachedCandles = (symbol: string, granularity: number): DerivCandle[] | null => {
