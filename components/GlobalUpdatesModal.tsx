@@ -274,6 +274,13 @@ export function GlobalUpdatesModal() {
     ? `/checkout?plan=${encodeURIComponent(nextAnnouncement.targetPlan || 'PRO')}&coupon=${encodeURIComponent(nextAnnouncement.couponCode!)}`
     : null;
 
+  // Plan promotion CTA — shown for ANY update with a targetPlan (even non-discount)
+  const hasPlanPromo = !isDiscount && nextAnnouncement.targetPlan;
+  const planPromoUrl = hasPlanPromo
+    ? `/checkout?plan=${encodeURIComponent(nextAnnouncement.targetPlan!)}`
+    : null;
+  const planLabel = PLAN_LABELS[nextAnnouncement.targetPlan || 'PRO'] || 'PRO';
+
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: floatingKeyframes }} />
@@ -364,6 +371,40 @@ export function GlobalUpdatesModal() {
                         className={`group inline-flex items-center gap-2 rounded-full bg-gradient-to-r ${theme.ctaGradient} px-6 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:scale-[1.03] hover:shadow-xl active:scale-[0.98]`}
                       >
                         Claim Discount
+                        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Plan promotion CTA — shown for non-discount updates with a targetPlan */}
+                {hasPlanPromo && planPromoUrl && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.15 }}
+                    className={`rounded-[20px] border ${theme.borderColor} bg-gradient-to-r from-white/5 via-white/[0.03] to-white/5 p-5`}
+                  >
+                    <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
+                      <div className="text-center sm:text-left">
+                        <div className="mb-1 flex items-center justify-center gap-2 sm:justify-start">
+                          <Sparkles className="h-4 w-4 text-emerald-400" />
+                          <span className="text-sm font-semibold text-white">
+                            Unlock the full experience with {planLabel}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-400">
+                          Get access to premium features and priority support
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          closeAnnouncement();
+                          router.push(planPromoUrl);
+                        }}
+                        className={`group inline-flex items-center gap-2 rounded-full bg-gradient-to-r ${theme.ctaGradient} px-6 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:scale-[1.03] hover:shadow-xl active:scale-[0.98]`}
+                      >
+                        Get {planLabel} Plan Now
                         <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                       </button>
                     </div>
