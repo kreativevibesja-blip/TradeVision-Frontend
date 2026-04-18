@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { api, type AdminUserDetails, type AdminUserListItem } from '@/lib/api';
 import { addDaysToDateInputValue, formatJamaicaDate, formatJamaicaDateTime, getEndOfJamaicaDayIso, getJamaicaDateInputValue, getStartOfJamaicaDayIso } from '@/lib/jamaica-time';
 import { Users, Search, Crown, Ban, ShieldCheck, Zap, X, CalendarRange } from 'lucide-react';
+import { ProSubscribersModal } from '@/components/ProSubscribersModal';
 
 type SubscriptionFilter = 'ALL' | 'FREE' | 'PRO' | 'TOP_TIER' | 'VIP_AUTO_TRADER';
 type DateFilter = 'ALL' | 'TODAY' | 'LAST_7_DAYS' | 'LAST_30_DAYS' | 'CUSTOM';
@@ -51,6 +52,7 @@ export default function AdminUsersPage() {
   const [selectedUserDetails, setSelectedUserDetails] = useState<AdminUserDetails | null>(null);
   const [loadingUserDetails, setLoadingUserDetails] = useState(false);
   const [resettingUsage, setResettingUsage] = useState(false);
+  const [showProSubs, setShowProSubs] = useState(false);
 
   useEffect(() => {
     if (token) loadUsers();
@@ -206,7 +208,18 @@ export default function AdminUsersPage() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-      <h1 className="text-2xl font-bold mb-6">User Management</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">User Management</h1>
+        <button
+          onClick={() => setShowProSubs(true)}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-500/10 text-violet-300 hover:bg-violet-500/20 border border-violet-500/20 hover:border-violet-500/40 transition-all text-sm font-medium"
+        >
+          <Crown className="w-4 h-4" />
+          Pro Subscribers
+        </button>
+      </div>
+
+      <ProSubscribersModal open={showProSubs} onClose={() => setShowProSubs(false)} token={token!} />
 
       <Card className="mb-6">
         <CardContent className="p-4">
