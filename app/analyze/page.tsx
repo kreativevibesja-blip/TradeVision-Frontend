@@ -1145,12 +1145,11 @@ function AnalyzePageContent() {
                     New Analysis
                   </Button>
                   <Button
-                    variant="outline"
                     onClick={() => setCommandCenterOpen(true)}
-                    className="gap-2 border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
+                    className="gap-2 bg-blue-600/20 text-blue-400 border border-blue-500/30 hover:bg-blue-600/30 shadow-[0_0_12px_rgba(59,130,246,0.25)]"
                   >
-                    <Zap className="h-4 w-4" />
-                    Command Center
+                    <Target className="h-4 w-4" />
+                    Open Command Center
                   </Button>
                 </div>
               </div>

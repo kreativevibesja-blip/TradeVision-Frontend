@@ -277,6 +277,25 @@ export default function DashboardPage() {
 
           </div>
 
+          {/* Command Center Info Banner */}
+          {analyses.length > 0 && (
+            <Card className="mobile-card border-blue-500/20 bg-gradient-to-r from-blue-500/5 via-transparent to-blue-500/5">
+              <CardContent className="p-4 sm:p-5">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 border border-blue-500/20">
+                    <Target className="h-5 w-5 text-blue-400" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-sm font-semibold text-white">Trade Command Center</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Click the blue <span className="text-blue-400 font-medium">Command</span> button on any analysis below for real-time trade execution guidance.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <Card className="mobile-card">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
@@ -345,7 +364,15 @@ export default function DashboardPage() {
                           </div>
                         </div>
                       </div>
-                      <div className="flex shrink-0 items-center gap-1">
+                      <div className="flex shrink-0 items-center gap-1.5 flex-wrap justify-end">
+                        <Button
+                          size="sm"
+                          className="gap-1.5 bg-blue-600/20 text-blue-400 border border-blue-500/30 hover:bg-blue-600/30 shadow-[0_0_10px_rgba(59,130,246,0.15)]"
+                          onClick={() => setCommandCenterTarget({ id: a.id, pair: a.pair, price: a.currentPrice })}
+                        >
+                          <Target className="h-3.5 w-3.5" />
+                          <span className="hidden sm:inline">Command</span>
+                        </Button>
                         {isTopTier ? (
                           <Link href={`/dashboard/one-tap?analysisId=${encodeURIComponent(a.id)}`}>
                             <Button variant="ghost" size="sm" className="text-violet-200 hover:text-violet-100">
@@ -353,15 +380,6 @@ export default function DashboardPage() {
                             </Button>
                           </Link>
                         ) : null}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-blue-300 hover:text-blue-200"
-                          onClick={() => setCommandCenterTarget({ id: a.id, pair: a.pair, price: a.currentPrice })}
-                          title="Command Center"
-                        >
-                          <Target className="h-4 w-4" />
-                        </Button>
                         <Link href={`/analyze?analysisId=${encodeURIComponent(a.id)}`} className="shrink-0">
                           <Button variant="ghost" size="sm">
                             <Eye className="h-4 w-4" />

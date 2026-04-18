@@ -468,8 +468,7 @@ function OneTapPageContent() {
                   </Button>
                 </Link>
                 <Button
-                  variant="outline"
-                  className="w-full gap-2 border-blue-500/30 text-blue-400 hover:bg-blue-500/10 mt-2"
+                  className="w-full gap-2 bg-blue-600/20 text-blue-400 border border-blue-500/30 hover:bg-blue-600/30 shadow-[0_0_12px_rgba(59,130,246,0.25)] mt-2"
                   onClick={() => setCommandCenterOpen(true)}
                 >
                   <Target className="h-4 w-4" />
