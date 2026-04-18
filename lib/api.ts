@@ -284,6 +284,16 @@ export interface AdminUserListItem {
   };
 }
 
+export interface PaidSubscriberItem {
+  id: string;
+  email: string;
+  name: string | null;
+  plan: string;
+  status: 'free' | 'active' | 'expired' | 'cancelled';
+  expiresAt: string | null;
+  daysLeft: number | null;
+}
+
 export interface AdminUserDetails {
   id: string;
   billing: {
@@ -797,6 +807,13 @@ export const api = {
       apiFetch<any>(`/admin/users/${encodeURIComponent(id)}`, {
         method: 'PATCH',
         body: JSON.stringify(data),
+        token,
+      }),
+    getPaidSubscribers: (token: string) =>
+      apiFetch<{ subscribers: PaidSubscriberItem[] }>('/admin/subscribers', { token }),
+    sendRenewalReminder: (userId: string, token: string) =>
+      apiFetch<{ success: boolean }>(`/admin/subscribers/${encodeURIComponent(userId)}/send-renewal`, {
+        method: 'POST',
         token,
       }),
     getAnalyses: (token: string, page = 1, search?: string) =>
