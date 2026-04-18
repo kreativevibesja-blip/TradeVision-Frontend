@@ -1138,6 +1138,19 @@ export const api = {
         token,
       }),
   },
+
+  // ── Command Center ──
+  commandCenter: {
+    getSnapshot: (tradeId: string, token: string, currentPrice?: number) => {
+      const params = new URLSearchParams();
+      if (currentPrice != null) params.set('currentPrice', String(currentPrice));
+      const query = params.toString();
+      return apiFetch<{ commandCenter: CommandCenterSnapshot }>(
+        `/trade/${encodeURIComponent(tradeId)}/command-center${query ? `?${query}` : ''}`,
+        { token }
+      );
+    },
+  },
 };
 
 // ── Referral Types ──
@@ -1409,4 +1422,79 @@ export interface ScannerPotentialTrade {
   fulfilledConditions: string[];
   requiredTriggers: string[];
   contextLabels: string[];
+}
+
+// ── Command Center Types ──
+
+export type TradeState = 'READY' | 'WAIT' | 'INVALID' | 'TRIGGERED' | 'ACTIVE' | 'CLOSED';
+
+export type LiveStatusMessage =
+  | 'approaching entry'
+  | 'entry triggered'
+  | 'momentum strong'
+  | 'momentum fading'
+  | 'approaching TP'
+  | 'exit warning'
+  | 'wait for confirmation'
+  | 'price in entry zone'
+  | 'watching structure';
+
+export interface CommandCenterEntryZone {
+  min: number;
+  max: number;
+}
+
+export interface ConfidenceReason {
+  label: string;
+  status: boolean;
+}
+
+export interface CommandCenterConfidence {
+  score: number;
+  reasons: ConfidenceReason[];
+}
+
+export interface CommandCenterTiming {
+  message: string;
+  candlesEstimate: string;
+  conditions: string[];
+}
+
+export interface CommandCenterSltp {
+  slInstruction: string;
+  tpLevels: { label: string; price: number }[];
+}
+
+export interface CommandCenterInvalidation {
+  isInvalid: boolean;
+  reason: string;
+}
+
+export interface CommandCenterTrade {
+  id: string;
+  pair: string;
+  timeframe: string;
+  direction: 'buy' | 'sell';
+  entry: number;
+  stopLoss: number;
+  takeProfit1: number;
+  takeProfit2: number | null;
+  takeProfit3: number | null;
+  confirmation: string;
+  reasoning: string;
+  confidence: number;
+  createdAt: string;
+}
+
+export interface CommandCenterSnapshot {
+  trade: CommandCenterTrade;
+  state: TradeState;
+  entryZone: CommandCenterEntryZone;
+  confidence: CommandCenterConfidence;
+  timing: CommandCenterTiming;
+  sltp: CommandCenterSltp;
+  liveStatus: LiveStatusMessage;
+  invalidation: CommandCenterInvalidation;
+  currentPrice: number;
+  updatedAt: string;
 }
