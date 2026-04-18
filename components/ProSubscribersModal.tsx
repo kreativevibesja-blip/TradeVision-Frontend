@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Crown, Mail, Loader2, CheckCircle, AlertTriangle, Clock } from 'lucide-react';
+import { X, Crown, Mail, Loader2, CheckCircle, AlertTriangle, Clock, XCircle } from 'lucide-react';
 import { api, type PaidSubscriberItem } from '@/lib/api';
 
 interface ProSubscribersModalProps {
@@ -26,6 +26,9 @@ const PLAN_COLORS: Record<string, string> = {
 };
 
 function getStatusInfo(sub: PaidSubscriberItem) {
+  if (sub.status === 'cancelled') {
+    return { label: 'Cancelled', color: 'text-orange-400', bg: 'bg-orange-500/10', icon: XCircle };
+  }
   if (sub.status === 'expired') {
     return { label: 'Expired', color: 'text-red-400', bg: 'bg-red-500/10', icon: AlertTriangle };
   }
