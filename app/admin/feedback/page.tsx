@@ -16,6 +16,7 @@ interface FeedbackRow {
   reason: string;
   message: string | null;
   created_at: string;
+  admin_seen: boolean;
 }
 
 function formatDate(iso: string) {
@@ -83,7 +84,23 @@ export default function AdminFeedbackPage() {
         setError(queryError.message);
         setFeedback([]);
       } else {
-        setFeedback((data as FeedbackRow[]) ?? []);
+        const rows = (data as FeedbackRow[]) ?? [];
+        setFeedback(rows);
+
+        const unseenIds = rows.filter((row) => !row.admin_seen).map((row) => row.id);
+        if (unseenIds.length > 0) {
+          const { error: updateError } = await supabase
+            .from('feedback')
+            .update({ admin_seen: true })
+            .in('id', unseenIds);
+
+          if (updateError) {
+            console.error('Feedback seen-state update error:', updateError);
+          } else {
+            setFeedback((prev) => prev.map((row) => ({ ...row, admin_seen: true })));
+            window.dispatchEvent(new Event('admin-feedback-seen'));
+          }
+        }
       }
     } finally {
       setLoading(false);

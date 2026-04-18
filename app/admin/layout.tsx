@@ -58,7 +58,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       try {
         const result = await supabase
           .from('feedback')
-          .select('id', { count: 'exact', head: true });
+          .select('id', { count: 'exact', head: true })
+          .eq('admin_seen', false);
         return result.count ?? 0;
       } catch {
         return 0;
@@ -94,8 +95,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     };
 
     load();
+    const handleFeedbackSeen = () => { void load(); };
+    window.addEventListener('admin-feedback-seen', handleFeedbackSeen);
     const interval = setInterval(load, 60_000);
-    return () => { active = false; clearInterval(interval); };
+    return () => {
+      active = false;
+      window.removeEventListener('admin-feedback-seen', handleFeedbackSeen);
+      clearInterval(interval);
+    };
   }, [token]);
 
   if (loading) {
