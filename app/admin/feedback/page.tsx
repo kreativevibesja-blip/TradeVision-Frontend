@@ -65,18 +65,26 @@ export default function AdminFeedbackPage() {
   const { user } = useAuth();
   const [feedback, setFeedback] = useState<FeedbackRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!supabase) return;
     setLoading(true);
+    setError(null);
     try {
-      const { data } = await supabase
+      const { data, error: queryError } = await supabase
         .from('feedback')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(500);
-      setFeedback((data as FeedbackRow[]) ?? []);
+      if (queryError) {
+        console.error('Feedback fetch error:', queryError);
+        setError(queryError.message);
+        setFeedback([]);
+      } else {
+        setFeedback((data as FeedbackRow[]) ?? []);
+      }
     } finally {
       setLoading(false);
     }
@@ -170,6 +178,10 @@ export default function AdminFeedbackPage() {
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : error ? (
+            <div className="py-12 text-center text-sm text-red-400">
+              Failed to load feedback: {error}
             </div>
           ) : feedback.length === 0 ? (
             <div className="py-12 text-center text-sm text-muted-foreground">No feedback yet.</div>
