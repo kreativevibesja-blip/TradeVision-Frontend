@@ -94,7 +94,7 @@ export default function AdminUpdatesPage() {
   const [title, setTitle] = useState(PRESETS[0].defaultTitle);
   const [content, setContent] = useState(PRESETS[0].defaultContent);
   const [couponCode, setCouponCode] = useState('');
-  const [targetPlan, setTargetPlan] = useState<'PRO' | 'TOP_TIER'>('PRO');
+  const [targetPlan, setTargetPlan] = useState<'PRO' | 'TOP_TIER' | ''>('');
   const [durationValue, setDurationValue] = useState('');
   const [durationUnit, setDurationUnit] = useState<'hours' | 'days'>('hours');
   const [creating, setCreating] = useState(false);
@@ -133,13 +133,15 @@ export default function AdminUpdatesPage() {
           title,
           content,
           type: selectedType,
-          ...(selectedType === 'discount' && couponCode.trim() ? { couponCode: couponCode.trim().toUpperCase(), targetPlan } : {}),
+          ...(selectedType === 'discount' && couponCode.trim() ? { couponCode: couponCode.trim().toUpperCase() } : {}),
+          ...(targetPlan ? { targetPlan } : {}),
           ...(durationValue.trim() ? { durationValue: Number(durationValue), durationUnit } : {}),
         },
         token!
       );
       selectPreset('update');
       setCouponCode('');
+      setTargetPlan('');
       setDurationValue('');
       setDurationUnit('hours');
       loadAnnouncements();
@@ -217,32 +219,36 @@ export default function AdminUpdatesPage() {
                 <Tag className="h-4 w-4" />
                 Discount Details
               </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <label className="mb-1 block text-xs text-muted-foreground">Coupon Code</label>
-                  <Input
-                    placeholder="e.g. SAVE20"
-                    value={couponCode}
-                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                    className="uppercase"
-                  />
-                  <p className="mt-1 text-[11px] text-muted-foreground">Must match an existing coupon from the Coupons page</p>
-                </div>
-                <div>
-                  <label className="mb-1 block text-xs text-muted-foreground">Target Plan</label>
-                  <select
-                    value={targetPlan}
-                    onChange={(e) => setTargetPlan(e.target.value as 'PRO' | 'TOP_TIER')}
-                    className="w-full rounded-lg border border-input bg-background/60 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-                  >
-                    <option value="PRO">PRO — $19.95/mo</option>
-                    <option value="TOP_TIER">PRO+ — $39.95/mo</option>
-                  </select>
-                  <p className="mt-1 text-[11px] text-muted-foreground">Users will see a button linking to checkout with this plan</p>
-                </div>
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">Coupon Code</label>
+                <Input
+                  placeholder="e.g. SAVE20"
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                  className="uppercase"
+                />
+                <p className="mt-1 text-[11px] text-muted-foreground">Must match an existing coupon from the Coupons page</p>
               </div>
             </motion.div>
           )}
+
+          {/* Promote Plan — available for all update types */}
+          <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+            <div className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
+              <Sparkles className="h-4 w-4 text-emerald-300" />
+              Promote Plan <span className="text-xs font-normal text-muted-foreground">(optional)</span>
+            </div>
+            <p className="mb-3 text-xs text-muted-foreground">Users will see a &ldquo;Get Plan Now&rdquo; button at the bottom of this update.</p>
+            <select
+              value={targetPlan}
+              onChange={(e) => setTargetPlan(e.target.value as 'PRO' | 'TOP_TIER' | '')}
+              className="w-full rounded-lg border border-input bg-background/60 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="">None — no upgrade button</option>
+              <option value="PRO">PRO — $19.95/mo</option>
+              <option value="TOP_TIER">PRO+ — $39.95/mo</option>
+            </select>
+          </div>
 
           <div className="grid gap-3 md:grid-cols-[1fr_180px]">
             <div className="rounded-xl border border-white/10 bg-white/5 p-4">
