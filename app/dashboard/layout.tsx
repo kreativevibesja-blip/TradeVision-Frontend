@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import PushNotificationPrompt from '@/components/PushNotificationPrompt';
 import { useAuth } from '@/hooks/useAuth';
-import { CandlestickChart, CreditCard, LayoutDashboard, RadioTower, Users, Radar, Zap } from 'lucide-react';
+import { CandlestickChart, CreditCard, LayoutDashboard, RadioTower, Users, Radar, Zap, Crosshair } from 'lucide-react';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -20,6 +20,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       ? [{ href: '/dashboard/one-tap', label: 'One-Tap', icon: Zap }]
       : []),
     { href: '/dashboard/scanner', label: 'Scanner', icon: Radar },
+    { href: '/dashboard/radar', label: 'Trade Radar', icon: Crosshair },
     { href: '/dashboard/billing', label: 'Billing', icon: CreditCard },
     { href: '/dashboard/referrals', label: 'Referrals', icon: Users },
   ];

@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { api, type AnalysisResult } from '@/lib/api';
 import { formatJamaicaDateTime } from '@/lib/jamaica-time';
 import TradeCommandCenterModal from '@/components/TradeCommandCenterModal';
+import TrackSetupButton from '@/components/TrackSetupButton';
 
 const formatPrice = (value: number | null | undefined, pair: string) => {
   if (typeof value !== 'number' || Number.isNaN(value)) {
@@ -474,6 +475,11 @@ function OneTapPageContent() {
                   <Target className="h-4 w-4" />
                   Open Command Center
                 </Button>
+                {analysis?.id && (
+                  <div className="mt-2">
+                    <TrackSetupButton analysisId={analysis.id} />
+                  </div>
+                )}
               </CardContent>
             </Card>
           ) : null}

@@ -22,6 +22,7 @@ import {
 import { AuthModal } from '@/components/AuthModal';
 import { ChartLightbox } from '@/components/ChartLightbox';
 import TradeCommandCenterModal from '@/components/TradeCommandCenterModal';
+import TrackSetupButton from '@/components/TrackSetupButton';
 import {
   Upload,
   Image as ImageIcon,
@@ -1151,6 +1152,7 @@ function AnalyzePageContent() {
                     <Target className="h-4 w-4" />
                     Open Command Center
                   </Button>
+                  {analysis?.id && <TrackSetupButton analysisId={analysis.id} />}
                 </div>
               </div>
 

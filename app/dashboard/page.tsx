@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api';
 import { formatJamaicaDate } from '@/lib/jamaica-time';
 import TradeCommandCenterModal from '@/components/TradeCommandCenterModal';
+import TrackSetupButton from '@/components/TrackSetupButton';
 import {
   BarChart3,
   Upload,
@@ -365,6 +366,7 @@ export default function DashboardPage() {
                         </div>
                       </div>
                       <div className="flex shrink-0 items-center gap-1.5 flex-wrap justify-end">
+                        <TrackSetupButton analysisId={a.id} />
                         <Button
                           size="sm"
                           className="gap-1.5 bg-blue-600/20 text-blue-400 border border-blue-500/30 hover:bg-blue-600/30 shadow-[0_0_10px_rgba(59,130,246,0.15)]"
