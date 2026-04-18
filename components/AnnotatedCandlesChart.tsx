@@ -32,6 +32,7 @@ const GRID = '#1e293b';
 const TEXT = '#e2e8f0';
 const EMA_50_COLOR = '#38bdf8';
 const EMA_200_COLOR = '#f59e0b';
+const INITIAL_VISIBLE_BARS = 120;
 
 export function AnnotatedCandlesChart({
   candles,
@@ -50,7 +51,7 @@ export function AnnotatedCandlesChart({
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const overlayFrameRef = useRef<number | null>(null);
   const priceLinesRef = useRef<any[]>([]);
-  const hasFittedRef = useRef(false);
+  const hasPositionedViewportRef = useRef(false);
   const [overlayRects, setOverlayRects] = useState<OverlayRect[]>([]);
 
   useEffect(() => {
@@ -215,7 +216,7 @@ export function AnnotatedCandlesChart({
   };
 
   useEffect(() => {
-    hasFittedRef.current = false;
+    hasPositionedViewportRef.current = false;
   }, [resetKey]);
 
   useEffect(() => {
@@ -231,9 +232,14 @@ export function AnnotatedCandlesChart({
     ema50Series.setData(calculateEmaSeries(candles, 50));
     ema200Series.setData(calculateEmaSeries(candles, 200));
 
-    if (candles.length > 0 && !hasFittedRef.current) {
-      chart.timeScale().fitContent();
-      hasFittedRef.current = true;
+    if (candles.length > 0 && !hasPositionedViewportRef.current) {
+      const visibleBars = Math.min(INITIAL_VISIBLE_BARS, candles.length);
+      const to = candles.length + Math.max(visibleBars * 0.08, 4);
+      const from = Math.max(0, candles.length - visibleBars);
+
+      chart.timeScale().setVisibleLogicalRange({ from, to });
+      chart.timeScale().scrollToRealTime();
+      hasPositionedViewportRef.current = true;
     }
 
     queueOverlayCalculation();
