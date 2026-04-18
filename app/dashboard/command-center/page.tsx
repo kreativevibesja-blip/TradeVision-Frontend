@@ -124,7 +124,7 @@ export default function CommandCenterPage() {
               </p>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="max-h-[60vh] overflow-y-auto space-y-2 pr-1 scrollbar-thin scrollbar-thumb-white/10">
               <AnimatePresence mode="popLayout">
                 {filtered.map((a) => (
                   <motion.div
