@@ -1644,8 +1644,6 @@ export interface GoldxPlan {
 }
 
 export interface GoldxUserStatus {
-  adminAccess?: boolean;
-  adminLicenseKey?: string | null;
   subscription: {
     id: string;
     status: string;
