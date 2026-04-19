@@ -165,7 +165,7 @@ export default function DashboardPage() {
 
           <Card className="mobile-card mb-8 border-amber-400/20 bg-[radial-gradient(circle_at_top_left,_rgba(245,158,11,0.14),_transparent_32%)]">
             <CardContent className="flex flex-col gap-4 p-6 lg:flex-row lg:items-center lg:justify-between">
-              <div className="max-w-2xl">
+              <div className="min-w-0 max-w-2xl flex-1">
                 <div className="mb-2 flex items-center gap-2">
                   <TrendingUp className="h-4 w-4 text-amber-300" />
                   <span className="text-sm font-medium text-amber-200">GoldX EA</span>
@@ -174,15 +174,15 @@ export default function DashboardPage() {
                   Access the GoldX expert advisor for XAUUSD night-scalping automation, then return here to manage your license, MT5 account binding, and execution mode from one place.
                 </p>
               </div>
-              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                <Link href="/pricing#goldx" className="sm:flex-1">
-                  <Button className="w-full gap-2 bg-amber-600 text-white hover:bg-amber-500 sm:w-auto">
+              <div className="flex w-full flex-col gap-3 sm:flex-row lg:w-auto lg:shrink-0 lg:flex-nowrap">
+                <Link href="/pricing#goldx" className="w-full sm:flex-1 lg:w-auto lg:flex-none">
+                  <Button className="w-full gap-2 bg-amber-600 text-white hover:bg-amber-500 lg:w-auto">
                     <TrendingUp className="h-4 w-4" />
                     Explore GoldX Plans
                   </Button>
                 </Link>
-                <Link href="/dashboard/goldx" className="sm:flex-1">
-                  <Button variant="outline" className="w-full gap-2 sm:w-auto">
+                <Link href="/dashboard/goldx" className="w-full sm:flex-1 lg:w-auto lg:flex-none">
+                  <Button variant="outline" className="w-full gap-2 lg:w-auto">
                     Open GoldX Workspace
                     <ArrowRight className="h-4 w-4" />
                   </Button>
