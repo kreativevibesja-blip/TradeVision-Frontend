@@ -1447,7 +1447,7 @@ export interface ScanResult {
   confirmations: ScanResultConfirmations;
   sessionType: ScannerSessionType;
   status: ScanResultStatus;
-  closeReason: 'tp' | 'sl' | null;
+  closeReason: 'tp' | 'sl' | 'be' | null;
   triggeredAt: string | null;
   closedAt: string | null;
   rank: number | null;
