@@ -315,6 +315,7 @@ export interface AdminUserDetails {
     }>;
   };
   goldx: {
+    licenseId: string | null;
     hasAccess: boolean;
     subscriptionStatus: string | null;
     currentPeriodEnd: string | null;
