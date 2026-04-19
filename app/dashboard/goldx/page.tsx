@@ -111,6 +111,7 @@ export default function GoldxDashboardPage() {
   const subscription = status?.subscription ?? null;
   const license = status?.license ?? null;
   const accountState = status?.accountState ?? null;
+  const latestGrant = status?.latestGrant ?? null;
   const hasLicenseAccess = Boolean(
     license
       && license.status === 'active'
@@ -207,6 +208,32 @@ export default function GoldxDashboardPage() {
         <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
           {/* Left — Status */}
           <div className="space-y-6">
+            {latestGrant && (
+              <Card className="border-emerald-500/20 bg-emerald-500/10">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-sm uppercase tracking-wider text-emerald-100">
+                    <Key className="h-4 w-4" /> New GoldX License Issued
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 text-sm text-emerald-50">
+                  <div className="rounded-xl border border-emerald-400/20 bg-black/20 p-4">
+                    <p className="text-xs uppercase tracking-[0.18em] text-emerald-200/80">License Key</p>
+                    <p className="mt-2 break-all font-mono text-base text-white">{latestGrant.licenseKey}</p>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-xl border border-emerald-400/20 bg-black/20 p-4">
+                      <p className="text-xs uppercase tracking-[0.18em] text-emerald-200/80">Started</p>
+                      <p className="mt-2 font-medium text-white">{new Date(latestGrant.issuedAt).toLocaleString()}</p>
+                    </div>
+                    <div className="rounded-xl border border-emerald-400/20 bg-black/20 p-4">
+                      <p className="text-xs uppercase tracking-[0.18em] text-emerald-200/80">Expires</p>
+                      <p className="mt-2 font-medium text-white">{new Date(latestGrant.expiresAt).toLocaleString()}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {subscription?.status === 'cancelled' && accessEndsAt && (
               <Card className="border-amber-500/20 bg-amber-500/10">
                 <CardContent className="p-4 text-sm text-amber-100">
@@ -228,6 +255,14 @@ export default function GoldxDashboardPage() {
                     <Badge variant="default" className={`mt-1 ${subscription?.status === 'cancelled' ? 'bg-amber-500/20 text-amber-300' : 'bg-emerald-500/20 text-emerald-300'}`}>
                       {subscription?.status ?? 'active'}
                     </Badge>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-muted-foreground">Started</p>
+                    <p className="mt-1 text-sm font-medium">
+                      {subscription?.currentPeriodStart
+                        ? new Date(subscription.currentPeriodStart).toLocaleDateString()
+                        : '—'}
+                    </p>
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-muted-foreground">{subscription?.status === 'cancelled' ? 'Access Until' : 'Renews'}</p>
@@ -252,6 +287,10 @@ export default function GoldxDashboardPage() {
                       <div>
                         <p className="text-xs text-muted-foreground">MT5 Account</p>
                         <p className="font-mono text-sm">{license.mt5Account ?? 'Not yet bound'}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-muted-foreground">Issued</p>
+                        <p className="text-sm">{new Date(license.createdAt).toLocaleDateString()}</p>
                       </div>
                       <div className="text-right">
                         <p className="text-xs text-muted-foreground">Expires</p>
