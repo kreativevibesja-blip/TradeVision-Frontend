@@ -293,11 +293,13 @@ function getEntryInstruction(result: ScanResult) {
 
   if (result.status === 'closed') {
     return {
-      badgeLabel: result.closeReason === 'tp' ? 'Closed TP' : 'Closed SL',
+      badgeLabel: result.closeReason === 'tp' ? 'Closed TP' : result.closeReason === 'be' ? 'Closed BE' : 'Closed SL',
       badgeVariant: 'secondary' as const,
       message: result.closeReason === 'tp'
         ? 'This setup has already completed at take profit.'
-        : 'This setup has already completed at stop loss.',
+        : result.closeReason === 'be'
+          ? 'This setup has already returned to entry and closed at breakeven.'
+          : 'This setup has already completed at stop loss.',
     };
   }
 
@@ -1097,7 +1099,9 @@ function SetupCard({
   const outcomeBadge = result.status === 'closed'
     ? result.closeReason === 'tp'
       ? { label: 'Win', variant: 'success' as const }
-      : { label: 'Loss', variant: 'destructive' as const }
+      : result.closeReason === 'be'
+        ? { label: 'BE', variant: 'outline' as const }
+        : { label: 'Loss', variant: 'destructive' as const }
     : result.status === 'invalidated'
       ? { label: 'No Entry', variant: 'outline' as const }
       : null;
@@ -1206,7 +1210,7 @@ function SetupCard({
             {(result.triggeredAt || result.closedAt) && (
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 {result.triggeredAt ? <PriceRow label="Entry Ready" value={formatTime(result.triggeredAt)} color="text-emerald-400" /> : null}
-                {result.closedAt ? <PriceRow label={result.closeReason === 'tp' ? 'Closed at TP' : 'Closed at SL'} value={formatTime(result.closedAt)} color={result.closeReason === 'tp' ? 'text-amber-400' : 'text-red-400'} /> : null}
+                {result.closedAt ? <PriceRow label={result.closeReason === 'tp' ? 'Closed at TP' : result.closeReason === 'be' ? 'Closed at BE' : 'Closed at SL'} value={formatTime(result.closedAt)} color={result.closeReason === 'tp' ? 'text-amber-400' : result.closeReason === 'be' ? 'text-cyan-300' : 'text-red-400'} /> : null}
               </div>
             )}
 
