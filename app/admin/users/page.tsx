@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { api, type AdminUserDetails, type AdminUserListItem } from '@/lib/api';
 import { addDaysToDateInputValue, formatJamaicaDate, formatJamaicaDateTime, getEndOfJamaicaDayIso, getJamaicaDateInputValue, getStartOfJamaicaDayIso } from '@/lib/jamaica-time';
-import { Users, Search, Crown, Ban, ShieldCheck, Zap, X, CalendarRange, KeyRound, CheckCircle2 } from 'lucide-react';
+import { Users, Search, Crown, Ban, ShieldCheck, Zap, X, CalendarRange, KeyRound, CheckCircle2, ShieldX } from 'lucide-react';
 import { ProSubscribersModal } from '@/components/ProSubscribersModal';
 
 type SubscriptionFilter = 'ALL' | 'FREE' | 'PRO' | 'TOP_TIER' | 'VIP_AUTO_TRADER';
@@ -54,6 +54,7 @@ export default function AdminUsersPage() {
   const [resettingUsage, setResettingUsage] = useState(false);
   const [showProSubs, setShowProSubs] = useState(false);
   const [grantingGoldx, setGrantingGoldx] = useState(false);
+  const [revokingGoldx, setRevokingGoldx] = useState(false);
   const [goldxGrantMessage, setGoldxGrantMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -216,6 +217,25 @@ export default function AdminUsersPage() {
       setGoldxGrantMessage('Failed to grant GoldX access.');
     } finally {
       setGrantingGoldx(false);
+    }
+  };
+
+  const revokeGoldxAccess = async (licenseId: string, userId: string) => {
+    if (!token) {
+      return;
+    }
+
+    try {
+      setRevokingGoldx(true);
+      await api.goldx.admin.revokeLicense(licenseId, token);
+      setGoldxGrantMessage('GoldX access revoked. Granting access again will generate a new license key.');
+
+      const data = await api.admin.getUserDetails(userId, token);
+      setSelectedUserDetails(data.user);
+    } catch {
+      setGoldxGrantMessage('Failed to revoke GoldX access.');
+    } finally {
+      setRevokingGoldx(false);
     }
   };
 
@@ -583,6 +603,16 @@ export default function AdminUsersPage() {
                     <Button className="mt-4" onClick={() => grantGoldxAccess(selectedUser.id)} disabled={grantingGoldx || loadingUserDetails}>
                       <KeyRound className="mr-2 h-4 w-4" />
                       {grantingGoldx ? 'Granting GoldX...' : 'Grant GoldX Access'}
+                    </Button>
+                  ) : selectedUserDetails?.goldx.licenseId ? (
+                    <Button
+                      className="mt-4"
+                      variant="outline"
+                      onClick={() => revokeGoldxAccess(selectedUserDetails.goldx.licenseId!, selectedUser.id)}
+                      disabled={revokingGoldx || loadingUserDetails}
+                    >
+                      <ShieldX className="mr-2 h-4 w-4" />
+                      {revokingGoldx ? 'Revoking GoldX...' : 'Revoke GoldX Access'}
                     </Button>
                   ) : null}
                   {goldxGrantMessage ? (

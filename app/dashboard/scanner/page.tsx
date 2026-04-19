@@ -113,16 +113,26 @@ function getLiveTradePulse(result: ScanResult) {
     return null;
   }
 
+  const finalTakeProfit = getFinalTakeProfit(result);
+  const primaryReward = Math.abs(result.takeProfit - result.entry);
+  const finalReward = Math.abs(finalTakeProfit - result.entry);
   const risk = Math.abs(result.entry - result.stopLoss);
-  if (!Number.isFinite(risk) || risk <= 0) {
+  const effectiveRisk = Number.isFinite(risk) && risk > 0
+    ? risk
+    : primaryReward > 0
+      ? primaryReward / 2
+      : finalReward > 0
+        ? finalReward / 2
+        : 0;
+
+  if (!Number.isFinite(effectiveRisk) || effectiveRisk <= 0) {
     return null;
   }
 
-  const primaryReward = Math.abs(result.takeProfit - result.entry);
   const signedMove = result.direction === 'buy' ? livePrice - result.entry : result.entry - livePrice;
-  const state: 'profit' | 'drawdown' | 'neutral' = signedMove > risk * 0.08
+  const state: 'profit' | 'drawdown' | 'neutral' = signedMove > effectiveRisk * 0.08
     ? 'profit'
-    : signedMove < -risk * 0.08
+    : signedMove < -effectiveRisk * 0.08
       ? 'drawdown'
       : 'neutral';
   const progressBase = result.direction === 'buy'
@@ -135,7 +145,7 @@ function getLiveTradePulse(result: ScanResult) {
     state,
     signedMove,
     percentFromEntry: result.entry !== 0 ? (signedMove / result.entry) * 100 : 0,
-    moveInR: signedMove / risk,
+    moveInR: signedMove / effectiveRisk,
     pathProgress,
     tpProgress: primaryReward > 0 ? Math.max(0, Math.min(1, Math.abs(signedMove) / primaryReward)) : 0,
   };
