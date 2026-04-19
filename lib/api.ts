@@ -314,6 +314,14 @@ export interface AdminUserDetails {
       createdAt: string;
     }>;
   };
+  goldx: {
+    hasAccess: boolean;
+    subscriptionStatus: string | null;
+    currentPeriodEnd: string | null;
+    licenseStatus: string | null;
+    expiresAt: string | null;
+    mt5Account: string | null;
+  };
   openTickets: Array<{
     id: string;
     ticketNumber: string;
@@ -812,6 +820,11 @@ export const api = {
         body: JSON.stringify(data),
         token,
       }),
+      grantGoldxAccess: (id: string, token: string) =>
+        apiFetch<{ success: boolean; created: boolean; licenseKey: string | null; message: string }>(`/goldx/admin/users/${encodeURIComponent(id)}/grant`, {
+          method: 'POST',
+          token,
+        }),
     getPaidSubscribers: (token: string) =>
       apiFetch<{ subscribers: PaidSubscriberItem[] }>('/admin/subscribers', { token }),
     sendRenewalReminder: (userId: string, token: string) =>
