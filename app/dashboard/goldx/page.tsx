@@ -109,7 +109,17 @@ export default function GoldxDashboardPage() {
     );
   }
 
-  const hasSubscription = status?.subscription?.status === 'active';
+  const now = Date.now();
+  const subscription = status?.subscription ?? null;
+  const license = status?.license ?? null;
+  const accountState = status?.accountState ?? null;
+  const hasLicenseAccess = Boolean(
+    license
+      && license.status === 'active'
+      && new Date(license.expiresAt).getTime() > now,
+  );
+  const canCancelSubscription = subscription?.status === 'active';
+  const accessEndsAt = subscription?.currentPeriodEnd ?? license?.expiresAt ?? null;
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
@@ -118,11 +128,11 @@ export default function GoldxDashboardPage() {
           <h1 className="text-3xl font-bold">GoldX</h1>
           <p className="text-muted-foreground">XAUUSD Night Scalping Expert Advisor</p>
         </div>
-        {hasSubscription && (
+        {hasLicenseAccess ? (
           <Badge variant="default" className="w-fit bg-amber-500/20 text-amber-300">
-            <Shield className="mr-1 h-3 w-3" /> Active
+            <Shield className="mr-1 h-3 w-3" /> {subscription?.status === 'cancelled' ? 'Access Active Until Expiry' : 'Active'}
           </Badge>
-        )}
+        ) : null}
       </div>
 
       {status?.adminLicenseKey && (
@@ -155,7 +165,7 @@ export default function GoldxDashboardPage() {
       )}
 
       {/* Not Subscribed */}
-      {!hasSubscription && plan && (
+      {!hasLicenseAccess && plan && (
         <Card className="bg-[radial-gradient(circle_at_top_left,_rgba(245,158,11,0.18),_transparent_30%),radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.12),_transparent_30%)]">
           <CardContent className="p-8">
             <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-start">
@@ -224,10 +234,17 @@ export default function GoldxDashboardPage() {
       )}
 
       {/* Subscribed */}
-      {hasSubscription && (
+      {hasLicenseAccess && (
         <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
           {/* Left — Status */}
           <div className="space-y-6">
+            {subscription?.status === 'cancelled' && accessEndsAt && (
+              <Card className="border-amber-500/20 bg-amber-500/10">
+                <CardContent className="p-4 text-sm text-amber-100">
+                  Your GoldX subscription has been cancelled, but your license remains active until {new Date(accessEndsAt).toLocaleDateString()}. After that date, access will expire automatically.
+                </CardContent>
+              </Card>
+            )}
             {/* Subscription Info */}
             <Card>
               <CardHeader>
@@ -239,55 +256,57 @@ export default function GoldxDashboardPage() {
                 <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4">
                   <div>
                     <p className="text-xs text-muted-foreground">Status</p>
-                    <Badge variant="default" className="mt-1 bg-emerald-500/20 text-emerald-300">
-                      {status.subscription?.status}
+                    <Badge variant="default" className={`mt-1 ${subscription?.status === 'cancelled' ? 'bg-amber-500/20 text-amber-300' : 'bg-emerald-500/20 text-emerald-300'}`}>
+                      {subscription?.status ?? 'active'}
                     </Badge>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs text-muted-foreground">Renews</p>
+                    <p className="text-xs text-muted-foreground">{subscription?.status === 'cancelled' ? 'Access Until' : 'Renews'}</p>
                     <p className="mt-1 text-sm font-medium">
-                      {status.subscription?.currentPeriodEnd
-                        ? new Date(status.subscription.currentPeriodEnd).toLocaleDateString()
+                      {subscription?.currentPeriodEnd
+                        ? new Date(subscription.currentPeriodEnd).toLocaleDateString()
                         : '—'}
                     </p>
                   </div>
                 </div>
 
                 {/* License */}
-                {status.license && (
+                {license && (
                   <div className="rounded-xl border border-white/10 bg-white/5 p-4">
                     <div className="mb-2 flex items-center justify-between">
                       <p className="text-xs text-muted-foreground">License</p>
-                      <Badge variant={status.license.status === 'active' ? 'default' : 'destructive'}>
-                        {status.license.status}
+                      <Badge variant={license.status === 'active' ? 'default' : 'destructive'}>
+                        {license.status}
                       </Badge>
                     </div>
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-xs text-muted-foreground">MT5 Account</p>
-                        <p className="font-mono text-sm">{status.license.mt5Account ?? 'Not yet bound'}</p>
+                        <p className="font-mono text-sm">{license.mt5Account ?? 'Not yet bound'}</p>
                       </div>
                       <div className="text-right">
                         <p className="text-xs text-muted-foreground">Expires</p>
-                        <p className="text-sm">{new Date(status.license.expiresAt).toLocaleDateString()}</p>
+                        <p className="text-sm">{new Date(license.expiresAt).toLocaleDateString()}</p>
                       </div>
                     </div>
                   </div>
                 )}
 
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-red-400 hover:bg-red-500/10 hover:text-red-300"
-                  onClick={() => setCancelConfirm(true)}
-                >
-                  Cancel Subscription
-                </Button>
+                {canCancelSubscription ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                    onClick={() => setCancelConfirm(true)}
+                  >
+                    Cancel Subscription
+                  </Button>
+                ) : null}
               </CardContent>
             </Card>
 
             {/* Trading Stats */}
-            {status.accountState && (
+            {accountState && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-sm uppercase tracking-wider text-muted-foreground">
@@ -297,13 +316,13 @@ export default function GoldxDashboardPage() {
                 <CardContent>
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                     {[
-                      { label: 'Trades', value: status.accountState.tradesToday, color: 'text-blue-400' },
-                      { label: 'Profit', value: `${status.accountState.profitToday.toFixed(2)}%`, color: 'text-emerald-400' },
-                      { label: 'Drawdown', value: `${status.accountState.drawdownToday.toFixed(2)}%`, color: 'text-red-400' },
+                      { label: 'Trades', value: accountState.tradesToday, color: 'text-blue-400' },
+                      { label: 'Profit', value: `${accountState.profitToday.toFixed(2)}%`, color: 'text-emerald-400' },
+                      { label: 'Drawdown', value: `${accountState.drawdownToday.toFixed(2)}%`, color: 'text-red-400' },
                       {
                         label: 'Last Trade',
-                        value: status.accountState.lastTradeAt
-                          ? new Date(status.accountState.lastTradeAt).toLocaleTimeString()
+                        value: accountState.lastTradeAt
+                          ? new Date(accountState.lastTradeAt).toLocaleTimeString()
                           : '—',
                         color: 'text-muted-foreground',
                       },
@@ -325,7 +344,7 @@ export default function GoldxDashboardPage() {
               <Zap className="h-4 w-4" /> Trading Mode
             </h3>
             {Object.entries(MODE_DETAILS).map(([key, mode]) => {
-              const isActive = status.accountState?.mode === key;
+              const isActive = accountState?.mode === key;
               return (
                 <button
                   key={key}
