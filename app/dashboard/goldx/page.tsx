@@ -18,7 +18,6 @@ import {
   Zap,
   Target,
   RotateCw,
-  Copy,
   Check,
   AlertTriangle,
   ChevronRight,
@@ -50,7 +49,6 @@ export default function GoldxDashboardPage() {
   const [plan, setPlan] = useState<GoldxPlan | null>(null);
   const [status, setStatus] = useState<GoldxUserStatus | null>(null);
   const [loading, setLoading] = useState(true);
-  const [copied, setCopied] = useState(false);
   const [changingMode, setChangingMode] = useState(false);
   const [cancelConfirm, setCancelConfirm] = useState(false);
   const [cancelling, setCancelling] = useState(false);
@@ -134,35 +132,6 @@ export default function GoldxDashboardPage() {
           </Badge>
         ) : null}
       </div>
-
-      {status?.adminLicenseKey && (
-        <Card className="mb-6 border-emerald-500/20 bg-emerald-500/10">
-          <CardContent className="p-6">
-            <div className="mb-3 flex items-center gap-2 text-emerald-300">
-              <Shield className="h-4 w-4" />
-              <span className="text-sm font-medium uppercase tracking-wider">Admin GoldX Access Provisioned</span>
-            </div>
-            <p className="mb-4 text-sm text-muted-foreground">
-              Your admin account has been granted complimentary GoldX access. Save this license key now because it is only shown once.
-            </p>
-            <div className="flex flex-col gap-3 rounded-xl border border-white/10 bg-black/20 p-4 sm:flex-row sm:items-center sm:justify-between">
-              <p className="break-all font-mono text-sm font-medium">{status.adminLicenseKey}</p>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  navigator.clipboard.writeText(status.adminLicenseKey ?? '');
-                  setCopied(true);
-                  setTimeout(() => setCopied(false), 2000);
-                }}
-              >
-                {copied ? <Check className="mr-1 h-3 w-3" /> : <Copy className="mr-1 h-3 w-3" />}
-                {copied ? 'Copied!' : 'Copy Key'}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Not Subscribed */}
       {!hasLicenseAccess && plan && (
