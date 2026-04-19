@@ -125,6 +125,35 @@ export default function GoldxDashboardPage() {
         )}
       </div>
 
+      {status?.adminLicenseKey && (
+        <Card className="mb-6 border-emerald-500/20 bg-emerald-500/10">
+          <CardContent className="p-6">
+            <div className="mb-3 flex items-center gap-2 text-emerald-300">
+              <Shield className="h-4 w-4" />
+              <span className="text-sm font-medium uppercase tracking-wider">Admin GoldX Access Provisioned</span>
+            </div>
+            <p className="mb-4 text-sm text-muted-foreground">
+              Your admin account has been granted complimentary GoldX access. Save this license key now because it is only shown once.
+            </p>
+            <div className="flex flex-col gap-3 rounded-xl border border-white/10 bg-black/20 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="break-all font-mono text-sm font-medium">{status.adminLicenseKey}</p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  navigator.clipboard.writeText(status.adminLicenseKey ?? '');
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000);
+                }}
+              >
+                {copied ? <Check className="mr-1 h-3 w-3" /> : <Copy className="mr-1 h-3 w-3" />}
+                {copied ? 'Copied!' : 'Copy Key'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Not Subscribed */}
       {!hasSubscription && plan && (
         <Card className="bg-[radial-gradient(circle_at_top_left,_rgba(245,158,11,0.18),_transparent_30%),radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.12),_transparent_30%)]">
