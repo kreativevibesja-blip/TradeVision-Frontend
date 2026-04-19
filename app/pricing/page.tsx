@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { api, type PricingPlan } from '@/lib/api';
-import { CheckCircle2, X, Zap, Crown } from 'lucide-react';
+import { CheckCircle2, X, Zap, Crown, TrendingUp, Shield } from 'lucide-react';
 
 type DisplayPlan = PricingPlan & {
   period: string;
@@ -101,6 +101,20 @@ const defaultFallbackPlans: DisplayPlan[] = [
   },
 ];
 
+const goldxFallbackPlan = {
+  id: 'goldx-fallback',
+  name: 'GoldX',
+  price: 129.95,
+  billingCycle: 'monthly',
+  features: [
+    'XAUUSD Night Scalping EA',
+    'Fast / Prop / Hybrid modes',
+    'Server-side strategy engine',
+    'Real-time signal delivery',
+    'License-based MT5 access',
+  ],
+};
+
 const toDisplayPlan = (plan: PricingPlan): DisplayPlan | null => {
   if (plan.tier === 'VIP_AUTO_TRADER') {
     return null;
@@ -126,14 +140,21 @@ const toDisplayPlan = (plan: PricingPlan): DisplayPlan | null => {
 
 export default function PricingPage() {
   const [plans, setPlans] = useState<DisplayPlan[]>(defaultFallbackPlans);
+  const [goldxPlan, setGoldxPlan] = useState(goldxFallbackPlan);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadPricingPlans = async () => {
       try {
-        const data = await api.getPublicPricingPlans();
+        const [data, goldx] = await Promise.all([
+          api.getPublicPricingPlans(),
+          api.goldx.getPlan().catch(() => null),
+        ]);
         if (Array.isArray(data.plans) && data.plans.length > 0) {
           setPlans(data.plans.map(toDisplayPlan).filter((plan): plan is DisplayPlan => plan !== null));
+        }
+        if (goldx) {
+          setGoldxPlan(goldx);
         }
       } catch {
       } finally {
@@ -239,6 +260,71 @@ export default function PricingPage() {
             No active pricing plans are available right now.
           </div>
         ) : null}
+
+        <motion.div
+          id="goldx"
+          initial={false}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.22 }}
+          className="mx-auto mt-16 max-w-6xl sm:mt-20"
+        >
+          <Card className="overflow-hidden border-amber-400/20 bg-[radial-gradient(circle_at_top_left,_rgba(245,158,11,0.18),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.12),_transparent_30%)]">
+            <CardContent className="grid gap-8 p-6 sm:p-8 lg:grid-cols-[1.1fr_0.9fr] lg:p-10">
+              <div>
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="rounded-2xl border border-amber-400/20 bg-amber-500/10 p-3 text-amber-300">
+                    <TrendingUp className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <Badge variant="outline" className="mb-2 border-amber-400/20 text-amber-300">GoldX</Badge>
+                    <h2 className="text-2xl font-bold sm:text-3xl">GoldX EA Subscription</h2>
+                  </div>
+                </div>
+
+                <p className="max-w-2xl text-sm text-muted-foreground sm:text-base">
+                  GoldX is the standalone XAUUSD night scalping system. Subscription starts from the public site,
+                  then license management, MT5 binding, and mode switching stay available inside your dashboard.
+                </p>
+
+                <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                  {goldxPlan.features.map((feature) => (
+                    <div key={feature} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                      <span className="text-sm">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-col justify-between rounded-[28px] border border-white/10 bg-black/20 p-6">
+                <div>
+                  <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-300">
+                    <Shield className="h-3.5 w-3.5" />
+                    License-protected MT5 access
+                  </div>
+                  <div className="mb-2 text-5xl font-bold">
+                    ${goldxPlan.price}
+                    <span className="ml-1 text-lg font-normal text-muted-foreground">/{goldxPlan.billingCycle}</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Best for traders who want a dedicated execution system instead of chart-only analysis.
+                  </p>
+                </div>
+
+                <div className="mt-8 space-y-3">
+                  <Link href="/goldx/checkout" className="block">
+                    <Button size="lg" className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700">
+                      Subscribe to GoldX
+                    </Button>
+                  </Link>
+                  <p className="text-xs text-muted-foreground">
+                    After checkout, use the dashboard to manage your license, MT5 account binding, and trading mode.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
         {/* Feature Comparison Table */}
         <motion.div

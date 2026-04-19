@@ -163,6 +163,34 @@ export default function DashboardPage() {
             </Card>
           </div>
 
+          <Card className="mobile-card mb-8 border-amber-400/20 bg-[radial-gradient(circle_at_top_left,_rgba(245,158,11,0.14),_transparent_32%)]">
+            <CardContent className="flex flex-col gap-4 p-6 lg:flex-row lg:items-center lg:justify-between">
+              <div className="max-w-2xl">
+                <div className="mb-2 flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-amber-300" />
+                  <span className="text-sm font-medium text-amber-200">GoldX EA</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  GoldX subscriptions now live on the public Pricing and landing pages. Come back here after signup to manage your license, MT5 binding, and trading mode.
+                </p>
+              </div>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Link href="/pricing#goldx">
+                  <Button className="gap-2 bg-amber-600 text-white hover:bg-amber-500">
+                    <TrendingUp className="h-4 w-4" />
+                    View GoldX Pricing
+                  </Button>
+                </Link>
+                <Link href="/dashboard/goldx">
+                  <Button variant="outline" className="gap-2">
+                    Manage GoldX
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Recent Analyses */}
           <div className="mb-8 grid grid-cols-1 gap-4 xl:grid-cols-3">
             <Card className="mobile-card overflow-hidden">

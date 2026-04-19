@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api';
 import type { GoldxPlan, GoldxUserStatus } from '@/lib/api';
@@ -147,12 +148,24 @@ export default function GoldxDashboardPage() {
               ))}
             </div>
 
-            <a href="/goldx/checkout">
-              <Button size="lg" className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700">
-                Subscribe to GoldX — ${plan.price}/mo
-                <ChevronRight className="ml-2 h-4 w-4" />
-              </Button>
-            </a>
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-muted-foreground">
+              GoldX subscriptions now start from the public site. Use Pricing or the landing page to subscribe,
+              then return here to manage your license, MT5 account binding, and trading mode.
+            </div>
+
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+              <Link href="/pricing#goldx" className="flex-1">
+                <Button size="lg" className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700">
+                  View GoldX on Pricing
+                  <ChevronRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+              <Link href="/" className="flex-1">
+                <Button variant="outline" size="lg" className="w-full">
+                  See Landing Page
+                </Button>
+              </Link>
+            </div>
           </CardContent>
         </Card>
       )}

@@ -532,6 +532,38 @@ export default function HomePage() {
                 </CardContent>
               </Card>
             </FadeInSection>
+
+            <FadeInSection delay={0.45}>
+              <Card className="h-full relative overflow-hidden border-amber-400/25 bg-[radial-gradient(circle_at_top_left,_rgba(245,158,11,0.16),_transparent_30%)]">
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-400 via-amber-500 to-cyan-400" />
+                <CardContent className="p-8">
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="text-xl font-semibold">GoldX</h3>
+                    <Badge variant="outline">EA</Badge>
+                  </div>
+                  <div className="text-4xl font-bold mb-4">$129.95<span className="text-lg text-muted-foreground font-normal">/month</span></div>
+                  <ul className="space-y-3 mb-8">
+                    {[
+                      'XAUUSD night scalping EA',
+                      'Fast, Prop, and Hybrid modes',
+                      'Server-side strategy engine',
+                      'Real-time signal delivery',
+                      'License-based MT5 access',
+                    ].map((f) => (
+                      <li key={f} className="flex items-center gap-2 text-sm">
+                        <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <Link href="/pricing#goldx" className="block">
+                    <Button variant="outline" size="lg" className="w-full border-amber-400/30 text-amber-200 hover:bg-amber-500/10">
+                      View GoldX
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            </FadeInSection>
           </div>
         </div>
       </section>
