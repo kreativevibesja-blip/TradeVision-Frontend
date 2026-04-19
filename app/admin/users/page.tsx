@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { api, type AdminUserDetails, type AdminUserListItem } from '@/lib/api';
 import { addDaysToDateInputValue, formatJamaicaDate, formatJamaicaDateTime, getEndOfJamaicaDayIso, getJamaicaDateInputValue, getStartOfJamaicaDayIso } from '@/lib/jamaica-time';
-import { Users, Search, Crown, Ban, ShieldCheck, Zap, X, CalendarRange } from 'lucide-react';
+import { Users, Search, Crown, Ban, ShieldCheck, Zap, X, CalendarRange, KeyRound, CheckCircle2 } from 'lucide-react';
 import { ProSubscribersModal } from '@/components/ProSubscribersModal';
 
 type SubscriptionFilter = 'ALL' | 'FREE' | 'PRO' | 'TOP_TIER' | 'VIP_AUTO_TRADER';
@@ -53,6 +53,8 @@ export default function AdminUsersPage() {
   const [loadingUserDetails, setLoadingUserDetails] = useState(false);
   const [resettingUsage, setResettingUsage] = useState(false);
   const [showProSubs, setShowProSubs] = useState(false);
+  const [grantingGoldx, setGrantingGoldx] = useState(false);
+  const [goldxGrantMessage, setGoldxGrantMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (token) loadUsers();
@@ -73,6 +75,7 @@ export default function AdminUsersPage() {
     if (!selectedUser || !token) {
       setSelectedUserDetails(null);
       setLoadingUserDetails(false);
+      setGoldxGrantMessage(null);
       return;
     }
 
@@ -192,6 +195,27 @@ export default function AdminUsersPage() {
     } catch {
     } finally {
       setResettingUsage(false);
+    }
+  };
+
+  const grantGoldxAccess = async (id: string) => {
+    if (!token) {
+      return;
+    }
+
+    try {
+      setGrantingGoldx(true);
+      const result = await api.admin.grantGoldxAccess(id, token);
+      setGoldxGrantMessage(result.licenseKey
+        ? `GoldX access granted. License key: ${result.licenseKey}`
+        : result.message);
+
+      const data = await api.admin.getUserDetails(id, token);
+      setSelectedUserDetails(data.user);
+    } catch {
+      setGoldxGrantMessage('Failed to grant GoldX access.');
+    } finally {
+      setGrantingGoldx(false);
     }
   };
 
@@ -524,6 +548,51 @@ export default function AdminUsersPage() {
                       </Badge>
                     ) : null}
                   </div>
+                </div>
+                <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs text-muted-foreground">GoldX access</p>
+                      <p className="mt-1 text-sm font-medium">
+                        {loadingUserDetails
+                          ? 'Loading...'
+                          : selectedUserDetails?.goldx.hasAccess
+                            ? selectedUserDetails.goldx.subscriptionStatus === 'cancelled' && selectedUserDetails.goldx.currentPeriodEnd
+                              ? `Active until ${formatJamaicaDateTime(selectedUserDetails.goldx.currentPeriodEnd)}`
+                              : 'Active'
+                            : 'Not granted'}
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {loadingUserDetails
+                          ? 'Checking GoldX entitlement...'
+                          : selectedUserDetails?.goldx.expiresAt
+                            ? `License expires ${formatJamaicaDateTime(selectedUserDetails.goldx.expiresAt)}`
+                            : 'Grant GoldX without changing the user\'s core TradeVision plan.'}
+                      </p>
+                      {selectedUserDetails?.goldx.mt5Account ? (
+                        <p className="mt-1 text-xs text-muted-foreground">MT5 account: {selectedUserDetails.goldx.mt5Account}</p>
+                      ) : null}
+                    </div>
+                    {selectedUserDetails ? (
+                      <Badge variant={selectedUserDetails.goldx.hasAccess ? 'success' : 'outline'}>
+                        {selectedUserDetails.goldx.hasAccess ? 'ACTIVE' : 'NOT GRANTED'}
+                      </Badge>
+                    ) : null}
+                  </div>
+                  {!selectedUserDetails?.goldx.hasAccess ? (
+                    <Button className="mt-4" onClick={() => grantGoldxAccess(selectedUser.id)} disabled={grantingGoldx || loadingUserDetails}>
+                      <KeyRound className="mr-2 h-4 w-4" />
+                      {grantingGoldx ? 'Granting GoldX...' : 'Grant GoldX Access'}
+                    </Button>
+                  ) : null}
+                  {goldxGrantMessage ? (
+                    <div className="mt-3 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-100">
+                      <div className="flex items-start gap-2">
+                        <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                        <span className="break-all">{goldxGrantMessage}</span>
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
                 <div className="flex flex-wrap gap-2 pt-2">
                   {selectedUser.subscription === 'FREE' ? (
