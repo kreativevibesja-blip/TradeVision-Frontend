@@ -1648,6 +1648,7 @@ export interface GoldxUserStatus {
   subscription: {
     id: string;
     status: string;
+    currentPeriodStart: string;
     currentPeriodEnd: string;
   } | null;
   license: {
@@ -1655,6 +1656,7 @@ export interface GoldxUserStatus {
     status: string;
     mt5Account: string | null;
     expiresAt: string;
+    createdAt: string;
   } | null;
   accountState: {
     mode: string;
@@ -1662,6 +1664,11 @@ export interface GoldxUserStatus {
     profitToday: number;
     drawdownToday: number;
     lastTradeAt: string | null;
+  } | null;
+  latestGrant: {
+    licenseKey: string;
+    issuedAt: string;
+    expiresAt: string;
   } | null;
 }
 
