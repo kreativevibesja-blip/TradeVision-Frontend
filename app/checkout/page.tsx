@@ -24,6 +24,7 @@ import {
   MapPin,
   Wallet,
   Zap,
+  TrendingUp,
   Mail,
   User,
   Tag,
@@ -32,7 +33,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
-type PlanKey = 'FREE' | 'PRO' | 'TOP_TIER';
+type PlanKey = 'FREE' | 'PRO' | 'TOP_TIER' | 'GOLDX';
 type CheckoutMethod = 'paypal' | 'card' | 'bank-transfer';
 type BankTransferBank = 'SCOTIABANK' | 'NCB';
 
@@ -106,6 +107,15 @@ const planCatalog: Record<PlanKey, {
     color: 'from-fuchsia-500 via-violet-500 to-cyan-500',
     features: ['500 analyses per month', 'Instant trade setups', 'Priority signal generation', 'Advanced entry precision', 'Smart Session Scanner'],
   },
+  GOLDX: {
+    name: 'GoldX',
+    price: 129.95,
+    period: '/month',
+    description: 'XAUUSD night scalping EA with a server-side strategy engine and license-based MT5 access.',
+    icon: TrendingUp,
+    color: 'from-amber-500 to-orange-500',
+    features: ['XAUUSD Night Scalping EA', 'Fast / Prop / Hybrid Modes', 'Server-Side Strategy Engine', 'Real-Time Signals', 'License-Based MT5 Access'],
+  },
 };
 
 const requiredAddressFields: Array<keyof AddressForm> = ['firstName', 'lastName', 'email', 'address1', 'city', 'state', 'postalCode', 'country'];
@@ -164,6 +174,7 @@ function PayPalButtonStack({
   onFreeActivation,
   onError,
   onLoadingChange,
+  onGoldxPlanId,
 }: {
   token: string;
   planKey: PlanKey;
@@ -175,6 +186,7 @@ function PayPalButtonStack({
   onFreeActivation: () => void;
   onError: (message: string) => void;
   onLoadingChange: (method: CheckoutMethod | null) => void;
+  onGoldxPlanId: (planId: string | null) => void;
 }) {
   const createOrder = async (method: CheckoutMethod) => {
     if (!token) {
@@ -189,6 +201,16 @@ function PayPalButtonStack({
 
     onLoadingChange(method);
     sessionStorage.setItem('tradevision_checkout_method', method);
+
+    if (planKey === 'GOLDX') {
+      const result = await api.goldx.createPayment(token);
+      onGoldxPlanId(result.planId);
+      sessionStorage.setItem('goldx_plan_id', result.planId);
+      sessionStorage.setItem('tradevision_order_id', result.orderId);
+      sessionStorage.removeItem('chartmind_order_id');
+      return result.orderId;
+    }
+
     const result = await api.createPayment(planKey, token, couponCode || undefined, method === 'card' ? 'CARD' : 'PAYPAL');
 
     if (result.freeActivation) {
@@ -348,12 +370,14 @@ function CheckoutPageContent() {
 
   // Referral discount state
   const [referralDiscount, setReferralDiscount] = useState<number>(0);
+  const [goldxPlanId, setGoldxPlanId] = useState<string | null>(null);
+  const [goldxLicenseKey, setGoldxLicenseKey] = useState<string | null>(null);
 
   const isSuccess = searchParams.get('success') === 'true';
   const isCanceled = searchParams.get('canceled') === 'true';
   const requestedPlan = searchParams.get('plan')?.toUpperCase();
   const requestedCoupon = searchParams.get('coupon') || '';
-  const planKey: PlanKey = requestedPlan === 'FREE' || requestedPlan === 'TOP_TIER' || requestedPlan === 'PRO' ? requestedPlan : 'PRO';
+  const planKey: PlanKey = requestedPlan === 'FREE' || requestedPlan === 'TOP_TIER' || requestedPlan === 'PRO' || requestedPlan === 'GOLDX' ? requestedPlan : 'PRO';
   const plan = planCatalog[planKey];
   const activeBillingAddress = sameAsShipping ? shippingAddress : billingAddress;
   const formReady = isAddressComplete(shippingAddress) && isAddressComplete(activeBillingAddress);
@@ -422,7 +446,7 @@ function CheckoutPageContent() {
   }, [user]);
 
   useEffect(() => {
-    if (!token || planKey === 'FREE') return;
+    if (!token || planKey === 'FREE' || planKey === 'GOLDX') return;
     api.referral.getMyDiscount(token)
       .then((data) => {
         if (data.discountPercent > 0) setReferralDiscount(data.discountPercent);
@@ -432,7 +456,7 @@ function CheckoutPageContent() {
 
   // Auto-apply coupon from URL query param (?coupon=CODE)
   useEffect(() => {
-    if (!requestedCoupon || !token || couponApplied) return;
+    if (!requestedCoupon || !token || couponApplied || planKey === 'GOLDX') return;
     setCouponCode(requestedCoupon.toUpperCase());
     setCouponLoading(true);
     api.validateCoupon(requestedCoupon.trim(), token)
@@ -447,7 +471,26 @@ function CheckoutPageContent() {
         setCouponError(err.message || 'Failed to validate coupon');
       })
       .finally(() => setCouponLoading(false));
-  }, [requestedCoupon, token]);
+  }, [requestedCoupon, token, couponApplied, planKey]);
+
+  useEffect(() => {
+    if (planKey !== 'GOLDX' || !token) {
+      return;
+    }
+
+    let cancelled = false;
+    api.goldx.getPlan()
+      .then((goldxPlan) => {
+        if (!cancelled) {
+          setGoldxPlanId(goldxPlan.id);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [planKey, token]);
 
   useEffect(() => {
     if (isSuccess && token) {
@@ -461,7 +504,19 @@ function CheckoutPageContent() {
   const handlePaymentCapture = async (orderId: string, method: CheckoutMethod = 'paypal') => {
     try {
       setLoadingMethod(method);
-      await api.paymentSuccess(orderId, token!);
+      if (planKey === 'GOLDX') {
+        const planId = goldxPlanId || sessionStorage.getItem('goldx_plan_id');
+        if (!planId) {
+          throw new Error('GoldX plan information is missing. Please restart checkout.');
+        }
+
+        const result = await api.goldx.capturePayment(orderId, planId, token!);
+        setGoldxLicenseKey(result.licenseKey);
+        sessionStorage.removeItem('goldx_plan_id');
+      } else {
+        await api.paymentSuccess(orderId, token!);
+      }
+
       sessionStorage.removeItem('tradevision_order_id');
       sessionStorage.removeItem('chartmind_order_id');
       sessionStorage.removeItem('tradevision_checkout_method');
@@ -477,6 +532,11 @@ function CheckoutPageContent() {
   const openBankTransferFlow = () => {
     if (!user || !token) {
       setAuthOpen(true);
+      return;
+    }
+
+    if (planKey === 'GOLDX') {
+      setError('Bank transfer is not available for GoldX. Please use PayPal or card checkout.');
       return;
     }
 
@@ -542,6 +602,11 @@ function CheckoutPageContent() {
       return;
     }
 
+    if (planKey === 'GOLDX') {
+      setError('Use the PayPal or card buttons below to complete GoldX checkout.');
+      return;
+    }
+
     try {
       setLoadingMethod(method);
       setError('');
@@ -588,12 +653,31 @@ function CheckoutPageContent() {
                 <CheckCircle2 className="h-12 w-12 text-green-400" />
               </motion.div>
               <h2 className="text-2xl font-bold mb-2">Subscription Active!</h2>
-              <p className="text-muted-foreground mb-6">
-                Your {plan.name} plan is now active. Enjoy the app.
-              </p>
-              <Link href="/analyze">
-                <Button variant="gradient" size="lg">Start Analyzing</Button>
-              </Link>
+              {planKey === 'GOLDX' ? (
+                <>
+                  <p className="text-muted-foreground mb-6">
+                    Your GoldX subscription is active. Save your license key now because it is only shown once.
+                  </p>
+                  {goldxLicenseKey ? (
+                    <div className="mb-6 rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 text-left">
+                      <div className="mb-2 text-xs font-medium uppercase tracking-[0.2em] text-amber-300">License Key</div>
+                      <div className="break-all font-mono text-sm text-white">{goldxLicenseKey}</div>
+                    </div>
+                  ) : null}
+                  <Link href="/dashboard/goldx">
+                    <Button variant="gradient" size="lg">Open GoldX Dashboard</Button>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <p className="text-muted-foreground mb-6">
+                    Your {plan.name} plan is now active. Enjoy the app.
+                  </p>
+                  <Link href="/analyze">
+                    <Button variant="gradient" size="lg">Start Analyzing</Button>
+                  </Link>
+                </>
+              )}
             </CardContent>
           </Card>
         </motion.div>
@@ -632,7 +716,7 @@ function CheckoutPageContent() {
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="font-semibold">{plan.name}</p>
-                          {planKey === 'TOP_TIER' ? <Badge variant="default">Includes Smart Session Scanner</Badge> : planKey === 'PRO' ? <Badge variant="outline">Premium</Badge> : <Badge variant="secondary">Starter</Badge>}
+                          {planKey === 'TOP_TIER' ? <Badge variant="default">Includes Smart Session Scanner</Badge> : planKey === 'PRO' ? <Badge variant="outline">Premium</Badge> : planKey === 'GOLDX' ? <Badge variant="outline">EA Subscription</Badge> : <Badge variant="secondary">Starter</Badge>}
                         </div>
                         <p className="text-sm text-muted-foreground">{plan.description}</p>
                       </div>
@@ -663,7 +747,7 @@ function CheckoutPageContent() {
                         Billing Cycle
                       </div>
                       <p className="font-medium">Monthly subscription</p>
-                      <p className="text-sm text-muted-foreground">Cancel anytime from your account.</p>
+                      <p className="text-sm text-muted-foreground">{planKey === 'GOLDX' ? 'GoldX license management stays available in your dashboard.' : 'Cancel anytime from your account.'}</p>
                     </div>
                   </div>
 
@@ -721,7 +805,7 @@ function CheckoutPageContent() {
               </Card>
 
               {/* Coupon Code Section */}
-              {planKey !== 'FREE' && (
+              {planKey !== 'FREE' && planKey !== 'GOLDX' && (
                 <Card className="mobile-card">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
@@ -806,7 +890,9 @@ function CheckoutPageContent() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  Choose the payment route that works best for you. PayPal and card payments activate automatically, while bank transfers are reviewed by the team after you send your receipt.
+                  {planKey === 'GOLDX'
+                    ? 'Choose PayPal or card checkout to activate GoldX automatically and receive your license key right after payment.'
+                    : 'Choose the payment route that works best for you. PayPal and card payments activate automatically, while bank transfers are reviewed by the team after you send your receipt.'}
                 </p>
 
                 {error && (
@@ -829,24 +915,27 @@ function CheckoutPageContent() {
                         onFreeActivation={handleFreeActivation}
                         onError={setError}
                         onLoadingChange={setLoadingMethod}
+                        onGoldxPlanId={setGoldxPlanId}
                       />
 
-                      <button
-                        type="button"
-                        onClick={openBankTransferFlow}
-                        className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-left transition hover:border-primary/40 hover:bg-white/10"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-2.5 text-emerald-300">
-                            <Landmark className="h-5 w-5" />
+                      {planKey !== 'GOLDX' ? (
+                        <button
+                          type="button"
+                          onClick={openBankTransferFlow}
+                          className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-left transition hover:border-primary/40 hover:bg-white/10"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-2.5 text-emerald-300">
+                              <Landmark className="h-5 w-5" />
+                            </div>
+                            <div>
+                              <div className="font-medium">Bank Transfer</div>
+                              <div className="text-sm text-muted-foreground">Submit a manual transfer and send your receipt to WhatsApp for verification.</div>
+                            </div>
                           </div>
-                          <div>
-                            <div className="font-medium">Bank Transfer</div>
-                            <div className="text-sm text-muted-foreground">Submit a manual transfer and send your receipt to WhatsApp for verification.</div>
-                          </div>
-                        </div>
-                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                      </button>
+                          <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                        </button>
+                      ) : null}
 
                       {!formReady ? (
                         <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-amber-200">
@@ -879,7 +968,7 @@ function CheckoutPageContent() {
 
                 <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
                   <Shield className="h-3 w-3" />
-                  Secure checkout with PayPal or manual verification for bank transfers.
+                  {planKey === 'GOLDX' ? 'Secure checkout with PayPal. GoldX license delivery happens after successful payment capture.' : 'Secure checkout with PayPal or manual verification for bank transfers.'}
                 </div>
               </CardContent>
               </Card>

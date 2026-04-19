@@ -312,7 +312,7 @@ export default function PricingPage() {
                 </div>
 
                 <div className="mt-8 space-y-3">
-                  <Link href="/goldx/checkout" className="block">
+                  <Link href="/checkout?plan=GOLDX" className="block">
                     <Button size="lg" className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700">
                       Subscribe to GoldX
                     </Button>
