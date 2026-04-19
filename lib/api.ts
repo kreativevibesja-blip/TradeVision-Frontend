@@ -1188,6 +1188,67 @@ export const api = {
         token,
       }),
   },
+
+  // ── GoldX ──
+  goldx: {
+    getPlan: () =>
+      apiFetch<GoldxPlan>('/goldx/plan'),
+    getMyStatus: (token: string) =>
+      apiFetch<GoldxUserStatus>('/goldx/me', { token }),
+    setMode: (mode: string, token: string) =>
+      apiFetch<{ success: boolean; mode: string }>('/goldx/me/mode', {
+        method: 'POST',
+        body: JSON.stringify({ mode }),
+        token,
+      }),
+    cancelSubscription: (token: string) =>
+      apiFetch<{ success: boolean }>('/goldx/me/cancel', {
+        method: 'POST',
+        token,
+      }),
+    createPayment: (token: string) =>
+      apiFetch<{ orderId: string; planId: string }>('/goldx/payment/create', {
+        method: 'POST',
+        token,
+      }),
+    capturePayment: (orderId: string, planId: string, token: string) =>
+      apiFetch<{ success: boolean; subscriptionId: string; licenseKey: string; message: string }>('/goldx/payment/capture', {
+        method: 'POST',
+        body: JSON.stringify({ orderId, planId }),
+        token,
+      }),
+    admin: {
+      getDashboard: (token: string) =>
+        apiFetch<GoldxAdminDashboard>('/goldx/admin/dashboard', { token }),
+      getLicenses: (token: string) =>
+        apiFetch<GoldxAdminLicense[]>('/goldx/admin/licenses', { token }),
+      getSubscriptions: (token: string) =>
+        apiFetch<GoldxAdminSubscription[]>('/goldx/admin/subscriptions', { token }),
+      revokeLicense: (licenseId: string, token: string) =>
+        apiFetch<{ success: boolean }>(`/goldx/admin/licenses/${encodeURIComponent(licenseId)}/revoke`, {
+          method: 'POST',
+          token,
+        }),
+      extendLicense: (licenseId: string, days: number, token: string) =>
+        apiFetch<{ success: boolean }>(`/goldx/admin/licenses/${encodeURIComponent(licenseId)}/extend`, {
+          method: 'POST',
+          body: JSON.stringify({ days }),
+          token,
+        }),
+      getAuditLogs: (token: string, limit = 100, offset = 0) =>
+        apiFetch<GoldxAuditLog[]>(`/goldx/admin/audit-logs?limit=${limit}&offset=${offset}`, { token }),
+      getSettings: (token: string) =>
+        apiFetch<Record<string, unknown>>('/goldx/admin/settings', { token }),
+      updateSettings: (key: string, value: Record<string, unknown>, token: string) =>
+        apiFetch<{ success: boolean }>('/goldx/admin/settings', {
+          method: 'POST',
+          body: JSON.stringify({ key, value }),
+          token,
+        }),
+      getTradeHistory: (token: string, limit = 100, offset = 0) =>
+        apiFetch<GoldxTradeHistoryEntry[]>(`/goldx/admin/trade-history?limit=${limit}&offset=${offset}`, { token }),
+    },
+  },
 };
 
 // ── Referral Types ──
@@ -1556,4 +1617,91 @@ export interface TrackedTrade {
   expiresAt: string;
   createdAt: string;
   updatedAt: string;
+}
+
+// ── GoldX Types ──
+
+export interface GoldxPlan {
+  id: string;
+  name: string;
+  price: number;
+  billingCycle: string;
+  features: string[];
+  isActive: boolean;
+}
+
+export interface GoldxUserStatus {
+  subscription: {
+    id: string;
+    status: string;
+    currentPeriodEnd: string;
+  } | null;
+  license: {
+    id: string;
+    status: string;
+    mt5Account: string | null;
+    expiresAt: string;
+  } | null;
+  accountState: {
+    mode: string;
+    tradesToday: number;
+    profitToday: number;
+    drawdownToday: number;
+    lastTradeAt: string | null;
+  } | null;
+}
+
+export interface GoldxAdminDashboard {
+  totalLicenses: number;
+  activeLicenses: number;
+  totalSubscriptions: number;
+  activeSubscriptions: number;
+}
+
+export interface GoldxAdminLicense {
+  id: string;
+  userId: string;
+  licenseHash: string;
+  mt5Account: string | null;
+  deviceId: string | null;
+  status: string;
+  expiresAt: string;
+  lastCheckedAt: string | null;
+  createdAt: string;
+}
+
+export interface GoldxAdminSubscription {
+  id: string;
+  userId: string;
+  planId: string;
+  status: string;
+  currentPeriodEnd: string;
+  createdAt: string;
+}
+
+export interface GoldxAuditLog {
+  id: string;
+  licenseId: string | null;
+  userId: string | null;
+  event: string;
+  ipAddress: string | null;
+  meta: Record<string, unknown>;
+  createdAt: string;
+}
+
+export interface GoldxTradeHistoryEntry {
+  id: string;
+  licenseId: string;
+  mt5Account: string;
+  symbol: string;
+  direction: string;
+  entryPrice: number | null;
+  slPrice: number | null;
+  tpPrice: number | null;
+  lotSize: number | null;
+  mode: string;
+  outcome: string | null;
+  profit: number | null;
+  openedAt: string;
+  closedAt: string | null;
 }
