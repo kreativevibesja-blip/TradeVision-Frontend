@@ -171,19 +171,19 @@ export default function DashboardPage() {
                   <span className="text-sm font-medium text-amber-200">GoldX EA</span>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  GoldX subscriptions now live on the public Pricing and landing pages. Come back here after signup to manage your license, MT5 binding, and trading mode.
+                  Access the GoldX expert advisor for XAUUSD night-scalping automation, then return here to manage your license, MT5 account binding, and execution mode from one place.
                 </p>
               </div>
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <Link href="/pricing#goldx">
-                  <Button className="gap-2 bg-amber-600 text-white hover:bg-amber-500">
+              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                <Link href="/pricing#goldx" className="sm:flex-1">
+                  <Button className="w-full gap-2 bg-amber-600 text-white hover:bg-amber-500 sm:w-auto">
                     <TrendingUp className="h-4 w-4" />
-                    View GoldX Pricing
+                    Explore GoldX Plans
                   </Button>
                 </Link>
-                <Link href="/dashboard/goldx">
-                  <Button variant="outline" className="gap-2">
-                    Manage GoldX
+                <Link href="/dashboard/goldx" className="sm:flex-1">
+                  <Button variant="outline" className="w-full gap-2 sm:w-auto">
+                    Open GoldX Workspace
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
@@ -314,63 +314,84 @@ export default function DashboardPage() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ duration: 0.2 }}
-                      className="flex items-start justify-between gap-3 rounded-2xl bg-white/5 p-4 transition-colors hover:bg-white/10"
+                      className="rounded-2xl bg-white/5 p-4 transition-colors hover:bg-white/10"
                     >
-                      <div className="flex min-w-0 items-start gap-3 sm:gap-4">
-                        <div className="h-12 w-12 rounded-lg bg-white/5 flex items-center justify-center">
-                          {a.bias === 'BULLISH' ? (
-                            <TrendingUp className="h-5 w-5 text-green-400" />
-                          ) : a.bias === 'BEARISH' ? (
-                            <TrendingDown className="h-5 w-5 text-red-400" />
-                          ) : (
-                            <Minus className="h-5 w-5 text-yellow-400" />
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="truncate font-medium">{a.pair}</p>
-                            <Badge variant={a.bias === 'BULLISH' ? 'success' : a.bias === 'BEARISH' ? 'destructive' : 'warning'} className="text-xs">
-                              {a.bias}
-                            </Badge>
-                            {a.marketCondition ? (
-                              <Badge variant="outline" className="text-[10px] capitalize">
-                                {a.marketCondition}
-                              </Badge>
-                            ) : null}
-                          </div>
-                          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                            <span>{a.timeframe}</span>
-                            <span className="flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {formatJamaicaDate(a.createdAt)}
-                            </span>
-                            {a.confidence && (
-                              <span>Score: {a.confidence}/100</span>
+                      <div className="flex flex-col gap-4">
+                        <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/5">
+                            {a.bias === 'BULLISH' ? (
+                              <TrendingUp className="h-5 w-5 text-green-400" />
+                            ) : a.bias === 'BEARISH' ? (
+                              <TrendingDown className="h-5 w-5 text-red-400" />
+                            ) : (
+                              <Minus className="h-5 w-5 text-yellow-400" />
                             )}
-                            {a.counterTrendPlan?.bias && a.counterTrendPlan.bias !== 'none' ? (
-                              <span className="text-rose-300">Counter plan</span>
-                            ) : null}
-                            {a.leftSidePlan?.bias && a.leftSidePlan.bias !== 'none' ? (
-                              <span className="text-amber-300">Left-side plan</span>
-                            ) : null}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="truncate text-sm font-semibold sm:text-base">{a.pair}</p>
+                              <Badge variant={a.bias === 'BULLISH' ? 'success' : a.bias === 'BEARISH' ? 'destructive' : 'warning'} className="text-[10px] sm:text-xs">
+                                {a.bias}
+                              </Badge>
+                              {a.marketCondition ? (
+                                <Badge variant="outline" className="text-[10px] capitalize">
+                                  {a.marketCondition}
+                                </Badge>
+                              ) : null}
+                            </div>
+                            <div className="mt-3 grid grid-cols-1 gap-2 text-xs text-muted-foreground sm:grid-cols-2">
+                              <div className="rounded-xl border border-white/8 bg-white/5 px-3 py-2">
+                                <span className="block text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">Timeframe</span>
+                                <span className="mt-1 block text-sm text-foreground">{a.timeframe}</span>
+                              </div>
+                              <div className="rounded-xl border border-white/8 bg-white/5 px-3 py-2">
+                                <span className="block text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">Analyzed</span>
+                                <span className="mt-1 flex items-center gap-1 text-sm text-foreground">
+                                  <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                                  {formatJamaicaDate(a.createdAt)}
+                                </span>
+                              </div>
+                              {a.confidence ? (
+                                <div className="rounded-xl border border-white/8 bg-white/5 px-3 py-2">
+                                  <span className="block text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">Confidence</span>
+                                  <span className="mt-1 block text-sm text-foreground">{a.confidence}/100</span>
+                                </div>
+                              ) : null}
+                              {(a.counterTrendPlan?.bias && a.counterTrendPlan.bias !== 'none') || (a.leftSidePlan?.bias && a.leftSidePlan.bias !== 'none') ? (
+                                <div className="rounded-xl border border-white/8 bg-white/5 px-3 py-2">
+                                  <span className="block text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">Alt plans</span>
+                                  <div className="mt-1 flex flex-wrap gap-2">
+                                    {a.counterTrendPlan?.bias && a.counterTrendPlan.bias !== 'none' ? (
+                                      <span className="rounded-full bg-rose-500/10 px-2 py-1 text-[11px] text-rose-300">Counter-plan</span>
+                                    ) : null}
+                                    {a.leftSidePlan?.bias && a.leftSidePlan.bias !== 'none' ? (
+                                      <span className="rounded-full bg-amber-500/10 px-2 py-1 text-[11px] text-amber-300">Left-side plan</span>
+                                    ) : null}
+                                  </div>
+                                </div>
+                              ) : null}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-1.5 flex-wrap justify-end">
-                        <TrackSetupButton analysisId={a.id} />
-                        <Button
-                          size="sm"
-                          className="gap-1.5 bg-blue-600/20 text-blue-400 border border-blue-500/30 hover:bg-blue-600/30 shadow-[0_0_10px_rgba(59,130,246,0.15)]"
-                          onClick={() => setCommandCenterTarget({ id: a.id, pair: a.pair, price: a.currentPrice })}
-                        >
-                          <Target className="h-3.5 w-3.5" />
-                          <span className="hidden sm:inline">Command</span>
-                        </Button>
-                        <Link href={`/analyze?analysisId=${encodeURIComponent(a.id)}`} className="shrink-0">
-                          <Button variant="ghost" size="sm">
-                            <Eye className="h-4 w-4" />
+                        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+                          <div className="w-full sm:w-auto [&>*]:w-full sm:[&>*]:w-auto">
+                            <TrackSetupButton analysisId={a.id} />
+                          </div>
+                          <Button
+                            size="sm"
+                            className="w-full gap-1.5 border border-blue-500/30 bg-blue-600/20 text-blue-400 shadow-[0_0_10px_rgba(59,130,246,0.15)] hover:bg-blue-600/30 sm:w-auto"
+                            onClick={() => setCommandCenterTarget({ id: a.id, pair: a.pair, price: a.currentPrice })}
+                          >
+                            <Target className="h-3.5 w-3.5" />
+                            <span>Open Command Center</span>
                           </Button>
-                        </Link>
+                          <Link href={`/analyze?analysisId=${encodeURIComponent(a.id)}`} className="w-full shrink-0 sm:w-auto">
+                            <Button variant="ghost" size="sm" className="w-full gap-2 sm:w-auto">
+                              <Eye className="h-4 w-4" />
+                              <span className="sm:hidden">View analysis</span>
+                            </Button>
+                          </Link>
+                        </div>
                       </div>
                     </motion.div>
                   ))}

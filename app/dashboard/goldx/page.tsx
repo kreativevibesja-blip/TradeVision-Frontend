@@ -158,42 +158,66 @@ export default function GoldxDashboardPage() {
       {!hasSubscription && plan && (
         <Card className="bg-[radial-gradient(circle_at_top_left,_rgba(245,158,11,0.18),_transparent_30%),radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.12),_transparent_30%)]">
           <CardContent className="p-8">
-            <div className="mb-6 flex items-center gap-3">
-              <div className="rounded-xl bg-gradient-to-br from-amber-500/30 to-amber-600/10 p-3">
-                <TrendingUp className="h-8 w-8 text-amber-400" />
-              </div>
+            <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-start">
               <div>
-                <h2 className="text-2xl font-bold">{plan.name}</h2>
-                <p className="text-muted-foreground">${plan.price}/{plan.billingCycle}</p>
-              </div>
-            </div>
-
-            <div className="mb-8 grid gap-3 sm:grid-cols-2">
-              {plan.features.map((feature, i) => (
-                <div key={i} className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-3">
-                  <Check className="h-4 w-4 text-emerald-400" />
-                  <span className="text-sm">{feature}</span>
+                <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-400/20 bg-amber-500/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.22em] text-amber-200">
+                  <TrendingUp className="h-3.5 w-3.5" />
+                  GoldX EA Access
                 </div>
-              ))}
-            </div>
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="rounded-xl bg-gradient-to-br from-amber-500/30 to-amber-600/10 p-3">
+                    <TrendingUp className="h-8 w-8 text-amber-400" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold">{plan.name}</h2>
+                    <p className="text-muted-foreground">${plan.price}/{plan.billingCycle}</p>
+                  </div>
+                </div>
+                <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
+                  GoldX gives you a dedicated XAUUSD night-scalping expert advisor with a managed license workflow, MT5 account binding, and mode controls designed for different account styles.
+                </p>
+                <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                  {plan.features.map((feature, i) => (
+                    <div key={i} className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-3">
+                      <Check className="h-4 w-4 text-emerald-400" />
+                      <span className="text-sm">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-4 rounded-[28px] border border-white/10 bg-black/20 p-5">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">How Access Works</p>
+                  <div className="mt-4 space-y-3 text-sm text-muted-foreground">
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                      <p className="font-medium text-white">Subscribe</p>
+                      <p className="mt-1">Choose the GoldX plan from pricing and complete checkout.</p>
+                    </div>
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                      <p className="font-medium text-white">Activate</p>
+                      <p className="mt-1">Return here to view your license, connect your MT5 account, and confirm entitlement.</p>
+                    </div>
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                      <p className="font-medium text-white">Operate</p>
+                      <p className="mt-1">Manage execution mode and account status from your GoldX workspace.</p>
+                    </div>
+                  </div>
+                </div>
 
-            <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-muted-foreground">
-              GoldX subscriptions now start from the public site. Use Pricing or the landing page to subscribe,
-              then return here to manage your license, MT5 account binding, and trading mode.
-            </div>
-
-            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-              <Link href="/pricing#goldx" className="flex-1">
-                <Button size="lg" className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700">
-                  View GoldX on Pricing
-                  <ChevronRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-              <Link href="/" className="flex-1">
-                <Button variant="outline" size="lg" className="w-full">
-                  See Landing Page
-                </Button>
-              </Link>
+                <div className="flex flex-col gap-3">
+                  <Link href="/pricing#goldx" className="w-full">
+                    <Button size="lg" className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700">
+                      Review GoldX Plans
+                      <ChevronRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </Link>
+                  <Link href="/" className="w-full">
+                    <Button variant="outline" size="lg" className="w-full">
+                      View Product Overview
+                    </Button>
+                  </Link>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
