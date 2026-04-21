@@ -33,6 +33,8 @@ import {
 
 type Tab = 'overview' | 'licenses' | 'subscriptions' | 'audit' | 'trades' | 'settings';
 
+const PANEL_SCROLL_CLASS = 'h-[min(62vh,calc(100vh-17rem))] min-h-[20rem] overflow-auto overscroll-contain';
+
 export default function AdminGoldxPage() {
   const { token } = useAuth();
   const [tab, setTab] = useState<Tab>('overview');
@@ -203,7 +205,7 @@ export default function AdminGoldxPage() {
       {tab === 'licenses' && (
         <Card>
           <CardContent className="p-0">
-            <div className="max-h-[70vh] overflow-auto">
+            <div className={PANEL_SCROLL_CLASS}>
               <table className="w-full text-sm">
                 <thead className="sticky top-0 bg-background/95 backdrop-blur">
                   <tr className="border-b border-white/10">
@@ -267,7 +269,7 @@ export default function AdminGoldxPage() {
       {tab === 'subscriptions' && (
         <Card>
           <CardContent className="p-0">
-            <div className="max-h-[70vh] overflow-auto">
+            <div className={PANEL_SCROLL_CLASS}>
               <table className="w-full text-sm">
                 <thead className="sticky top-0 bg-background/95 backdrop-blur">
                   <tr className="border-b border-white/10">
@@ -308,7 +310,7 @@ export default function AdminGoldxPage() {
       {tab === 'audit' && (
         <Card>
           <CardContent className="p-0">
-            <div className="max-h-[70vh] overflow-auto">
+            <div className={PANEL_SCROLL_CLASS}>
               <table className="w-full text-sm">
                 <thead className="sticky top-0 bg-background/95 backdrop-blur">
                   <tr className="border-b border-white/10">
@@ -351,7 +353,7 @@ export default function AdminGoldxPage() {
       {tab === 'trades' && (
         <Card>
           <CardContent className="p-0">
-            <div className="max-h-[70vh] overflow-auto">
+            <div className={PANEL_SCROLL_CLASS}>
               <table className="w-full text-sm">
                 <thead className="sticky top-0 bg-background/95 backdrop-blur">
                   <tr className="border-b border-white/10">
