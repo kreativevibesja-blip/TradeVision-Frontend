@@ -122,6 +122,7 @@ export default function GoldxDashboardPage() {
   );
   const canCancelSubscription = subscription?.status === 'active';
   const accessEndsAt = subscription?.currentPeriodEnd ?? license?.expiresAt ?? null;
+  const canChangeMode = Boolean(license?.mt5Account);
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
@@ -354,17 +355,26 @@ export default function GoldxDashboardPage() {
             <h3 className="flex items-center gap-2 text-sm font-medium uppercase tracking-wider text-muted-foreground">
               <Zap className="h-4 w-4" /> Trading Mode
             </h3>
+            {!canChangeMode && (
+              <Card className="border-amber-500/20 bg-amber-500/10">
+                <CardContent className="p-4 text-sm text-amber-100">
+                  Bind your MT5 account through the EA first. Trading mode becomes available after the license is verified and attached to your MT5 account.
+                </CardContent>
+              </Card>
+            )}
             {Object.entries(MODE_DETAILS).map(([key, mode]) => {
               const isActive = accountState?.mode === key;
               return (
                 <button
                   key={key}
-                  disabled={changingMode}
+                  disabled={changingMode || !canChangeMode}
                   onClick={() => handleModeChange(key)}
                   className={`w-full rounded-2xl border p-4 text-left transition-all ${
                     isActive
                       ? 'border-primary/30 bg-primary/10 ring-1 ring-primary/20'
-                      : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'
+                      : canChangeMode
+                        ? 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'
+                        : 'cursor-not-allowed border-white/10 bg-white/5 opacity-60'
                   }`}
                 >
                   <div className="flex items-center gap-3">
