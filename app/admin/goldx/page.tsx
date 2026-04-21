@@ -139,12 +139,29 @@ export default function AdminGoldxPage() {
       </div>
 
       {/* Tab Bar */}
-      <div className="mb-6 flex gap-1 overflow-x-auto rounded-xl border border-white/10 bg-white/5 p-1">
+      <div className="mb-4 sm:hidden">
+        <label className="mb-2 block text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+          Section
+        </label>
+        <select
+          value={tab}
+          onChange={(e) => setTab(e.target.value as Tab)}
+          className="h-12 w-full rounded-xl border border-white/10 bg-white/5 px-4 text-sm font-medium text-foreground outline-none transition-colors focus:border-primary/40"
+        >
+          {tabs.map((t) => (
+            <option key={t.key} value={t.key}>
+              {t.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="mb-6 hidden gap-1 overflow-x-auto rounded-xl border border-white/10 bg-white/5 p-1 sm:flex">
         {tabs.map((t) => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className={`flex items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+            className={`shrink-0 flex items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
               tab === t.key
                 ? 'bg-primary/10 text-primary'
                 : 'text-muted-foreground hover:bg-white/5 hover:text-foreground'
