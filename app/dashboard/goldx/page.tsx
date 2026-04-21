@@ -61,6 +61,9 @@ export default function GoldxDashboardPage() {
         api.goldx.getPlan(),
         api.goldx.getMyStatus(token),
       ]);
+      if (process.env.NEXT_PUBLIC_DEBUG_LICENSE === 'true') {
+        console.log('DASHBOARD LICENSE:', s.license);
+      }
       setPlan(p);
       setStatus(s);
     } catch (err) {
