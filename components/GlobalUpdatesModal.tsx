@@ -184,7 +184,7 @@ const THEMES: Record<AnnouncementType, ThemeConfig> = {
   },
 };
 
-const PLAN_LABELS: Record<string, string> = { PRO: 'PRO', TOP_TIER: 'PRO+' };
+const PLAN_LABELS: Record<string, string> = { PRO: 'PRO', TOP_TIER: 'PRO+', GOLDX: 'GoldX' };
 
 export function GlobalUpdatesModal() {
   const pathname = usePathname();
@@ -270,14 +270,21 @@ export function GlobalUpdatesModal() {
   const BadgeIcon = theme.badgeIcon;
 
   const isDiscount = announcementType === 'discount' && nextAnnouncement.couponCode;
+  const discountBaseUrl = nextAnnouncement.targetPlan === 'GOLDX'
+    ? '/goldx/checkout'
+    : `/checkout?plan=${encodeURIComponent(nextAnnouncement.targetPlan || 'PRO')}`;
   const checkoutUrl = isDiscount
-    ? `/checkout?plan=${encodeURIComponent(nextAnnouncement.targetPlan || 'PRO')}&coupon=${encodeURIComponent(nextAnnouncement.couponCode!)}`
+    ? nextAnnouncement.targetPlan === 'GOLDX'
+      ? discountBaseUrl
+      : `${discountBaseUrl}&coupon=${encodeURIComponent(nextAnnouncement.couponCode!)}`
     : null;
 
   // Plan promotion CTA — shown for ANY update with a targetPlan (even non-discount)
   const hasPlanPromo = !isDiscount && nextAnnouncement.targetPlan;
   const planPromoUrl = hasPlanPromo
-    ? `/checkout?plan=${encodeURIComponent(nextAnnouncement.targetPlan!)}`
+    ? (nextAnnouncement.targetPlan === 'GOLDX'
+        ? '/goldx/checkout'
+        : `/checkout?plan=${encodeURIComponent(nextAnnouncement.targetPlan!)}`)
     : null;
   const planLabel = PLAN_LABELS[nextAnnouncement.targetPlan || 'PRO'] || 'PRO';
 
