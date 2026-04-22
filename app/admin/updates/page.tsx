@@ -94,7 +94,7 @@ export default function AdminUpdatesPage() {
   const [title, setTitle] = useState(PRESETS[0].defaultTitle);
   const [content, setContent] = useState(PRESETS[0].defaultContent);
   const [couponCode, setCouponCode] = useState('');
-  const [targetPlan, setTargetPlan] = useState<'PRO' | 'TOP_TIER' | ''>('');
+  const [targetPlan, setTargetPlan] = useState<'PRO' | 'TOP_TIER' | 'GOLDX' | ''>('');
   const [durationValue, setDurationValue] = useState('');
   const [durationUnit, setDurationUnit] = useState<'hours' | 'days'>('hours');
   const [creating, setCreating] = useState(false);
@@ -241,12 +241,13 @@ export default function AdminUpdatesPage() {
             <p className="mb-3 text-xs text-muted-foreground">Users will see a &ldquo;Get Plan Now&rdquo; button at the bottom of this update.</p>
             <select
               value={targetPlan}
-              onChange={(e) => setTargetPlan(e.target.value as 'PRO' | 'TOP_TIER' | '')}
+              onChange={(e) => setTargetPlan(e.target.value as 'PRO' | 'TOP_TIER' | 'GOLDX' | '')}
               className="w-full rounded-lg border border-input bg-background/60 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="">None — no upgrade button</option>
               <option value="PRO">PRO — $19.95/mo</option>
               <option value="TOP_TIER">PRO+ — $39.95/mo</option>
+              <option value="GOLDX">GoldX — Gold trading system</option>
             </select>
           </div>
 
@@ -306,7 +307,7 @@ export default function AdminUpdatesPage() {
                         <Badge variant={a.isActive ? 'success' : 'secondary'}>{a.isActive ? 'Active' : 'Hidden'}</Badge>
                         <Badge variant="outline">{a.expiresAt ? `Expires ${formatJamaicaDateTime(a.expiresAt)}` : 'No expiry'}</Badge>
                         {a.couponCode && <Badge className="border border-pink-400/30 bg-pink-400/15 text-pink-300">Coupon: {a.couponCode}</Badge>}
-                        {a.targetPlan && <Badge variant="outline">{a.targetPlan === 'TOP_TIER' ? 'PRO+' : a.targetPlan}</Badge>}
+                        {a.targetPlan && <Badge variant="outline">{a.targetPlan === 'TOP_TIER' ? 'PRO+' : a.targetPlan === 'GOLDX' ? 'GoldX' : a.targetPlan}</Badge>}
                       </div>
                     </div>
                     <Button
