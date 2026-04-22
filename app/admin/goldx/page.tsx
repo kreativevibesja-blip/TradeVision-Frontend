@@ -7,6 +7,7 @@ import { api } from '@/lib/api';
 import type {
   GoldxAdminDashboard,
   GoldxAdminLicense,
+  GoldxAdminSetupRequest,
   GoldxAdminSubscription,
   GoldxAuditLog,
   GoldxTradeHistoryEntry,
@@ -29,9 +30,10 @@ import {
   CalendarPlus,
   Eye,
   Settings,
+  Wrench,
 } from 'lucide-react';
 
-type Tab = 'overview' | 'licenses' | 'subscriptions' | 'audit' | 'trades' | 'settings';
+type Tab = 'overview' | 'licenses' | 'subscriptions' | 'audit' | 'trades' | 'setup' | 'settings';
 
 const PANEL_SCROLL_CLASS = 'h-[min(62vh,calc(100vh-17rem))] min-h-[20rem] overflow-auto overscroll-contain';
 
@@ -40,12 +42,15 @@ export default function AdminGoldxPage() {
   const [tab, setTab] = useState<Tab>('overview');
   const [dashboard, setDashboard] = useState<GoldxAdminDashboard | null>(null);
   const [licenses, setLicenses] = useState<GoldxAdminLicense[]>([]);
+  const [setupRequests, setSetupRequests] = useState<GoldxAdminSetupRequest[]>([]);
   const [subscriptions, setSubscriptions] = useState<GoldxAdminSubscription[]>([]);
   const [auditLogs, setAuditLogs] = useState<GoldxAuditLog[]>([]);
   const [trades, setTrades] = useState<GoldxTradeHistoryEntry[]>([]);
   const [settings, setSettings] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
   const [extendDays, setExtendDays] = useState<Record<string, number>>({});
+  const [setupDraftStatus, setSetupDraftStatus] = useState<Record<string, GoldxAdminSetupRequest['status']>>({});
+  const [setupDraftNotes, setSetupDraftNotes] = useState<Record<string, string>>({});
   const [editSettingKey, setEditSettingKey] = useState<string | null>(null);
   const [editSettingValue, setEditSettingValue] = useState('');
 
@@ -53,9 +58,10 @@ export default function AdminGoldxPage() {
     if (!token) return;
     setLoading(true);
     try {
-      const [d, l, s, a, t, st] = await Promise.all([
+      const [d, l, sr, s, a, t, st] = await Promise.all([
         api.goldx.admin.getDashboard(token),
         api.goldx.admin.getLicenses(token),
+        api.goldx.admin.getSetupRequests(token),
         api.goldx.admin.getSubscriptions(token),
         api.goldx.admin.getAuditLogs(token),
         api.goldx.admin.getTradeHistory(token),
@@ -63,6 +69,7 @@ export default function AdminGoldxPage() {
       ]);
       setDashboard(d);
       setLicenses(l);
+      setSetupRequests(sr);
       setSubscriptions(s);
       setAuditLogs(a);
       setTrades(t);
@@ -110,12 +117,26 @@ export default function AdminGoldxPage() {
     }
   };
 
+  const handleUpdateSetupRequest = async (requestId: string) => {
+    if (!token) return;
+    try {
+      await api.goldx.admin.updateSetupRequest(requestId, {
+        status: setupDraftStatus[requestId],
+        internalNotes: setupDraftNotes[requestId] ?? null,
+      }, token);
+      load();
+    } catch (err) {
+      console.error('Failed to update setup request:', err);
+    }
+  };
+
   const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
     { key: 'overview', label: 'Overview', icon: <TrendingUp className="h-4 w-4" /> },
     { key: 'licenses', label: 'Licenses', icon: <Key className="h-4 w-4" /> },
     { key: 'subscriptions', label: 'Subscriptions', icon: <Users className="h-4 w-4" /> },
     { key: 'audit', label: 'Audit Logs', icon: <Eye className="h-4 w-4" /> },
     { key: 'trades', label: 'Trades', icon: <Activity className="h-4 w-4" /> },
+    { key: 'setup', label: 'Setup Requests', icon: <Wrench className="h-4 w-4" /> },
     { key: 'settings', label: 'Settings', icon: <Settings className="h-4 w-4" /> },
   ];
 
@@ -402,6 +423,68 @@ export default function AdminGoldxPage() {
                   ))}
                   {trades.length === 0 && (
                     <tr><td colSpan={10} className="p-8 text-center text-muted-foreground">No trades yet</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {tab === 'setup' && (
+        <Card>
+          <CardContent className="p-0">
+            <div className={PANEL_SCROLL_CLASS}>
+              <table className="w-full text-sm">
+                <thead className="sticky top-0 bg-background/95 backdrop-blur">
+                  <tr className="border-b border-white/10">
+                    <th className="p-4 text-left font-medium text-muted-foreground">User</th>
+                    <th className="p-4 text-left font-medium text-muted-foreground">MT5 Login</th>
+                    <th className="p-4 text-left font-medium text-muted-foreground">Server</th>
+                    <th className="p-4 text-left font-medium text-muted-foreground">Email</th>
+                    <th className="p-4 text-left font-medium text-muted-foreground">Status</th>
+                    <th className="p-4 text-left font-medium text-muted-foreground">Request</th>
+                    <th className="p-4 text-left font-medium text-muted-foreground">Internal Notes</th>
+                    <th className="p-4 text-left font-medium text-muted-foreground">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {setupRequests.map((request) => (
+                    <tr key={request.id} className="border-b border-white/5 align-top hover:bg-white/5">
+                      <td className="p-4 font-mono text-xs">{request.userId.slice(0, 8)}...</td>
+                      <td className="p-4 text-xs">{request.mt5LoginMasked}</td>
+                      <td className="p-4 text-xs">{request.server}</td>
+                      <td className="p-4 text-xs">{request.emailMasked}</td>
+                      <td className="p-4">
+                        <select
+                          value={setupDraftStatus[request.id] ?? request.status}
+                          onChange={(e) => setSetupDraftStatus({ ...setupDraftStatus, [request.id]: e.target.value as GoldxAdminSetupRequest['status'] })}
+                          className="h-9 rounded-lg border border-input bg-background px-3 text-xs"
+                        >
+                          <option value="pending">pending</option>
+                          <option value="in_progress">in_progress</option>
+                          <option value="completed">completed</option>
+                        </select>
+                      </td>
+                      <td className="max-w-[220px] p-4 text-xs text-muted-foreground">{request.notePreview ?? '—'}</td>
+                      <td className="p-4">
+                        <textarea
+                          value={setupDraftNotes[request.id] ?? request.internalNotesPreview ?? ''}
+                          onChange={(e) => setSetupDraftNotes({ ...setupDraftNotes, [request.id]: e.target.value })}
+                          className="min-h-24 w-56 rounded-lg border border-input bg-background p-3 text-xs"
+                          placeholder="Internal notes"
+                        />
+                      </td>
+                      <td className="p-4 text-xs">
+                        <Button size="sm" onClick={() => handleUpdateSetupRequest(request.id)}>
+                          Save
+                        </Button>
+                        <p className="mt-2 text-muted-foreground">{new Date(request.createdAt).toLocaleString()}</p>
+                      </td>
+                    </tr>
+                  ))}
+                  {setupRequests.length === 0 && (
+                    <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">No setup requests yet</td></tr>
                   )}
                 </tbody>
               </table>

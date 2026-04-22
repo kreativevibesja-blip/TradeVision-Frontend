@@ -23,6 +23,7 @@ import {
   ChevronRight,
   Moon,
   SunMedium,
+  Settings,
 } from 'lucide-react';
 
 const MODE_DETAILS: Record<string, { label: string; description: string; icon: React.ReactNode; color: string }> = {
@@ -212,11 +213,18 @@ export default function GoldxDashboardPage() {
           <h1 className="text-3xl font-bold">GoldX</h1>
           <p className="text-muted-foreground">Session-aware XAUUSD Expert Advisor</p>
         </div>
-        {hasLicenseAccess ? (
-          <Badge variant="default" className="w-fit bg-amber-500/20 text-amber-300">
-            <Shield className="mr-1 h-3 w-3" /> {subscription?.status === 'cancelled' ? 'Access Active Until Expiry' : 'Active'}
-          </Badge>
-        ) : null}
+        <div className="flex flex-col gap-3 sm:items-end">
+          {hasLicenseAccess ? (
+            <Badge variant="default" className="w-fit bg-amber-500/20 text-amber-300">
+              <Shield className="mr-1 h-3 w-3" /> {subscription?.status === 'cancelled' ? 'Access Active Until Expiry' : 'Active'}
+            </Badge>
+          ) : null}
+          <Link href="/goldx/setup" className="w-full sm:w-auto">
+            <Button variant="outline" className="w-full sm:w-auto">
+              <Settings className="mr-2 h-4 w-4" /> How to Set Up GoldX
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Not Subscribed */}
