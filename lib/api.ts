@@ -1209,6 +1209,14 @@ export const api = {
       apiFetch<GoldxPlan>('/goldx/plan'),
     getMyStatus: (token: string) =>
       apiFetch<GoldxUserStatus>('/goldx/me', { token }),
+    downloadEa: (token: string) =>
+      apiFetch<{ success: boolean; downloadUrl: string }>('/goldx/download-ea', { token }),
+    createSetupRequest: (payload: { mt5Login: string; server: string; email: string; note?: string }, token: string) =>
+      apiFetch<{ success: boolean }>('/goldx/setup-request', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        token,
+      }),
     setMode: (mode: string, token: string) =>
       apiFetch<{ success: boolean; mode: string }>('/goldx/me/mode', {
         method: 'POST',
@@ -1267,6 +1275,14 @@ export const api = {
         }),
       getTradeHistory: (token: string, limit = 100, offset = 0) =>
         apiFetch<GoldxTradeHistoryEntry[]>(`/goldx/admin/trade-history?limit=${limit}&offset=${offset}`, { token }),
+      getSetupRequests: (token: string) =>
+        apiFetch<GoldxAdminSetupRequest[]>('/goldx/admin/setup-requests', { token }),
+      updateSetupRequest: (requestId: string, payload: { status?: 'pending' | 'in_progress' | 'completed'; internalNotes?: string | null }, token: string) =>
+        apiFetch<{ success: boolean }>(`/goldx/admin/setup-requests/${encodeURIComponent(requestId)}`, {
+          method: 'POST',
+          body: JSON.stringify(payload),
+          token,
+        }),
     },
   },
 };
@@ -1673,6 +1689,19 @@ export interface GoldxUserStatus {
     drawdownToday: number;
     lastTradeAt: string | null;
   } | null;
+  onboardingState: {
+    hasDownloadedEa: boolean;
+    hasConnectedMt5: boolean;
+    setupCompleted: boolean;
+  };
+  setupRequest: {
+    id: string;
+    server: string;
+    email: string;
+    status: 'pending' | 'in_progress' | 'completed';
+    createdAt: string;
+    updatedAt: string;
+  } | null;
   latestGrant: {
     licenseKey: string;
     issuedAt: string;
@@ -1733,4 +1762,17 @@ export interface GoldxTradeHistoryEntry {
   profit: number | null;
   openedAt: string;
   closedAt: string | null;
+}
+
+export interface GoldxAdminSetupRequest {
+  id: string;
+  userId: string;
+  mt5LoginMasked: string;
+  server: string;
+  emailMasked: string;
+  notePreview: string | null;
+  status: 'pending' | 'in_progress' | 'completed';
+  internalNotesPreview: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
