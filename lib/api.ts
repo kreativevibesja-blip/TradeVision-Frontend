@@ -1215,6 +1215,12 @@ export const api = {
         body: JSON.stringify({ mode }),
         token,
       }),
+    setSessionMode: (sessionMode: 'day' | 'night' | 'hybrid' | 'all', token: string) =>
+      apiFetch<{ success: boolean; sessionMode: 'day' | 'night' | 'hybrid' | 'all'; sessionStatus: 'day' | 'night' | 'asian' | 'london' | 'newYork' | 'closed' }>('/goldx/set-session-mode', {
+        method: 'POST',
+        body: JSON.stringify({ sessionMode }),
+        token,
+      }),
     cancelSubscription: (token: string) =>
       apiFetch<{ success: boolean }>('/goldx/me/cancel', {
         method: 'POST',
@@ -1660,6 +1666,8 @@ export interface GoldxUserStatus {
   } | null;
   accountState: {
     mode: string;
+    sessionMode: 'day' | 'night' | 'hybrid' | 'all';
+    sessionStatus: 'day' | 'night' | 'asian' | 'london' | 'newYork' | 'closed';
     tradesToday: number;
     profitToday: number;
     drawdownToday: number;
