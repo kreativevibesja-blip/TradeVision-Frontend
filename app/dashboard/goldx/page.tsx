@@ -21,6 +21,8 @@ import {
   Check,
   AlertTriangle,
   ChevronRight,
+  Moon,
+  SunMedium,
 } from 'lucide-react';
 
 const MODE_DETAILS: Record<string, { label: string; description: string; icon: React.ReactNode; color: string }> = {
@@ -44,12 +46,77 @@ const MODE_DETAILS: Record<string, { label: string; description: string; icon: R
   },
 };
 
+const SESSION_MODE_DETAILS: Record<
+  'day' | 'night' | 'hybrid' | 'all',
+  { label: string; description: string; icon: React.ReactNode; color: string; window: string }
+> = {
+  day: {
+    label: 'Day Mode',
+    description: 'Trades the New York session with tighter filters, lower daily trade caps, and longer cooldowns.',
+    icon: <SunMedium className="h-5 w-5" />,
+    color: 'from-orange-500/20 to-amber-600/5',
+    window: '8AM-5PM New York',
+  },
+  night: {
+    label: 'Night Mode',
+    description: 'Trades lower-volatility hours from 12AM-6AM using the calmer baseline GoldX behavior.',
+    icon: <Moon className="h-5 w-5" />,
+    color: 'from-sky-500/20 to-indigo-600/5',
+    window: '12AM-6AM New York',
+  },
+  hybrid: {
+    label: 'Hybrid',
+    description: 'Combines both sessions and automatically applies the active session risk profile.',
+    icon: <Zap className="h-5 w-5" />,
+    color: 'from-emerald-500/20 to-yellow-500/5',
+    window: 'Day + Night sessions',
+  },
+  all: {
+    label: 'All Sessions',
+    description: 'Trades Asian, London, and New York sessions with session-aware risk adjustments.',
+    icon: <Clock className="h-5 w-5" />,
+    color: 'from-fuchsia-500/20 to-cyan-500/5',
+    window: 'Asian + London + New York',
+  },
+};
+
+const SESSION_STATUS_DETAILS: Record<
+  'day' | 'night' | 'asian' | 'london' | 'newYork' | 'closed',
+  { label: string; tone: string }
+> = {
+  day: {
+    label: 'Active (Day Session)',
+    tone: 'bg-orange-500/20 text-orange-200',
+  },
+  night: {
+    label: 'Active (Night Session)',
+    tone: 'bg-sky-500/20 text-sky-200',
+  },
+  asian: {
+    label: 'Active (Asian Session)',
+    tone: 'bg-cyan-500/20 text-cyan-200',
+  },
+  london: {
+    label: 'Active (London Session)',
+    tone: 'bg-violet-500/20 text-violet-200',
+  },
+  newYork: {
+    label: 'Active (New York Session)',
+    tone: 'bg-orange-500/20 text-orange-200',
+  },
+  closed: {
+    label: 'Outside Trading Hours',
+    tone: 'bg-white/10 text-slate-200',
+  },
+};
+
 export default function GoldxDashboardPage() {
   const { token } = useAuth();
   const [plan, setPlan] = useState<GoldxPlan | null>(null);
   const [status, setStatus] = useState<GoldxUserStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [changingMode, setChangingMode] = useState(false);
+  const [changingSessionMode, setChangingSessionMode] = useState(false);
   const [cancelConfirm, setCancelConfirm] = useState(false);
   const [cancelling, setCancelling] = useState(false);
 
@@ -88,6 +155,19 @@ export default function GoldxDashboardPage() {
     }
   };
 
+  const handleSessionModeChange = async (sessionMode: 'day' | 'night' | 'hybrid' | 'all') => {
+    if (!token || changingSessionMode) return;
+    setChangingSessionMode(true);
+    try {
+      await api.goldx.setSessionMode(sessionMode, token);
+      load();
+    } catch (err) {
+      console.error('Failed to set session mode:', err);
+    } finally {
+      setChangingSessionMode(false);
+    }
+  };
+
   const handleCancel = async () => {
     if (!token || cancelling) return;
     setCancelling(true);
@@ -123,13 +203,14 @@ export default function GoldxDashboardPage() {
   const canCancelSubscription = subscription?.status === 'active';
   const accessEndsAt = subscription?.currentPeriodEnd ?? license?.expiresAt ?? null;
   const canChangeMode = Boolean(license?.mt5Account);
+  const sessionStatus = accountState?.sessionStatus ?? 'closed';
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold">GoldX</h1>
-          <p className="text-muted-foreground">XAUUSD Night Scalping Expert Advisor</p>
+          <p className="text-muted-foreground">Session-aware XAUUSD Expert Advisor</p>
         </div>
         {hasLicenseAccess ? (
           <Badge variant="default" className="w-fit bg-amber-500/20 text-amber-300">
@@ -158,7 +239,7 @@ export default function GoldxDashboardPage() {
                   </div>
                 </div>
                 <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-                  GoldX gives you a dedicated XAUUSD night-scalping expert advisor with a managed license workflow, MT5 account binding, and mode controls designed for different account styles.
+                  GoldX gives you a dedicated XAUUSD expert advisor with managed licensing, MT5 account binding, risk-profile controls, and session-based scheduling for day, night, or hybrid execution.
                 </p>
                 <div className="mt-6 grid gap-3 sm:grid-cols-2">
                   {plan.features.map((feature, i) => (
@@ -352,50 +433,112 @@ export default function GoldxDashboardPage() {
 
           {/* Right — Mode Selector */}
           <div className="space-y-4">
-            <h3 className="flex items-center gap-2 text-sm font-medium uppercase tracking-wider text-muted-foreground">
-              <Zap className="h-4 w-4" /> Trading Mode
-            </h3>
             {!canChangeMode && (
               <Card className="border-amber-500/20 bg-amber-500/10">
                 <CardContent className="p-4 text-sm text-amber-100">
-                  Bind your MT5 account through the EA first. Trading mode becomes available after the license is verified and attached to your MT5 account.
+                  Bind your MT5 account through the EA first. Trading controls become available after the license is verified and attached to your MT5 account.
                 </CardContent>
               </Card>
             )}
-            {Object.entries(MODE_DETAILS).map(([key, mode]) => {
-              const isActive = accountState?.mode === key;
-              return (
-                <button
-                  key={key}
-                  disabled={changingMode || !canChangeMode}
-                  onClick={() => handleModeChange(key)}
-                  className={`w-full rounded-2xl border p-4 text-left transition-all ${
-                    isActive
-                      ? 'border-primary/30 bg-primary/10 ring-1 ring-primary/20'
-                      : canChangeMode
-                        ? 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'
-                        : 'cursor-not-allowed border-white/10 bg-white/5 opacity-60'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`rounded-lg bg-gradient-to-br ${mode.color} p-2`}>
-                      {mode.icon}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-sm uppercase tracking-wider text-muted-foreground">
+                  <Clock className="h-4 w-4" /> Trading Session Mode
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Current Session Status</p>
+                      <p className="mt-2 text-sm font-medium text-white">{SESSION_STATUS_DETAILS[sessionStatus].label}</p>
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium">{mode.label}</p>
-                        {isActive && (
-                          <Badge variant="default" className="bg-primary/20 text-primary text-xs">
-                            Active
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="mt-1 text-xs text-muted-foreground">{mode.description}</p>
-                    </div>
+                    <Badge className={SESSION_STATUS_DETAILS[sessionStatus].tone}>
+                      {sessionStatus.toUpperCase()}
+                    </Badge>
                   </div>
-                </button>
-              );
-            })}
+                </div>
+                {Object.entries(SESSION_MODE_DETAILS).map(([key, mode]) => {
+                  const isActive = accountState?.sessionMode === key;
+                  return (
+                    <button
+                      key={key}
+                      disabled={changingSessionMode || !canChangeMode}
+                      onClick={() => handleSessionModeChange(key as 'day' | 'night' | 'hybrid' | 'all')}
+                      className={`w-full rounded-2xl border p-4 text-left transition-all ${
+                        isActive
+                          ? 'border-primary/30 bg-primary/10 ring-1 ring-primary/20'
+                          : canChangeMode
+                            ? 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'
+                            : 'cursor-not-allowed border-white/10 bg-white/5 opacity-60'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`rounded-lg bg-gradient-to-br ${mode.color} p-2`}>
+                          {mode.icon}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium">{mode.label}</p>
+                            {isActive && (
+                              <Badge variant="default" className="bg-primary/20 text-primary text-xs">
+                                Active
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="mt-1 text-xs text-muted-foreground">{mode.window}</p>
+                          <p className="mt-2 text-xs text-muted-foreground">{mode.description}</p>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-sm uppercase tracking-wider text-muted-foreground">
+                  <Zap className="h-4 w-4" /> Trading Mode
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {Object.entries(MODE_DETAILS).map(([key, mode]) => {
+                  const isActive = accountState?.mode === key;
+                  return (
+                    <button
+                      key={key}
+                      disabled={changingMode || !canChangeMode}
+                      onClick={() => handleModeChange(key)}
+                      className={`w-full rounded-2xl border p-4 text-left transition-all ${
+                        isActive
+                          ? 'border-primary/30 bg-primary/10 ring-1 ring-primary/20'
+                          : canChangeMode
+                            ? 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'
+                            : 'cursor-not-allowed border-white/10 bg-white/5 opacity-60'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`rounded-lg bg-gradient-to-br ${mode.color} p-2`}>
+                          {mode.icon}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium">{mode.label}</p>
+                            {isActive && (
+                              <Badge variant="default" className="bg-primary/20 text-primary text-xs">
+                                Active
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="mt-1 text-xs text-muted-foreground">{mode.description}</p>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </CardContent>
+            </Card>
           </div>
         </div>
       )}
