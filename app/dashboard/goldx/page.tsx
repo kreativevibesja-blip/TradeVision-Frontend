@@ -9,6 +9,8 @@ import type { GoldxPlan, GoldxUserStatus } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Key,
   Shield,
@@ -120,6 +122,11 @@ export default function GoldxDashboardPage() {
   const [changingSessionMode, setChangingSessionMode] = useState(false);
   const [cancelConfirm, setCancelConfirm] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [lotModeDraft, setLotModeDraft] = useState<'auto' | 'manual'>('auto');
+  const [lotSizeDraft, setLotSizeDraft] = useState('0.10');
+  const [savingLotSettings, setSavingLotSettings] = useState(false);
+  const [lotSettingsError, setLotSettingsError] = useState<string | null>(null);
+  const [lotSettingsMessage, setLotSettingsMessage] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -142,6 +149,13 @@ export default function GoldxDashboardPage() {
   }, [token]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    const accountState = status?.accountState;
+    if (!accountState) return;
+    setLotModeDraft(accountState.lotMode ?? 'auto');
+    setLotSizeDraft(accountState.userLotSize != null ? accountState.userLotSize.toFixed(2) : '0.10');
+  }, [status]);
 
   const handleModeChange = async (mode: string) => {
     if (!token || changingMode) return;
@@ -183,6 +197,38 @@ export default function GoldxDashboardPage() {
     }
   };
 
+  const handleLotSettingsSave = async () => {
+    if (!token || savingLotSettings || !canChangeMode) return;
+
+    setLotSettingsError(null);
+    setLotSettingsMessage(null);
+
+    let parsedLot: number | null = null;
+    if (lotModeDraft === 'manual') {
+      parsedLot = Number(lotSizeDraft);
+      if (!Number.isFinite(parsedLot) || parsedLot < 0.01 || parsedLot > 5.0) {
+        setLotSettingsError('Manual lot size must be between 0.01 and 5.0.');
+        return;
+      }
+    }
+
+    setSavingLotSettings(true);
+    try {
+      const result = await api.goldx.setLotSize({ mode: lotModeDraft, lotSize: parsedLot }, token);
+      setLotSettingsMessage(
+        result.lotMode === 'manual'
+          ? `Manual lot saved at ${result.userLot?.toFixed(2)}.`
+          : 'Auto lot sizing restored.',
+      );
+      await load();
+    } catch (err: any) {
+      console.error('Failed to save lot settings:', err);
+      setLotSettingsError(err?.message ?? 'Unable to save lot settings.');
+    } finally {
+      setSavingLotSettings(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -205,6 +251,7 @@ export default function GoldxDashboardPage() {
   const accessEndsAt = subscription?.currentPeriodEnd ?? license?.expiresAt ?? null;
   const canChangeMode = Boolean(license?.mt5Account);
   const sessionStatus = accountState?.sessionStatus ?? 'closed';
+  const currentModeCap = accountState?.mode === 'prop' ? 0.5 : accountState?.mode === 'fast' ? 1.0 : 0.75;
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
@@ -501,6 +548,82 @@ export default function GoldxDashboardPage() {
                     </button>
                   );
                 })}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-sm uppercase tracking-wider text-muted-foreground">
+                  <Settings className="h-4 w-4" /> Lot Size
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="rounded-2xl border border-amber-400/15 bg-amber-500/10 p-4 text-sm text-amber-50">
+                  High lot sizes increase risk significantly
+                </div>
+
+                {lotSettingsError ? (
+                  <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-100">
+                    {lotSettingsError}
+                  </div>
+                ) : null}
+
+                {lotSettingsMessage ? (
+                  <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-50">
+                    {lotSettingsMessage}
+                  </div>
+                ) : null}
+
+                <div className="grid grid-cols-2 gap-3">
+                  {(['auto', 'manual'] as const).map((mode) => {
+                    const isActive = lotModeDraft === mode;
+                    return (
+                      <button
+                        key={mode}
+                        type="button"
+                        disabled={!canChangeMode || savingLotSettings}
+                        onClick={() => setLotModeDraft(mode)}
+                        className={`rounded-2xl border p-4 text-left transition-all ${
+                          isActive
+                            ? 'border-primary/30 bg-primary/10 ring-1 ring-primary/20'
+                            : canChangeMode
+                              ? 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'
+                              : 'cursor-not-allowed border-white/10 bg-white/5 opacity-60'
+                        }`}
+                      >
+                        <p className="font-medium capitalize">{mode}</p>
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          {mode === 'auto' ? 'Uses GoldX dynamic risk sizing.' : 'Uses your configured lot with runtime safety caps.'}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="goldx-lot-size">Lot Size</Label>
+                  <Input
+                    id="goldx-lot-size"
+                    type="number"
+                    inputMode="decimal"
+                    min="0.01"
+                    max="5.0"
+                    step="0.01"
+                    disabled={lotModeDraft !== 'manual' || !canChangeMode || savingLotSettings}
+                    value={lotSizeDraft}
+                    onChange={(event) => setLotSizeDraft(event.target.value)}
+                    placeholder="0.10"
+                  />
+                </div>
+
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-muted-foreground">
+                  <p>Current mode cap: {currentModeCap.toFixed(2)} lots.</p>
+                  <p className="mt-2">Stored manual sizes above the mode cap are reduced at execution time. GoldX also reduces total lot if lotSize x 1000 exceeds account balance.</p>
+                </div>
+
+                <Button onClick={handleLotSettingsSave} disabled={!canChangeMode || savingLotSettings} className="w-full">
+                  {savingLotSettings ? 'Saving lot settings...' : 'Save Lot Settings'}
+                </Button>
               </CardContent>
             </Card>
 
