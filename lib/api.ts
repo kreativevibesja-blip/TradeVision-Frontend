@@ -1229,6 +1229,12 @@ export const api = {
         body: JSON.stringify({ sessionMode }),
         token,
       }),
+    setLotSize: (payload: { lotSize?: number | null; mode: 'auto' | 'manual' }, token: string) =>
+      apiFetch<{ success: boolean; lotSizeUsed: number | null; lotMode: 'auto' | 'manual'; userLot: number | null }>('/goldx/settings/lot-size', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        token,
+      }),
     cancelSubscription: (token: string) =>
       apiFetch<{ success: boolean }>('/goldx/me/cancel', {
         method: 'POST',
@@ -1682,6 +1688,8 @@ export interface GoldxUserStatus {
   } | null;
   accountState: {
     mode: string;
+    lotMode: 'auto' | 'manual';
+    userLotSize: number | null;
     sessionMode: 'day' | 'night' | 'hybrid' | 'all';
     sessionStatus: 'day' | 'night' | 'asian' | 'london' | 'newYork' | 'closed';
     tradesToday: number;
