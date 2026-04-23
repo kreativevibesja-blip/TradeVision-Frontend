@@ -47,6 +47,9 @@ export function Navbar() {
             <Link href="/analyze" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Analyze
             </Link>
+            <Link href="/platform" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Platform
+            </Link>
             <Link href="/trade-examples" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Education
             </Link>
@@ -114,6 +117,9 @@ export function Navbar() {
               </Link>
               <Link href="/pricing" className="flex min-h-12 items-center rounded-xl px-4 text-sm hover:bg-white/5" onClick={() => setMobileOpen(false)}>
                 Pricing
+              </Link>
+              <Link href="/platform" className="flex min-h-12 items-center rounded-xl px-4 text-sm hover:bg-white/5" onClick={() => setMobileOpen(false)}>
+                Platform
               </Link>
               <Link href="/trade-examples" className="flex min-h-12 items-center rounded-xl px-4 text-sm hover:bg-white/5" onClick={() => setMobileOpen(false)}>
                 Education
