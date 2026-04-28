@@ -1408,6 +1408,11 @@ export const api = {
           body: JSON.stringify(payload),
           token,
         }),
+      clearResults: (token: string) =>
+        apiFetch<{ success: boolean; snapshot: GoldxPulseSnapshot }>('/goldx-pulse/clear-results', {
+          method: 'POST',
+          token,
+        }),
     },
 };
 
