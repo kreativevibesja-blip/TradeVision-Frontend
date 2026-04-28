@@ -34,6 +34,7 @@ const defaultSnapshot: GoldxPulseSnapshot = {
     cooldownMs: 15000,
   },
   ticks: [],
+  totalTickCount: 0,
   analytics: {
     frequencyMap: Array.from({ length: 10 }, () => 0),
     mostFrequentDigit: null,
@@ -244,15 +245,12 @@ export default function GoldxPulsePage() {
 
   const sparklinePoints = useMemo(() => buildPolylinePoints(snapshot.ticks.slice(-80).map((tick) => tick.quote)), [snapshot.ticks]);
 
-  const tickerDigits = useMemo(() => {
+  const streamedDigits = useMemo(() => {
     return snapshot.ticks.slice(-24).map((tick) => ({
       key: `${tick.epoch}-${tick.formattedQuote}`,
       digit: tick.digit,
-      quote: tick.formattedQuote,
     }));
   }, [snapshot.ticks]);
-
-  const marqueeDigits = useMemo(() => [...tickerDigits, ...tickerDigits], [tickerDigits]);
 
   const digitActionButtons = useMemo(() => {
     return Array.from({ length: 10 }, (_, digit) => ({
@@ -597,23 +595,25 @@ export default function GoldxPulsePage() {
               <div className="overflow-hidden rounded-2xl border border-white/10 bg-[linear-gradient(90deg,rgba(2,6,23,0.98),rgba(15,23,42,0.8)_18%,rgba(15,23,42,0.86)_82%,rgba(2,6,23,0.98))]">
                 <div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3 text-xs uppercase tracking-[0.18em] text-slate-400">
                   <span>Current digits</span>
-                  <span>{tickerDigits.length} ticks</span>
+                  <span>{snapshot.totalTickCount} ticks</span>
                 </div>
                 <div className="relative overflow-hidden px-4 py-4">
                   <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-20 bg-gradient-to-r from-slate-950 via-slate-950/90 to-transparent" />
                   <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-slate-950 via-slate-950/70 to-transparent" />
-                  {tickerDigits.length > 0 ? (
-                    <motion.div
-                      className="flex w-max items-center gap-3"
-                      animate={{ x: ['0%', '-50%'] }}
-                      transition={{ duration: 18, ease: 'linear', repeat: Infinity }}
-                    >
-                      {marqueeDigits.map((tick, index) => (
-                        <div key={`${tick.key}-${index}`} className="flex h-12 min-w-[3.25rem] items-center justify-center rounded-2xl border border-cyan-400/10 bg-white/[0.04] px-3 text-lg font-semibold text-slate-100 shadow-[0_0_24px_rgba(34,211,238,0.08)]">
+                  {streamedDigits.length > 0 ? (
+                    <div className="flex min-h-12 items-center justify-end gap-3 overflow-hidden">
+                      {streamedDigits.map((tick, index) => (
+                        <motion.div
+                          key={tick.key}
+                          initial={{ opacity: 0, x: 18, scale: 0.92 }}
+                          animate={{ opacity: 1, x: 0, scale: 1 }}
+                          transition={{ duration: 0.2 }}
+                          className={`flex h-12 min-w-[3rem] items-center justify-center rounded-2xl border px-3 text-lg font-semibold shadow-[0_0_24px_rgba(34,211,238,0.08)] ${index === streamedDigits.length - 1 ? 'border-cyan-300/30 bg-cyan-400/14 text-cyan-100' : 'border-cyan-400/10 bg-white/[0.04] text-slate-100'}`}
+                        >
                           <span>{tick.digit}</span>
-                        </div>
+                        </motion.div>
                       ))}
-                    </motion.div>
+                    </div>
                   ) : (
                     <div className="flex h-12 items-center justify-center text-sm text-slate-500">Digits will flow here after connection.</div>
                   )}
@@ -653,16 +653,7 @@ export default function GoldxPulsePage() {
                             <span className={`${item.digit === Number(selectedDigit) ? 'text-cyan-200' : 'text-slate-500'}`}>{item.digit === Number(selectedDigit) ? 'Selected' : 'Tap'}</span>
                           </div>
                           <div className="mt-2 text-2xl font-semibold">{item.count}</div>
-                          <div className="mt-2 flex gap-2">
-                            <Button size="sm" variant="outline" className="flex-1" onClick={(event) => {
-                              event.stopPropagation();
-                              void placeTrade('MATCH', item.digit);
-                            }} disabled={placingTrade != null || !snapshot.connected}>Match</Button>
-                            <Button size="sm" variant="outline" className="flex-1" onClick={(event) => {
-                              event.stopPropagation();
-                              void placeTrade('DIFFER', item.digit);
-                            }} disabled={placingTrade != null || !snapshot.connected}>Differ</Button>
-                          </div>
+                          <div className="mt-2 text-xs text-slate-500">Tap to set the active differ digit.</div>
                         </div>
                       ))}
                     </div>
@@ -784,12 +775,18 @@ export default function GoldxPulsePage() {
                 ) : null}
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Button variant="gradient" className="gap-2" onClick={() => placeTrade('OVER')} disabled={placingTrade != null || !snapshot.connected}>Over</Button>
-                <Button variant="outline" className="gap-2 border-cyan-400/20 bg-cyan-400/10 text-cyan-100 hover:bg-cyan-400/20" onClick={() => placeTrade('UNDER')} disabled={placingTrade != null || !snapshot.connected}>Under</Button>
-                <Button variant="gradient" className="gap-2" onClick={() => placeTrade('MATCH', Number(selectedDigit))} disabled={placingTrade != null || !snapshot.connected}>Match {selectedDigit}</Button>
-                <Button variant="outline" className="gap-2 border-fuchsia-400/20 bg-fuchsia-400/10 text-fuchsia-100 hover:bg-fuchsia-400/20" onClick={() => placeTrade('DIFFER', Number(selectedDigit))} disabled={placingTrade != null || !snapshot.connected}>Differ {selectedDigit}</Button>
-              </div>
+              {workspaceMode === 'range-pressure' ? (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Button variant="gradient" className="gap-2" onClick={() => placeTrade('OVER')} disabled={placingTrade != null || !snapshot.connected}>Over</Button>
+                  <Button variant="outline" className="gap-2 border-cyan-400/20 bg-cyan-400/10 text-cyan-100 hover:bg-cyan-400/20" onClick={() => placeTrade('UNDER')} disabled={placingTrade != null || !snapshot.connected}>Under</Button>
+                </div>
+              ) : (
+                <div className="flex justify-center">
+                  <Button variant="outline" className="w-full max-w-md gap-2 border-fuchsia-400/20 bg-fuchsia-400/10 text-fuchsia-100 hover:bg-fuchsia-400/20" onClick={() => placeTrade('DIFFER', Number(selectedDigit))} disabled={placingTrade != null || !snapshot.connected}>
+                    Differ {selectedDigit}
+                  </Button>
+                </div>
+              )}
 
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-300">
                 <div className="flex items-center justify-between gap-3">
