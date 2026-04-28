@@ -99,6 +99,10 @@ function buildPolylinePoints(values: number[]) {
     .join(' ');
 }
 
+  const digitOptions = Array.from({ length: 10 }, (_, digit) => String(digit));
+  const durationOptions = Array.from({ length: 10 }, (_, index) => String(index + 1));
+  const darkSelectClassName = 'h-11 w-full appearance-none rounded-xl border border-white/10 bg-slate-900/90 px-3 text-sm text-slate-100 outline-none transition focus:border-cyan-400/30 focus:ring-2 focus:ring-cyan-400/20';
+
 export default function GoldxPulsePage() {
   const { user, token, loading: authLoading } = useAuth();
   const [access, setAccess] = useState<GoldxPulseAccess | null>(null);
@@ -492,11 +496,11 @@ export default function GoldxPulsePage() {
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
                       <label className="text-xs uppercase tracking-[0.22em] text-slate-400">Index</label>
-                      <select value={selectedSymbol} onChange={(event) => setSelectedSymbol(event.target.value)} className="h-12 w-full rounded-xl border border-cyan-400/20 bg-slate-900/80 px-3 text-sm text-slate-100 outline-none">
+                        <select value={selectedSymbol} onChange={(event) => setSelectedSymbol(event.target.value)} className="h-12 w-full appearance-none rounded-xl border border-cyan-400/20 bg-slate-900/90 px-3 text-sm text-slate-100 outline-none transition focus:border-cyan-400/30 focus:ring-2 focus:ring-cyan-400/20" style={{ colorScheme: 'dark' }}>
                         {Object.entries(groupedSymbols).map(([group, options]) => (
-                          <optgroup key={group} label={group}>
+                            <optgroup key={group} label={group} className="bg-slate-950 text-slate-100">
                             {options.map((option) => (
-                              <option key={option.symbol} value={option.symbol}>{option.label}</option>
+                                <option key={option.symbol} value={option.symbol} className="bg-slate-950 text-slate-100">{option.label}</option>
                             ))}
                           </optgroup>
                         ))}
@@ -516,18 +520,21 @@ export default function GoldxPulsePage() {
                   </Button>
                 </div>
               ) : (
-                <div className="grid gap-4 md:grid-cols-3">
+                <div className="grid gap-4 md:grid-cols-2">
                   <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                     <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Balance</div>
                     <div className="mt-2 text-2xl font-semibold text-cyan-200">{formatCurrency(snapshot.account?.balance, snapshot.account?.currency)}</div>
                   </div>
                   <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                     <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Account</div>
-                    <div className="mt-2 text-lg font-semibold text-slate-100">{snapshot.account?.accountType.toUpperCase()} · {snapshot.account?.loginId}</div>
+                    <div className="mt-2 space-y-2">
+                      <div className="text-lg font-semibold text-slate-100">{snapshot.account?.accountType.toUpperCase()}</div>
+                      <div className="break-all text-base font-medium text-slate-300">{snapshot.account?.loginId}</div>
+                    </div>
                   </div>
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4 md:col-span-2">
                     <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Session</div>
-                    <div className="mt-2 flex items-center gap-2 text-lg font-semibold text-slate-100">
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-lg font-semibold text-slate-100">
                       <Power className="h-4 w-4 text-emerald-300" />
                       {snapshot.connectionState}
                     </div>
@@ -594,12 +601,33 @@ export default function GoldxPulsePage() {
                   <>
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
                       {digitActionButtons.map((item) => (
-                        <div key={item.digit} className={`rounded-2xl border p-3 text-center ${item.digit === snapshot.analytics.mostFrequentDigit ? 'border-red-400/30 bg-red-500/10' : item.digit === snapshot.analytics.leastFrequentDigit ? 'border-emerald-400/30 bg-emerald-500/10' : 'border-white/10 bg-white/5'}`}>
-                          <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Digit {item.digit}</div>
+                        <div
+                          key={item.digit}
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => setSelectedDigit(String(item.digit))}
+                          onKeyDown={(event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault();
+                              setSelectedDigit(String(item.digit));
+                            }
+                          }}
+                          className={`rounded-2xl border p-3 text-center transition ${item.digit === Number(selectedDigit) ? 'border-cyan-300/60 bg-cyan-400/12 shadow-[0_0_0_1px_rgba(103,232,249,0.28)]' : item.digit === snapshot.analytics.mostFrequentDigit ? 'border-red-400/30 bg-red-500/10' : item.digit === snapshot.analytics.leastFrequentDigit ? 'border-emerald-400/30 bg-emerald-500/10' : 'border-white/10 bg-white/5 hover:border-cyan-400/30 hover:bg-cyan-400/8'}`}
+                        >
+                          <div className="flex items-center justify-between gap-2 text-xs uppercase tracking-[0.18em] text-slate-400">
+                            <span>Digit {item.digit}</span>
+                            <span className={`${item.digit === Number(selectedDigit) ? 'text-cyan-200' : 'text-slate-500'}`}>{item.digit === Number(selectedDigit) ? 'Selected' : 'Tap'}</span>
+                          </div>
                           <div className="mt-2 text-2xl font-semibold">{item.count}</div>
                           <div className="mt-2 flex gap-2">
-                            <Button size="sm" variant="outline" className="flex-1" onClick={() => placeTrade('MATCH', item.digit)} disabled={placingTrade != null || !snapshot.connected}>Match</Button>
-                            <Button size="sm" variant="outline" className="flex-1" onClick={() => placeTrade('DIFFER', item.digit)} disabled={placingTrade != null || !snapshot.connected}>Differ</Button>
+                            <Button size="sm" variant="outline" className="flex-1" onClick={(event) => {
+                              event.stopPropagation();
+                              void placeTrade('MATCH', item.digit);
+                            }} disabled={placingTrade != null || !snapshot.connected}>Match</Button>
+                            <Button size="sm" variant="outline" className="flex-1" onClick={(event) => {
+                              event.stopPropagation();
+                              void placeTrade('DIFFER', item.digit);
+                            }} disabled={placingTrade != null || !snapshot.connected}>Differ</Button>
                           </div>
                         </div>
                       ))}
@@ -671,19 +699,27 @@ export default function GoldxPulsePage() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs uppercase tracking-[0.18em] text-slate-400">Tick duration</label>
-                  <Input value={duration} onChange={(event) => setDuration(event.target.value)} className="h-11 border-white/10 bg-white/5 text-slate-100" />
+                  <select value={duration} onChange={(event) => setDuration(event.target.value)} className={darkSelectClassName} style={{ colorScheme: 'dark' }}>
+                    {durationOptions.map((value) => (
+                      <option key={value} value={value} className="bg-slate-950 text-slate-100">{value} ticks</option>
+                    ))}
+                  </select>
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs uppercase tracking-[0.18em] text-slate-400">Selected digit</label>
-                  <Input value={selectedDigit} onChange={(event) => setSelectedDigit(event.target.value)} className="h-11 border-white/10 bg-white/5 text-slate-100" />
+                  <select value={selectedDigit} onChange={(event) => setSelectedDigit(event.target.value)} className={darkSelectClassName} style={{ colorScheme: 'dark' }}>
+                    {digitOptions.map((value) => (
+                      <option key={value} value={value} className="bg-slate-950 text-slate-100">Digit {value}</option>
+                    ))}
+                  </select>
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs uppercase tracking-[0.18em] text-slate-400">Index</label>
-                  <select value={selectedSymbol} onChange={(event) => setSelectedSymbol(event.target.value)} className="h-11 w-full rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-slate-100 outline-none">
+                  <select value={selectedSymbol} onChange={(event) => setSelectedSymbol(event.target.value)} className={darkSelectClassName} style={{ colorScheme: 'dark' }}>
                     {Object.entries(groupedSymbols).map(([group, options]) => (
-                      <optgroup key={group} label={group}>
+                      <optgroup key={group} label={group} className="bg-slate-950 text-slate-100">
                         {options.map((option) => (
-                          <option key={option.symbol} value={option.symbol}>{option.label}</option>
+                          <option key={option.symbol} value={option.symbol} className="bg-slate-950 text-slate-100">{option.label}</option>
                         ))}
                       </optgroup>
                     ))}
