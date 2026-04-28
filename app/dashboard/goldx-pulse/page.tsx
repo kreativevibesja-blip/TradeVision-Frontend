@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { AlertTriangle, Activity, BarChart3, CandlestickChart, Flame, Loader2, Lock, Power, RadioTower, ShieldAlert, Sparkles, Wallet, Zap } from 'lucide-react';
+import { AlertTriangle, Activity, BarChart3, CandlestickChart, Flame, Loader2, Lock, Power, RadioTower, ShieldAlert, Sparkles, Trash2, Wallet, Zap } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import {
   api,
@@ -123,6 +123,7 @@ export default function GoldxPulsePage() {
   const [connectBusy, setConnectBusy] = useState(false);
   const [saving, setSaving] = useState(false);
   const [placingTrade, setPlacingTrade] = useState<string | null>(null);
+  const [clearingResults, setClearingResults] = useState(false);
   const [pulseRenewing, setPulseRenewing] = useState(false);
   const [error, setError] = useState('');
 
@@ -340,6 +341,23 @@ export default function GoldxPulsePage() {
       setError(nextError instanceof Error ? nextError.message : 'Trade request failed.');
     } finally {
       setPlacingTrade(null);
+    }
+  };
+
+  const clearResults = async () => {
+    if (!token || snapshot.trades.length === 0) {
+      return;
+    }
+
+    try {
+      setClearingResults(true);
+      setError('');
+      const response = await api.goldxPulse.clearResults(token);
+      setSnapshot(response.snapshot);
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : 'Unable to clear GoldX Pulse results.');
+    } finally {
+      setClearingResults(false);
     }
   };
 
@@ -803,10 +821,21 @@ export default function GoldxPulsePage() {
 
           <Card className="border-emerald-400/20 bg-slate-950/80">
             <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2 text-xl">
-                <Sparkles className="h-5 w-5 text-emerald-300" />
-                Live Results
-              </CardTitle>
+              <div className="flex items-center justify-between gap-3">
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <Sparkles className="h-5 w-5 text-emerald-300" />
+                  Live Results
+                </CardTitle>
+                <button
+                  type="button"
+                  onClick={() => void clearResults()}
+                  disabled={clearingResults || snapshot.trades.length === 0}
+                  aria-label="Clear live results"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-red-400/20 bg-red-500/10 text-red-300 transition hover:bg-red-500/20 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  {clearingResults ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                </button>
+              </div>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="rounded-2xl border border-white/10 bg-[linear-gradient(135deg,rgba(16,185,129,0.14),rgba(15,23,42,0.78),rgba(2,6,23,0.92))] p-4">
