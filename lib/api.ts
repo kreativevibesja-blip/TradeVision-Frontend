@@ -411,6 +411,16 @@ export interface BillingSummary {
   canceledAt: string | null;
   canCancel: boolean;
   canRenew: boolean;
+  goldxPulse: {
+    active: boolean;
+    status: 'inactive' | 'active' | 'trial' | 'expired' | 'cancelled';
+    planName: string | null;
+    expiresAt: string | null;
+    lastPaymentAt: string | null;
+    canPurchase: boolean;
+    canCancel: boolean;
+    canRenew: boolean;
+  };
   recentPayments: Array<{
     id: string;
     paypalOrderId: string;
@@ -419,7 +429,7 @@ export interface BillingSummary {
     status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
     paymentMethod: 'PAYPAL' | 'CARD' | 'BANK_TRANSFER' | 'COUPON';
     bankTransferBank: 'SCOTIABANK' | 'NCB' | null;
-    plan: 'FREE' | 'PRO' | 'TOP_TIER' | 'VIP_AUTO_TRADER';
+    plan: 'FREE' | 'PRO' | 'TOP_TIER' | 'VIP_AUTO_TRADER' | 'GOLDX_PULSE';
     verifiedAt: string | null;
     createdAt: string;
     updatedAt: string;
@@ -435,7 +445,7 @@ export interface AdminPayment {
   status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REFUNDED';
   paymentMethod: 'PAYPAL' | 'CARD' | 'BANK_TRANSFER' | 'COUPON';
   bankTransferBank: 'SCOTIABANK' | 'NCB' | null;
-  plan: 'FREE' | 'PRO' | 'TOP_TIER' | 'VIP_AUTO_TRADER';
+  plan: 'FREE' | 'PRO' | 'TOP_TIER' | 'VIP_AUTO_TRADER' | 'GOLDX_PULSE';
   verifiedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -623,6 +633,74 @@ export async function openScannerPanelsStream(
   }
 }
 
+export async function openGoldxPulseStream(
+  token: string,
+  handlers: {
+    onSnapshot: (payload: GoldxPulseSnapshot) => void;
+    onError?: (error: Error) => void;
+    signal?: AbortSignal;
+  },
+) {
+  const resolvedToken = await resolveAuthToken(token);
+  const response = await fetch(`${API_URL}/goldx-pulse/stream`, {
+    method: 'GET',
+    headers: resolvedToken ? { Authorization: `Bearer ${resolvedToken}` } : {},
+    signal: handlers.signal,
+  });
+
+  if (!response.ok || !response.body) {
+    throw new Error(`GoldX Pulse stream failed (${response.status})`);
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  const processBlock = (block: string) => {
+    const eventLine = block.split('\n').find((line) => line.startsWith('event:'));
+    const dataLines = block
+      .split('\n')
+      .filter((line) => line.startsWith('data:'))
+      .map((line) => line.slice(5).trim());
+
+    if (!eventLine || dataLines.length === 0) {
+      return;
+    }
+
+    const eventName = eventLine.slice(6).trim();
+    const rawData = dataLines.join('\n');
+
+    if (eventName === 'pulse-snapshot') {
+      handlers.onSnapshot(JSON.parse(rawData) as GoldxPulseSnapshot);
+      return;
+    }
+
+    if (eventName === 'pulse-error' && handlers.onError) {
+      try {
+        const payload = JSON.parse(rawData) as { message?: string };
+        handlers.onError(new Error(payload.message || 'GoldX Pulse stream error'));
+      } catch {
+        handlers.onError(new Error('GoldX Pulse stream error'));
+      }
+    }
+  };
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) {
+      break;
+    }
+
+    buffer += decoder.decode(value, { stream: true });
+    const blocks = buffer.split('\n\n');
+    buffer = blocks.pop() ?? '';
+
+    for (const block of blocks) {
+      processBlock(block);
+    }
+  }
+}
+
 export const api = {
   heartbeatVisitor: (data: { sessionId: string; currentPath?: string }) =>
     apiFetch<{ success: boolean }>('/visitors/heartbeat', {
@@ -754,6 +832,16 @@ export const api = {
     apiFetch<{ billing: BillingSummary }>('/billing-summary', { token }),
   cancelSubscription: (token: string) =>
     apiFetch<{ success: boolean; billing: BillingSummary }>('/cancel-subscription', {
+      method: 'POST',
+      token,
+    }),
+  cancelGoldxPulseSubscription: (token: string) =>
+    apiFetch<{ success: boolean; billing: BillingSummary }>('/goldx-pulse/cancel-subscription', {
+      method: 'POST',
+      token,
+    }),
+  renewGoldxPulseSubscription: (token: string) =>
+    apiFetch<{ success: boolean; billing: BillingSummary }>('/goldx-pulse/renew-subscription', {
       method: 'POST',
       token,
     }),
@@ -1291,6 +1379,36 @@ export const api = {
         }),
     },
   },
+
+    goldxPulse: {
+      getAccess: (token: string) =>
+        apiFetch<{ access: GoldxPulseAccess; symbols: GoldxPulseSymbol[] }>('/goldx-pulse/access', { token }),
+      getSession: (token: string) =>
+        apiFetch<{ snapshot: GoldxPulseSnapshot; symbols: GoldxPulseSymbol[] }>('/goldx-pulse/session', { token }),
+      connect: (payload: { apiToken: string; symbol?: string }, token: string) =>
+        apiFetch<{ account: GoldxPulseAccount; snapshot: GoldxPulseSnapshot }>('/goldx-pulse/connect', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+          token,
+        }),
+      disconnect: (token: string) =>
+        apiFetch<{ success: boolean }>('/goldx-pulse/disconnect', {
+          method: 'POST',
+          token,
+        }),
+      updateSettings: (payload: Partial<GoldxPulseSettings>, token: string) =>
+        apiFetch<{ snapshot: GoldxPulseSnapshot }>('/goldx-pulse/settings', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+          token,
+        }),
+      placeTrade: (payload: { action: 'OVER' | 'UNDER' | 'MATCH' | 'DIFFER'; symbol?: string; stake?: number; duration?: number; digit?: number | null }, token: string) =>
+        apiFetch<{ trade: GoldxPulseTrade; snapshot: GoldxPulseSnapshot }>('/goldx-pulse/trade', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+          token,
+        }),
+    },
 };
 
 // ── Referral Types ──
@@ -1782,5 +1900,90 @@ export interface GoldxAdminSetupRequest {
   status: 'pending' | 'in_progress' | 'completed';
   internalNotesPreview: string | null;
   createdAt: string;
+  updatedAt: string;
+}
+
+export interface GoldxPulseAccess {
+  active: boolean;
+  source: 'admin' | 'pulse-subscription' | 'platform-plan' | 'none';
+  planName: string | null;
+  expiresAt: string | null;
+  reason: string | null;
+}
+
+export interface GoldxPulseSymbol {
+  symbol: string;
+  label: string;
+  category: 'volatility' | 'volatility-1s' | 'jump' | 'step' | 'boom-crash';
+  digits: number;
+}
+
+export interface GoldxPulseAccount {
+  balance: number;
+  currency: string;
+  accountType: 'demo' | 'real';
+  loginId: string;
+}
+
+export interface GoldxPulseTick {
+  quote: number;
+  formattedQuote: string;
+  epoch: number;
+  digit: number;
+}
+
+export interface GoldxPulseAnalytics {
+  frequencyMap: number[];
+  mostFrequentDigit: number | null;
+  leastFrequentDigit: number | null;
+  currentStreakDigit: number | null;
+  currentStreakLength: number;
+  longestStreakDigit: number | null;
+  longestStreakLength: number;
+  aboveFivePct: number;
+  belowFivePct: number;
+  bias: 'over' | 'under' | 'neutral';
+}
+
+export interface GoldxPulseTrade {
+  id: string;
+  action: 'OVER' | 'UNDER' | 'MATCH' | 'DIFFER';
+  symbol: string;
+  stake: number;
+  duration: number;
+  digit: number | null;
+  barrier: string | null;
+  status: 'proposal' | 'open' | 'won' | 'lost' | 'error';
+  payout: number | null;
+  profit: number | null;
+  contractId: number | null;
+  buyPrice: number | null;
+  sellPrice: number | null;
+  displayMessage: string;
+  createdAt: string;
+  settledAt: string | null;
+}
+
+export interface GoldxPulseSettings {
+  symbol: string;
+  stake: number;
+  duration: number;
+  strategyMode: 'digit-pulse' | 'range-pressure';
+  selectedDigit: number;
+  maxDailyLoss: number | null;
+  cooldownMs: number;
+}
+
+export interface GoldxPulseSnapshot {
+  connected: boolean;
+  connectionState: 'disconnected' | 'connecting' | 'connected' | 'error';
+  account: GoldxPulseAccount | null;
+  settings: GoldxPulseSettings;
+  ticks: GoldxPulseTick[];
+  analytics: GoldxPulseAnalytics;
+  trades: GoldxPulseTrade[];
+  cooldownRemainingMs: number;
+  dailyLoss: number;
+  error: string | null;
   updatedAt: string;
 }
