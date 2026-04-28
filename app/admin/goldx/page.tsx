@@ -11,10 +11,12 @@ import type {
   GoldxAdminSubscription,
   GoldxAuditLog,
   GoldxTradeHistoryEntry,
+  SearchedUser,
 } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Key,
   Users,
@@ -31,11 +33,19 @@ import {
   Eye,
   Settings,
   Wrench,
+  Sparkles,
 } from 'lucide-react';
 
 type Tab = 'overview' | 'licenses' | 'subscriptions' | 'audit' | 'trades' | 'setup' | 'settings';
 
 const PANEL_SCROLL_CLASS = 'h-[min(62vh,calc(100vh-17rem))] min-h-[20rem] overflow-auto overscroll-contain';
+const GOLDX_PULSE_SETTING_PREFIX = 'goldxPulse:subscription:';
+
+type GoldxPulseAdminSetting = {
+  status?: 'active' | 'inactive' | 'cancelled' | 'expired' | 'trial';
+  expiresAt?: string | null;
+  planName?: string;
+};
 
 export default function AdminGoldxPage() {
   const { token } = useAuth();
@@ -53,6 +63,15 @@ export default function AdminGoldxPage() {
   const [setupDraftNotes, setSetupDraftNotes] = useState<Record<string, string>>({});
   const [editSettingKey, setEditSettingKey] = useState<string | null>(null);
   const [editSettingValue, setEditSettingValue] = useState('');
+  const [pulseUserId, setPulseUserId] = useState('');
+  const [pulsePlanName, setPulsePlanName] = useState('GoldX Pulse');
+  const [pulseStatus, setPulseStatus] = useState<NonNullable<GoldxPulseAdminSetting['status']>>('active');
+  const [pulseExpiresAt, setPulseExpiresAt] = useState('');
+  const [pulseSaving, setPulseSaving] = useState(false);
+  const [pulseMessage, setPulseMessage] = useState('');
+  const [pulseSearchQuery, setPulseSearchQuery] = useState('');
+  const [pulseSearchResults, setPulseSearchResults] = useState<SearchedUser[]>([]);
+  const [pulseSearchLoading, setPulseSearchLoading] = useState(false);
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -128,6 +147,107 @@ export default function AdminGoldxPage() {
     } catch (err) {
       console.error('Failed to update setup request:', err);
     }
+  };
+
+  const pulseAccessEntries = Object.entries(settings ?? {})
+    .filter(([key]) => key.startsWith(GOLDX_PULSE_SETTING_PREFIX))
+    .map(([key, value]) => ({
+      key,
+      userId: key.slice(GOLDX_PULSE_SETTING_PREFIX.length),
+      value: (value ?? {}) as GoldxPulseAdminSetting,
+    }))
+    .sort((left, right) => left.userId.localeCompare(right.userId));
+
+  const resetPulseForm = () => {
+    setPulseUserId('');
+    setPulsePlanName('GoldX Pulse');
+    setPulseStatus('active');
+    setPulseExpiresAt('');
+  };
+
+  const handleSavePulseAccess = async () => {
+    if (!token || !pulseUserId.trim()) {
+      return;
+    }
+
+    try {
+      setPulseSaving(true);
+      setPulseMessage('');
+      const normalizedUserId = pulseUserId.trim();
+      await api.goldx.admin.updateSettings(`${GOLDX_PULSE_SETTING_PREFIX}${normalizedUserId}`, {
+        status: pulseStatus,
+        expiresAt: pulseExpiresAt ? new Date(`${pulseExpiresAt}T23:59:59.999Z`).toISOString() : null,
+        planName: pulsePlanName.trim() || 'GoldX Pulse',
+      }, token);
+      setPulseMessage(`Saved GoldX Pulse access for ${normalizedUserId}.`);
+      resetPulseForm();
+      load();
+    } catch (err) {
+      console.error('Failed to save GoldX Pulse access:', err);
+      setPulseMessage('Failed to save GoldX Pulse access.');
+    } finally {
+      setPulseSaving(false);
+    }
+  };
+
+  const handleEditPulseAccess = (userId: string, value: GoldxPulseAdminSetting) => {
+    setPulseUserId(userId);
+    setPulsePlanName(value.planName ?? 'GoldX Pulse');
+    setPulseStatus(value.status ?? 'inactive');
+    setPulseExpiresAt(value.expiresAt ? new Date(value.expiresAt).toISOString().slice(0, 10) : '');
+    setPulseMessage('');
+  };
+
+  const handleDisablePulseAccess = async (userId: string, currentValue: GoldxPulseAdminSetting) => {
+    if (!token) {
+      return;
+    }
+
+    try {
+      setPulseSaving(true);
+      setPulseMessage('');
+      await api.goldx.admin.updateSettings(`${GOLDX_PULSE_SETTING_PREFIX}${userId}`, {
+        ...currentValue,
+        status: 'inactive',
+      }, token);
+      setPulseMessage(`Disabled GoldX Pulse access for ${userId}.`);
+      load();
+    } catch (err) {
+      console.error('Failed to disable GoldX Pulse access:', err);
+      setPulseMessage('Failed to disable GoldX Pulse access.');
+    } finally {
+      setPulseSaving(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!token) {
+      setPulseSearchResults([]);
+      return;
+    }
+
+    const query = pulseSearchQuery.trim();
+    if (query.length < 2) {
+      setPulseSearchResults([]);
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setPulseSearchLoading(true);
+      api.admin.searchUsers(query, token)
+        .then((response) => setPulseSearchResults(response.users))
+        .catch(() => setPulseSearchResults([]))
+        .finally(() => setPulseSearchLoading(false));
+    }, 220);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [pulseSearchQuery, token]);
+
+  const selectPulseUser = (user: SearchedUser) => {
+    setPulseUserId(user.id);
+    setPulseSearchQuery(user.name ? `${user.name} (${user.email})` : user.email);
+    setPulseSearchResults([]);
+    setPulseMessage('');
   };
 
   const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
@@ -496,6 +616,150 @@ export default function AdminGoldxPage() {
       {/* Settings */}
       {tab === 'settings' && settings && (
         <div className="space-y-4">
+          <Card className="border-cyan-400/20 bg-[radial-gradient(circle_at_top_left,_rgba(34,211,238,0.14),_transparent_28%),rgba(15,23,42,0.92)]">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <Sparkles className="h-4 w-4 text-cyan-300" />
+                GoldX Pulse Access Grants
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Grant or disable dedicated GoldX Pulse access by writing the per-user subscription setting consumed by the Pulse access service.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+                <div className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2 sm:col-span-2">
+                      <label className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Find user</label>
+                      <div className="space-y-2">
+                        <Input
+                          value={pulseSearchQuery}
+                          onChange={(e) => setPulseSearchQuery(e.target.value)}
+                          placeholder="Search by name or email"
+                        />
+                        {(pulseSearchLoading || pulseSearchResults.length > 0) && (
+                          <div className="max-h-48 overflow-auto rounded-xl border border-white/10 bg-slate-950/95 p-2">
+                            {pulseSearchLoading ? (
+                              <div className="px-3 py-2 text-sm text-muted-foreground">Searching users...</div>
+                            ) : pulseSearchResults.map((user) => (
+                              <button
+                                key={user.id}
+                                type="button"
+                                onClick={() => selectPulseUser(user)}
+                                className="flex w-full items-start justify-between rounded-lg px-3 py-2 text-left hover:bg-white/5"
+                              >
+                                <div>
+                                  <div className="text-sm text-foreground">{user.name || 'Unnamed user'}</div>
+                                  <div className="text-xs text-muted-foreground">{user.email}</div>
+                                </div>
+                                <Badge variant="outline">{user.subscription}</Badge>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="space-y-2 sm:col-span-2">
+                      <label className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">User ID</label>
+                      <Input
+                        value={pulseUserId}
+                        onChange={(e) => setPulseUserId(e.target.value)}
+                        placeholder="Supabase user id"
+                        className="font-mono text-xs"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Plan name</label>
+                      <Input
+                        value={pulsePlanName}
+                        onChange={(e) => setPulsePlanName(e.target.value)}
+                        placeholder="GoldX Pulse"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Status</label>
+                      <select
+                        value={pulseStatus}
+                        onChange={(e) => setPulseStatus(e.target.value as NonNullable<GoldxPulseAdminSetting['status']>)}
+                        className="h-10 w-full rounded-lg border border-input bg-background/50 px-3 text-sm outline-none"
+                      >
+                        <option value="active">active</option>
+                        <option value="trial">trial</option>
+                        <option value="inactive">inactive</option>
+                        <option value="cancelled">cancelled</option>
+                        <option value="expired">expired</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Expiry date</label>
+                      <Input
+                        type="date"
+                        value={pulseExpiresAt}
+                        onChange={(e) => setPulseExpiresAt(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2 sm:col-span-2">
+                      <label className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Setting key preview</label>
+                      <div className="rounded-lg border border-white/10 bg-black/20 px-3 py-2 font-mono text-xs text-cyan-200">
+                        {pulseUserId.trim() ? `${GOLDX_PULSE_SETTING_PREFIX}${pulseUserId.trim()}` : `${GOLDX_PULSE_SETTING_PREFIX}<userId>`}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    <Button onClick={handleSavePulseAccess} disabled={pulseSaving || !pulseUserId.trim()}>
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      {pulseSaving ? 'Saving…' : 'Save Grant'}
+                    </Button>
+                    <Button variant="outline" onClick={resetPulseForm} disabled={pulseSaving}>
+                      Clear
+                    </Button>
+                  </div>
+                  {pulseMessage && (
+                    <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-muted-foreground">
+                      {pulseMessage}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-3 rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <div>
+                    <div className="text-sm font-medium">Existing Pulse grants</div>
+                    <div className="text-xs text-muted-foreground">These entries come directly from the current settings payload.</div>
+                  </div>
+                  <div className="max-h-80 space-y-3 overflow-auto pr-1">
+                    {pulseAccessEntries.length === 0 ? (
+                      <div className="rounded-xl border border-dashed border-white/10 px-4 py-6 text-center text-sm text-muted-foreground">
+                        No GoldX Pulse grants found yet.
+                      </div>
+                    ) : pulseAccessEntries.map((entry) => (
+                      <div key={entry.key} className="rounded-xl border border-white/10 bg-black/10 p-3">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="font-mono text-xs text-cyan-200">{entry.userId}</div>
+                            <div className="mt-1 text-sm text-foreground">{entry.value.planName ?? 'GoldX Pulse'}</div>
+                            <div className="mt-1 text-xs text-muted-foreground">Expires: {entry.value.expiresAt ? new Date(entry.value.expiresAt).toLocaleString() : 'No expiry'}</div>
+                          </div>
+                          <Badge variant={entry.value.status === 'active' || entry.value.status === 'trial' ? 'success' : 'secondary'}>
+                            {entry.value.status ?? 'inactive'}
+                          </Badge>
+                        </div>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <Button variant="outline" size="sm" onClick={() => handleEditPulseAccess(entry.userId, entry.value)}>
+                            Edit
+                          </Button>
+                          <Button variant="destructive" size="sm" onClick={() => handleDisablePulseAccess(entry.userId, entry.value)} disabled={pulseSaving || entry.value.status === 'inactive'}>
+                            Disable
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {Object.entries(settings).map(([key, value]) => (
             <Card key={key}>
               <CardHeader className="pb-3">
