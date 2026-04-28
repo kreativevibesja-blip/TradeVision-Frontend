@@ -200,7 +200,15 @@ export default function GoldxPulsePage() {
     setMaxDailyLoss(snapshot.settings.maxDailyLoss != null ? String(snapshot.settings.maxDailyLoss) : '');
     setCooldownSeconds(String(Math.round(snapshot.settings.cooldownMs / 1000)));
     setWorkspaceMode(snapshot.settings.strategyMode);
-  }, [snapshot.settings]);
+  }, [
+    snapshot.settings.stake,
+    snapshot.settings.duration,
+    snapshot.settings.selectedDigit,
+    snapshot.settings.symbol,
+    snapshot.settings.maxDailyLoss,
+    snapshot.settings.cooldownMs,
+    snapshot.settings.strategyMode,
+  ]);
 
   useEffect(() => {
     if (!token || !access?.active) {
@@ -236,7 +244,15 @@ export default function GoldxPulsePage() {
 
   const sparklinePoints = useMemo(() => buildPolylinePoints(snapshot.ticks.slice(-80).map((tick) => tick.quote)), [snapshot.ticks]);
 
-  const latestTicks = useMemo(() => snapshot.ticks.slice(-12).reverse(), [snapshot.ticks]);
+  const tickerDigits = useMemo(() => {
+    return snapshot.ticks.slice(-24).map((tick) => ({
+      key: `${tick.epoch}-${tick.formattedQuote}`,
+      digit: tick.digit,
+      quote: tick.formattedQuote,
+    }));
+  }, [snapshot.ticks]);
+
+  const marqueeDigits = useMemo(() => [...tickerDigits, ...tickerDigits], [tickerDigits]);
 
   const digitActionButtons = useMemo(() => {
     return Array.from({ length: 10 }, (_, digit) => ({
@@ -244,6 +260,11 @@ export default function GoldxPulsePage() {
       count: snapshot.analytics.frequencyMap[digit] ?? 0,
     }));
   }, [snapshot.analytics.frequencyMap]);
+
+  const netProfit = useMemo(
+    () => snapshot.trades.reduce((total, trade) => total + (trade.profit ?? 0), 0),
+    [snapshot.trades],
+  );
 
   const saveWorkspaceSettings = async () => {
     if (!token) {
@@ -573,17 +594,30 @@ export default function GoldxPulsePage() {
                   )}
                 </div>
               </div>
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {latestTicks.map((tick) => (
-                  <div key={`${tick.epoch}-${tick.formattedQuote}`} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-3 text-sm">
-                    <div className="text-xs uppercase tracking-[0.18em] text-slate-500">Tick</div>
-                    <div className="mt-1 font-semibold text-slate-100">{tick.formattedQuote}</div>
-                    <div className="mt-2 flex items-center justify-between text-xs text-slate-400">
-                      <span>Digit {tick.digit}</span>
-                      <span>{new Date(tick.epoch * 1000).toLocaleTimeString()}</span>
-                    </div>
-                  </div>
-                ))}
+              <div className="overflow-hidden rounded-2xl border border-white/10 bg-[linear-gradient(90deg,rgba(2,6,23,0.98),rgba(15,23,42,0.8)_18%,rgba(15,23,42,0.86)_82%,rgba(2,6,23,0.98))]">
+                <div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3 text-xs uppercase tracking-[0.18em] text-slate-400">
+                  <span>Current digits</span>
+                  <span>{tickerDigits.length} ticks</span>
+                </div>
+                <div className="relative overflow-hidden px-4 py-4">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-20 bg-gradient-to-r from-slate-950 via-slate-950/90 to-transparent" />
+                  <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-slate-950 via-slate-950/70 to-transparent" />
+                  {tickerDigits.length > 0 ? (
+                    <motion.div
+                      className="flex w-max items-center gap-3"
+                      animate={{ x: ['0%', '-50%'] }}
+                      transition={{ duration: 18, ease: 'linear', repeat: Infinity }}
+                    >
+                      {marqueeDigits.map((tick, index) => (
+                        <div key={`${tick.key}-${index}`} className="flex h-12 min-w-[3.25rem] items-center justify-center rounded-2xl border border-cyan-400/10 bg-white/[0.04] px-3 text-lg font-semibold text-slate-100 shadow-[0_0_24px_rgba(34,211,238,0.08)]">
+                          <span>{tick.digit}</span>
+                        </div>
+                      ))}
+                    </motion.div>
+                  ) : (
+                    <div className="flex h-12 items-center justify-center text-sm text-slate-500">Digits will flow here after connection.</div>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -778,30 +812,40 @@ export default function GoldxPulsePage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {snapshot.trades.length === 0 ? (
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-400">
-                  No trades yet. Connect your account, then use the assisted buttons to place the first contract.
+              <div className="rounded-2xl border border-white/10 bg-[linear-gradient(135deg,rgba(16,185,129,0.14),rgba(15,23,42,0.78),rgba(2,6,23,0.92))] p-4">
+                <div className="text-xs uppercase tracking-[0.18em] text-emerald-200/80">Net profit</div>
+                <div className={`mt-2 text-3xl font-semibold ${netProfit >= 0 ? 'text-emerald-200' : 'text-red-200'}`}>
+                  {formatCurrency(netProfit, snapshot.account?.currency || 'USD')}
                 </div>
-              ) : snapshot.trades.map((trade) => (
-                <div key={trade.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="font-medium text-slate-100">{trade.action} · {trade.symbol}</div>
-                      <div className="mt-1 text-xs text-slate-400">{formatDateTime(trade.createdAt)}</div>
+                <div className="mt-2 text-xs text-slate-400">Running total across the live results list.</div>
+              </div>
+
+              <div className="max-h-[28rem] space-y-3 overflow-y-auto pr-1">
+                {snapshot.trades.length === 0 ? (
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-400">
+                    No trades yet. Connect your account, then use the assisted buttons to place the first contract.
+                  </div>
+                ) : snapshot.trades.map((trade) => (
+                  <div key={trade.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="font-medium text-slate-100">{trade.action} · {trade.symbol}</div>
+                        <div className="mt-1 text-xs text-slate-400">{formatDateTime(trade.createdAt)}</div>
+                      </div>
+                      <Badge variant={trade.status === 'won' ? 'success' : trade.status === 'lost' ? 'destructive' : 'outline'}>
+                        {trade.status.toUpperCase()}
+                      </Badge>
                     </div>
-                    <Badge variant={trade.status === 'won' ? 'success' : trade.status === 'lost' ? 'destructive' : 'outline'}>
-                      {trade.status.toUpperCase()}
-                    </Badge>
+                    <div className="mt-3 grid grid-cols-2 gap-3 text-sm text-slate-300">
+                      <div>Stake: {formatCurrency(trade.stake, snapshot.account?.currency || 'USD')}</div>
+                      <div>Payout: {formatCurrency(trade.payout, snapshot.account?.currency || 'USD')}</div>
+                      <div>Digit: {trade.digit ?? '-'}</div>
+                      <div>Profit: {formatCurrency(trade.profit, snapshot.account?.currency || 'USD')}</div>
+                    </div>
+                    <div className="mt-2 text-xs text-slate-400">{trade.displayMessage}</div>
                   </div>
-                  <div className="mt-3 grid grid-cols-2 gap-3 text-sm text-slate-300">
-                    <div>Stake: {formatCurrency(trade.stake, snapshot.account?.currency || 'USD')}</div>
-                    <div>Payout: {formatCurrency(trade.payout, snapshot.account?.currency || 'USD')}</div>
-                    <div>Digit: {trade.digit ?? '-'}</div>
-                    <div>Profit: {formatCurrency(trade.profit, snapshot.account?.currency || 'USD')}</div>
-                  </div>
-                  <div className="mt-2 text-xs text-slate-400">{trade.displayMessage}</div>
-                </div>
-              ))}
+                ))}
+              </div>
             </CardContent>
           </Card>
 
