@@ -1980,6 +1980,7 @@ export interface GoldxPulseSnapshot {
   account: GoldxPulseAccount | null;
   settings: GoldxPulseSettings;
   ticks: GoldxPulseTick[];
+  totalTickCount: number;
   analytics: GoldxPulseAnalytics;
   trades: GoldxPulseTrade[];
   cooldownRemainingMs: number;
