@@ -118,7 +118,7 @@ const goldxFallbackPlan = {
 const goldxPulseFallbackPlan = {
   id: 'goldx-pulse-fallback',
   name: 'GoldX Pulse',
-  price: 49.95,
+  price: 79.95,
   billingCycle: 'month',
   features: [
     'Live Deriv tick stream',

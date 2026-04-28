@@ -118,7 +118,7 @@ const planCatalog: Record<PlanKey, {
   },
   GOLDX_PULSE: {
     name: 'GoldX Pulse',
-    price: 49.95,
+    price: 79.95,
     period: '/month',
     description: 'Deriv options workspace with live digit analytics, assisted execution panels, and server-side access control.',
     icon: Zap,
