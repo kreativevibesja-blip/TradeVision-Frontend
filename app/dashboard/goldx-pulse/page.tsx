@@ -20,6 +20,23 @@ import { Input } from '@/components/ui/input';
 
 type WorkspaceMode = 'digit-pulse' | 'range-pressure';
 
+const strategyCards: Array<{
+  mode: WorkspaceMode;
+  name: string;
+  description: string;
+}> = [
+  {
+    mode: 'digit-pulse',
+    name: 'GoldX Digits',
+    description: 'Tracks last-digit behavior so you can trade differ setups from the live digit board.',
+  },
+  {
+    mode: 'range-pressure',
+    name: 'GoldX U/O',
+    description: 'Measures whether live ticks are pressing above or below five for over-under entries.',
+  },
+];
+
 const defaultSnapshot: GoldxPulseSnapshot = {
   connected: false,
   connectionState: 'disconnected',
@@ -546,12 +563,8 @@ export default function GoldxPulsePage() {
                         ))}
                       </select>
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-xs uppercase tracking-[0.22em] text-slate-400">Workspace mode</label>
-                      <div className="grid grid-cols-2 gap-2">
-                        <Button variant={workspaceMode === 'digit-pulse' ? 'gradient' : 'outline'} onClick={() => setWorkspaceMode('digit-pulse')}>Digit Pulse</Button>
-                        <Button variant={workspaceMode === 'range-pressure' ? 'gradient' : 'outline'} onClick={() => setWorkspaceMode('range-pressure')}>Range Pressure</Button>
-                      </div>
+                    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-slate-400">
+                      Strategy controls now live in the dedicated panel below.
                     </div>
                   </div>
                   <Button variant="gradient" className="w-full gap-2" onClick={connectAccount} disabled={connectBusy || !apiToken.trim()}>
@@ -581,6 +594,37 @@ export default function GoldxPulsePage() {
                   </div>
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          <Card className="border-orange-400/20 bg-slate-950/80">
+            <CardHeader className="pb-4">
+              <CardTitle className="flex items-center gap-2 text-xl text-slate-100">
+                <Activity className="h-5 w-5 text-orange-300" />
+                Strategies
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {strategyCards.map((strategy) => {
+                const isActive = workspaceMode === strategy.mode;
+
+                return (
+                  <div key={strategy.mode} className={`flex items-start justify-between gap-4 rounded-2xl border p-4 transition ${isActive ? 'border-orange-300/30 bg-orange-400/10 shadow-[0_0_28px_rgba(251,146,60,0.08)]' : 'border-white/10 bg-white/5'}`}>
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold text-slate-100">{strategy.name}</div>
+                      <div className="mt-1 text-xs leading-5 text-slate-400">{strategy.description}</div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setWorkspaceMode(strategy.mode)}
+                      aria-pressed={isActive}
+                      className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] transition ${isActive ? 'border-emerald-300/30 bg-emerald-400/15 text-emerald-200' : 'border-white/10 bg-white/5 text-slate-300 hover:border-orange-300/30 hover:text-orange-200'}`}
+                    >
+                      {isActive ? 'On' : 'Off'}
+                    </button>
+                  </div>
+                );
+              })}
             </CardContent>
           </Card>
 
@@ -798,9 +842,6 @@ export default function GoldxPulsePage() {
               <div className="flex flex-wrap gap-3">
                 <Button variant={assistedPanelsOn ? 'gradient' : 'outline'} onClick={() => setAssistedPanelsOn((value) => !value)}>
                   {assistedPanelsOn ? 'Panels ON' : 'Panels OFF'}
-                </Button>
-                <Button variant="outline" onClick={() => setWorkspaceMode(workspaceMode === 'digit-pulse' ? 'range-pressure' : 'digit-pulse')}>
-                  Switch Strategy
                 </Button>
                 <Button variant="outline" onClick={saveWorkspaceSettings} disabled={saving}>
                   {saving ? 'Saving…' : 'Save Controls'}
