@@ -6,14 +6,22 @@ import { usePathname, useRouter } from 'next/navigation';
 import { ArrowRight, Compass, Sparkles, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-const PLATFORM_MODAL_KEY = 'tradevision_platform_intro_dismissed';
+const PLATFORM_MODAL_KEY = 'tradevision_platform_intro_dismiss_until';
 
-function getLocalDateStamp() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+function getDismissUntilTimestamp() {
+  const nextMidnight = new Date();
+  nextMidnight.setHours(24, 0, 0, 0);
+  return nextMidnight.getTime();
+}
+
+function isDismissedForToday() {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  const rawValue = window.localStorage.getItem(PLATFORM_MODAL_KEY);
+  const dismissUntil = rawValue ? Number(rawValue) : 0;
+  return Number.isFinite(dismissUntil) && dismissUntil > Date.now();
 }
 
 export function PlatformIntroModal() {
@@ -27,8 +35,7 @@ export function PlatformIntroModal() {
       return;
     }
 
-    const stored = typeof window !== 'undefined' ? window.localStorage.getItem(PLATFORM_MODAL_KEY) : getLocalDateStamp();
-    if (stored === getLocalDateStamp()) {
+    if (isDismissedForToday()) {
       setOpen(false);
       return;
     }
@@ -39,7 +46,7 @@ export function PlatformIntroModal() {
 
   const dismiss = () => {
     if (typeof window !== 'undefined') {
-      window.localStorage.setItem(PLATFORM_MODAL_KEY, getLocalDateStamp());
+      window.localStorage.setItem(PLATFORM_MODAL_KEY, String(getDismissUntilTimestamp()));
     }
     setOpen(false);
   };

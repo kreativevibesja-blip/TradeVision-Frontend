@@ -5,16 +5,24 @@ import { FeedbackModal } from '@/components/FeedbackModal';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 
-function getLocalDateStamp() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+function getDismissUntilTimestamp() {
+  const nextMidnight = new Date();
+  nextMidnight.setHours(24, 0, 0, 0);
+  return nextMidnight.getTime();
 }
 
 function getFeedbackDismissKey(userId: string) {
-  return `tradevision_feedback_dismissed:${userId}`;
+  return `tradevision_feedback_dismiss_until:${userId}`;
+}
+
+function isDismissedForToday(userId: string) {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  const rawValue = window.localStorage.getItem(getFeedbackDismissKey(userId));
+  const dismissUntil = rawValue ? Number(rawValue) : 0;
+  return Number.isFinite(dismissUntil) && dismissUntil > Date.now();
 }
 
 export function FeedbackTrigger() {
@@ -25,6 +33,12 @@ export function FeedbackTrigger() {
   useEffect(() => {
     if (!user) {
       checkedUserId.current = null;
+      setShow(false);
+      return;
+    }
+
+    if (isDismissedForToday(user.id)) {
+      checkedUserId.current = user.id;
       setShow(false);
       return;
     }
@@ -52,12 +66,9 @@ export function FeedbackTrigger() {
 
       const feedbackUserId = authUser.id;
 
-      if (typeof window !== 'undefined') {
-        const dismissedToday = window.localStorage.getItem(getFeedbackDismissKey(feedbackUserId));
-        if (dismissedToday === getLocalDateStamp()) {
-          checkedUserId.current = feedbackUserId;
-          return;
-        }
+      if (isDismissedForToday(feedbackUserId)) {
+        checkedUserId.current = feedbackUserId;
+        return;
       }
 
       const {
@@ -99,8 +110,9 @@ export function FeedbackTrigger() {
 
   const handleClose = () => {
     if (typeof window !== 'undefined') {
-      window.localStorage.setItem(getFeedbackDismissKey(user.id), getLocalDateStamp());
+      window.localStorage.setItem(getFeedbackDismissKey(user.id), String(getDismissUntilTimestamp()));
     }
+    checkedUserId.current = user.id;
     setShow(false);
   };
 
