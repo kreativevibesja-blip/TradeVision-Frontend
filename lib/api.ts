@@ -1944,8 +1944,44 @@ export interface GoldxPulseTick {
   digit: number;
 }
 
+export interface GoldxPulseDigitProbability {
+  digit: number;
+  count: number;
+  probability: number;
+  deviation: number;
+  bias: 'underrepresented' | 'overrepresented' | 'neutral';
+}
+
+export interface GoldxPulseOverUnderProbability {
+  selectedDigit: number;
+  overProbability: number;
+  underProbability: number;
+  difference: number;
+  confidence: number;
+  bias: 'over' | 'under' | 'neutral';
+  strength: 'strong' | 'weak' | 'neutral';
+}
+
+export interface GoldxPulseMatchDifferProbability {
+  selectedDigit: number;
+  matchProbability: number;
+  differProbability: number;
+  matchDeviation: number;
+  differDeviation: number;
+}
+
+export interface GoldxPulseWarmupStatus {
+  minTicksRequired: number;
+  currentTicks: number;
+  remainingTicks: number;
+  progressPct: number;
+  ready: boolean;
+  message: string;
+}
+
 export interface GoldxPulseAnalytics {
   frequencyMap: number[];
+  digitProbabilities: GoldxPulseDigitProbability[];
   mostFrequentDigit: number | null;
   leastFrequentDigit: number | null;
   currentStreakDigit: number | null;
@@ -1955,6 +1991,9 @@ export interface GoldxPulseAnalytics {
   aboveFivePct: number;
   belowFivePct: number;
   bias: 'over' | 'under' | 'neutral';
+  overUnder: GoldxPulseOverUnderProbability;
+  matchDiffer: GoldxPulseMatchDifferProbability;
+  warmup: GoldxPulseWarmupStatus;
 }
 
 export interface GoldxPulseTrade {
