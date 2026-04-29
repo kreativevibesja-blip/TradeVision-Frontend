@@ -5,6 +5,18 @@ import { FeedbackModal } from '@/components/FeedbackModal';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
 
+function getLocalDateStamp() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function getFeedbackDismissKey(userId: string) {
+  return `tradevision_feedback_dismissed:${userId}`;
+}
+
 export function FeedbackTrigger() {
   const { user } = useAuth();
   const [show, setShow] = useState(false);
@@ -39,6 +51,14 @@ export function FeedbackTrigger() {
       }
 
       const feedbackUserId = authUser.id;
+
+      if (typeof window !== 'undefined') {
+        const dismissedToday = window.localStorage.getItem(getFeedbackDismissKey(feedbackUserId));
+        if (dismissedToday === getLocalDateStamp()) {
+          checkedUserId.current = feedbackUserId;
+          return;
+        }
+      }
 
       const {
         data,
@@ -76,5 +96,13 @@ export function FeedbackTrigger() {
   }, [user]);
 
   if (!user) return null;
-  return <FeedbackModal open={show} onClose={() => setShow(false)} userId={user.id} />;
+
+  const handleClose = () => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(getFeedbackDismissKey(user.id), getLocalDateStamp());
+    }
+    setShow(false);
+  };
+
+  return <FeedbackModal open={show} onClose={handleClose} userId={user.id} />;
 }

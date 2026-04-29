@@ -6,7 +6,15 @@ import { usePathname, useRouter } from 'next/navigation';
 import { ArrowRight, Compass, Sparkles, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-const PLATFORM_MODAL_KEY = 'tradevision_platform_intro_seen';
+const PLATFORM_MODAL_KEY = 'tradevision_platform_intro_dismissed';
+
+function getLocalDateStamp() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 
 export function PlatformIntroModal() {
   const pathname = usePathname();
@@ -19,8 +27,8 @@ export function PlatformIntroModal() {
       return;
     }
 
-    const stored = typeof window !== 'undefined' ? sessionStorage.getItem(PLATFORM_MODAL_KEY) : 'seen';
-    if (stored === 'seen') {
+    const stored = typeof window !== 'undefined' ? window.localStorage.getItem(PLATFORM_MODAL_KEY) : getLocalDateStamp();
+    if (stored === getLocalDateStamp()) {
       setOpen(false);
       return;
     }
@@ -31,7 +39,7 @@ export function PlatformIntroModal() {
 
   const dismiss = () => {
     if (typeof window !== 'undefined') {
-      sessionStorage.setItem(PLATFORM_MODAL_KEY, 'seen');
+      window.localStorage.setItem(PLATFORM_MODAL_KEY, getLocalDateStamp());
     }
     setOpen(false);
   };
