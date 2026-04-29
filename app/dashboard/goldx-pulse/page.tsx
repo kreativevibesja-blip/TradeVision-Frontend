@@ -254,11 +254,14 @@ export default function GoldxPulsePage() {
   }, [snapshot.ticks]);
 
   const digitActionButtons = useMemo(() => {
+    const totalObservedTicks = Math.max(snapshot.ticks.length, 1);
+
     return Array.from({ length: 10 }, (_, digit) => ({
       digit,
       count: snapshot.analytics.frequencyMap[digit] ?? 0,
+      percentage: `${(((snapshot.analytics.frequencyMap[digit] ?? 0) / totalObservedTicks) * 100).toFixed(1)}%`,
     }));
-  }, [snapshot.analytics.frequencyMap]);
+  }, [snapshot.analytics.frequencyMap, snapshot.ticks.length]);
 
   const netProfit = useMemo(
     () => snapshot.trades.reduce((total, trade) => total + (trade.profit ?? 0), 0),
@@ -651,7 +654,7 @@ export default function GoldxPulsePage() {
               <CardContent className="space-y-5">
                 {workspaceMode === 'digit-pulse' ? (
                   <>
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+                    <div className="grid grid-cols-5 gap-2 sm:gap-3">
                       {digitActionButtons.map((item) => (
                         <div
                           key={item.digit}
@@ -664,14 +667,28 @@ export default function GoldxPulsePage() {
                               setSelectedDigit(String(item.digit));
                             }
                           }}
-                          className={`rounded-2xl border p-3 text-center transition ${item.digit === Number(selectedDigit) ? 'border-cyan-300/60 bg-cyan-400/12 shadow-[0_0_0_1px_rgba(103,232,249,0.28)]' : item.digit === snapshot.analytics.mostFrequentDigit ? 'border-red-400/30 bg-red-500/10' : item.digit === snapshot.analytics.leastFrequentDigit ? 'border-emerald-400/30 bg-emerald-500/10' : 'border-white/10 bg-white/5 hover:border-cyan-400/30 hover:bg-cyan-400/8'}`}
+                          className={`relative overflow-hidden rounded-2xl border p-2.5 text-center transition sm:p-3 ${item.digit === Number(selectedDigit) ? 'border-orange-300/50 bg-orange-400/8 shadow-[0_0_24px_rgba(251,146,60,0.18)]' : item.digit === snapshot.analytics.mostFrequentDigit ? 'border-red-400/30 bg-red-500/10' : item.digit === snapshot.analytics.leastFrequentDigit ? 'border-emerald-400/30 bg-emerald-500/10' : 'border-white/10 bg-white/5 hover:border-cyan-400/30 hover:bg-cyan-400/8'}`}
                         >
-                          <div className="flex items-center justify-between gap-2 text-xs uppercase tracking-[0.18em] text-slate-400">
-                            <span>Digit {item.digit}</span>
-                            <span className={`${item.digit === Number(selectedDigit) ? 'text-cyan-200' : 'text-slate-500'}`}>{item.digit === Number(selectedDigit) ? 'Selected' : 'Tap'}</span>
+                          {item.digit === Number(selectedDigit) ? (
+                            <motion.div
+                              aria-hidden="true"
+                              className="pointer-events-none absolute inset-0 rounded-2xl border border-orange-300/70"
+                              animate={{ rotate: 360 }}
+                              transition={{ duration: 3.2, ease: 'linear', repeat: Infinity }}
+                              style={{ boxShadow: '0 0 0 1px rgba(253,186,116,0.35), 0 0 24px rgba(251,146,60,0.28)' }}
+                            />
+                          ) : null}
+                          <div className="relative flex min-h-[5.2rem] items-center justify-center sm:min-h-[6.2rem]">
+                            <span className={`text-2xl font-semibold sm:text-3xl ${item.digit === Number(selectedDigit) ? 'text-orange-100' : 'text-slate-100'}`}>
+                              {item.digit}
+                            </span>
+                            <span className="absolute bottom-0 left-0 text-[0.62rem] font-medium text-slate-400 sm:text-[0.72rem]">
+                              {item.count}
+                            </span>
+                            <span className={`absolute bottom-0 right-0 text-[0.62rem] font-medium sm:text-[0.72rem] ${item.digit === Number(selectedDigit) ? 'text-orange-200' : 'text-slate-400'}`}>
+                              {item.percentage}
+                            </span>
                           </div>
-                          <div className="mt-2 text-2xl font-semibold">{item.count}</div>
-                          <div className="mt-2 text-xs text-slate-500">Tap to set the active differ digit.</div>
                         </div>
                       ))}
                     </div>
