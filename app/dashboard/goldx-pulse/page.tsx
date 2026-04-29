@@ -129,6 +129,7 @@ export default function GoldxPulsePage() {
   const [snapshot, setSnapshot] = useState<GoldxPulseSnapshot>(defaultSnapshot);
   const [apiToken, setApiToken] = useState('');
   const [workspaceMode, setWorkspaceMode] = useState<WorkspaceMode>('digit-pulse');
+  const [activeStrategy, setActiveStrategy] = useState<WorkspaceMode | null>('digit-pulse');
   const [assistedPanelsOn, setAssistedPanelsOn] = useState(true);
   const [stake, setStake] = useState('1');
   const [duration, setDuration] = useState('5');
@@ -219,6 +220,7 @@ export default function GoldxPulsePage() {
     setMaxDailyLoss(snapshot.settings.maxDailyLoss != null ? String(snapshot.settings.maxDailyLoss) : '');
     setCooldownSeconds(String(Math.round(snapshot.settings.cooldownMs / 1000)));
     setWorkspaceMode(snapshot.settings.strategyMode);
+    setActiveStrategy(snapshot.settings.strategyMode);
   }, [
     snapshot.settings.stake,
     snapshot.settings.duration,
@@ -285,6 +287,8 @@ export default function GoldxPulsePage() {
     [snapshot.trades],
   );
 
+  const displayedStrategy = activeStrategy ?? workspaceMode;
+
   const saveWorkspaceSettings = async () => {
     if (!token) {
       return;
@@ -298,7 +302,7 @@ export default function GoldxPulsePage() {
         stake: Number(stake),
         duration: Number(duration),
         selectedDigit: Number(selectedDigit),
-        strategyMode: workspaceMode,
+        strategyMode: displayedStrategy,
         maxDailyLoss: maxDailyLoss === '' ? null : Number(maxDailyLoss),
         cooldownMs: Number(cooldownSeconds) * 1000,
       }, token);
@@ -517,7 +521,7 @@ export default function GoldxPulsePage() {
               {snapshot.settings.symbol}
             </Badge>
             <Badge variant="outline" className="px-3 py-1 text-xs border-fuchsia-400/20 text-fuchsia-200">
-              {workspaceMode === 'digit-pulse' ? 'Digit Pulse Engine™' : 'Range Pressure Engine™'}
+              {activeStrategy == null ? 'No Active Strategy' : activeStrategy === 'digit-pulse' ? 'Digit Pulse Engine™' : 'Range Pressure Engine™'}
             </Badge>
           </div>
         </div>
@@ -606,7 +610,7 @@ export default function GoldxPulsePage() {
             </CardHeader>
             <CardContent className="space-y-3">
               {strategyCards.map((strategy) => {
-                const isActive = workspaceMode === strategy.mode;
+                const isActive = activeStrategy === strategy.mode;
 
                 return (
                   <div key={strategy.mode} className={`flex items-start justify-between gap-4 rounded-2xl border p-4 transition ${isActive ? 'border-orange-300/30 bg-orange-400/10 shadow-[0_0_28px_rgba(251,146,60,0.08)]' : 'border-white/10 bg-white/5'}`}>
@@ -616,7 +620,15 @@ export default function GoldxPulsePage() {
                     </div>
                     <button
                       type="button"
-                      onClick={() => setWorkspaceMode(strategy.mode)}
+                      onClick={() => {
+                        if (isActive) {
+                          setActiveStrategy(null);
+                          return;
+                        }
+
+                        setWorkspaceMode(strategy.mode);
+                        setActiveStrategy(strategy.mode);
+                      }}
                       aria-pressed={isActive}
                       className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] transition ${isActive ? 'border-emerald-300/30 bg-emerald-400/15 text-emerald-200' : 'border-white/10 bg-white/5 text-slate-300 hover:border-orange-300/30 hover:text-orange-200'}`}
                     >
@@ -628,6 +640,17 @@ export default function GoldxPulsePage() {
             </CardContent>
           </Card>
 
+          {activeStrategy == null ? (
+            <Card className="border-white/10 bg-[radial-gradient(circle_at_top,_rgba(251,146,60,0.1),_transparent_32%),linear-gradient(180deg,rgba(2,6,23,0.96),rgba(15,23,42,0.92))] text-slate-100">
+              <CardContent className="flex min-h-[18rem] flex-col items-center justify-center gap-3 p-8 text-center">
+                <div className="rounded-full border border-orange-300/20 bg-orange-400/10 px-3 py-1 text-xs uppercase tracking-[0.24em] text-orange-200">
+                  Strategy Idle
+                </div>
+                <div className="text-2xl font-semibold">No active strategy</div>
+                <p className="max-w-md text-sm text-slate-400">Turn on a strategy to begin trading. Live panels, controls, and results will appear once GoldX Digits or GoldX U/O is active.</p>
+              </CardContent>
+            </Card>
+          ) : (
           <Card className="border-fuchsia-400/20 bg-slate-950/80">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-xl">
@@ -686,17 +709,18 @@ export default function GoldxPulsePage() {
               </div>
             </CardContent>
           </Card>
+          )}
 
-          {assistedPanelsOn ? (
+          {activeStrategy != null && assistedPanelsOn ? (
             <Card className="border-cyan-400/20 bg-slate-950/80">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2 text-xl">
                   <BarChart3 className="h-5 w-5 text-cyan-300" />
-                  {workspaceMode === 'digit-pulse' ? 'Digit Pulse Engine™' : 'Range Pressure Engine™'}
+                  {activeStrategy === 'digit-pulse' ? 'Digit Pulse Engine™' : 'Range Pressure Engine™'}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-5">
-                {workspaceMode === 'digit-pulse' ? (
+                {activeStrategy === 'digit-pulse' ? (
                   <>
                     <div className="grid grid-cols-5 gap-2 sm:gap-3">
                       {digitActionButtons.map((item) => (
@@ -788,6 +812,7 @@ export default function GoldxPulsePage() {
         </div>
 
         <div className="space-y-6">
+          {activeStrategy == null ? null : (
           <Card className="border-fuchsia-400/20 bg-slate-950/80">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-xl">
@@ -851,7 +876,7 @@ export default function GoldxPulsePage() {
                 ) : null}
               </div>
 
-              {workspaceMode === 'range-pressure' ? (
+              {activeStrategy === 'range-pressure' ? (
                 <div className="grid gap-3 sm:grid-cols-2">
                   <Button variant="gradient" className="gap-2" onClick={() => placeTrade('OVER')} disabled={placingTrade != null || !snapshot.connected}>Over</Button>
                   <Button variant="outline" className="gap-2 border-cyan-400/20 bg-cyan-400/10 text-cyan-100 hover:bg-cyan-400/20" onClick={() => placeTrade('UNDER')} disabled={placingTrade != null || !snapshot.connected}>Under</Button>
@@ -876,7 +901,9 @@ export default function GoldxPulsePage() {
               </div>
             </CardContent>
           </Card>
+          )}
 
+          {activeStrategy == null ? null : (
           <Card className="border-emerald-400/20 bg-slate-950/80">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between gap-3">
@@ -932,7 +959,9 @@ export default function GoldxPulsePage() {
               </div>
             </CardContent>
           </Card>
+          )}
 
+          {activeStrategy == null ? null : (
           <Card className="border-amber-400/20 bg-slate-950/80">
             <CardContent className="p-5 text-sm text-amber-100/90">
               <div className="flex items-start gap-3">
@@ -944,6 +973,7 @@ export default function GoldxPulsePage() {
               </div>
             </CardContent>
           </Card>
+          )}
         </div>
       </div>
     </div>
