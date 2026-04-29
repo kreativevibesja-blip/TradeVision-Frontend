@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { AlertTriangle, Activity, BarChart3, CandlestickChart, Flame, Loader2, Lock, Power, RadioTower, ShieldAlert, Sparkles, Trash2, Wallet, Zap } from 'lucide-react';
+import { AlertTriangle, Activity, BarChart3, CandlestickChart, CheckSquare, Flame, Loader2, Lock, Power, RadioTower, ShieldAlert, Sparkles, Square, Trash2, Wallet, X, Zap } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import {
   api,
@@ -143,6 +143,10 @@ export default function GoldxPulsePage() {
   const [placingTrade, setPlacingTrade] = useState<string | null>(null);
   const [clearingResults, setClearingResults] = useState(false);
   const [pulseRenewing, setPulseRenewing] = useState(false);
+  const [agreementAccepted, setAgreementAccepted] = useState<boolean | null>(null);
+  const [agreementChecked, setAgreementChecked] = useState(false);
+  const [agreementBusy, setAgreementBusy] = useState(false);
+  const [legalOpen, setLegalOpen] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -168,11 +172,18 @@ export default function GoldxPulsePage() {
         setSymbols(response.symbols);
 
         if (response.access.active) {
-          const sessionResponse = await api.goldxPulse.getSession(token);
+          const [sessionResponse, agreementResponse] = await Promise.all([
+            api.goldxPulse.getSession(token),
+            api.goldxPulse.getAgreementStatus(token),
+          ]);
           if (!active) {
             return;
           }
           setSnapshot(sessionResponse.snapshot);
+          setAgreementAccepted(agreementResponse.accepted);
+          setAgreementChecked(agreementResponse.accepted);
+        } else {
+          setAgreementAccepted(true);
         }
       })
       .catch((nextError) => {
@@ -192,6 +203,7 @@ export default function GoldxPulsePage() {
   }, [token]);
 
   const pulseStatus = billing?.goldxPulse;
+  const showAgreementGate = access?.active && agreementAccepted === false;
 
   const handlePulseResume = async () => {
     if (!token) {
@@ -382,6 +394,24 @@ export default function GoldxPulsePage() {
       setError(nextError instanceof Error ? nextError.message : 'Unable to clear GoldX Pulse results.');
     } finally {
       setClearingResults(false);
+    }
+  };
+
+  const acceptAgreement = async () => {
+    if (!token || !agreementChecked) {
+      return;
+    }
+
+    try {
+      setAgreementBusy(true);
+      setError('');
+      const response = await api.goldxPulse.acceptAgreement(token);
+      setAgreementAccepted(response.accepted);
+      setLegalOpen(false);
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : 'Unable to save GoldX Pulse agreement.');
+    } finally {
+      setAgreementBusy(false);
     }
   };
 
@@ -976,6 +1006,89 @@ export default function GoldxPulsePage() {
           )}
         </div>
       </div>
+
+      {showAgreementGate ? (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-2xl rounded-[28px] border border-orange-300/20 bg-[radial-gradient(circle_at_top,_rgba(251,146,60,0.16),_transparent_35%),linear-gradient(180deg,rgba(2,6,23,0.98),rgba(15,23,42,0.96))] p-6 shadow-[0_0_80px_rgba(251,146,60,0.12)]">
+            <div className="inline-flex items-center gap-2 rounded-full border border-orange-300/20 bg-orange-400/10 px-3 py-1 text-xs uppercase tracking-[0.22em] text-orange-200">
+              <ShieldAlert className="h-3.5 w-3.5" />
+              GoldX Pulse Agreement
+            </div>
+            <h2 className="mt-4 text-2xl font-semibold text-slate-100">Confirm the GoldX Pulse trading agreement</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-300">
+              Before you start using GoldX Pulse, you must acknowledge the trading risk notice, Deriv options disclosure, and the GoldX Pulse no-refund policy.
+            </p>
+            <button
+              type="button"
+              onClick={() => setLegalOpen(true)}
+              className="mt-4 text-sm font-medium text-cyan-300 underline underline-offset-4 transition hover:text-cyan-200"
+            >
+              Read the GoldX Pulse legal agreement
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setAgreementChecked((value) => !value)}
+              className="mt-6 flex w-full items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 text-left transition hover:border-orange-300/20 hover:bg-white/[0.07]"
+            >
+              {agreementChecked ? <CheckSquare className="mt-0.5 h-5 w-5 text-orange-200" /> : <Square className="mt-0.5 h-5 w-5 text-slate-400" />}
+              <span className="text-sm leading-6 text-slate-300">
+                I understand that trading Deriv options carries material risk, results are not guaranteed, and GoldX Pulse purchases are non-refundable once access is granted.
+              </span>
+            </button>
+
+            <div className="mt-6 flex flex-wrap justify-end gap-3">
+              <Button variant="gradient" onClick={acceptAgreement} disabled={!agreementChecked || agreementBusy}>
+                {agreementBusy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Agree And Continue
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {legalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-3xl rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(2,6,23,0.98),rgba(15,23,42,0.96))] shadow-[0_30px_100px_rgba(0,0,0,0.45)]">
+            <div className="flex items-center justify-between gap-4 border-b border-white/10 px-6 py-5">
+              <div>
+                <div className="text-xs uppercase tracking-[0.22em] text-orange-200">Legal Agreement</div>
+                <div className="mt-1 text-xl font-semibold text-slate-100">GoldX Pulse Trading, Risk, and Refund Terms</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setLegalOpen(false)}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-300 transition hover:bg-white/10 hover:text-white"
+                aria-label="Close legal agreement"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="max-h-[70vh] space-y-6 overflow-y-auto px-6 py-6 text-sm leading-7 text-slate-300">
+              <section>
+                <h3 className="text-base font-semibold text-slate-100">Trading Risk Notice</h3>
+                <p className="mt-2">GoldX Pulse is a trading workspace and analytical tool. It does not provide investment, legal, tax, or financial advice. All market decisions remain your sole responsibility, and you should only trade capital you can afford to lose.</p>
+              </section>
+              <section>
+                <h3 className="text-base font-semibold text-slate-100">Deriv Options Disclosure</h3>
+                <p className="mt-2">Deriv options and short-duration contracts can settle rapidly and may lead to fast gains or losses. Execution conditions, contract availability, pricing, balance availability, and platform behavior are controlled by Deriv and remain outside the control of TradeVision AI and GoldX Pulse.</p>
+              </section>
+              <section>
+                <h3 className="text-base font-semibold text-slate-100">No Guarantee Of Performance</h3>
+                <p className="mt-2">Past digit behavior, streaks, percentages, and analytical indicators do not guarantee future outcomes. No representation is made that any strategy, setup, or signal will produce profit or avoid loss.</p>
+              </section>
+              <section>
+                <h3 className="text-base font-semibold text-slate-100">No Refund Policy</h3>
+                <p className="mt-2">GoldX Pulse is a digitally delivered access product. Once access has been granted, activated, or used, no refund, reversal, partial refund, or usage-based credit is provided for the GoldX Pulse add-on except where required by law.</p>
+              </section>
+              <section>
+                <h3 className="text-base font-semibold text-slate-100">User Responsibility</h3>
+                <p className="mt-2">By continuing, you confirm that you understand the risks of trading leveraged or short-term option products, that you will use the workspace at your own discretion, and that you accept full responsibility for all trades and account outcomes.</p>
+              </section>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
