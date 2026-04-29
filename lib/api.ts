@@ -1383,6 +1383,13 @@ export const api = {
     goldxPulse: {
       getAccess: (token: string) =>
         apiFetch<{ access: GoldxPulseAccess; symbols: GoldxPulseSymbol[] }>('/goldx-pulse/access', { token }),
+      getAgreementStatus: (token: string) =>
+        apiFetch<GoldxPulseAgreementStatus>('/goldx-pulse/agreement', { token }),
+      acceptAgreement: (token: string) =>
+        apiFetch<{ success: boolean; accepted: boolean; acceptedAt: string | null }>('/goldx-pulse/agreement', {
+          method: 'POST',
+          token,
+        }),
       getSession: (token: string) =>
         apiFetch<{ snapshot: GoldxPulseSnapshot; symbols: GoldxPulseSymbol[] }>('/goldx-pulse/session', { token }),
       connect: (payload: { apiToken: string; symbol?: string }, token: string) =>
@@ -1992,4 +1999,9 @@ export interface GoldxPulseSnapshot {
   dailyLoss: number;
   error: string | null;
   updatedAt: string;
+}
+
+export interface GoldxPulseAgreementStatus {
+  accepted: boolean;
+  acceptedAt: string | null;
 }
