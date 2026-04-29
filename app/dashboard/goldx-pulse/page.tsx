@@ -33,7 +33,7 @@ const strategyCards: Array<{
   {
     mode: 'range-pressure',
     name: 'GoldX U/O',
-    description: 'Measures whether live ticks are pressing above or below five for over-under entries.',
+    description: 'Measures whether live digits are leaning over or under your selected barrier for U/O entries.',
   },
 ];
 
@@ -54,6 +54,13 @@ const defaultSnapshot: GoldxPulseSnapshot = {
   totalTickCount: 0,
   analytics: {
     frequencyMap: Array.from({ length: 10 }, () => 0),
+    digitProbabilities: Array.from({ length: 10 }, (_, digit) => ({
+      digit,
+      count: 0,
+      probability: 0,
+      deviation: 0,
+      bias: 'neutral' as const,
+    })),
     mostFrequentDigit: null,
     leastFrequentDigit: null,
     currentStreakDigit: null,
@@ -63,6 +70,30 @@ const defaultSnapshot: GoldxPulseSnapshot = {
     aboveFivePct: 0,
     belowFivePct: 0,
     bias: 'neutral',
+    overUnder: {
+      selectedDigit: 7,
+      overProbability: 0,
+      underProbability: 0,
+      difference: 0,
+      confidence: 0,
+      bias: 'neutral',
+      strength: 'neutral',
+    },
+    matchDiffer: {
+      selectedDigit: 7,
+      matchProbability: 0,
+      differProbability: 0,
+      matchDeviation: 0,
+      differDeviation: 0,
+    },
+    warmup: {
+      minTicksRequired: 70,
+      currentTicks: 0,
+      remainingTicks: 70,
+      progressPct: 0,
+      ready: false,
+      message: 'Collecting data... (0 / 70 ticks)',
+    },
   },
   trades: [],
   cooldownRemainingMs: 0,
@@ -78,6 +109,8 @@ const categoryLabels: Record<GoldxPulseSymbol['category'], string> = {
   step: 'Step',
   'boom-crash': 'Boom & Crash',
 };
+
+const PROBABILITY_DISCLAIMER = 'Probabilities are based on recent ticks and do not guarantee outcomes.';
 
 function formatCurrency(value: number | null | undefined, currency = 'USD') {
   if (value == null || Number.isNaN(value)) {
@@ -115,6 +148,18 @@ function buildPolylinePoints(values: number[]) {
       return `${x},${y}`;
     })
     .join(' ');
+}
+
+function formatSignedPercent(value: number) {
+  return `${value > 0 ? '+' : ''}${value.toFixed(1)}%`;
+}
+
+function buildBiasLabel(bias: 'over' | 'under' | 'neutral', strength: 'strong' | 'weak' | 'neutral') {
+  if (bias === 'neutral' || strength === 'neutral') {
+    return 'Neutral Flow';
+  }
+
+  return `${strength === 'strong' ? 'Strong' : 'Moderate'} ${bias === 'over' ? 'Over' : 'Under'} Bias`;
 }
 
   const digitOptions = Array.from({ length: 10 }, (_, digit) => String(digit));
@@ -285,19 +330,69 @@ export default function GoldxPulsePage() {
   }, [snapshot.ticks]);
 
   const digitActionButtons = useMemo(() => {
-    const totalObservedTicks = Math.max(snapshot.ticks.length, 1);
+    if (snapshot.analytics.digitProbabilities.length === 10) {
+      return snapshot.analytics.digitProbabilities;
+    }
 
     return Array.from({ length: 10 }, (_, digit) => ({
       digit,
       count: snapshot.analytics.frequencyMap[digit] ?? 0,
-      percentage: `${(((snapshot.analytics.frequencyMap[digit] ?? 0) / totalObservedTicks) * 100).toFixed(1)}%`,
+      probability: 0,
+      deviation: 0,
+      bias: 'neutral' as const,
     }));
-  }, [snapshot.analytics.frequencyMap, snapshot.ticks.length]);
+  }, [snapshot.analytics.digitProbabilities, snapshot.analytics.frequencyMap]);
 
   const netProfit = useMemo(
     () => snapshot.trades.reduce((total, trade) => total + (trade.profit ?? 0), 0),
     [snapshot.trades],
   );
+
+  const selectedDigitMetrics = useMemo(() => {
+    const currentSelectedDigit = Number(selectedDigit);
+    const selectedProfile = digitActionButtons.find((item) => item.digit === currentSelectedDigit) ?? {
+      digit: currentSelectedDigit,
+      count: 0,
+      probability: 0,
+      deviation: 0,
+      bias: 'neutral' as const,
+    };
+    const underProbability = Number(
+      digitActionButtons
+        .filter((item) => item.digit < currentSelectedDigit)
+        .reduce((total, item) => total + item.probability, 0)
+        .toFixed(1),
+    );
+    const overProbability = Number(
+      digitActionButtons
+        .filter((item) => item.digit > currentSelectedDigit)
+        .reduce((total, item) => total + item.probability, 0)
+        .toFixed(1),
+    );
+    const difference = Number(Math.abs(overProbability - underProbability).toFixed(1));
+    const strength: 'strong' | 'weak' | 'neutral' = difference > 10 ? 'strong' : difference > 5 ? 'weak' : 'neutral';
+    const bias: 'over' | 'under' | 'neutral' = strength === 'neutral' ? 'neutral' : overProbability > underProbability ? 'over' : 'under';
+
+    return {
+      selectedDigit: currentSelectedDigit,
+      profile: selectedProfile,
+      matchProbability: selectedProfile.probability,
+      differProbability: Number(Math.max(0, 100 - selectedProfile.probability).toFixed(1)),
+      matchDeviation: selectedProfile.deviation,
+      differDeviation: Number((-selectedProfile.deviation).toFixed(1)),
+      underProbability,
+      overProbability,
+      difference,
+      confidence: Math.max(0, Math.min(100, difference)),
+      bias,
+      strength,
+    };
+  }, [digitActionButtons, selectedDigit]);
+
+  const warmup = snapshot.analytics.warmup;
+  const biasLabel = buildBiasLabel(selectedDigitMetrics.bias, selectedDigitMetrics.strength);
+  const tradeReady = snapshot.connected && warmup.ready;
+  const tradeDisabled = placingTrade != null || !tradeReady;
 
   const displayedStrategy = activeStrategy ?? workspaceMode;
 
@@ -750,6 +845,25 @@ export default function GoldxPulsePage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-5">
+                <div className={`rounded-2xl border p-4 ${warmup.ready ? 'border-emerald-400/20 bg-emerald-500/10' : 'border-amber-400/20 bg-amber-500/10'}`}>
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <div className="text-xs uppercase tracking-[0.18em] text-slate-300">Probability warm-up</div>
+                      <div className={`mt-1 text-sm font-medium ${warmup.ready ? 'text-emerald-100' : 'text-amber-100'}`}>{warmup.message}</div>
+                    </div>
+                    <Badge className={warmup.ready ? 'border-emerald-400/20 bg-emerald-500/15 text-emerald-100' : 'border-amber-400/20 bg-amber-500/15 text-amber-100'}>
+                      {warmup.progressPct.toFixed(0)}%
+                    </Badge>
+                  </div>
+                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-900/70">
+                    <div
+                      className={`h-full rounded-full transition-all ${warmup.ready ? 'bg-emerald-300' : 'bg-amber-300'}`}
+                      style={{ width: `${warmup.progressPct}%` }}
+                    />
+                  </div>
+                  <p className="mt-3 text-xs text-slate-300">{PROBABILITY_DISCLAIMER}</p>
+                </div>
+
                 {activeStrategy === 'digit-pulse' ? (
                   <>
                     <div className="grid grid-cols-5 gap-2 sm:gap-3">
@@ -765,7 +879,7 @@ export default function GoldxPulsePage() {
                               setSelectedDigit(String(item.digit));
                             }
                           }}
-                          className={`relative overflow-hidden rounded-2xl border p-2.5 text-center transition sm:p-3 ${item.digit === Number(selectedDigit) ? 'border-orange-300/50 bg-orange-400/8 shadow-[0_0_24px_rgba(251,146,60,0.18)]' : item.digit === snapshot.analytics.mostFrequentDigit ? 'border-red-400/30 bg-red-500/10' : item.digit === snapshot.analytics.leastFrequentDigit ? 'border-emerald-400/30 bg-emerald-500/10' : 'border-white/10 bg-white/5 hover:border-cyan-400/30 hover:bg-cyan-400/8'}`}
+                          className={`relative overflow-hidden rounded-2xl border p-2.5 text-center transition sm:p-3 ${item.digit === Number(selectedDigit) ? 'border-orange-300/50 bg-orange-400/8 shadow-[0_0_24px_rgba(251,146,60,0.18)]' : item.bias === 'underrepresented' ? 'border-emerald-400/30 bg-emerald-500/10 hover:border-emerald-300/40' : item.bias === 'overrepresented' ? 'border-rose-400/30 bg-rose-500/10 hover:border-rose-300/40' : 'border-white/10 bg-white/5 hover:border-cyan-400/30 hover:bg-cyan-400/8'}`}
                         >
                           {item.digit === Number(selectedDigit) ? (
                             <motion.div
@@ -777,20 +891,45 @@ export default function GoldxPulsePage() {
                             />
                           ) : null}
                           <div className="relative flex min-h-[5.2rem] items-center justify-center sm:min-h-[6.2rem]">
+                            <span className={`absolute right-0 top-0 text-[0.58rem] font-medium sm:text-[0.68rem] ${item.bias === 'underrepresented' ? 'text-emerald-200' : item.bias === 'overrepresented' ? 'text-rose-200' : 'text-slate-500'}`}>
+                              {formatSignedPercent(item.deviation)}
+                            </span>
                             <span className={`text-2xl font-semibold sm:text-3xl ${item.digit === Number(selectedDigit) ? 'text-orange-100' : 'text-slate-100'}`}>
                               {item.digit}
                             </span>
-                            <span className="absolute bottom-0 left-0 text-[0.62rem] font-medium text-slate-400 sm:text-[0.72rem]">
+                            <span className={`absolute bottom-0 left-0 text-[0.62rem] font-medium sm:text-[0.72rem] ${item.bias === 'underrepresented' ? 'text-emerald-200' : item.bias === 'overrepresented' ? 'text-rose-200' : 'text-slate-400'}`}>
                               {item.count}
                             </span>
-                            <span className={`absolute bottom-0 right-0 text-[0.62rem] font-medium sm:text-[0.72rem] ${item.digit === Number(selectedDigit) ? 'text-orange-200' : 'text-slate-400'}`}>
-                              {item.percentage}
+                            <span className={`absolute bottom-0 right-0 text-[0.62rem] font-medium sm:text-[0.72rem] ${item.digit === Number(selectedDigit) ? 'text-orange-200' : item.bias === 'underrepresented' ? 'text-emerald-200' : item.bias === 'overrepresented' ? 'text-rose-200' : 'text-slate-400'}`}>
+                              {item.probability.toFixed(1)}%
                             </span>
                           </div>
                         </div>
                       ))}
                     </div>
-                    <div className="grid gap-4 md:grid-cols-3">
+                    <div className="grid gap-4 md:grid-cols-4">
+                      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                        <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Match {selectedDigitMetrics.selectedDigit}</div>
+                        <div className="mt-2 text-2xl font-semibold text-fuchsia-100">{selectedDigitMetrics.matchProbability.toFixed(1)}%</div>
+                      </div>
+                      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                        <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Differ {selectedDigitMetrics.selectedDigit}</div>
+                        <div className="mt-2 text-2xl font-semibold text-cyan-100">{selectedDigitMetrics.differProbability.toFixed(1)}%</div>
+                      </div>
+                      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                        <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Deviation</div>
+                        <div className={`mt-2 text-2xl font-semibold ${selectedDigitMetrics.matchDeviation < 0 ? 'text-emerald-200' : selectedDigitMetrics.matchDeviation > 0 ? 'text-rose-200' : 'text-slate-100'}`}>
+                          {formatSignedPercent(selectedDigitMetrics.matchDeviation)}
+                        </div>
+                      </div>
+                      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                        <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Signal</div>
+                        <div className={`mt-2 text-lg font-semibold ${selectedDigitMetrics.profile.bias === 'underrepresented' ? 'text-emerald-200' : selectedDigitMetrics.profile.bias === 'overrepresented' ? 'text-rose-200' : 'text-slate-100'}`}>
+                          {selectedDigitMetrics.profile.bias === 'underrepresented' ? 'Reversion Edge' : selectedDigitMetrics.profile.bias === 'overrepresented' ? 'Cooling Off' : 'Balanced'}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-4">
                       <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                         <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Most frequent</div>
                         <div className="mt-2 text-xl font-semibold text-red-200">{snapshot.analytics.mostFrequentDigit ?? '-'}</div>
@@ -806,33 +945,57 @@ export default function GoldxPulsePage() {
                           {snapshot.analytics.currentStreakDigit ?? '-'} × {snapshot.analytics.currentStreakLength}
                         </div>
                       </div>
+                      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                        <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Longest streak</div>
+                        <div className="mt-2 text-xl font-semibold text-violet-200">
+                          {snapshot.analytics.longestStreakDigit ?? '-'} × {snapshot.analytics.longestStreakLength}
+                        </div>
+                      </div>
                     </div>
                   </>
                 ) : (
                   <>
-                    <div className="grid gap-4 md:grid-cols-3">
+                    <div className="grid gap-4 md:grid-cols-4">
                       <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                        <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Digits above 5</div>
-                        <div className="mt-2 text-3xl font-semibold text-fuchsia-200">{snapshot.analytics.aboveFivePct}%</div>
+                        <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Over {selectedDigitMetrics.selectedDigit}</div>
+                        <div className="mt-2 text-3xl font-semibold text-fuchsia-200">{selectedDigitMetrics.overProbability.toFixed(1)}%</div>
                       </div>
                       <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                        <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Digits below 5</div>
-                        <div className="mt-2 text-3xl font-semibold text-cyan-200">{snapshot.analytics.belowFivePct}%</div>
+                        <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Under {selectedDigitMetrics.selectedDigit}</div>
+                        <div className="mt-2 text-3xl font-semibold text-cyan-200">{selectedDigitMetrics.underProbability.toFixed(1)}%</div>
                       </div>
                       <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                        <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Bias</div>
-                        <div className="mt-2 text-3xl font-semibold text-emerald-200">{snapshot.analytics.bias.toUpperCase()}</div>
+                        <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Match {selectedDigitMetrics.selectedDigit}</div>
+                        <div className="mt-2 text-3xl font-semibold text-amber-100">{selectedDigitMetrics.matchProbability.toFixed(1)}%</div>
+                      </div>
+                      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                        <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Differ {selectedDigitMetrics.selectedDigit}</div>
+                        <div className="mt-2 text-3xl font-semibold text-slate-100">{selectedDigitMetrics.differProbability.toFixed(1)}%</div>
                       </div>
                     </div>
-                    <div className="grid gap-3 md:grid-cols-2">
-                      <Button variant="gradient" className="gap-2" onClick={() => placeTrade('OVER')} disabled={placingTrade != null || !snapshot.connected}>
-                        <Activity className="h-4 w-4" />
-                        Over 5
-                      </Button>
-                      <Button variant="outline" className="gap-2 border-cyan-400/20 bg-cyan-400/10 text-cyan-100 hover:bg-cyan-400/20" onClick={() => placeTrade('UNDER')} disabled={placingTrade != null || !snapshot.connected}>
-                        <Activity className="h-4 w-4" />
-                        Under 5
-                      </Button>
+                    <div className="grid gap-4 md:grid-cols-[1.3fr_0.9fr_0.8fr]">
+                      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Bias signal</div>
+                            <div className={`mt-2 text-2xl font-semibold ${selectedDigitMetrics.bias === 'over' ? 'text-fuchsia-200' : selectedDigitMetrics.bias === 'under' ? 'text-cyan-200' : 'text-slate-100'}`}>{biasLabel}</div>
+                          </div>
+                          <Badge className={selectedDigitMetrics.bias === 'over' ? 'border-fuchsia-400/20 bg-fuchsia-500/15 text-fuchsia-100' : selectedDigitMetrics.bias === 'under' ? 'border-cyan-400/20 bg-cyan-500/15 text-cyan-100' : 'border-white/10 bg-white/10 text-slate-200'}>
+                            {selectedDigitMetrics.difference.toFixed(1)}%
+                          </Badge>
+                        </div>
+                        <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-900/70">
+                          <div className={`h-full rounded-full transition-all ${selectedDigitMetrics.bias === 'over' ? 'bg-fuchsia-300' : selectedDigitMetrics.bias === 'under' ? 'bg-cyan-300' : 'bg-slate-400'}`} style={{ width: `${selectedDigitMetrics.confidence}%` }} />
+                        </div>
+                      </div>
+                      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                        <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Confidence</div>
+                        <div className="mt-2 text-3xl font-semibold text-emerald-100">{selectedDigitMetrics.confidence.toFixed(1)}%</div>
+                      </div>
+                      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                        <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Deviation</div>
+                        <div className={`mt-2 text-3xl font-semibold ${selectedDigitMetrics.matchDeviation < 0 ? 'text-emerald-200' : selectedDigitMetrics.matchDeviation > 0 ? 'text-rose-200' : 'text-slate-100'}`}>{formatSignedPercent(selectedDigitMetrics.matchDeviation)}</div>
+                      </div>
                     </div>
                   </>
                 )}
@@ -906,14 +1069,27 @@ export default function GoldxPulsePage() {
                 ) : null}
               </div>
 
+              <div className={`rounded-2xl border p-4 text-sm ${warmup.ready ? 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100' : 'border-amber-400/20 bg-amber-500/10 text-amber-100'}`}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <Lock className="mt-0.5 h-4 w-4 shrink-0" />
+                    <div>
+                      <div className="font-medium">{warmup.ready ? 'Trading unlocked' : 'Trading locked during warm-up'}</div>
+                      <div className="mt-1 text-xs text-current/80">{warmup.ready ? 'Enough live ticks have been collected for the probability engine.' : `${warmup.message}. Trade buttons unlock automatically at ${warmup.minTicksRequired} ticks.`}</div>
+                    </div>
+                  </div>
+                  <span className="text-xs font-semibold uppercase tracking-[0.18em]">{warmup.currentTicks}/{warmup.minTicksRequired}</span>
+                </div>
+              </div>
+
               {activeStrategy === 'range-pressure' ? (
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <Button variant="gradient" className="gap-2" onClick={() => placeTrade('OVER')} disabled={placingTrade != null || !snapshot.connected}>Over</Button>
-                  <Button variant="outline" className="gap-2 border-cyan-400/20 bg-cyan-400/10 text-cyan-100 hover:bg-cyan-400/20" onClick={() => placeTrade('UNDER')} disabled={placingTrade != null || !snapshot.connected}>Under</Button>
+                  <Button variant="gradient" className="gap-2" onClick={() => placeTrade('OVER')} disabled={tradeDisabled}>Over {selectedDigit}</Button>
+                  <Button variant="outline" className="gap-2 border-cyan-400/20 bg-cyan-400/10 text-cyan-100 hover:bg-cyan-400/20" onClick={() => placeTrade('UNDER')} disabled={tradeDisabled}>Under {selectedDigit}</Button>
                 </div>
               ) : (
                 <div className="flex justify-center">
-                  <Button variant="outline" className="w-full max-w-md gap-2 border-fuchsia-400/20 bg-fuchsia-400/10 text-fuchsia-100 hover:bg-fuchsia-400/20" onClick={() => placeTrade('DIFFER', Number(selectedDigit))} disabled={placingTrade != null || !snapshot.connected}>
+                  <Button variant="outline" className="w-full max-w-md gap-2 border-fuchsia-400/20 bg-fuchsia-400/10 text-fuchsia-100 hover:bg-fuchsia-400/20" onClick={() => placeTrade('DIFFER', Number(selectedDigit))} disabled={tradeDisabled}>
                     Differ {selectedDigit}
                   </Button>
                 </div>
@@ -928,6 +1104,11 @@ export default function GoldxPulsePage() {
                   <span>Cooldown remaining</span>
                   <span>{Math.ceil(snapshot.cooldownRemainingMs / 1000)}s</span>
                 </div>
+                <div className="mt-2 flex items-center justify-between gap-3">
+                  <span>Data readiness</span>
+                  <span>{warmup.ready ? 'Ready' : `${warmup.remainingTicks} ticks left`}</span>
+                </div>
+                <p className="mt-3 text-xs text-slate-400">{PROBABILITY_DISCLAIMER}</p>
               </div>
             </CardContent>
           </Card>
