@@ -19,6 +19,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 
 type WorkspaceMode = 'digit-pulse' | 'range-pressure';
+type RecommendationStage = 'No Trade' | 'Wait' | 'Enter';
 
 const strategyCards: Array<{
   mode: WorkspaceMode;
@@ -160,6 +161,49 @@ function buildBiasLabel(bias: 'over' | 'under' | 'neutral', strength: 'strong' |
   }
 
   return `${strength === 'strong' ? 'Strong' : 'Moderate'} ${bias === 'over' ? 'Over' : 'Under'} Bias`;
+}
+
+function getConfidenceStage(score: number, ready: boolean): RecommendationStage {
+  if (!ready) {
+    return 'No Trade';
+  }
+
+  if (score >= 66) {
+    return 'Enter';
+  }
+
+  if (score >= 38) {
+    return 'Wait';
+  }
+
+  return 'No Trade';
+}
+
+function getConfidenceTone(stage: RecommendationStage) {
+  if (stage === 'Enter') {
+    return {
+      text: 'text-emerald-100',
+      chip: 'border-emerald-400/20 bg-emerald-500/15 text-emerald-100',
+      bar: 'from-amber-300 via-cyan-300 to-emerald-300',
+      panel: 'border-emerald-400/20 bg-emerald-500/10',
+    };
+  }
+
+  if (stage === 'Wait') {
+    return {
+      text: 'text-amber-100',
+      chip: 'border-amber-400/20 bg-amber-500/15 text-amber-100',
+      bar: 'from-rose-300 via-amber-300 to-cyan-300',
+      panel: 'border-amber-400/20 bg-amber-500/10',
+    };
+  }
+
+  return {
+    text: 'text-rose-100',
+    chip: 'border-rose-400/20 bg-rose-500/15 text-rose-100',
+    bar: 'from-rose-300 via-rose-300 to-amber-300',
+    panel: 'border-rose-400/20 bg-rose-500/10',
+  };
 }
 
   const digitOptions = Array.from({ length: 10 }, (_, digit) => String(digit));
@@ -394,6 +438,72 @@ export default function GoldxPulsePage() {
   const tradeReady = snapshot.connected && warmup.ready;
   const tradeDisabled = placingTrade != null || !tradeReady;
 
+  const bestDifferDigit = useMemo(() => {
+    return [...digitActionButtons]
+      .sort((left, right) => {
+        if (left.probability === right.probability) {
+          return left.deviation - right.deviation;
+        }
+
+        return left.probability - right.probability;
+      })[0] ?? null;
+  }, [digitActionButtons]);
+
+  const strategyRecommendation = useMemo<{
+    stage: RecommendationStage;
+    confidence: number;
+    title: string;
+    action: string;
+    detail: string;
+  }>(() => {
+    if (!warmup.ready) {
+      return {
+        stage: 'No Trade' as const,
+        confidence: 0,
+        title: 'Warm-up Running',
+        action: `Collect ${warmup.remainingTicks} more ticks`,
+        detail: 'The model needs more live samples before it can suggest an entry.',
+      };
+    }
+
+    if (activeStrategy === 'digit-pulse') {
+      if (!bestDifferDigit) {
+        return {
+          stage: 'No Trade' as const,
+          confidence: 0,
+          title: 'No Clean Digit Edge',
+          action: 'Hold position',
+          detail: 'Digit probabilities are too balanced for a clean differs setup.',
+        };
+      }
+
+      const confidence = Math.max(0, Math.min(100, Number((Math.max(0, -bestDifferDigit.deviation) * 12 + Math.max(0, 10 - bestDifferDigit.probability) * 4).toFixed(1))));
+      const stage = getConfidenceStage(confidence, warmup.ready);
+
+      return {
+        stage,
+        confidence,
+        title: stage === 'Enter' ? 'Differ Setup Ready' : stage === 'Wait' ? 'Differ Setup Forming' : 'No Trade Edge',
+        action: stage === 'Enter' ? `Enter Differ on digit ${bestDifferDigit.digit}` : stage === 'Wait' ? `Watch digit ${bestDifferDigit.digit} for a cleaner differ edge` : `Avoid differ entries until digit ${bestDifferDigit.digit} separates more`,
+        detail: `Digit ${bestDifferDigit.digit} is the least frequent print at ${bestDifferDigit.probability.toFixed(1)}% with ${formatSignedPercent(bestDifferDigit.deviation)} deviation.` ,
+      };
+    }
+
+    const confidence = selectedDigitMetrics.confidence;
+    const stage = getConfidenceStage(confidence, warmup.ready);
+    const direction = selectedDigitMetrics.bias === 'neutral' ? null : selectedDigitMetrics.bias === 'over' ? 'Over' : 'Under';
+
+    return {
+      stage,
+      confidence,
+      title: direction ? `${direction} Bias ${stage === 'Enter' ? 'Ready' : stage === 'Wait' ? 'Building' : 'Muted'}` : 'Range Flow Neutral',
+      action: direction ? stage === 'Enter' ? `Enter ${direction} ${selectedDigitMetrics.selectedDigit}` : stage === 'Wait' ? `Wait on ${direction} ${selectedDigitMetrics.selectedDigit}` : `No trade on ${selectedDigitMetrics.selectedDigit}` : `Wait for stronger movement around ${selectedDigitMetrics.selectedDigit}`,
+      detail: direction ? `${biasLabel} with a ${selectedDigitMetrics.difference.toFixed(1)}% separation between over and under flow.` : 'Over and under probabilities are still too close together.',
+    };
+  }, [activeStrategy, bestDifferDigit, biasLabel, selectedDigitMetrics, warmup.ready, warmup.remainingTicks]);
+
+  const recommendationTone = getConfidenceTone(strategyRecommendation.stage);
+
   const displayedStrategy = activeStrategy ?? workspaceMode;
 
   const saveWorkspaceSettings = async () => {
@@ -445,10 +555,14 @@ export default function GoldxPulsePage() {
     }
 
     try {
+      setConnectBusy(true);
+      setError('');
       await api.goldxPulse.disconnect(token);
       setSnapshot(defaultSnapshot);
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : 'Unable to disconnect Deriv account.');
+    } finally {
+      setConnectBusy(false);
     }
   };
 
@@ -702,25 +816,31 @@ export default function GoldxPulsePage() {
                   </Button>
                 </div>
               ) : (
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                    <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Balance</div>
-                    <div className="mt-2 text-2xl font-semibold text-cyan-200">{formatCurrency(snapshot.account?.balance, snapshot.account?.currency)}</div>
-                  </div>
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                    <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Account</div>
-                    <div className="mt-2 space-y-2">
-                      <div className="text-lg font-semibold text-slate-100">{snapshot.account?.accountType.toUpperCase()}</div>
-                      <div className="break-all text-base font-medium text-slate-300">{snapshot.account?.loginId}</div>
+                <div className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                      <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Balance</div>
+                      <div className="mt-2 text-2xl font-semibold text-cyan-200">{formatCurrency(snapshot.account?.balance, snapshot.account?.currency)}</div>
+                    </div>
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                      <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Account</div>
+                      <div className="mt-2 space-y-2">
+                        <div className="text-lg font-semibold text-slate-100">{snapshot.account?.accountType.toUpperCase()}</div>
+                        <div className="break-all text-base font-medium text-slate-300">{snapshot.account?.loginId}</div>
+                      </div>
+                    </div>
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-4 md:col-span-2">
+                      <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Session</div>
+                      <div className="mt-2 flex flex-wrap items-center gap-2 text-lg font-semibold text-slate-100">
+                        <Power className="h-4 w-4 text-emerald-300" />
+                        {snapshot.connectionState}
+                      </div>
                     </div>
                   </div>
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4 md:col-span-2">
-                    <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Session</div>
-                    <div className="mt-2 flex flex-wrap items-center gap-2 text-lg font-semibold text-slate-100">
-                      <Power className="h-4 w-4 text-emerald-300" />
-                      {snapshot.connectionState}
-                    </div>
-                  </div>
+                  <Button variant="destructive" className="w-full gap-2" onClick={disconnectAccount} disabled={connectBusy}>
+                    {connectBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Power className="h-4 w-4" />}
+                    Disconnect Deriv Account
+                  </Button>
                 </div>
               )}
             </CardContent>
@@ -862,6 +982,53 @@ export default function GoldxPulsePage() {
                     />
                   </div>
                   <p className="mt-3 text-xs text-slate-300">{PROBABILITY_DISCLAIMER}</p>
+                </div>
+
+                <div className="grid gap-4 xl:grid-cols-[1.35fr_0.75fr]">
+                  <div className={`rounded-2xl border p-4 ${recommendationTone.panel}`}>
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <div className="text-xs uppercase tracking-[0.18em] text-slate-300">Confidence meter</div>
+                        <div className={`mt-2 text-2xl font-semibold ${recommendationTone.text}`}>{strategyRecommendation.stage}</div>
+                      </div>
+                      <Badge className={recommendationTone.chip}>{strategyRecommendation.confidence.toFixed(1)}%</Badge>
+                    </div>
+                    <div className="mt-4">
+                      <div className="mb-2 flex items-center justify-between text-[0.64rem] font-semibold uppercase tracking-[0.18em] text-slate-400 sm:text-[0.7rem]">
+                        <span>No Trade</span>
+                        <span>Wait</span>
+                        <span>Enter</span>
+                      </div>
+                      <div className="relative h-3 overflow-hidden rounded-full bg-slate-900/70">
+                        <div className="absolute inset-y-0 left-1/3 w-px bg-white/10" />
+                        <div className="absolute inset-y-0 left-2/3 w-px bg-white/10" />
+                        <div className={`h-full rounded-full bg-gradient-to-r ${recommendationTone.bar} transition-all`} style={{ width: `${Math.max(6, strategyRecommendation.confidence)}%` }} />
+                      </div>
+                    </div>
+                    <p className="mt-4 text-sm text-slate-200">{strategyRecommendation.detail}</p>
+                  </div>
+
+                  <div className="flex xl:justify-end">
+                    <div className="relative aspect-square w-full max-w-[15rem] overflow-hidden rounded-[1.75rem] border border-white/10 bg-[linear-gradient(160deg,rgba(15,23,42,0.96),rgba(30,41,59,0.92))] p-4 shadow-[0_18px_60px_rgba(15,23,42,0.4)]">
+                      <div className="pointer-events-none absolute inset-x-4 top-0 h-20 rounded-b-[999px] bg-white/10 blur-2xl" />
+                      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.12),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(34,211,238,0.12),transparent_30%)]" />
+                      <div className="relative flex h-full flex-col justify-between">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="text-[0.62rem] uppercase tracking-[0.24em] text-slate-400">Pulse call</div>
+                            <div className={`mt-2 text-lg font-semibold ${recommendationTone.text}`}>{strategyRecommendation.title}</div>
+                          </div>
+                          <div className={`rounded-full border px-2.5 py-1 text-[0.62rem] font-semibold uppercase tracking-[0.18em] ${recommendationTone.chip}`}>
+                            {strategyRecommendation.stage}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-xl font-semibold leading-tight text-slate-100">{strategyRecommendation.action}</div>
+                          <p className="mt-3 text-sm leading-6 text-slate-300">{strategyRecommendation.detail}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {activeStrategy === 'digit-pulse' ? (
@@ -1014,12 +1181,12 @@ export default function GoldxPulsePage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
+              <div className="grid grid-cols-3 gap-3 sm:gap-4">
+                <div className="min-w-0 space-y-2">
                   <label className="text-xs uppercase tracking-[0.18em] text-slate-400">Stake amount</label>
                   <Input value={stake} onChange={(event) => setStake(event.target.value)} className="h-11 border-white/10 bg-white/5 text-slate-100" />
                 </div>
-                <div className="space-y-2">
+                <div className="min-w-0 space-y-2">
                   <label className="text-xs uppercase tracking-[0.18em] text-slate-400">Tick duration</label>
                   <select value={duration} onChange={(event) => setDuration(event.target.value)} className={darkSelectClassName} style={{ colorScheme: 'dark' }}>
                     {durationOptions.map((value) => (
@@ -1027,7 +1194,7 @@ export default function GoldxPulsePage() {
                     ))}
                   </select>
                 </div>
-                <div className="space-y-2">
+                <div className="min-w-0 space-y-2">
                   <label className="text-xs uppercase tracking-[0.18em] text-slate-400">Selected digit</label>
                   <select value={selectedDigit} onChange={(event) => setSelectedDigit(event.target.value)} className={darkSelectClassName} style={{ colorScheme: 'dark' }}>
                     {digitOptions.map((value) => (
@@ -1035,7 +1202,7 @@ export default function GoldxPulsePage() {
                     ))}
                   </select>
                 </div>
-                <div className="space-y-2">
+                <div className="min-w-0 space-y-2">
                   <label className="text-xs uppercase tracking-[0.18em] text-slate-400">Index</label>
                   <select value={selectedSymbol} onChange={(event) => setSelectedSymbol(event.target.value)} className={darkSelectClassName} style={{ colorScheme: 'dark' }}>
                     {Object.entries(groupedSymbols).map(([group, options]) => (
@@ -1047,11 +1214,11 @@ export default function GoldxPulsePage() {
                     ))}
                   </select>
                 </div>
-                <div className="space-y-2">
+                <div className="min-w-0 space-y-2">
                   <label className="text-xs uppercase tracking-[0.18em] text-slate-400">Max daily loss</label>
                   <Input value={maxDailyLoss} onChange={(event) => setMaxDailyLoss(event.target.value)} placeholder="Optional" className="h-11 border-white/10 bg-white/5 text-slate-100" />
                 </div>
-                <div className="space-y-2">
+                <div className="min-w-0 space-y-2">
                   <label className="text-xs uppercase tracking-[0.18em] text-slate-400">Trade cooldown (seconds)</label>
                   <Input value={cooldownSeconds} onChange={(event) => setCooldownSeconds(event.target.value)} className="h-11 border-white/10 bg-white/5 text-slate-100" />
                 </div>
@@ -1064,9 +1231,6 @@ export default function GoldxPulsePage() {
                 <Button variant="outline" onClick={saveWorkspaceSettings} disabled={saving}>
                   {saving ? 'Saving…' : 'Save Controls'}
                 </Button>
-                {snapshot.connected ? (
-                  <Button variant="destructive" onClick={disconnectAccount}>Disconnect</Button>
-                ) : null}
               </div>
 
               <div className={`rounded-2xl border p-4 text-sm ${warmup.ready ? 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100' : 'border-amber-400/20 bg-amber-500/10 text-amber-100'}`}>
