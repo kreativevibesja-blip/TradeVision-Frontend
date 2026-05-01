@@ -11,6 +11,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const { user, token } = useAuth();
   const isLiveWorkspace = pathname === '/dashboard/tradingview' || pathname === '/dashboard/deriv';
+  const isGoldxPulseWorkspace = pathname === '/dashboard/goldx-pulse';
   const showPushPrompt = user?.subscription === 'TOP_TIER' && Boolean(token);
   const dashboardNav = [
     { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
@@ -31,8 +32,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="page-stack min-h-screen">
-      <div className="page-shell max-w-6xl">
-        <div className="grid gap-6 lg:grid-cols-[max-content_1fr] lg:items-start">
+      <div className={`page-shell ${isGoldxPulseWorkspace ? 'max-w-[1600px]' : 'max-w-6xl'}`}>
+        <div className={`grid gap-6 lg:items-start ${isGoldxPulseWorkspace ? 'lg:grid-cols-[13rem_minmax(0,1fr)]' : 'lg:grid-cols-[max-content_1fr]'}`}>
           <aside className="lg:sticky lg:top-24 lg:self-start">
             <Card className="mobile-card overflow-hidden lg:w-fit">
               <CardContent className="p-2 sm:p-3">
@@ -56,7 +57,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </CardContent>
             </Card>
           </aside>
-          <div className="min-w-0 space-y-6">
+          <div className={`min-w-0 ${isGoldxPulseWorkspace ? '' : 'space-y-6'}`}>
             {showPushPrompt && token ? <PushNotificationPrompt token={token} /> : null}
             {children}
           </div>

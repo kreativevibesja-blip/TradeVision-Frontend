@@ -144,7 +144,7 @@ const MICRO_STAT_CLASS = 'rounded-[10px] border border-white/10 bg-black/25 px-3
 const SECTION_KICKER_CLASS = 'inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.045] px-3 py-1 text-[0.63rem] font-semibold uppercase tracking-[0.2em] text-slate-300';
 const ANALYTICS_TILE_CLASS = 'rounded-[10px] border border-white/10 bg-black/25 p-3 shadow-none';
 const CONTROL_SURFACE_CLASS = 'rounded-[10px] border border-white/10 bg-black/25 p-3 shadow-none';
-const QUANTIX_PAGE_CLASS = 'mx-auto grid w-full max-w-[980px] gap-4 px-2 pb-16 text-slate-100 sm:px-3 xl:grid-cols-[minmax(0,0.96fr)_minmax(0,1.04fr)]';
+const QUANTIX_PAGE_CLASS = 'mx-auto grid w-full gap-4 px-1 pb-16 text-slate-100 sm:px-2 2xl:grid-cols-[minmax(18rem,0.86fr)_minmax(24rem,1.14fr)]';
 const QUANTIX_PANEL_CLASS = 'rounded-[10px] border border-white/10 bg-[linear-gradient(180deg,rgba(21,24,34,0.98),rgba(27,31,46,0.96))] p-3 shadow-none';
 const QUANTIX_TITLE_CLASS = 'text-[15px] font-semibold text-rose-400';
 const QUANTIX_STAT_CLASS = 'rounded-[10px] border border-white/10 bg-black/25 px-3 py-3';
@@ -851,7 +851,7 @@ export default function GoldxPulsePage() {
         </div>
       ) : null}
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,0.94fr)_minmax(0,1.06fr)] xl:gap-4">
+      <div className="grid gap-4 2xl:grid-cols-[minmax(18rem,0.86fr)_minmax(24rem,1.14fr)]">
         <div className="min-w-0 space-y-4">
           <Card className={`${QUANTIX_PANEL_CLASS} border-cyan-400/20`}>
             <CardHeader className="pb-4">
