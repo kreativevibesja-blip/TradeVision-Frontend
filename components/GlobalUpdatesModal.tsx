@@ -184,7 +184,7 @@ const THEMES: Record<AnnouncementType, ThemeConfig> = {
   },
 };
 
-const PLAN_LABELS: Record<string, string> = { PRO: 'PRO', TOP_TIER: 'PRO+', GOLDX: 'GoldX' };
+const PLAN_LABELS: Record<string, string> = { PRO: 'PRO', TOP_TIER: 'PRO+', GOLDX: 'GoldX', GOLDX_PULSE: 'GoldX Pulse' };
 
 export function GlobalUpdatesModal() {
   const pathname = usePathname();
