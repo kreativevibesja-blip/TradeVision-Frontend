@@ -1099,7 +1099,7 @@ export default function GoldxPulsePage() {
                     <BarChart3 className="h-5 w-5 text-cyan-300" />
                     {strategyDisplay[activeStrategy].metricsTitle}
                   </CardTitle>
-                  <span className={SECTION_KICKER_CLASS}>Signal & Confidence</span>
+                  <span className={SECTION_KICKER_CLASS}>Strategy Metrics</span>
                 </div>
               </CardHeader>
               <CardContent className="space-y-5">
@@ -1120,53 +1120,6 @@ export default function GoldxPulsePage() {
                     />
                   </div>
                   <p className="mt-3 text-xs text-slate-300">{PROBABILITY_DISCLAIMER}</p>
-                </div>
-
-                <div className="grid gap-4 xl:grid-cols-[1.35fr_0.75fr]">
-                  <div className={`rounded-2xl border p-4 ${recommendationTone.panel}`}>
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <div className="text-xs uppercase tracking-[0.18em] text-slate-300">Confidence meter</div>
-                        <div className={`mt-2 text-2xl font-semibold ${recommendationTone.text}`}>{strategyRecommendation.stage}</div>
-                      </div>
-                      <Badge className={recommendationTone.chip}>{strategyRecommendation.confidence.toFixed(1)}%</Badge>
-                    </div>
-                    <div className="mt-4">
-                      <div className="mb-2 flex items-center justify-between text-[0.64rem] font-semibold uppercase tracking-[0.18em] text-slate-400 sm:text-[0.7rem]">
-                        <span>No Trade</span>
-                        <span>Wait</span>
-                        <span>Enter</span>
-                      </div>
-                      <div className="relative h-3 overflow-hidden rounded-full bg-slate-900/70">
-                        <div className="absolute inset-y-0 left-1/3 w-px bg-white/10" />
-                        <div className="absolute inset-y-0 left-2/3 w-px bg-white/10" />
-                        <div className={`h-full rounded-full bg-gradient-to-r ${recommendationTone.bar} transition-all`} style={{ width: `${Math.max(6, strategyRecommendation.confidence)}%` }} />
-                      </div>
-                    </div>
-                    <p className="mt-4 text-sm text-slate-200">{strategyRecommendation.detail}</p>
-                  </div>
-
-                  <div className="flex xl:justify-end">
-                    <div className="relative aspect-square w-full max-w-[15rem] overflow-hidden rounded-[1.75rem] border border-white/10 bg-[linear-gradient(160deg,rgba(15,23,42,0.96),rgba(30,41,59,0.92))] p-4 shadow-[0_18px_60px_rgba(15,23,42,0.4)]">
-                      <div className="pointer-events-none absolute inset-x-4 top-0 h-20 rounded-b-[999px] bg-white/10 blur-2xl" />
-                      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.12),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(34,211,238,0.12),transparent_30%)]" />
-                      <div className="relative flex h-full flex-col justify-between">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <div className="text-[0.62rem] uppercase tracking-[0.24em] text-slate-400">Pulse call</div>
-                            <div className={`mt-2 text-lg font-semibold ${recommendationTone.text}`}>{strategyRecommendation.title}</div>
-                          </div>
-                          <div className={`rounded-full border px-2.5 py-1 text-[0.62rem] font-semibold uppercase tracking-[0.18em] ${recommendationTone.chip}`}>
-                            {strategyRecommendation.stage}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-xl font-semibold leading-tight text-slate-100">{strategyRecommendation.action}</div>
-                          <p className="mt-3 text-sm leading-6 text-slate-300">{strategyRecommendation.detail}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
                 </div>
 
                 {activeStrategy === 'digit-pulse' ? (
@@ -1326,6 +1279,67 @@ export default function GoldxPulsePage() {
         </div>
 
         <div className="min-w-0 space-y-5 xl:space-y-6">
+          {activeStrategy != null && assistedPanelsOn ? (
+          <Card className={`${WORKSPACE_CARD_CLASS} border-cyan-400/20`}>
+            <CardHeader className="pb-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <Sparkles className="h-5 w-5 text-cyan-300" />
+                  Signal & Confidence
+                </CardTitle>
+                <span className={SECTION_KICKER_CLASS}>{strategyDisplay[activeStrategy].name} live recommendation</span>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className={`rounded-[24px] border p-4 ${recommendationTone.panel}`}>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <div className="text-xs uppercase tracking-[0.18em] text-slate-300">Confidence meter</div>
+                    <div className={`mt-2 text-2xl font-semibold ${recommendationTone.text}`}>{strategyRecommendation.stage}</div>
+                  </div>
+                  <Badge className={recommendationTone.chip}>{strategyRecommendation.confidence.toFixed(1)}%</Badge>
+                </div>
+                <div className="mt-4">
+                  <div className="mb-2 flex items-center justify-between text-[0.64rem] font-semibold uppercase tracking-[0.18em] text-slate-400 sm:text-[0.7rem]">
+                    <span>No Trade</span>
+                    <span>Wait</span>
+                    <span>Enter</span>
+                  </div>
+                  <div className="relative h-3 overflow-hidden rounded-full bg-slate-900/70">
+                    <div className="absolute inset-y-0 left-1/3 w-px bg-white/10" />
+                    <div className="absolute inset-y-0 left-2/3 w-px bg-white/10" />
+                    <div className={`h-full rounded-full bg-gradient-to-r ${recommendationTone.bar} transition-all`} style={{ width: `${Math.max(6, strategyRecommendation.confidence)}%` }} />
+                  </div>
+                </div>
+                <p className="mt-4 text-sm text-slate-200">{strategyRecommendation.detail}</p>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-[minmax(0,1.1fr)_minmax(14rem,0.9fr)]">
+                <div className={`${CONTROL_SURFACE_CLASS} flex flex-col justify-between`}>
+                  <div>
+                    <div className="text-[0.62rem] uppercase tracking-[0.2em] text-slate-400">Trade signal</div>
+                    <div className={`mt-2 text-xl font-semibold ${recommendationTone.text}`}>{strategyRecommendation.title}</div>
+                  </div>
+                  <div className="mt-4 text-sm leading-6 text-slate-300">{strategyRecommendation.action}</div>
+                </div>
+                <div className="relative overflow-hidden rounded-[24px] border border-white/10 bg-[linear-gradient(160deg,rgba(15,23,42,0.96),rgba(30,41,59,0.92))] p-4 shadow-[0_18px_60px_rgba(15,23,42,0.4)]">
+                  <div className="pointer-events-none absolute inset-x-4 top-0 h-20 rounded-b-[999px] bg-white/10 blur-2xl" />
+                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.12),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(34,211,238,0.12),transparent_30%)]" />
+                  <div className="relative flex h-full flex-col justify-between gap-6">
+                    <div>
+                      <div className="text-[0.62rem] uppercase tracking-[0.24em] text-slate-400">Signal card</div>
+                      <div className={`mt-2 text-lg font-semibold ${recommendationTone.text}`}>{strategyRecommendation.title}</div>
+                    </div>
+                    <div className={`inline-flex w-fit rounded-full border px-2.5 py-1 text-[0.62rem] font-semibold uppercase tracking-[0.18em] ${recommendationTone.chip}`}>
+                      {strategyRecommendation.stage}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          ) : null}
+
           {activeStrategy == null ? null : (
           <Card className={`${WORKSPACE_CARD_CLASS} border-fuchsia-400/20`}>
             <CardHeader className="pb-4">
