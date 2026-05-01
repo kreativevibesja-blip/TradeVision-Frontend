@@ -1049,7 +1049,7 @@ export default function GoldxPulsePage() {
           </Card>
 
           {activeStrategy == null ? (
-            <Card className={`${WORKSPACE_CARD_CLASS} border-white/10 bg-[radial-gradient(circle_at_top,_rgba(251,146,60,0.1),_transparent_32%),linear-gradient(180deg,rgba(2,6,23,0.96),rgba(15,23,42,0.92))] text-slate-100`}>
+            <Card className={`${QUANTIX_PANEL_CLASS} border-white/10 text-slate-100`}>
               <CardContent className="flex min-h-[18rem] flex-col items-center justify-center gap-3 p-8 text-center">
                 <div className="rounded-full border border-orange-300/20 bg-orange-400/10 px-3 py-1 text-xs uppercase tracking-[0.24em] text-orange-200">
                   Strategy Idle
@@ -1059,7 +1059,7 @@ export default function GoldxPulsePage() {
               </CardContent>
             </Card>
           ) : (
-          <Card className={`${WORKSPACE_CARD_CLASS} border-fuchsia-400/20`}>
+          <Card className={`${QUANTIX_PANEL_CLASS} border-fuchsia-400/20`}>
             <CardHeader className="pb-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <CardTitle className="flex items-center gap-2 text-xl">
@@ -1123,7 +1123,7 @@ export default function GoldxPulsePage() {
           )}
 
           {activeStrategy != null && assistedPanelsOn ? (
-            <Card className={`${WORKSPACE_CARD_CLASS} border-cyan-400/20`}>
+            <Card className={`${QUANTIX_PANEL_CLASS} border-cyan-400/20`}>
               <CardHeader className="pb-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <CardTitle className="flex items-center gap-2 text-xl">
@@ -1311,7 +1311,7 @@ export default function GoldxPulsePage() {
 
         <div className="min-w-0 space-y-5 xl:space-y-6">
           {activeStrategy != null && assistedPanelsOn ? (
-          <Card className={`${WORKSPACE_CARD_CLASS} border-cyan-400/20`}>
+          <Card className={`${QUANTIX_PANEL_CLASS} border-cyan-400/20`}>
             <CardHeader className="pb-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <CardTitle className="flex items-center gap-2 text-xl">
@@ -1372,7 +1372,7 @@ export default function GoldxPulsePage() {
           ) : null}
 
           {activeStrategy == null ? null : (
-          <Card className={`${WORKSPACE_CARD_CLASS} border-fuchsia-400/20`}>
+          <Card className={`${QUANTIX_PANEL_CLASS} border-fuchsia-400/20`}>
             <CardHeader className="pb-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <CardTitle className="flex items-center gap-2 text-xl">
@@ -1502,7 +1502,7 @@ export default function GoldxPulsePage() {
           )}
 
           {activeStrategy == null ? null : (
-          <Card className={`${WORKSPACE_CARD_CLASS} border-emerald-400/20`}>
+          <Card className={`${QUANTIX_PANEL_CLASS} border-emerald-400/20`}>
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -1563,7 +1563,7 @@ export default function GoldxPulsePage() {
           )}
 
           {activeStrategy == null ? null : (
-          <Card className={`${WORKSPACE_CARD_CLASS} border-amber-400/20`}>
+          <Card className={`${QUANTIX_PANEL_CLASS} border-amber-400/20`}>
             <CardContent className="p-5 text-sm text-amber-100/90">
               <div className="flex items-start gap-3">
                 <AlertTriangle className="mt-0.5 h-4 w-4 text-amber-300" />
