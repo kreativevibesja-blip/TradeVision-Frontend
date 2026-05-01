@@ -144,6 +144,46 @@ const MICRO_STAT_CLASS = 'rounded-[22px] border border-white/10 bg-[linear-gradi
 const SECTION_KICKER_CLASS = 'inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.045] px-3 py-1 text-[0.63rem] font-semibold uppercase tracking-[0.2em] text-slate-300';
 const ANALYTICS_TILE_CLASS = 'rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.025))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]';
 const CONTROL_SURFACE_CLASS = 'rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.02))] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]';
+const QUANTIX_PAGE_CLASS = 'mx-auto grid max-w-[980px] gap-5 px-3 pb-24 text-slate-100 xl:max-w-[1320px] xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]';
+const QUANTIX_PANEL_CLASS = 'rounded-[10px] border border-white/10 bg-[linear-gradient(180deg,rgba(21,24,34,0.98),rgba(27,31,46,0.96))] p-3 shadow-none';
+const QUANTIX_TITLE_CLASS = 'text-[15px] font-semibold text-rose-400';
+const QUANTIX_STAT_CLASS = 'rounded-[10px] border border-white/10 bg-black/25 px-3 py-3';
+
+function getEtSessionContext(date = new Date()) {
+  const etFormatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+    weekday: 'short',
+  });
+  const parts = etFormatter.formatToParts(date);
+  const weekday = parts.find((part) => part.type === 'weekday')?.value ?? '';
+  const hour = Number(parts.find((part) => part.type === 'hour')?.value ?? '0');
+  const minute = parts.find((part) => part.type === 'minute')?.value ?? '00';
+  const dayPeriod = parts.find((part) => part.type === 'dayPeriod')?.value ?? 'AM';
+  const twentyFourHour = dayPeriod.toLowerCase() === 'pm' && hour !== 12 ? hour + 12 : dayPeriod.toLowerCase() === 'am' && hour === 12 ? 0 : hour;
+
+  let sessionName = 'Overnight';
+  let sessionNote = 'Liquidity is thinner and edge confirmation matters more.';
+
+  if (twentyFourHour >= 7 && twentyFourHour < 12) {
+    sessionName = 'NY Morning';
+    sessionNote = 'Best for sharper reactions and faster digit flow.';
+  } else if (twentyFourHour >= 12 && twentyFourHour < 17) {
+    sessionName = 'NY Midday';
+    sessionNote = 'Momentum can flatten, so wait for cleaner confirmation.';
+  } else if (twentyFourHour >= 17 && twentyFourHour < 22) {
+    sessionName = 'NY Evening';
+    sessionNote = 'Good for controlled re-entry and lower-noise setups.';
+  }
+
+  return {
+    label: `${weekday} ${hour}:${minute} ${dayPeriod} ET`,
+    sessionName,
+    sessionNote,
+  };
+}
 
 function formatCurrency(value: number | null | undefined, currency = 'USD') {
   if (value == null || Number.isNaN(value)) {
@@ -535,6 +575,13 @@ export default function GoldxPulsePage() {
   }, [activeStrategy, bestDifferDigit, biasLabel, selectedDigitMetrics, warmup.ready, warmup.remainingTicks]);
 
   const recommendationTone = getConfidenceTone(strategyRecommendation.stage);
+  const etSession = useMemo(() => getEtSessionContext(), []);
+  const bestStrategyLabel = activeStrategy == null ? 'Standby' : `${strategyDisplay[activeStrategy].name}`;
+  const recommendationBadgeClass = strategyRecommendation.stage === 'Enter'
+    ? 'border-emerald-400/30 bg-emerald-500/15 text-emerald-100'
+    : strategyRecommendation.stage === 'Wait'
+      ? 'border-amber-400/30 bg-amber-500/15 text-amber-100'
+      : 'border-white/10 bg-white/10 text-slate-200';
 
   const displayedStrategy = activeStrategy ?? workspaceMode;
 
@@ -779,108 +826,34 @@ export default function GoldxPulsePage() {
   }
 
   return (
-    <div className="relative isolate space-y-5 overflow-hidden text-slate-100 sm:space-y-6">
-      <motion.div
-        aria-hidden="true"
-        className="pointer-events-none absolute -left-28 top-20 h-72 w-72 rounded-full bg-cyan-400/12 blur-3xl"
-        animate={{ opacity: [0.32, 0.62, 0.32], scale: [1, 1.06, 1] }}
-        transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
-      />
-      <motion.div
-        aria-hidden="true"
-        className="pointer-events-none absolute right-[-8rem] top-72 h-80 w-80 rounded-full bg-fuchsia-500/10 blur-3xl"
-        animate={{ opacity: [0.26, 0.5, 0.26], scale: [1.04, 0.98, 1.04] }}
-        transition={{ duration: 8.5, repeat: Infinity, ease: 'easeInOut' }}
-      />
-      <motion.div
-        aria-hidden="true"
-        className="pointer-events-none absolute bottom-24 left-1/3 h-64 w-64 rounded-full bg-emerald-400/8 blur-3xl"
-        animate={{ opacity: [0.2, 0.38, 0.2], scale: [0.98, 1.04, 0.98] }}
-        transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
-      />
-
-      <motion.div
-        initial={{ opacity: 0, y: 18 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.28 }}
-        className="overflow-hidden rounded-[32px] border border-cyan-400/20 bg-[radial-gradient(circle_at_top_left,_rgba(34,211,238,0.22),_transparent_26%),radial-gradient(circle_at_bottom_right,_rgba(168,85,247,0.18),_transparent_24%),linear-gradient(180deg,rgba(2,6,23,0.98),rgba(15,23,42,0.96))] p-5 shadow-[0_30px_100px_rgba(14,165,233,0.16)] sm:p-6"
-      >
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)] xl:items-end">
-          <div className="min-w-0">
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-[0.68rem] uppercase tracking-[0.25em] text-cyan-200 backdrop-blur">
-              <RadioTower className="h-3.5 w-3.5" />
-              GoldX Pulse
-            </div>
-            <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-              <div>
-                <h1 className="text-[2rem] font-semibold tracking-tight sm:text-[2.35rem]">Z Trade and Strike Pro Workspace</h1>
-                <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300 sm:text-[0.95rem]">
-                  Quantix-style layout, GoldX Pulse data. Run Z Trade for matches and differs, switch to Strike Pro for GoldX U/O pressure, and keep the feed, metrics, trading panel, and history in one tighter workspace.
-                </p>
-              </div>
-              <div className="hidden rounded-[24px] border border-white/10 bg-white/[0.04] px-4 py-3 text-right shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] md:block">
-                <div className="text-[0.65rem] uppercase tracking-[0.22em] text-slate-400">Trade signal</div>
-                <div className={`mt-1 text-lg font-semibold ${recommendationTone.text}`}>{strategyRecommendation.stage}</div>
-              </div>
-            </div>
+    <div className={QUANTIX_PAGE_CLASS}>
+      <header className="col-span-1 flex items-center justify-between gap-4 rounded-[10px] border border-white/10 bg-[linear-gradient(90deg,rgba(0,0,0,0.55),rgba(0,0,0,0.35))] px-4 py-4 shadow-[0_18px_40px_rgba(0,0,0,0.45)] xl:col-span-2">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 text-[22px] font-semibold text-rose-400">
+            <span className="inline-flex h-2.5 w-2.5 rounded-full bg-rose-500 shadow-[0_0_14px_rgba(244,63,94,0.7)]" />
+            <span className="inline-flex h-2.5 w-2.5 rounded-full bg-cyan-400 shadow-[0_0_14px_rgba(34,211,238,0.7)]" />
+            GoldX Pulse
           </div>
-
-          <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1 2xl:grid-cols-3">
-            <div className={MICRO_STAT_CLASS}>
-              <div className="text-[0.65rem] uppercase tracking-[0.2em] text-slate-400">Connection</div>
-              <div className={`mt-2 text-lg font-semibold ${snapshot.connected ? 'text-emerald-100' : 'text-slate-100'}`}>{snapshot.connected ? 'Live' : 'Offline'}</div>
-              <div className="mt-1 text-xs text-slate-400">{snapshot.settings.symbol}</div>
-            </div>
-            <div className={MICRO_STAT_CLASS}>
-              <div className="text-[0.65rem] uppercase tracking-[0.2em] text-slate-400">Warm-up</div>
-              <div className={`mt-2 text-lg font-semibold ${warmup.ready ? 'text-emerald-100' : 'text-amber-100'}`}>{warmup.ready ? 'Ready' : `${warmup.progressPct.toFixed(0)}%`}</div>
-              <div className="mt-1 text-xs text-slate-400">{warmup.ready ? 'Trading unlocked' : `${warmup.remainingTicks} ticks left`}</div>
-            </div>
-            <div className={MICRO_STAT_CLASS}>
-              <div className="text-[0.65rem] uppercase tracking-[0.2em] text-slate-400">Net P/L</div>
-              <div className={`mt-2 text-lg font-semibold ${netProfit >= 0 ? 'text-emerald-100' : 'text-rose-100'}`}>{formatCurrency(netProfit, snapshot.account?.currency || 'USD')}</div>
-              <div className="mt-1 text-xs text-slate-400">{activeStrategy == null ? 'No strategy active' : `${strategyDisplay[activeStrategy].name} · ${strategyDisplay[activeStrategy].subtitle}`}</div>
-            </div>
-          </div>
+          <p className="mt-1 text-xs text-slate-400">Deriv Strategy Dashboard · Quantix layout with Z Trade and Strike Pro</p>
         </div>
-
-        <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <div className={`${MICRO_STAT_CLASS} xl:col-span-2`}>
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <div className="text-[0.65rem] uppercase tracking-[0.2em] text-slate-400">Workspace bias</div>
-                <div className="mt-1 text-base font-semibold text-slate-100">{activeStrategy == null ? 'No active strategy' : activeStrategy === 'digit-pulse' ? `${strategyDisplay[activeStrategy].biasLabel} on ${selectedDigitMetrics.selectedDigit}` : biasLabel}</div>
-              </div>
-              <Badge className={recommendationTone.chip}>{strategyRecommendation.confidence.toFixed(1)}%</Badge>
-            </div>
-          </div>
-          <div className={MICRO_STAT_CLASS}>
-            <div className="text-[0.65rem] uppercase tracking-[0.2em] text-slate-400">Status</div>
-            <div className="mt-2 flex flex-wrap gap-2">
-              <Badge variant={snapshot.connected ? 'success' : 'outline'} className="px-2.5 py-1 text-[0.65rem]">
-                {snapshot.connected ? 'Connected' : 'Not connected'}
-              </Badge>
-              <Badge variant="outline" className="border-cyan-400/20 px-2.5 py-1 text-[0.65rem] text-cyan-200">
-                {snapshot.settings.symbol}
-              </Badge>
-            </div>
-          </div>
-          <div className={MICRO_STAT_CLASS}>
-            <div className="text-[0.65rem] uppercase tracking-[0.2em] text-slate-400">Engine</div>
-            <div className="mt-2 text-base font-semibold text-slate-100">{activeStrategy == null ? 'Standby' : strategyDisplay[activeStrategy].engine}</div>
-          </div>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <Badge className={recommendationBadgeClass}>{strategyRecommendation.stage}</Badge>
+          <Badge variant={snapshot.connected ? 'success' : 'outline'}>{snapshot.connected ? 'Connected' : 'Disconnected'}</Badge>
+          <Link href="/dashboard/billing">
+            <Button variant="outline" className="rounded-full border-white/10 bg-black/25">Billing</Button>
+          </Link>
         </div>
-      </motion.div>
+      </header>
 
       {error ? (
-        <div className="rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+        <div className="col-span-1 rounded-[10px] border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-200 xl:col-span-2">
           {error}
         </div>
       ) : null}
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] xl:gap-6">
         <div className="min-w-0 space-y-5 xl:space-y-6">
-          <Card className={`${WORKSPACE_CARD_CLASS} border-cyan-400/20`}>
+          <Card className={`${QUANTIX_PANEL_CLASS} border-cyan-400/20`}>
             <CardHeader className="pb-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <CardTitle className="flex items-center gap-2 text-xl">
@@ -955,7 +928,65 @@ export default function GoldxPulsePage() {
             </CardContent>
           </Card>
 
-          <Card className={`${WORKSPACE_CARD_CLASS} border-orange-400/20`}>
+          <Card className={QUANTIX_PANEL_CLASS}>
+            <CardHeader className="pb-4">
+              <CardTitle className={QUANTIX_TITLE_CLASS}>Time &amp; Session Recommendation</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className={QUANTIX_STAT_CLASS}>
+                  <div className="text-[11px] text-slate-500">ET Time</div>
+                  <div className="mt-1 text-base font-semibold text-slate-100">{etSession.label}</div>
+                </div>
+                <div className={QUANTIX_STAT_CLASS}>
+                  <div className="text-[11px] text-slate-500">Session</div>
+                  <div className="mt-1 text-base font-semibold text-slate-100">{etSession.sessionName}</div>
+                  <div className="mt-1 text-xs text-slate-400">{etSession.sessionNote}</div>
+                </div>
+                <div className={QUANTIX_STAT_CLASS}>
+                  <div className="text-[11px] text-slate-500">Best Strategy</div>
+                  <div className="mt-1 text-base font-semibold text-slate-100">{bestStrategyLabel}</div>
+                </div>
+                <div className={QUANTIX_STAT_CLASS}>
+                  <div className="text-[11px] text-slate-500">Recommendation</div>
+                  <div className={`mt-2 inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${recommendationBadgeClass}`}>{strategyRecommendation.stage}</div>
+                </div>
+              </div>
+              <div className="text-xs text-slate-400">{strategyRecommendation.detail}</div>
+            </CardContent>
+          </Card>
+
+          <Card className={QUANTIX_PANEL_CLASS}>
+            <CardHeader className="pb-4">
+              <CardTitle className={QUANTIX_TITLE_CLASS}>Advanced Controls</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className={CONTROL_SURFACE_CLASS}>
+                  <label className="text-xs uppercase tracking-[0.18em] text-slate-400">Confidence Threshold</label>
+                  <div className="mt-2 text-lg font-semibold text-slate-100">{strategyRecommendation.confidence.toFixed(1)}%</div>
+                  <div className="mt-1 text-xs text-slate-400">Live recommendation confidence from the active engine.</div>
+                </div>
+                <div className={CONTROL_SURFACE_CLASS}>
+                  <label className="text-xs uppercase tracking-[0.18em] text-slate-400">Warm-up Requirement</label>
+                  <div className="mt-2 text-lg font-semibold text-slate-100">{warmup.currentTicks} / {warmup.minTicksRequired}</div>
+                  <div className="mt-1 text-xs text-slate-400">Trading unlocks automatically once the sample threshold is reached.</div>
+                </div>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className={`${CONTROL_SURFACE_CLASS} space-y-2`}>
+                  <label className="text-xs uppercase tracking-[0.18em] text-slate-400">Max daily loss</label>
+                  <Input value={maxDailyLoss} onChange={(event) => setMaxDailyLoss(event.target.value)} placeholder="Optional" className="h-11 border-white/10 bg-white/5 text-slate-100" />
+                </div>
+                <div className={`${CONTROL_SURFACE_CLASS} space-y-2`}>
+                  <label className="text-xs uppercase tracking-[0.18em] text-slate-400">Trade cooldown</label>
+                  <Input value={cooldownSeconds} onChange={(event) => setCooldownSeconds(event.target.value)} className="h-11 border-white/10 bg-white/5 text-slate-100" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className={`${QUANTIX_PANEL_CLASS} border-orange-400/20`}>
             <CardHeader className="pb-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <CardTitle className="flex items-center gap-2 text-xl text-slate-100">
