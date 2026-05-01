@@ -28,15 +28,41 @@ const strategyCards: Array<{
 }> = [
   {
     mode: 'digit-pulse',
-    name: 'GoldX Digits',
-    description: 'Tracks last-digit behavior so you can trade differ setups from the live digit board.',
+    name: 'Z Trade',
+    description: 'Matches and differs control room with a live digit board, reversion bias, and fast digit selection.',
   },
   {
     mode: 'range-pressure',
-    name: 'GoldX U/O',
-    description: 'Measures whether live digits are leaning over or under your selected barrier for U/O entries.',
+    name: 'Strike Pro',
+    description: 'GoldX U/O remapped as Strike Pro so over and under pressure stays in one execution lane.',
   },
 ];
+
+const strategyDisplay: Record<WorkspaceMode, {
+  name: string;
+  subtitle: string;
+  engine: string;
+  biasLabel: string;
+  feedTitle: string;
+  metricsTitle: string;
+}> = {
+  'digit-pulse': {
+    name: 'Z Trade',
+    subtitle: 'Matches / Differs',
+    engine: 'Z Trade Engine',
+    biasLabel: 'Matches / Differs bias',
+    feedTitle: 'Z Trade Market Feed',
+    metricsTitle: 'Z Trade Strategy Metrics',
+  },
+  'range-pressure': {
+    name: 'Strike Pro',
+    subtitle: 'GoldX U/O',
+    engine: 'Strike Pro Engine',
+    biasLabel: 'Strike Pro bias',
+    feedTitle: 'Strike Pro Market Feed',
+    metricsTitle: 'Strike Pro Strategy Metrics',
+  },
+};
 
 const defaultSnapshot: GoldxPulseSnapshot = {
   connected: false,
@@ -115,6 +141,9 @@ const PROBABILITY_DISCLAIMER = 'Probabilities are based on recent ticks and do n
 const WORKSPACE_CARD_CLASS = 'overflow-hidden border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.8),rgba(2,6,23,0.94))] shadow-[0_20px_70px_rgba(2,6,23,0.42)] backdrop-blur-xl';
 const GLOSS_PANEL_CLASS = 'rounded-[24px] border border-white/10 bg-white/[0.045] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur';
 const MICRO_STAT_CLASS = 'rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]';
+const SECTION_KICKER_CLASS = 'inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.045] px-3 py-1 text-[0.63rem] font-semibold uppercase tracking-[0.2em] text-slate-300';
+const ANALYTICS_TILE_CLASS = 'rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.025))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]';
+const CONTROL_SURFACE_CLASS = 'rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.02))] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]';
 
 function formatCurrency(value: number | null | undefined, currency = 'USD') {
   if (value == null || Number.isNaN(value)) {
@@ -784,13 +813,13 @@ export default function GoldxPulsePage() {
             </div>
             <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
               <div>
-                <h1 className="text-[2rem] font-semibold tracking-tight sm:text-[2.35rem]">Digit Pulse Control Room</h1>
+                <h1 className="text-[2rem] font-semibold tracking-tight sm:text-[2.35rem]">Z Trade and Strike Pro Workspace</h1>
                 <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300 sm:text-[0.95rem]">
-                  A live Deriv options workspace built around faster reads, tighter controls, and cleaner execution. Connect once, watch the signal shape, and act when the edge is there.
+                  Quantix-style layout, GoldX Pulse data. Run Z Trade for matches and differs, switch to Strike Pro for GoldX U/O pressure, and keep the feed, metrics, trading panel, and history in one tighter workspace.
                 </p>
               </div>
               <div className="hidden rounded-[24px] border border-white/10 bg-white/[0.04] px-4 py-3 text-right shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] md:block">
-                <div className="text-[0.65rem] uppercase tracking-[0.22em] text-slate-400">Live call</div>
+                <div className="text-[0.65rem] uppercase tracking-[0.22em] text-slate-400">Trade signal</div>
                 <div className={`mt-1 text-lg font-semibold ${recommendationTone.text}`}>{strategyRecommendation.stage}</div>
               </div>
             </div>
@@ -810,7 +839,7 @@ export default function GoldxPulsePage() {
             <div className={MICRO_STAT_CLASS}>
               <div className="text-[0.65rem] uppercase tracking-[0.2em] text-slate-400">Net P/L</div>
               <div className={`mt-2 text-lg font-semibold ${netProfit >= 0 ? 'text-emerald-100' : 'text-rose-100'}`}>{formatCurrency(netProfit, snapshot.account?.currency || 'USD')}</div>
-              <div className="mt-1 text-xs text-slate-400">{activeStrategy == null ? 'No strategy active' : activeStrategy === 'digit-pulse' ? 'Digits mode' : 'U/O mode'}</div>
+              <div className="mt-1 text-xs text-slate-400">{activeStrategy == null ? 'No strategy active' : `${strategyDisplay[activeStrategy].name} · ${strategyDisplay[activeStrategy].subtitle}`}</div>
             </div>
           </div>
         </div>
@@ -820,7 +849,7 @@ export default function GoldxPulsePage() {
             <div className="flex items-center justify-between gap-3">
               <div>
                 <div className="text-[0.65rem] uppercase tracking-[0.2em] text-slate-400">Workspace bias</div>
-                <div className="mt-1 text-base font-semibold text-slate-100">{activeStrategy == null ? 'No active strategy' : activeStrategy === 'digit-pulse' ? `Differ bias on ${selectedDigitMetrics.selectedDigit}` : biasLabel}</div>
+                <div className="mt-1 text-base font-semibold text-slate-100">{activeStrategy == null ? 'No active strategy' : activeStrategy === 'digit-pulse' ? `${strategyDisplay[activeStrategy].biasLabel} on ${selectedDigitMetrics.selectedDigit}` : biasLabel}</div>
               </div>
               <Badge className={recommendationTone.chip}>{strategyRecommendation.confidence.toFixed(1)}%</Badge>
             </div>
@@ -838,7 +867,7 @@ export default function GoldxPulsePage() {
           </div>
           <div className={MICRO_STAT_CLASS}>
             <div className="text-[0.65rem] uppercase tracking-[0.2em] text-slate-400">Engine</div>
-            <div className="mt-2 text-base font-semibold text-slate-100">{activeStrategy == null ? 'Standby' : activeStrategy === 'digit-pulse' ? 'Digit Pulse Engine' : 'Range Pressure Engine'}</div>
+            <div className="mt-2 text-base font-semibold text-slate-100">{activeStrategy == null ? 'Standby' : strategyDisplay[activeStrategy].engine}</div>
           </div>
         </div>
       </motion.div>
@@ -853,10 +882,13 @@ export default function GoldxPulsePage() {
         <div className="min-w-0 space-y-5 xl:space-y-6">
           <Card className={`${WORKSPACE_CARD_CLASS} border-cyan-400/20`}>
             <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2 text-xl">
-                <Wallet className="h-5 w-5 text-cyan-300" />
-                Connection & Account
-              </CardTitle>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <Wallet className="h-5 w-5 text-cyan-300" />
+                  Connection
+                </CardTitle>
+                <span className={SECTION_KICKER_CLASS}>Deriv API Connection</span>
+              </div>
             </CardHeader>
             <CardContent className="space-y-5">
               {!snapshot.connected ? (
@@ -925,37 +957,60 @@ export default function GoldxPulsePage() {
 
           <Card className={`${WORKSPACE_CARD_CLASS} border-orange-400/20`}>
             <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2 text-xl text-slate-100">
-                <Activity className="h-5 w-5 text-orange-300" />
-                Strategies
-              </CardTitle>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <CardTitle className="flex items-center gap-2 text-xl text-slate-100">
+                  <Activity className="h-5 w-5 text-orange-300" />
+                  Strategies
+                </CardTitle>
+                <span className={SECTION_KICKER_CLASS}>Matches / Differs and GoldX U/O</span>
+              </div>
             </CardHeader>
             <CardContent className="space-y-3">
               {strategyCards.map((strategy) => {
                 const isActive = activeStrategy === strategy.mode;
+                const display = strategyDisplay[strategy.mode];
 
                 return (
-                  <div key={strategy.mode} className={`flex items-start justify-between gap-4 rounded-2xl border p-4 transition ${isActive ? 'border-orange-300/30 bg-orange-400/10 shadow-[0_0_28px_rgba(251,146,60,0.08)]' : 'border-white/10 bg-white/5'}`}>
-                    <div className="min-w-0">
-                      <div className="text-sm font-semibold text-slate-100">{strategy.name}</div>
-                      <div className="mt-1 text-xs leading-5 text-slate-400">{strategy.description}</div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (isActive) {
-                          setActiveStrategy(null);
-                          return;
-                        }
+                  <div key={strategy.mode} className={`rounded-[26px] border p-4 transition ${isActive ? 'border-orange-300/30 bg-[linear-gradient(135deg,rgba(251,146,60,0.14),rgba(15,23,42,0.8))] shadow-[0_0_28px_rgba(251,146,60,0.08)]' : 'border-white/10 bg-white/5'}`}>
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <div className="text-sm font-semibold text-slate-100">{strategy.name}</div>
+                          <span className="rounded-full border border-white/10 bg-white/[0.06] px-2.5 py-1 text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-slate-300">{display.subtitle}</span>
+                        </div>
+                        <div className="mt-1 text-xs leading-5 text-slate-400">{strategy.description}</div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (isActive) {
+                            setActiveStrategy(null);
+                            return;
+                          }
 
-                        setWorkspaceMode(strategy.mode);
-                        setActiveStrategy(strategy.mode);
-                      }}
-                      aria-pressed={isActive}
-                      className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] transition ${isActive ? 'border-emerald-300/30 bg-emerald-400/15 text-emerald-200' : 'border-white/10 bg-white/5 text-slate-300 hover:border-orange-300/30 hover:text-orange-200'}`}
-                    >
-                      {isActive ? 'On' : 'Off'}
-                    </button>
+                          setWorkspaceMode(strategy.mode);
+                          setActiveStrategy(strategy.mode);
+                        }}
+                        aria-pressed={isActive}
+                        className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] transition ${isActive ? 'border-emerald-300/30 bg-emerald-400/15 text-emerald-200' : 'border-white/10 bg-white/5 text-slate-300 hover:border-orange-300/30 hover:text-orange-200'}`}
+                      >
+                        {isActive ? 'On' : 'Off'}
+                      </button>
+                    </div>
+                    <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                      <div className={`${GLOSS_PANEL_CLASS} px-3 py-2`}>
+                        <div className="text-[0.62rem] uppercase tracking-[0.18em] text-slate-400">Engine</div>
+                        <div className="mt-1 text-sm font-semibold text-slate-100">{display.engine}</div>
+                      </div>
+                      <div className={`${GLOSS_PANEL_CLASS} px-3 py-2`}>
+                        <div className="text-[0.62rem] uppercase tracking-[0.18em] text-slate-400">Execution</div>
+                        <div className="mt-1 text-sm font-semibold text-slate-100">{strategy.mode === 'digit-pulse' ? 'Matches / Differs' : 'Over / Under'}</div>
+                      </div>
+                      <div className={`${GLOSS_PANEL_CLASS} px-3 py-2`}>
+                        <div className="text-[0.62rem] uppercase tracking-[0.18em] text-slate-400">Panel flow</div>
+                        <div className="mt-1 text-sm font-semibold text-slate-100">Feed, metrics, trade</div>
+                      </div>
+                    </div>
                   </div>
                 );
               })}
@@ -969,16 +1024,19 @@ export default function GoldxPulsePage() {
                   Strategy Idle
                 </div>
                 <div className="text-2xl font-semibold">No active strategy</div>
-                <p className="max-w-md text-sm text-slate-400">Turn on a strategy to begin trading. Live panels, controls, and results will appear once GoldX Digits or GoldX U/O is active.</p>
+                <p className="max-w-md text-sm text-slate-400">Turn on a strategy to begin trading. The workspace follows the Quantix panel flow once Z Trade or Strike Pro is active.</p>
               </CardContent>
             </Card>
           ) : (
           <Card className={`${WORKSPACE_CARD_CLASS} border-fuchsia-400/20`}>
             <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2 text-xl">
-                <CandlestickChart className="h-5 w-5 text-fuchsia-300" />
-                Live Tick Stream
-              </CardTitle>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <CandlestickChart className="h-5 w-5 text-fuchsia-300" />
+                  {strategyDisplay[activeStrategy].feedTitle}
+                </CardTitle>
+                <span className={SECTION_KICKER_CLASS}>Live ticks and digit flow</span>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className={`${GLOSS_PANEL_CLASS} rounded-[26px] bg-[linear-gradient(180deg,rgba(15,23,42,0.92),rgba(15,23,42,0.7))] p-4`}>
@@ -1036,10 +1094,13 @@ export default function GoldxPulsePage() {
           {activeStrategy != null && assistedPanelsOn ? (
             <Card className={`${WORKSPACE_CARD_CLASS} border-cyan-400/20`}>
               <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2 text-xl">
-                  <BarChart3 className="h-5 w-5 text-cyan-300" />
-                  {activeStrategy === 'digit-pulse' ? 'Digit Pulse Engine™' : 'Range Pressure Engine™'}
-                </CardTitle>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <BarChart3 className="h-5 w-5 text-cyan-300" />
+                    {strategyDisplay[activeStrategy].metricsTitle}
+                  </CardTitle>
+                  <span className={SECTION_KICKER_CLASS}>Signal & Confidence</span>
+                </div>
               </CardHeader>
               <CardContent className="space-y-5">
                 <div className={`rounded-2xl border p-4 ${warmup.ready ? 'border-emerald-400/20 bg-emerald-500/10' : 'border-amber-400/20 bg-amber-500/10'}`}>
@@ -1110,6 +1171,16 @@ export default function GoldxPulsePage() {
 
                 {activeStrategy === 'digit-pulse' ? (
                   <>
+                    <div className={`${GLOSS_PANEL_CLASS} p-3 sm:p-4`}>
+                      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                          <div className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-slate-400">Z Trade digit board</div>
+                          <div className="mt-1 text-sm text-slate-300">Select the live digit you want to use for matches and differs execution.</div>
+                        </div>
+                        <span className="rounded-full border border-orange-300/20 bg-orange-400/10 px-3 py-1 text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-orange-100">
+                          Active digit {selectedDigit}
+                        </span>
+                      </div>
                     <div className="grid grid-cols-5 gap-2 sm:gap-3">
                       {digitActionButtons.map((item) => (
                         <div
@@ -1123,7 +1194,7 @@ export default function GoldxPulsePage() {
                               setSelectedDigit(String(item.digit));
                             }
                           }}
-                          className={`relative overflow-hidden rounded-2xl border p-2.5 text-center transition sm:p-3 ${item.digit === Number(selectedDigit) ? 'border-orange-300/50 bg-orange-400/8 shadow-[0_0_24px_rgba(251,146,60,0.18)]' : item.bias === 'underrepresented' ? 'border-emerald-400/30 bg-emerald-500/10 hover:border-emerald-300/40' : item.bias === 'overrepresented' ? 'border-rose-400/30 bg-rose-500/10 hover:border-rose-300/40' : 'border-white/10 bg-white/5 hover:border-cyan-400/30 hover:bg-cyan-400/8'}`}
+                          className={`relative overflow-hidden rounded-[20px] border p-2.5 text-center transition sm:p-3 ${item.digit === Number(selectedDigit) ? 'border-orange-300/50 bg-[linear-gradient(155deg,rgba(251,146,60,0.22),rgba(15,23,42,0.84))] shadow-[0_0_28px_rgba(251,146,60,0.22)]' : item.bias === 'underrepresented' ? 'border-emerald-400/30 bg-[linear-gradient(155deg,rgba(16,185,129,0.16),rgba(15,23,42,0.78))] hover:border-emerald-300/40' : item.bias === 'overrepresented' ? 'border-rose-400/30 bg-[linear-gradient(155deg,rgba(244,63,94,0.16),rgba(15,23,42,0.78))] hover:border-rose-300/40' : 'border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.055),rgba(255,255,255,0.02))] hover:border-cyan-400/30 hover:bg-cyan-400/8'}`}
                         >
                           {item.digit === Number(selectedDigit) ? (
                             <motion.div
@@ -1134,10 +1205,15 @@ export default function GoldxPulsePage() {
                               style={{ boxShadow: '0 0 0 1px rgba(253,186,116,0.35), 0 0 24px rgba(251,146,60,0.28)' }}
                             />
                           ) : null}
-                          <div className="relative flex min-h-[5.2rem] items-center justify-center sm:min-h-[6.2rem]">
+                          <div className="relative flex min-h-[5.8rem] items-center justify-center sm:min-h-[6.6rem]">
                             <span className={`absolute right-0 top-0 text-[0.58rem] font-medium sm:text-[0.68rem] ${item.bias === 'underrepresented' ? 'text-emerald-200' : item.bias === 'overrepresented' ? 'text-rose-200' : 'text-slate-500'}`}>
                               {formatSignedPercent(item.deviation)}
                             </span>
+                            {item.digit === Number(selectedDigit) ? (
+                              <span className="absolute left-0 top-0 rounded-full border border-orange-300/20 bg-orange-400/10 px-1.5 py-0.5 text-[0.52rem] font-semibold uppercase tracking-[0.14em] text-orange-100 sm:text-[0.58rem]">
+                                Live
+                              </span>
+                            ) : null}
                             <span className={`text-2xl font-semibold sm:text-3xl ${item.digit === Number(selectedDigit) ? 'text-orange-100' : 'text-slate-100'}`}>
                               {item.digit}
                             </span>
@@ -1151,45 +1227,46 @@ export default function GoldxPulsePage() {
                         </div>
                       ))}
                     </div>
-                    <div className="grid gap-4 md:grid-cols-4">
-                      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                      <div className={ANALYTICS_TILE_CLASS}>
                         <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Match {selectedDigitMetrics.selectedDigit}</div>
                         <div className="mt-2 text-2xl font-semibold text-fuchsia-100">{selectedDigitMetrics.matchProbability.toFixed(1)}%</div>
                       </div>
-                      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                      <div className={ANALYTICS_TILE_CLASS}>
                         <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Differ {selectedDigitMetrics.selectedDigit}</div>
                         <div className="mt-2 text-2xl font-semibold text-cyan-100">{selectedDigitMetrics.differProbability.toFixed(1)}%</div>
                       </div>
-                      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                      <div className={ANALYTICS_TILE_CLASS}>
                         <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Deviation</div>
                         <div className={`mt-2 text-2xl font-semibold ${selectedDigitMetrics.matchDeviation < 0 ? 'text-emerald-200' : selectedDigitMetrics.matchDeviation > 0 ? 'text-rose-200' : 'text-slate-100'}`}>
                           {formatSignedPercent(selectedDigitMetrics.matchDeviation)}
                         </div>
                       </div>
-                      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                      <div className={ANALYTICS_TILE_CLASS}>
                         <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Signal</div>
                         <div className={`mt-2 text-lg font-semibold ${selectedDigitMetrics.profile.bias === 'underrepresented' ? 'text-emerald-200' : selectedDigitMetrics.profile.bias === 'overrepresented' ? 'text-rose-200' : 'text-slate-100'}`}>
                           {selectedDigitMetrics.profile.bias === 'underrepresented' ? 'Reversion Edge' : selectedDigitMetrics.profile.bias === 'overrepresented' ? 'Cooling Off' : 'Balanced'}
                         </div>
                       </div>
                     </div>
-                    <div className="grid gap-4 md:grid-cols-4">
-                      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                      <div className={ANALYTICS_TILE_CLASS}>
                         <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Most frequent</div>
                         <div className="mt-2 text-xl font-semibold text-red-200">{snapshot.analytics.mostFrequentDigit ?? '-'}</div>
                       </div>
-                      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                      <div className={ANALYTICS_TILE_CLASS}>
                         <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Least frequent</div>
                         <div className="mt-2 text-xl font-semibold text-emerald-200">{snapshot.analytics.leastFrequentDigit ?? '-'}</div>
                       </div>
-                      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                      <div className={ANALYTICS_TILE_CLASS}>
                         <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Streak alert</div>
                         <div className="mt-2 flex items-center gap-2 text-xl font-semibold text-cyan-200">
                           <Flame className="h-5 w-5 text-amber-300" />
                           {snapshot.analytics.currentStreakDigit ?? '-'} × {snapshot.analytics.currentStreakLength}
                         </div>
                       </div>
-                      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                      <div className={ANALYTICS_TILE_CLASS}>
                         <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Longest streak</div>
                         <div className="mt-2 text-xl font-semibold text-violet-200">
                           {snapshot.analytics.longestStreakDigit ?? '-'} × {snapshot.analytics.longestStreakLength}
@@ -1199,26 +1276,26 @@ export default function GoldxPulsePage() {
                   </>
                 ) : (
                   <>
-                    <div className="grid gap-4 md:grid-cols-4">
-                      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                      <div className={ANALYTICS_TILE_CLASS}>
                         <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Over {selectedDigitMetrics.selectedDigit}</div>
                         <div className="mt-2 text-3xl font-semibold text-fuchsia-200">{selectedDigitMetrics.overProbability.toFixed(1)}%</div>
                       </div>
-                      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                      <div className={ANALYTICS_TILE_CLASS}>
                         <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Under {selectedDigitMetrics.selectedDigit}</div>
                         <div className="mt-2 text-3xl font-semibold text-cyan-200">{selectedDigitMetrics.underProbability.toFixed(1)}%</div>
                       </div>
-                      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                      <div className={ANALYTICS_TILE_CLASS}>
                         <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Match {selectedDigitMetrics.selectedDigit}</div>
                         <div className="mt-2 text-3xl font-semibold text-amber-100">{selectedDigitMetrics.matchProbability.toFixed(1)}%</div>
                       </div>
-                      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                      <div className={ANALYTICS_TILE_CLASS}>
                         <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Differ {selectedDigitMetrics.selectedDigit}</div>
                         <div className="mt-2 text-3xl font-semibold text-slate-100">{selectedDigitMetrics.differProbability.toFixed(1)}%</div>
                       </div>
                     </div>
-                    <div className="grid gap-4 md:grid-cols-[1.3fr_0.9fr_0.8fr]">
-                      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <div className="grid gap-3 xl:grid-cols-[1.3fr_0.9fr_0.8fr]">
+                      <div className={ANALYTICS_TILE_CLASS}>
                         <div className="flex items-center justify-between gap-3">
                           <div>
                             <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Bias signal</div>
@@ -1232,11 +1309,11 @@ export default function GoldxPulsePage() {
                           <div className={`h-full rounded-full transition-all ${selectedDigitMetrics.bias === 'over' ? 'bg-fuchsia-300' : selectedDigitMetrics.bias === 'under' ? 'bg-cyan-300' : 'bg-slate-400'}`} style={{ width: `${selectedDigitMetrics.confidence}%` }} />
                         </div>
                       </div>
-                      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                      <div className={ANALYTICS_TILE_CLASS}>
                         <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Confidence</div>
                         <div className="mt-2 text-3xl font-semibold text-emerald-100">{selectedDigitMetrics.confidence.toFixed(1)}%</div>
                       </div>
-                      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                      <div className={ANALYTICS_TILE_CLASS}>
                         <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Deviation</div>
                         <div className={`mt-2 text-3xl font-semibold ${selectedDigitMetrics.matchDeviation < 0 ? 'text-emerald-200' : selectedDigitMetrics.matchDeviation > 0 ? 'text-rose-200' : 'text-slate-100'}`}>{formatSignedPercent(selectedDigitMetrics.matchDeviation)}</div>
                       </div>
@@ -1252,18 +1329,21 @@ export default function GoldxPulsePage() {
           {activeStrategy == null ? null : (
           <Card className={`${WORKSPACE_CARD_CLASS} border-fuchsia-400/20`}>
             <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2 text-xl">
-                <Zap className="h-5 w-5 text-fuchsia-300" />
-                Trade Panel
-              </CardTitle>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <Zap className="h-5 w-5 text-fuchsia-300" />
+                  Trading Panel
+                </CardTitle>
+                <span className={SECTION_KICKER_CLASS}>{activeStrategy === 'digit-pulse' ? 'Z Trade execution' : 'Strike Pro execution'}</span>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-3 gap-3 sm:gap-4">
-                <div className="min-w-0 space-y-2">
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                <div className={`${CONTROL_SURFACE_CLASS} min-w-0 space-y-2`}>
                   <label className="text-xs uppercase tracking-[0.18em] text-slate-400">Stake amount</label>
                   <Input value={stake} onChange={(event) => setStake(event.target.value)} className="h-11 border-white/10 bg-white/5 text-slate-100" />
                 </div>
-                <div className="min-w-0 space-y-2">
+                <div className={`${CONTROL_SURFACE_CLASS} min-w-0 space-y-2`}>
                   <label className="text-xs uppercase tracking-[0.18em] text-slate-400">Tick duration</label>
                   <select value={duration} onChange={(event) => setDuration(event.target.value)} className={darkSelectClassName} style={{ colorScheme: 'dark' }}>
                     {durationOptions.map((value) => (
@@ -1271,7 +1351,7 @@ export default function GoldxPulsePage() {
                     ))}
                   </select>
                 </div>
-                <div className="min-w-0 space-y-2">
+                <div className={`${CONTROL_SURFACE_CLASS} min-w-0 space-y-2`}>
                   <label className="text-xs uppercase tracking-[0.18em] text-slate-400">Selected digit</label>
                   <select value={selectedDigit} onChange={(event) => setSelectedDigit(event.target.value)} className={darkSelectClassName} style={{ colorScheme: 'dark' }}>
                     {digitOptions.map((value) => (
@@ -1279,7 +1359,7 @@ export default function GoldxPulsePage() {
                     ))}
                   </select>
                 </div>
-                <div className="min-w-0 space-y-2">
+                <div className={`${CONTROL_SURFACE_CLASS} min-w-0 space-y-2`}>
                   <label className="text-xs uppercase tracking-[0.18em] text-slate-400">Index</label>
                   <select value={selectedSymbol} onChange={(event) => setSelectedSymbol(event.target.value)} className={darkSelectClassName} style={{ colorScheme: 'dark' }}>
                     {Object.entries(groupedSymbols).map(([group, options]) => (
@@ -1291,22 +1371,24 @@ export default function GoldxPulsePage() {
                     ))}
                   </select>
                 </div>
-                <div className="min-w-0 space-y-2">
+                <div className={`${CONTROL_SURFACE_CLASS} min-w-0 space-y-2`}>
                   <label className="text-xs uppercase tracking-[0.18em] text-slate-400">Max daily loss</label>
                   <Input value={maxDailyLoss} onChange={(event) => setMaxDailyLoss(event.target.value)} placeholder="Optional" className="h-11 border-white/10 bg-white/5 text-slate-100" />
                 </div>
-                <div className="min-w-0 space-y-2">
+                <div className={`${CONTROL_SURFACE_CLASS} min-w-0 space-y-2`}>
                   <label className="text-xs uppercase tracking-[0.18em] text-slate-400">Trade cooldown (seconds)</label>
                   <Input value={cooldownSeconds} onChange={(event) => setCooldownSeconds(event.target.value)} className="h-11 border-white/10 bg-white/5 text-slate-100" />
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-3">
-                <Button variant={assistedPanelsOn ? 'gradient' : 'outline'} onClick={() => setAssistedPanelsOn((value) => !value)}>
-                  {assistedPanelsOn ? 'Panels ON' : 'Panels OFF'}
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Button variant={assistedPanelsOn ? 'gradient' : 'outline'} className="h-12 justify-between rounded-[18px] border-white/10 px-4" onClick={() => setAssistedPanelsOn((value) => !value)}>
+                  <span>{assistedPanelsOn ? 'Panels ON' : 'Panels OFF'}</span>
+                  <span className="text-[0.62rem] uppercase tracking-[0.18em] text-current/75">Display</span>
                 </Button>
-                <Button variant="outline" onClick={saveWorkspaceSettings} disabled={saving}>
-                  {saving ? 'Saving…' : 'Save Controls'}
+                <Button variant="outline" className="h-12 justify-between rounded-[18px] border-white/10 bg-white/[0.04] px-4" onClick={saveWorkspaceSettings} disabled={saving}>
+                  <span>{saving ? 'Saving…' : 'Save Controls'}</span>
+                  <span className="text-[0.62rem] uppercase tracking-[0.18em] text-current/75">Sync</span>
                 </Button>
               </div>
 
@@ -1325,29 +1407,48 @@ export default function GoldxPulsePage() {
 
               {activeStrategy === 'range-pressure' ? (
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <Button variant="gradient" className="gap-2" onClick={() => placeTrade('OVER')} disabled={tradeDisabled}>Over {selectedDigit}</Button>
-                  <Button variant="outline" className="gap-2 border-cyan-400/20 bg-cyan-400/10 text-cyan-100 hover:bg-cyan-400/20" onClick={() => placeTrade('UNDER')} disabled={tradeDisabled}>Under {selectedDigit}</Button>
+                  <Button variant="gradient" className="h-14 justify-between rounded-[20px] px-5 text-left" onClick={() => placeTrade('OVER')} disabled={tradeDisabled}>
+                    <span className="flex flex-col items-start">
+                      <span className="text-sm font-semibold">Strike Pro Over {selectedDigit}</span>
+                      <span className="text-[0.68rem] uppercase tracking-[0.16em] text-current/70">GoldX U/O Long Bias</span>
+                    </span>
+                  </Button>
+                  <Button variant="outline" className="h-14 justify-between rounded-[20px] border-cyan-400/20 bg-cyan-400/10 px-5 text-left text-cyan-100 hover:bg-cyan-400/20" onClick={() => placeTrade('UNDER')} disabled={tradeDisabled}>
+                    <span className="flex flex-col items-start">
+                      <span className="text-sm font-semibold">Strike Pro Under {selectedDigit}</span>
+                      <span className="text-[0.68rem] uppercase tracking-[0.16em] text-current/70">GoldX U/O Short Bias</span>
+                    </span>
+                  </Button>
                 </div>
               ) : (
-                <div className="flex justify-center">
-                  <Button variant="outline" className="w-full max-w-md gap-2 border-fuchsia-400/20 bg-fuchsia-400/10 text-fuchsia-100 hover:bg-fuchsia-400/20" onClick={() => placeTrade('DIFFER', Number(selectedDigit))} disabled={tradeDisabled}>
-                    Differ {selectedDigit}
+                <div className="grid gap-3 md:grid-cols-2">
+                  <Button variant="outline" className="h-14 justify-between rounded-[20px] border-fuchsia-400/20 bg-fuchsia-400/10 px-5 text-left text-fuchsia-100 hover:bg-fuchsia-400/20" onClick={() => placeTrade('DIFFER', Number(selectedDigit))} disabled={tradeDisabled}>
+                    <span className="flex flex-col items-start">
+                      <span className="text-sm font-semibold">Z Trade Differ {selectedDigit}</span>
+                      <span className="text-[0.68rem] uppercase tracking-[0.16em] text-current/70">Primary execution</span>
+                    </span>
                   </Button>
+                  <div className={`${CONTROL_SURFACE_CLASS} flex flex-col justify-center gap-1 px-4`}>
+                    <div className="text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-slate-400">Execution note</div>
+                    <div className="text-sm text-slate-300">Matches stay visible in metrics while the trading lane stays focused on differ entries.</div>
+                  </div>
                 </div>
               )}
 
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-300">
-                <div className="flex items-center justify-between gap-3">
+              <div className={`${CONTROL_SURFACE_CLASS} text-sm text-slate-300`}>
+                <div className="grid gap-2 sm:grid-cols-3 sm:gap-3">
+                <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/8 bg-black/10 px-3 py-3">
                   <span>Daily loss guard</span>
                   <span>{formatCurrency(snapshot.dailyLoss, snapshot.account?.currency || 'USD')}</span>
                 </div>
-                <div className="mt-2 flex items-center justify-between gap-3">
+                <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/8 bg-black/10 px-3 py-3">
                   <span>Cooldown remaining</span>
                   <span>{Math.ceil(snapshot.cooldownRemainingMs / 1000)}s</span>
                 </div>
-                <div className="mt-2 flex items-center justify-between gap-3">
+                <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/8 bg-black/10 px-3 py-3">
                   <span>Data readiness</span>
                   <span>{warmup.ready ? 'Ready' : `${warmup.remainingTicks} ticks left`}</span>
+                </div>
                 </div>
                 <p className="mt-3 text-xs text-slate-400">{PROBABILITY_DISCLAIMER}</p>
               </div>
@@ -1359,10 +1460,13 @@ export default function GoldxPulsePage() {
           <Card className={`${WORKSPACE_CARD_CLASS} border-emerald-400/20`}>
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
                 <CardTitle className="flex items-center gap-2 text-xl">
                   <Sparkles className="h-5 w-5 text-emerald-300" />
-                  Live Results
+                  Trade History
                 </CardTitle>
+                <span className={`${SECTION_KICKER_CLASS} hidden sm:inline-flex`}>Performance and settlements</span>
+                </div>
                 <button
                   type="button"
                   onClick={() => void clearResults()}
@@ -1380,13 +1484,13 @@ export default function GoldxPulsePage() {
                 <div className={`mt-2 text-3xl font-semibold ${netProfit >= 0 ? 'text-emerald-200' : 'text-red-200'}`}>
                   {formatCurrency(netProfit, snapshot.account?.currency || 'USD')}
                 </div>
-                <div className="mt-2 text-xs text-slate-400">Running total across the live results list.</div>
+                <div className="mt-2 text-xs text-slate-400">Running total across the Quantix-style trade history feed.</div>
               </div>
 
               <div className="max-h-[28rem] space-y-3 overflow-y-auto pr-1">
                 {snapshot.trades.length === 0 ? (
                   <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-400">
-                    No trades yet. Connect your account, then use the assisted buttons to place the first contract.
+                    No trades yet. Connect your account, then use the trading panel to place the first Z Trade or Strike Pro contract.
                   </div>
                 ) : snapshot.trades.map((trade) => (
                   <div key={trade.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
