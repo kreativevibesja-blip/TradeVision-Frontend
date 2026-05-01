@@ -9,6 +9,41 @@ import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api';
 import { Settings, Save, Loader2 } from 'lucide-react';
 
+type ScannerStrategyToggleKey =
+  | 'trendPullback'
+  | 'countertrendReversal'
+  | 'fvgContinuation'
+  | 'emaReclaim'
+  | 'equalLevelSweep'
+  | 'poiReclaim'
+  | 'rangeRejection'
+  | 'zoneTap'
+  | 'sessionFlip';
+
+const DEFAULT_SCANNER_STRATEGIES: Record<ScannerStrategyToggleKey, boolean> = {
+  trendPullback: true,
+  countertrendReversal: true,
+  fvgContinuation: true,
+  emaReclaim: true,
+  equalLevelSweep: true,
+  poiReclaim: true,
+  rangeRejection: true,
+  zoneTap: true,
+  sessionFlip: true,
+};
+
+const SCANNER_STRATEGY_LABELS: Array<{ key: ScannerStrategyToggleKey; title: string; detail: string }> = [
+  { key: 'trendPullback', title: 'Trend Pullback', detail: 'Continuation pullbacks aligned with structure and trend flow.' },
+  { key: 'countertrendReversal', title: 'Countertrend Reversal', detail: 'Reversal setups from supply or demand against the broader move.' },
+  { key: 'fvgContinuation', title: 'FVG Continuation', detail: 'Fair value gap fill continuations that resume directional flow.' },
+  { key: 'emaReclaim', title: 'EMA Reclaim', detail: 'EMA reclaim and retest continuations.' },
+  { key: 'equalLevelSweep', title: 'Equal-Level Sweep', detail: 'EQH or EQL liquidity sweep reversals.' },
+  { key: 'poiReclaim', title: 'POI Reclaim', detail: 'Point-of-interest reclaim setups after reaction.' },
+  { key: 'rangeRejection', title: 'Range Rejection', detail: 'Support and resistance range rotations.' },
+  { key: 'zoneTap', title: 'Zone Tap', detail: 'Basic directional zone pullback taps.' },
+  { key: 'sessionFlip', title: 'Session Flip', detail: 'London and New York continuation flip engine.' },
+];
+
 export default function AdminSettingsPage() {
   const { token } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -24,6 +59,12 @@ export default function AdminSettingsPage() {
   const [proOpenAiEnabled, setProOpenAiEnabled] = useState(false);
   const [supportWhatsappNumber, setSupportWhatsappNumber] = useState('18762797956');
   const [supportWhatsappMessage, setSupportWhatsappMessage] = useState('Hi TradeVision AI, I need support.');
+  const [scannerUseEmaFilter, setScannerUseEmaFilter] = useState(true);
+  const [scannerFastEma, setScannerFastEma] = useState('10');
+  const [scannerMidEma, setScannerMidEma] = useState('14');
+  const [scannerSlowEma, setScannerSlowEma] = useState('50');
+  const [scannerPullbackTolerance, setScannerPullbackTolerance] = useState('0.12');
+  const [scannerStrategies, setScannerStrategies] = useState<Record<ScannerStrategyToggleKey, boolean>>(DEFAULT_SCANNER_STRATEGIES);
 
   useEffect(() => {
     if (token) loadSettings();
@@ -43,6 +84,12 @@ export default function AdminSettingsPage() {
       const proOpenAi = data.settings.find((s: any) => s.key === 'ai_model_openai_pro_enabled');
       const whatsappNumber = data.settings.find((s: any) => s.key === 'support_whatsapp_number');
       const whatsappMessage = data.settings.find((s: any) => s.key === 'support_whatsapp_message');
+      const scannerUseEma = data.settings.find((s: any) => s.key === 'scanner_execution_use_ema_filter');
+      const scannerFast = data.settings.find((s: any) => s.key === 'scanner_execution_fast_ema_period');
+      const scannerMid = data.settings.find((s: any) => s.key === 'scanner_execution_mid_ema_period');
+      const scannerSlow = data.settings.find((s: any) => s.key === 'scanner_execution_slow_ema_period');
+      const scannerTolerance = data.settings.find((s: any) => s.key === 'scanner_execution_pullback_tolerance_pct');
+      const scannerEnabledStrategies = data.settings.find((s: any) => s.key === 'scanner_enabled_strategies');
       if (prompt) setAiPrompt(prompt.value);
       if (free) setFreeLimit(String(free.value));
       if (pro) setProLimit(String(pro.value));
@@ -54,6 +101,14 @@ export default function AdminSettingsPage() {
       if (proOpenAi) setProOpenAiEnabled(Boolean(proOpenAi.value));
       if (whatsappNumber?.value) setSupportWhatsappNumber(String(whatsappNumber.value));
       if (whatsappMessage?.value) setSupportWhatsappMessage(String(whatsappMessage.value));
+      if (scannerUseEma) setScannerUseEmaFilter(Boolean(scannerUseEma.value));
+      if (scannerFast?.value != null) setScannerFastEma(String(scannerFast.value));
+      if (scannerMid?.value != null) setScannerMidEma(String(scannerMid.value));
+      if (scannerSlow?.value != null) setScannerSlowEma(String(scannerSlow.value));
+      if (scannerTolerance?.value != null) setScannerPullbackTolerance(String(scannerTolerance.value));
+      if (scannerEnabledStrategies?.value && typeof scannerEnabledStrategies.value === 'object') {
+        setScannerStrategies({ ...DEFAULT_SCANNER_STRATEGIES, ...scannerEnabledStrategies.value });
+      }
     } catch {
     } finally {
       setLoading(false);
@@ -143,6 +198,77 @@ export default function AdminSettingsPage() {
             <Button size="sm" onClick={() => saveSetting('ai_prompt', aiPrompt)} disabled={saving}>
               {saving ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Save className="h-3 w-3 mr-1" />}
               Save Prompt
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Scanner Execution Settings</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="rounded-lg border border-white/10 bg-background/50 p-4 space-y-4">
+              <div>
+                <label className="text-sm text-muted-foreground">EMA execution filter</label>
+                <p className="mt-1 text-xs text-muted-foreground">Scanner executions must match the same EMA 10/14/50-style pullback and reclaim filter used for GoldX SMC behavior.</p>
+              </div>
+              <Button type="button" variant={scannerUseEmaFilter ? 'default' : 'outline'} size="sm" onClick={() => setScannerUseEmaFilter((current) => !current)}>
+                EMA Filter {scannerUseEmaFilter ? 'On' : 'Off'}
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+              <div>
+                <label className="text-sm text-muted-foreground">Fast EMA</label>
+                <Input value={scannerFastEma} onChange={(e) => setScannerFastEma(e.target.value)} type="number" />
+              </div>
+              <div>
+                <label className="text-sm text-muted-foreground">Mid EMA</label>
+                <Input value={scannerMidEma} onChange={(e) => setScannerMidEma(e.target.value)} type="number" />
+              </div>
+              <div>
+                <label className="text-sm text-muted-foreground">Slow EMA</label>
+                <Input value={scannerSlowEma} onChange={(e) => setScannerSlowEma(e.target.value)} type="number" />
+              </div>
+              <div>
+                <label className="text-sm text-muted-foreground">Pullback tolerance %</label>
+                <Input value={scannerPullbackTolerance} onChange={(e) => setScannerPullbackTolerance(e.target.value)} type="number" step="0.01" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {SCANNER_STRATEGY_LABELS.map((item) => (
+                <div key={item.key} className="rounded-lg border border-white/10 bg-background/50 p-4 space-y-3">
+                  <div>
+                    <label className="text-sm text-muted-foreground">{item.title}</label>
+                    <p className="mt-1 text-xs text-muted-foreground">{item.detail}</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant={scannerStrategies[item.key] ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setScannerStrategies((current) => ({ ...current, [item.key]: !current[item.key] }))}
+                  >
+                    {scannerStrategies[item.key] ? 'Enabled' : 'Disabled'}
+                  </Button>
+                </div>
+              ))}
+            </div>
+
+            <Button
+              size="sm"
+              onClick={async () => {
+                await saveSetting('scanner_execution_use_ema_filter', scannerUseEmaFilter);
+                await saveSetting('scanner_execution_fast_ema_period', parseInt(scannerFastEma, 10));
+                await saveSetting('scanner_execution_mid_ema_period', parseInt(scannerMidEma, 10));
+                await saveSetting('scanner_execution_slow_ema_period', parseInt(scannerSlowEma, 10));
+                await saveSetting('scanner_execution_pullback_tolerance_pct', parseFloat(scannerPullbackTolerance));
+                await saveSetting('scanner_enabled_strategies', scannerStrategies);
+              }}
+              disabled={saving}
+            >
+              {saving ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Save className="h-3 w-3 mr-1" />}
+              Save Scanner Settings
             </Button>
           </CardContent>
         </Card>
