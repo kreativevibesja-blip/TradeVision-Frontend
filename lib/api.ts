@@ -372,7 +372,7 @@ export interface Announcement {
   expiresAt?: string | null;
   type: AnnouncementType;
   couponCode?: string | null;
-  targetPlan?: 'PRO' | 'TOP_TIER' | 'GOLDX' | null;
+  targetPlan?: 'PRO' | 'TOP_TIER' | 'GOLDX' | 'GOLDX_PULSE' | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -996,7 +996,7 @@ export const api = {
       }),
     getAnnouncements: (token: string) =>
       apiFetch<{ announcements: Announcement[] }>('/admin/announcements', { token }),
-    createAnnouncement: (data: { title: string; content: string; durationValue?: number; durationUnit?: 'hours' | 'days'; type?: AnnouncementType; couponCode?: string; targetPlan?: 'PRO' | 'TOP_TIER' | 'GOLDX' }, token: string) =>
+    createAnnouncement: (data: { title: string; content: string; durationValue?: number; durationUnit?: 'hours' | 'days'; type?: AnnouncementType; couponCode?: string; targetPlan?: 'PRO' | 'TOP_TIER' | 'GOLDX' | 'GOLDX_PULSE' }, token: string) =>
       apiFetch<{ announcement: Announcement }>('/admin/announcements', {
         method: 'POST',
         body: JSON.stringify(data),
