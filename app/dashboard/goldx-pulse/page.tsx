@@ -138,13 +138,13 @@ const categoryLabels: Record<GoldxPulseSymbol['category'], string> = {
 };
 
 const PROBABILITY_DISCLAIMER = 'Probabilities are based on recent ticks and do not guarantee outcomes.';
-const WORKSPACE_CARD_CLASS = 'overflow-hidden border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.8),rgba(2,6,23,0.94))] shadow-[0_20px_70px_rgba(2,6,23,0.42)] backdrop-blur-xl';
-const GLOSS_PANEL_CLASS = 'rounded-[24px] border border-white/10 bg-white/[0.045] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur';
-const MICRO_STAT_CLASS = 'rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]';
+const WORKSPACE_CARD_CLASS = 'overflow-hidden rounded-[10px] border border-white/10 bg-[linear-gradient(180deg,rgba(21,24,34,0.98),rgba(27,31,46,0.96))] shadow-none';
+const GLOSS_PANEL_CLASS = 'rounded-[10px] border border-white/10 bg-black/25 shadow-none';
+const MICRO_STAT_CLASS = 'rounded-[10px] border border-white/10 bg-black/25 px-3 py-3 shadow-none';
 const SECTION_KICKER_CLASS = 'inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.045] px-3 py-1 text-[0.63rem] font-semibold uppercase tracking-[0.2em] text-slate-300';
-const ANALYTICS_TILE_CLASS = 'rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.025))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]';
-const CONTROL_SURFACE_CLASS = 'rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.02))] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]';
-const QUANTIX_PAGE_CLASS = 'mx-auto grid max-w-[980px] gap-5 px-3 pb-24 text-slate-100 xl:max-w-[1320px] xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]';
+const ANALYTICS_TILE_CLASS = 'rounded-[10px] border border-white/10 bg-black/25 p-3 shadow-none';
+const CONTROL_SURFACE_CLASS = 'rounded-[10px] border border-white/10 bg-black/25 p-3 shadow-none';
+const QUANTIX_PAGE_CLASS = 'mx-auto grid w-full max-w-[980px] gap-4 px-2 pb-16 text-slate-100 sm:px-3 xl:grid-cols-[minmax(0,0.96fr)_minmax(0,1.04fr)]';
 const QUANTIX_PANEL_CLASS = 'rounded-[10px] border border-white/10 bg-[linear-gradient(180deg,rgba(21,24,34,0.98),rgba(27,31,46,0.96))] p-3 shadow-none';
 const QUANTIX_TITLE_CLASS = 'text-[15px] font-semibold text-rose-400';
 const QUANTIX_STAT_CLASS = 'rounded-[10px] border border-white/10 bg-black/25 px-3 py-3';
@@ -827,20 +827,20 @@ export default function GoldxPulsePage() {
 
   return (
     <div className={QUANTIX_PAGE_CLASS}>
-      <header className="col-span-1 flex items-center justify-between gap-4 rounded-[10px] border border-white/10 bg-[linear-gradient(90deg,rgba(0,0,0,0.55),rgba(0,0,0,0.35))] px-4 py-4 shadow-[0_18px_40px_rgba(0,0,0,0.45)] xl:col-span-2">
+      <header className="col-span-1 flex items-center justify-between gap-3 rounded-[10px] border border-white/10 bg-[#0b0c11] px-3 py-3 xl:col-span-2">
         <div className="min-w-0">
-          <div className="flex items-center gap-2 text-[22px] font-semibold text-rose-400">
+          <div className="flex items-center gap-2 text-[18px] font-semibold text-rose-400">
             <span className="inline-flex h-2.5 w-2.5 rounded-full bg-rose-500 shadow-[0_0_14px_rgba(244,63,94,0.7)]" />
             <span className="inline-flex h-2.5 w-2.5 rounded-full bg-cyan-400 shadow-[0_0_14px_rgba(34,211,238,0.7)]" />
             GoldX Pulse
           </div>
-          <p className="mt-1 text-xs text-slate-400">Deriv Strategy Dashboard · Quantix layout with Z Trade and Strike Pro</p>
+          <p className="mt-1 text-[11px] text-slate-400">Deriv Strategy Dashboard · Quantix layout with Z Trade and Strike Pro</p>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">
           <Badge className={recommendationBadgeClass}>{strategyRecommendation.stage}</Badge>
           <Badge variant={snapshot.connected ? 'success' : 'outline'}>{snapshot.connected ? 'Connected' : 'Disconnected'}</Badge>
           <Link href="/dashboard/billing">
-            <Button variant="outline" className="rounded-full border-white/10 bg-black/25">Billing</Button>
+            <Button variant="outline" className="h-9 rounded-[8px] border-white/10 bg-black/25 px-3">Billing</Button>
           </Link>
         </div>
       </header>
@@ -851,12 +851,12 @@ export default function GoldxPulsePage() {
         </div>
       ) : null}
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] xl:gap-6">
-        <div className="min-w-0 space-y-5 xl:space-y-6">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,0.94fr)_minmax(0,1.06fr)] xl:gap-4">
+        <div className="min-w-0 space-y-4">
           <Card className={`${QUANTIX_PANEL_CLASS} border-cyan-400/20`}>
             <CardHeader className="pb-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <CardTitle className="flex items-center gap-2 text-xl">
+                <CardTitle className={`flex items-center gap-2 ${QUANTIX_TITLE_CLASS}`}>
                   <Wallet className="h-5 w-5 text-cyan-300" />
                   Connection
                 </CardTitle>
@@ -989,7 +989,7 @@ export default function GoldxPulsePage() {
           <Card className={`${QUANTIX_PANEL_CLASS} border-orange-400/20`}>
             <CardHeader className="pb-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <CardTitle className="flex items-center gap-2 text-xl text-slate-100">
+                <CardTitle className={`flex items-center gap-2 ${QUANTIX_TITLE_CLASS}`}>
                   <Activity className="h-5 w-5 text-orange-300" />
                   Strategies
                 </CardTitle>
@@ -1002,7 +1002,7 @@ export default function GoldxPulsePage() {
                 const display = strategyDisplay[strategy.mode];
 
                 return (
-                  <div key={strategy.mode} className={`rounded-[26px] border p-4 transition ${isActive ? 'border-orange-300/30 bg-[linear-gradient(135deg,rgba(251,146,60,0.14),rgba(15,23,42,0.8))] shadow-[0_0_28px_rgba(251,146,60,0.08)]' : 'border-white/10 bg-white/5'}`}>
+                  <div key={strategy.mode} className={`rounded-[10px] border p-3 transition ${isActive ? 'border-orange-300/30 bg-[linear-gradient(135deg,rgba(251,146,60,0.14),rgba(15,23,42,0.8))]' : 'border-white/10 bg-white/5'}`}>
                     <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
@@ -1062,7 +1062,7 @@ export default function GoldxPulsePage() {
           <Card className={`${QUANTIX_PANEL_CLASS} border-fuchsia-400/20`}>
             <CardHeader className="pb-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <CardTitle className="flex items-center gap-2 text-xl">
+                <CardTitle className={`flex items-center gap-2 ${QUANTIX_TITLE_CLASS}`}>
                   <CandlestickChart className="h-5 w-5 text-fuchsia-300" />
                   {strategyDisplay[activeStrategy].feedTitle}
                 </CardTitle>
@@ -1070,7 +1070,7 @@ export default function GoldxPulsePage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className={`${GLOSS_PANEL_CLASS} rounded-[26px] bg-[linear-gradient(180deg,rgba(15,23,42,0.92),rgba(15,23,42,0.7))] p-4`}>
+              <div className={`${GLOSS_PANEL_CLASS} bg-[linear-gradient(180deg,rgba(15,23,42,0.92),rgba(15,23,42,0.7))] p-3`}>
                 <div className="mb-3 flex items-center justify-between text-xs uppercase tracking-[0.2em] text-slate-400">
                   <span>Latest movement</span>
                   <span>{snapshot.ticks[snapshot.ticks.length - 1]?.formattedQuote || '-'}</span>
@@ -1108,6 +1108,7 @@ export default function GoldxPulsePage() {
                           animate={{ opacity: 1, x: 0, scale: 1 }}
                           transition={{ duration: 0.2 }}
                           className={`flex h-12 min-w-[3rem] items-center justify-center rounded-2xl border px-3 text-lg font-semibold shadow-[0_0_24px_rgba(34,211,238,0.08)] ${index === streamedDigits.length - 1 ? 'border-cyan-300/30 bg-cyan-400/14 text-cyan-100' : 'border-cyan-400/10 bg-white/[0.04] text-slate-100'}`}
+                          style={{ minHeight: '5rem' }}
                         >
                           <span>{tick.digit}</span>
                         </motion.div>
@@ -1309,12 +1310,12 @@ export default function GoldxPulsePage() {
           ) : null}
         </div>
 
-        <div className="min-w-0 space-y-5 xl:space-y-6">
+        <div className="min-w-0 space-y-4">
           {activeStrategy != null && assistedPanelsOn ? (
           <Card className={`${QUANTIX_PANEL_CLASS} border-cyan-400/20`}>
             <CardHeader className="pb-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <CardTitle className="flex items-center gap-2 text-xl">
+                <CardTitle className={`flex items-center gap-2 ${QUANTIX_TITLE_CLASS}`}>
                   <Sparkles className="h-5 w-5 text-cyan-300" />
                   Signal & Confidence
                 </CardTitle>
@@ -1353,7 +1354,7 @@ export default function GoldxPulsePage() {
                   </div>
                   <div className="mt-4 text-sm leading-6 text-slate-300">{strategyRecommendation.action}</div>
                 </div>
-                <div className="relative overflow-hidden rounded-[24px] border border-white/10 bg-[linear-gradient(160deg,rgba(15,23,42,0.96),rgba(30,41,59,0.92))] p-4 shadow-[0_18px_60px_rgba(15,23,42,0.4)]">
+                <div className="relative overflow-hidden rounded-[10px] border border-white/10 bg-[linear-gradient(160deg,rgba(15,23,42,0.96),rgba(30,41,59,0.92))] p-4 shadow-none">
                   <div className="pointer-events-none absolute inset-x-4 top-0 h-20 rounded-b-[999px] bg-white/10 blur-2xl" />
                   <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.12),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(34,211,238,0.12),transparent_30%)]" />
                   <div className="relative flex h-full flex-col justify-between gap-6">
@@ -1375,7 +1376,7 @@ export default function GoldxPulsePage() {
           <Card className={`${QUANTIX_PANEL_CLASS} border-fuchsia-400/20`}>
             <CardHeader className="pb-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <CardTitle className="flex items-center gap-2 text-xl">
+                <CardTitle className={`flex items-center gap-2 ${QUANTIX_TITLE_CLASS}`}>
                   <Zap className="h-5 w-5 text-fuchsia-300" />
                   Trading Panel
                 </CardTitle>
@@ -1506,7 +1507,7 @@ export default function GoldxPulsePage() {
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                <CardTitle className="flex items-center gap-2 text-xl">
+                <CardTitle className={`flex items-center gap-2 ${QUANTIX_TITLE_CLASS}`}>
                   <Sparkles className="h-5 w-5 text-emerald-300" />
                   Trade History
                 </CardTitle>
