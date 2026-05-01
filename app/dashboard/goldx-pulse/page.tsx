@@ -112,6 +112,9 @@ const categoryLabels: Record<GoldxPulseSymbol['category'], string> = {
 };
 
 const PROBABILITY_DISCLAIMER = 'Probabilities are based on recent ticks and do not guarantee outcomes.';
+const WORKSPACE_CARD_CLASS = 'overflow-hidden border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.8),rgba(2,6,23,0.94))] shadow-[0_20px_70px_rgba(2,6,23,0.42)] backdrop-blur-xl';
+const GLOSS_PANEL_CLASS = 'rounded-[24px] border border-white/10 bg-white/[0.045] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur';
+const MICRO_STAT_CLASS = 'rounded-[22px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]';
 
 function formatCurrency(value: number | null | undefined, currency = 'USD') {
   if (value == null || Number.isNaN(value)) {
@@ -654,8 +657,21 @@ export default function GoldxPulsePage() {
 
   if (!access?.active) {
     return (
-      <div className="space-y-6">
-        <div className="rounded-3xl border border-cyan-400/20 bg-[radial-gradient(circle_at_top_left,_rgba(34,211,238,0.18),_transparent_28%),linear-gradient(180deg,rgba(2,6,23,0.95),rgba(15,23,42,0.95))] p-6 text-slate-100 shadow-[0_0_60px_rgba(6,182,212,0.12)]">
+      <div className="relative isolate space-y-5 overflow-hidden text-slate-100 sm:space-y-6">
+        <motion.div
+          aria-hidden="true"
+          className="pointer-events-none absolute -left-24 top-0 h-56 w-56 rounded-full bg-cyan-400/12 blur-3xl"
+          animate={{ opacity: [0.35, 0.7, 0.35], scale: [1, 1.08, 1] }}
+          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        <motion.div
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-24 top-24 h-64 w-64 rounded-full bg-fuchsia-400/10 blur-3xl"
+          animate={{ opacity: [0.3, 0.55, 0.3], scale: [1.02, 0.96, 1.02] }}
+          transition={{ duration: 7.5, repeat: Infinity, ease: 'easeInOut' }}
+        />
+
+        <div className="rounded-[30px] border border-cyan-400/20 bg-[radial-gradient(circle_at_top_left,_rgba(34,211,238,0.2),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(168,85,247,0.14),_transparent_24%),linear-gradient(180deg,rgba(2,6,23,0.96),rgba(15,23,42,0.96))] p-5 shadow-[0_28px_90px_rgba(8,145,178,0.16)] sm:p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs uppercase tracking-[0.25em] text-cyan-200">
@@ -702,7 +718,7 @@ export default function GoldxPulsePage() {
           </div>
         ) : null}
 
-        <Card className="border-amber-400/20 bg-slate-950/80 text-slate-100">
+        <Card className={`${WORKSPACE_CARD_CLASS} border-amber-400/20 text-slate-100`}>
           <CardContent className="grid gap-6 p-6 lg:grid-cols-[1.2fr_0.8fr]">
             <div>
               <div className="mb-4 flex items-center gap-3">
@@ -716,7 +732,7 @@ export default function GoldxPulsePage() {
                 If access has already been granted, refresh the dashboard after the subscription record becomes active.
               </p>
             </div>
-            <div className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-5">
+            <div className={`space-y-4 p-5 ${GLOSS_PANEL_CLASS}`}>
               <div className="flex items-center gap-2 text-sm text-slate-300">
                 <ShieldAlert className="h-4 w-4 text-cyan-300" />
                 Access source: {access?.source || 'none'}
@@ -734,34 +750,95 @@ export default function GoldxPulsePage() {
   }
 
   return (
-    <div className="space-y-6 text-slate-100">
+    <div className="relative isolate space-y-5 overflow-hidden text-slate-100 sm:space-y-6">
+      <motion.div
+        aria-hidden="true"
+        className="pointer-events-none absolute -left-28 top-20 h-72 w-72 rounded-full bg-cyan-400/12 blur-3xl"
+        animate={{ opacity: [0.32, 0.62, 0.32], scale: [1, 1.06, 1] }}
+        transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
+      />
+      <motion.div
+        aria-hidden="true"
+        className="pointer-events-none absolute right-[-8rem] top-72 h-80 w-80 rounded-full bg-fuchsia-500/10 blur-3xl"
+        animate={{ opacity: [0.26, 0.5, 0.26], scale: [1.04, 0.98, 1.04] }}
+        transition={{ duration: 8.5, repeat: Infinity, ease: 'easeInOut' }}
+      />
+      <motion.div
+        aria-hidden="true"
+        className="pointer-events-none absolute bottom-24 left-1/3 h-64 w-64 rounded-full bg-emerald-400/8 blur-3xl"
+        animate={{ opacity: [0.2, 0.38, 0.2], scale: [0.98, 1.04, 0.98] }}
+        transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
+      />
+
       <motion.div
         initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.28 }}
-        className="rounded-[28px] border border-cyan-400/20 bg-[radial-gradient(circle_at_top_left,_rgba(34,211,238,0.22),_transparent_26%),radial-gradient(circle_at_bottom_right,_rgba(168,85,247,0.18),_transparent_24%),linear-gradient(180deg,rgba(2,6,23,0.96),rgba(15,23,42,0.96))] p-6 shadow-[0_0_70px_rgba(14,165,233,0.12)]"
+        className="overflow-hidden rounded-[32px] border border-cyan-400/20 bg-[radial-gradient(circle_at_top_left,_rgba(34,211,238,0.22),_transparent_26%),radial-gradient(circle_at_bottom_right,_rgba(168,85,247,0.18),_transparent_24%),linear-gradient(180deg,rgba(2,6,23,0.98),rgba(15,23,42,0.96))] p-5 shadow-[0_30px_100px_rgba(14,165,233,0.16)] sm:p-6"
       >
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs uppercase tracking-[0.25em] text-cyan-200">
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)] xl:items-end">
+          <div className="min-w-0">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-[0.68rem] uppercase tracking-[0.25em] text-cyan-200 backdrop-blur">
               <RadioTower className="h-3.5 w-3.5" />
               GoldX Pulse
             </div>
-            <h1 className="text-3xl font-semibold">Digit Pulse Control Room</h1>
-            <p className="mt-2 max-w-3xl text-sm text-slate-300">
-              This is a trading tool, not financial advice. Connect a Deriv token, stream live ticks, inspect digit behavior, and execute assisted options trades with risk controls.
-            </p>
+            <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+              <div>
+                <h1 className="text-[2rem] font-semibold tracking-tight sm:text-[2.35rem]">Digit Pulse Control Room</h1>
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300 sm:text-[0.95rem]">
+                  A live Deriv options workspace built around faster reads, tighter controls, and cleaner execution. Connect once, watch the signal shape, and act when the edge is there.
+                </p>
+              </div>
+              <div className="hidden rounded-[24px] border border-white/10 bg-white/[0.04] px-4 py-3 text-right shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] md:block">
+                <div className="text-[0.65rem] uppercase tracking-[0.22em] text-slate-400">Live call</div>
+                <div className={`mt-1 text-lg font-semibold ${recommendationTone.text}`}>{strategyRecommendation.stage}</div>
+              </div>
+            </div>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <Badge variant={snapshot.connected ? 'success' : 'outline'} className="px-3 py-1 text-xs">
-              {snapshot.connected ? 'Connected' : 'Not connected'}
-            </Badge>
-            <Badge variant="outline" className="px-3 py-1 text-xs border-cyan-400/20 text-cyan-200">
-              {snapshot.settings.symbol}
-            </Badge>
-            <Badge variant="outline" className="px-3 py-1 text-xs border-fuchsia-400/20 text-fuchsia-200">
-              {activeStrategy == null ? 'No Active Strategy' : activeStrategy === 'digit-pulse' ? 'Digit Pulse Engine™' : 'Range Pressure Engine™'}
-            </Badge>
+
+          <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1 2xl:grid-cols-3">
+            <div className={MICRO_STAT_CLASS}>
+              <div className="text-[0.65rem] uppercase tracking-[0.2em] text-slate-400">Connection</div>
+              <div className={`mt-2 text-lg font-semibold ${snapshot.connected ? 'text-emerald-100' : 'text-slate-100'}`}>{snapshot.connected ? 'Live' : 'Offline'}</div>
+              <div className="mt-1 text-xs text-slate-400">{snapshot.settings.symbol}</div>
+            </div>
+            <div className={MICRO_STAT_CLASS}>
+              <div className="text-[0.65rem] uppercase tracking-[0.2em] text-slate-400">Warm-up</div>
+              <div className={`mt-2 text-lg font-semibold ${warmup.ready ? 'text-emerald-100' : 'text-amber-100'}`}>{warmup.ready ? 'Ready' : `${warmup.progressPct.toFixed(0)}%`}</div>
+              <div className="mt-1 text-xs text-slate-400">{warmup.ready ? 'Trading unlocked' : `${warmup.remainingTicks} ticks left`}</div>
+            </div>
+            <div className={MICRO_STAT_CLASS}>
+              <div className="text-[0.65rem] uppercase tracking-[0.2em] text-slate-400">Net P/L</div>
+              <div className={`mt-2 text-lg font-semibold ${netProfit >= 0 ? 'text-emerald-100' : 'text-rose-100'}`}>{formatCurrency(netProfit, snapshot.account?.currency || 'USD')}</div>
+              <div className="mt-1 text-xs text-slate-400">{activeStrategy == null ? 'No strategy active' : activeStrategy === 'digit-pulse' ? 'Digits mode' : 'U/O mode'}</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className={`${MICRO_STAT_CLASS} xl:col-span-2`}>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-[0.65rem] uppercase tracking-[0.2em] text-slate-400">Workspace bias</div>
+                <div className="mt-1 text-base font-semibold text-slate-100">{activeStrategy == null ? 'No active strategy' : activeStrategy === 'digit-pulse' ? `Differ bias on ${selectedDigitMetrics.selectedDigit}` : biasLabel}</div>
+              </div>
+              <Badge className={recommendationTone.chip}>{strategyRecommendation.confidence.toFixed(1)}%</Badge>
+            </div>
+          </div>
+          <div className={MICRO_STAT_CLASS}>
+            <div className="text-[0.65rem] uppercase tracking-[0.2em] text-slate-400">Status</div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <Badge variant={snapshot.connected ? 'success' : 'outline'} className="px-2.5 py-1 text-[0.65rem]">
+                {snapshot.connected ? 'Connected' : 'Not connected'}
+              </Badge>
+              <Badge variant="outline" className="border-cyan-400/20 px-2.5 py-1 text-[0.65rem] text-cyan-200">
+                {snapshot.settings.symbol}
+              </Badge>
+            </div>
+          </div>
+          <div className={MICRO_STAT_CLASS}>
+            <div className="text-[0.65rem] uppercase tracking-[0.2em] text-slate-400">Engine</div>
+            <div className="mt-2 text-base font-semibold text-slate-100">{activeStrategy == null ? 'Standby' : activeStrategy === 'digit-pulse' ? 'Digit Pulse Engine' : 'Range Pressure Engine'}</div>
           </div>
         </div>
       </motion.div>
@@ -772,9 +849,9 @@ export default function GoldxPulsePage() {
         </div>
       ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <div className="space-y-6">
-          <Card className="border-cyan-400/20 bg-slate-950/80">
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] xl:gap-6">
+        <div className="min-w-0 space-y-5 xl:space-y-6">
+          <Card className={`${WORKSPACE_CARD_CLASS} border-cyan-400/20`}>
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-xl">
                 <Wallet className="h-5 w-5 text-cyan-300" />
@@ -806,7 +883,7 @@ export default function GoldxPulsePage() {
                         ))}
                       </select>
                     </div>
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-slate-400">
+                    <div className={`${GLOSS_PANEL_CLASS} p-4 text-sm text-slate-400`}>
                       Strategy controls now live in the dedicated panel below.
                     </div>
                   </div>
@@ -818,18 +895,18 @@ export default function GoldxPulsePage() {
               ) : (
                 <div className="space-y-4">
                   <div className="grid gap-4 md:grid-cols-2">
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <div className={`${GLOSS_PANEL_CLASS} p-4`}>
                       <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Balance</div>
                       <div className="mt-2 text-2xl font-semibold text-cyan-200">{formatCurrency(snapshot.account?.balance, snapshot.account?.currency)}</div>
                     </div>
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <div className={`${GLOSS_PANEL_CLASS} p-4`}>
                       <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Account</div>
                       <div className="mt-2 space-y-2">
                         <div className="text-lg font-semibold text-slate-100">{snapshot.account?.accountType.toUpperCase()}</div>
                         <div className="break-all text-base font-medium text-slate-300">{snapshot.account?.loginId}</div>
                       </div>
                     </div>
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-4 md:col-span-2">
+                    <div className={`${GLOSS_PANEL_CLASS} p-4 md:col-span-2`}>
                       <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Session</div>
                       <div className="mt-2 flex flex-wrap items-center gap-2 text-lg font-semibold text-slate-100">
                         <Power className="h-4 w-4 text-emerald-300" />
@@ -846,7 +923,7 @@ export default function GoldxPulsePage() {
             </CardContent>
           </Card>
 
-          <Card className="border-orange-400/20 bg-slate-950/80">
+          <Card className={`${WORKSPACE_CARD_CLASS} border-orange-400/20`}>
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-xl text-slate-100">
                 <Activity className="h-5 w-5 text-orange-300" />
@@ -886,7 +963,7 @@ export default function GoldxPulsePage() {
           </Card>
 
           {activeStrategy == null ? (
-            <Card className="border-white/10 bg-[radial-gradient(circle_at_top,_rgba(251,146,60,0.1),_transparent_32%),linear-gradient(180deg,rgba(2,6,23,0.96),rgba(15,23,42,0.92))] text-slate-100">
+            <Card className={`${WORKSPACE_CARD_CLASS} border-white/10 bg-[radial-gradient(circle_at_top,_rgba(251,146,60,0.1),_transparent_32%),linear-gradient(180deg,rgba(2,6,23,0.96),rgba(15,23,42,0.92))] text-slate-100`}>
               <CardContent className="flex min-h-[18rem] flex-col items-center justify-center gap-3 p-8 text-center">
                 <div className="rounded-full border border-orange-300/20 bg-orange-400/10 px-3 py-1 text-xs uppercase tracking-[0.24em] text-orange-200">
                   Strategy Idle
@@ -896,7 +973,7 @@ export default function GoldxPulsePage() {
               </CardContent>
             </Card>
           ) : (
-          <Card className="border-fuchsia-400/20 bg-slate-950/80">
+          <Card className={`${WORKSPACE_CARD_CLASS} border-fuchsia-400/20`}>
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-xl">
                 <CandlestickChart className="h-5 w-5 text-fuchsia-300" />
@@ -904,7 +981,7 @@ export default function GoldxPulsePage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="rounded-3xl border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.92),rgba(15,23,42,0.7))] p-4">
+              <div className={`${GLOSS_PANEL_CLASS} rounded-[26px] bg-[linear-gradient(180deg,rgba(15,23,42,0.92),rgba(15,23,42,0.7))] p-4`}>
                 <div className="mb-3 flex items-center justify-between text-xs uppercase tracking-[0.2em] text-slate-400">
                   <span>Latest movement</span>
                   <span>{snapshot.ticks[snapshot.ticks.length - 1]?.formattedQuote || '-'}</span>
@@ -925,7 +1002,7 @@ export default function GoldxPulsePage() {
                   )}
                 </div>
               </div>
-              <div className="overflow-hidden rounded-2xl border border-white/10 bg-[linear-gradient(90deg,rgba(2,6,23,0.98),rgba(15,23,42,0.8)_18%,rgba(15,23,42,0.86)_82%,rgba(2,6,23,0.98))]">
+              <div className={`${GLOSS_PANEL_CLASS} overflow-hidden bg-[linear-gradient(90deg,rgba(2,6,23,0.98),rgba(15,23,42,0.8)_18%,rgba(15,23,42,0.86)_82%,rgba(2,6,23,0.98))]`}>
                 <div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3 text-xs uppercase tracking-[0.18em] text-slate-400">
                   <span>Current digits</span>
                   <span>{snapshot.totalTickCount} ticks</span>
@@ -957,7 +1034,7 @@ export default function GoldxPulsePage() {
           )}
 
           {activeStrategy != null && assistedPanelsOn ? (
-            <Card className="border-cyan-400/20 bg-slate-950/80">
+            <Card className={`${WORKSPACE_CARD_CLASS} border-cyan-400/20`}>
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2 text-xl">
                   <BarChart3 className="h-5 w-5 text-cyan-300" />
@@ -1171,9 +1248,9 @@ export default function GoldxPulsePage() {
           ) : null}
         </div>
 
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-5 xl:space-y-6">
           {activeStrategy == null ? null : (
-          <Card className="border-fuchsia-400/20 bg-slate-950/80">
+          <Card className={`${WORKSPACE_CARD_CLASS} border-fuchsia-400/20`}>
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-xl">
                 <Zap className="h-5 w-5 text-fuchsia-300" />
@@ -1279,7 +1356,7 @@ export default function GoldxPulsePage() {
           )}
 
           {activeStrategy == null ? null : (
-          <Card className="border-emerald-400/20 bg-slate-950/80">
+          <Card className={`${WORKSPACE_CARD_CLASS} border-emerald-400/20`}>
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between gap-3">
                 <CardTitle className="flex items-center gap-2 text-xl">
@@ -1337,7 +1414,7 @@ export default function GoldxPulsePage() {
           )}
 
           {activeStrategy == null ? null : (
-          <Card className="border-amber-400/20 bg-slate-950/80">
+          <Card className={`${WORKSPACE_CARD_CLASS} border-amber-400/20`}>
             <CardContent className="p-5 text-sm text-amber-100/90">
               <div className="flex items-start gap-3">
                 <AlertTriangle className="mt-0.5 h-4 w-4 text-amber-300" />
