@@ -347,6 +347,15 @@ export function GlobalUpdatesModal() {
 
                 {/* Content */}
                 <div className="rounded-[24px] border border-white/10 bg-white/5 p-5 sm:p-6">
+                  {nextAnnouncement.imageUrl ? (
+                    <div className="mb-5 overflow-hidden rounded-[20px] border border-white/10 bg-black/30">
+                      <img
+                        src={nextAnnouncement.imageUrl}
+                        alt={nextAnnouncement.title}
+                        className="max-h-[320px] w-full object-cover"
+                      />
+                    </div>
+                  ) : null}
                   <p className="whitespace-pre-wrap text-sm leading-7 text-slate-200 sm:text-base">{nextAnnouncement.content}</p>
                 </div>
 
