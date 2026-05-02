@@ -94,6 +94,7 @@ export default function AdminUpdatesPage() {
   const [title, setTitle] = useState(PRESETS[0].defaultTitle);
   const [content, setContent] = useState(PRESETS[0].defaultContent);
   const [couponCode, setCouponCode] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
   const [targetPlan, setTargetPlan] = useState<'PRO' | 'TOP_TIER' | 'GOLDX' | 'GOLDX_PULSE' | ''>('');
   const [durationValue, setDurationValue] = useState('');
   const [durationUnit, setDurationUnit] = useState<'hours' | 'days'>('hours');
@@ -134,6 +135,7 @@ export default function AdminUpdatesPage() {
           content,
           type: selectedType,
           ...(selectedType === 'discount' && couponCode.trim() ? { couponCode: couponCode.trim().toUpperCase() } : {}),
+          ...(imageUrl.trim() ? { imageUrl: imageUrl.trim() } : {}),
           ...(targetPlan ? { targetPlan } : {}),
           ...(durationValue.trim() ? { durationValue: Number(durationValue), durationUnit } : {}),
         },
@@ -141,6 +143,7 @@ export default function AdminUpdatesPage() {
       );
       selectPreset('update');
       setCouponCode('');
+      setImageUrl('');
       setTargetPlan('');
       setDurationValue('');
       setDurationUnit('hours');
@@ -206,6 +209,21 @@ export default function AdminUpdatesPage() {
             value={content}
             onChange={(e) => setContent(e.target.value)}
           />
+
+          <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+            <div className="mb-2 text-sm font-medium text-foreground">Popup Image <span className="text-xs font-normal text-muted-foreground">(optional)</span></div>
+            <Input
+              placeholder="https://example.com/update-image.png"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+            />
+            <p className="mt-2 text-xs text-muted-foreground">Paste a public image URL. It will appear inside the update popup above the message body.</p>
+            {imageUrl.trim() ? (
+              <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-black/20">
+                <img src={imageUrl.trim()} alt="Update preview" className="max-h-56 w-full object-cover" />
+              </div>
+            ) : null}
+          </div>
 
           {/* Discount-specific fields */}
           {selectedType === 'discount' && (
@@ -322,6 +340,11 @@ export default function AdminUpdatesPage() {
                       {deletingId === a.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                     </Button>
                   </div>
+                  {a.imageUrl ? (
+                    <div className="mb-3 overflow-hidden rounded-2xl border border-white/10 bg-black/20">
+                      <img src={a.imageUrl} alt={a.title} className="max-h-56 w-full object-cover" />
+                    </div>
+                  ) : null}
                   <p className="mb-3 text-sm leading-relaxed text-muted-foreground">{a.content}</p>
                   <p className="text-xs text-muted-foreground">Published {formatJamaicaDateTime(a.createdAt)}</p>
                 </CardContent>
