@@ -297,8 +297,8 @@ export default function PricingPage() {
                 </div>
 
                 <p className="max-w-2xl text-sm text-muted-foreground sm:text-base">
-                  GoldX is the standalone XAUUSD night scalping system. Subscription starts from the public site,
-                  then license management, MT5 binding, and mode switching stay available inside your dashboard.
+                  GoldX is the standalone GoldX SMC EA for traders who want a license-protected MT5 execution system.
+                  Subscribe here, then use the platform to manage access, onboarding, and MT5 account binding while the EA handles live execution from the terminal.
                 </p>
 
                 <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -322,7 +322,7 @@ export default function PricingPage() {
                     <span className="ml-1 text-lg font-normal text-muted-foreground">/{goldxPlan.billingCycle}</span>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Best for traders who want a dedicated execution system instead of chart-only analysis.
+                    Best for traders who want a creative, always-on volatility execution product instead of a chart-only workflow.
                   </p>
                 </div>
 
@@ -333,7 +333,7 @@ export default function PricingPage() {
                     </Button>
                   </Link>
                   <p className="text-xs text-muted-foreground">
-                    After checkout, use the dashboard to manage your license, MT5 account binding, and trading mode.
+                    After checkout, use the platform to manage your license, setup flow, and MT5 account binding. Execution settings stay inside MT5.
                   </p>
                 </div>
               </div>

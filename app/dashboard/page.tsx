@@ -171,7 +171,7 @@ export default function DashboardPage() {
                   <span className="text-sm font-medium text-amber-200">GoldX EA</span>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Access the GoldX expert advisor for XAUUSD night-scalping automation, then return here to manage your license, MT5 account binding, and execution mode from one place.
+                  Access the GoldX SMC EA for 24/7 volatility execution, then return here to manage your license, MT5 account binding, onboarding, and workspace visibility.
                 </p>
               </div>
               <div className="flex w-full flex-col gap-3 sm:flex-row lg:w-auto lg:shrink-0 lg:flex-nowrap">

@@ -39,7 +39,7 @@ const SETUP_STEPS = [
   'Go to Navigator -> Expert Advisors.',
   'Drag GoldX EA onto an XAUUSD chart.',
   'Enable Allow Algo Trading and Allow DLL imports.',
-  'Enter your License Key, trading mode, and session mode.',
+  'Enter your License Key and configure your execution settings inside MT5.',
   'Turn on AutoTrading from the MT5 top bar.',
 ];
 
@@ -178,7 +178,7 @@ export default function GoldxSetupPage() {
             </Badge>
             <h1 className="mt-4 text-4xl font-bold tracking-tight">Set Up GoldX EA in Minutes</h1>
             <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">
-              Works on MT5 desktop, runs fully automated once installed, and requires no coding. Most users finish setup in under 10 minutes.
+              Works on MT5 desktop, runs fully automated once installed, and keeps execution controls inside the terminal. Most users finish setup in under 10 minutes.
             </p>
           </div>
           <div className="flex gap-3">
@@ -212,7 +212,7 @@ export default function GoldxSetupPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 text-sm text-muted-foreground">
-                <p>GoldX installs directly into MetaTrader 5 on desktop and starts operating automatically once your chart, license key, mode, and session mode are configured.</p>
+                <p>GoldX installs directly into MetaTrader 5 on desktop and starts operating automatically once your chart, license key, and EA settings are configured in MT5.</p>
                 <div className="grid gap-3 sm:grid-cols-3">
                   {[
                     'MT5 Desktop required',
@@ -252,7 +252,7 @@ export default function GoldxSetupPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 text-sm text-muted-foreground">
-                <p>Self setup is recommended. Download the EA, place it in the MT5 Experts folder, and finish the checklist above.</p>
+                <p>Self setup is recommended. Download the EA, place it in the MT5 Experts folder, and finish the checklist above. Use MT5 to set lot sizing, session behavior, and execution preferences.</p>
                 <div className="flex flex-wrap gap-3">
                   <Button onClick={handleDownload} disabled={downloading || loading}>
                     {downloading ? <RotateCw className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
