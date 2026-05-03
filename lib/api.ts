@@ -35,9 +35,62 @@ export const resolveAssetUrl = (value?: string | null) => {
   return `${API_ORIGIN}${value.startsWith('/') ? value : `/${value}`}`;
 };
 
+export type SubscriptionTier = 'FREE' | 'PRO' | 'TOP_TIER' | 'VIP_AUTO_TRADER';
+export type AnalysisFeatureName = 'reactionChallenge' | 'confidenceThermometer' | 'tradeReplay';
+
+export interface FeatureAccessSummary {
+  feature: AnalysisFeatureName;
+  allowed: boolean;
+  requiredPlan: 'FREE' | 'PRO' | 'TOP_TIER';
+  currentPlan: SubscriptionTier;
+  upgradeRequired: 'PRO' | 'TOP_TIER' | null;
+}
+
+export interface AnalysisInteractionRecord {
+  id: string;
+  user_id: string;
+  analysis_id: string;
+  feature: AnalysisFeatureName;
+  data: Record<string, any> | null;
+  created_at: string;
+}
+
+export interface ConfidenceThermometerData {
+  score: number;
+  bucket: 'high' | 'medium' | 'low';
+  summary: string;
+  factors: Array<{
+    key: string;
+    label: string;
+    weight: number;
+    score: number;
+    summary: string;
+  }>;
+}
+
+export interface TradeReplayData {
+  referenceEntry: number;
+  stopLoss: number;
+  takeProfit1: number;
+  takeProfit2: number;
+  takeProfit3: number;
+  summary: string;
+  scenarios: Array<{
+    id: string;
+    title: string;
+    probability: number;
+    narrative: string;
+    frames: Array<{
+      step: number;
+      price: number;
+    }>;
+  }>;
+}
+
 export interface AnalysisResult {
   id: string;
   imageUrl?: string;
+  entry?: number | null;
   pair: string;
   timeframe: string;
   assetClass?: string | null;
@@ -768,6 +821,25 @@ export const api = {
 
   getAnalysis: (id: string, token: string) =>
     apiFetch<{ analysis: AnalysisResult }>(`/analyses/${encodeURIComponent(id)}`, { token }),
+
+  getAnalysisConfidence: (id: string, token: string) =>
+    apiFetch<{ confidence: ConfidenceThermometerData; featureAccess: FeatureAccessSummary }>(`/analysis/confidence/${encodeURIComponent(id)}`, { token }),
+
+  getTradeReplay: (id: string, token: string) =>
+    apiFetch<{ replay: TradeReplayData; featureAccess: FeatureAccessSummary }>(`/analysis/replay/${encodeURIComponent(id)}`, { token }),
+
+  getAnalysisInteractions: (id: string, token: string) =>
+    apiFetch<{ interactions: AnalysisInteractionRecord[]; latestByFeature: Record<string, AnalysisInteractionRecord> }>(`/analysis/interactions/${encodeURIComponent(id)}`, { token }),
+
+  createAnalysisInteraction: (
+    id: string,
+    payload: { feature: AnalysisFeatureName; data?: Record<string, unknown> },
+    token: string
+  ) => apiFetch<{ interaction: AnalysisInteractionRecord; result?: Record<string, any> | null; featureAccess: FeatureAccessSummary }>(`/analysis/interactions/${encodeURIComponent(id)}`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+    token,
+  }),
 
   // Queue
   getQueueStatus: (jobId: string, token: string) =>
