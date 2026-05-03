@@ -21,8 +21,13 @@ import {
 } from '@/lib/chart-upload';
 import { AuthModal } from '@/components/AuthModal';
 import { ChartLightbox } from '@/components/ChartLightbox';
+import { ConfidenceThermometer } from '@/components/ConfidenceThermometer';
+import { FeatureUpgradeModal } from '@/components/FeatureUpgradeModal';
+import { ReactionChallengeModal, type ReactionChallengeBounds, type ReactionChallengeResult } from '@/components/ReactionChallengeModal';
 import TradeCommandCenterModal from '@/components/TradeCommandCenterModal';
+import { TradeReplayModal } from '@/components/TradeReplayModal';
 import TrackSetupButton from '@/components/TrackSetupButton';
+import { useAnalysisFeatureAccess } from '@/hooks/useAnalysisFeatureAccess';
 import {
   Upload,
   Image as ImageIcon,
@@ -38,6 +43,7 @@ import {
   BarChart3,
   AlertTriangle,
   Eye,
+  Crosshair,
   Zap,
   CandlestickChart,
   Activity,
@@ -47,6 +53,7 @@ import {
   Crown,
   Bot,
 } from 'lucide-react';
+import type { AnalysisFeatureName, AnalysisInteractionRecord, ConfidenceThermometerData, TradeReplayData } from '@/lib/api';
 
 const PAIRS = [
   'EUR/USD', 'GBP/USD', 'USD/JPY', 'AUD/USD', 'USD/CAD', 'NZD/USD',
@@ -318,7 +325,9 @@ function AnalyzePageContent() {
   const searchParams = useSearchParams();
   const { user, token, refreshUser } = useAuth();
   const isPro = user?.subscription !== 'FREE';
-  const isTopTier = user?.subscription === 'TOP_TIER' || user?.subscription === 'VIP_AUTO_TRADER';
+  const { canUseFeature } = useAnalysisFeatureAccess(user?.subscription);
+  const confidenceAccess = canUseFeature('confidenceThermometer');
+  const replayAccess = canUseFeature('tradeReplay');
   const retryMode = searchParams.get('retry') === '1';
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -344,6 +353,18 @@ function AnalyzePageContent() {
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [queueStarting, setQueueStarting] = useState(false);
+  const [upgradeFeature, setUpgradeFeature] = useState<AnalysisFeatureName | null>(null);
+  const [reactionAttempts, setReactionAttempts] = useState<AnalysisInteractionRecord[]>([]);
+  const [confidenceData, setConfidenceData] = useState<ConfidenceThermometerData | null>(null);
+  const [confidenceLoading, setConfidenceLoading] = useState(false);
+  const [replayData, setReplayData] = useState<TradeReplayData | null>(null);
+  const [replayLoading, setReplayLoading] = useState(false);
+  const [replayOpen, setReplayOpen] = useState(false);
+  const [challengeOpen, setChallengeOpen] = useState(false);
+  const [challengeSubmitting, setChallengeSubmitting] = useState(false);
+  const [reactionResult, setReactionResult] = useState<ReactionChallengeResult | null>(null);
+  const [loadedInteractionsAnalysisId, setLoadedInteractionsAnalysisId] = useState<string | null>(null);
+  const [challengePromptedAnalysisId, setChallengePromptedAnalysisId] = useState<string | null>(null);
   const analysisId = searchParams.get('analysisId');
 
   const reportUploadFailure = useCallback(async (
@@ -612,6 +633,104 @@ function AnalyzePageContent() {
     };
   }, [analysis?.id, analysisId, token]);
 
+  useEffect(() => {
+    if (!analysis?.id || !token) {
+      setReactionAttempts([]);
+      setReactionResult(null);
+      setLoadedInteractionsAnalysisId(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadInteractions = async () => {
+      try {
+        const result = await api.getAnalysisInteractions(analysis.id, token);
+        if (cancelled) {
+          return;
+        }
+
+          setReactionAttempts(result.interactions.filter((interaction) => interaction.feature === 'reactionChallenge'));
+        const latestReaction = result.latestByFeature.reactionChallenge;
+        setReactionResult((latestReaction?.data?.result as ReactionChallengeResult | undefined) ?? null);
+      } catch {
+        if (!cancelled) {
+          setReactionAttempts([]);
+          setReactionResult(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadedInteractionsAnalysisId(analysis.id);
+        }
+      }
+    };
+
+    void loadInteractions();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [analysis?.id, token]);
+
+  useEffect(() => {
+    if (!analysis?.id || !token || !confidenceAccess.allowed) {
+      setConfidenceData(null);
+      setConfidenceLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setConfidenceLoading(true);
+
+    void api.getAnalysisConfidence(analysis.id, token)
+      .then((result) => {
+        if (!cancelled) {
+          setConfidenceData(result.confidence);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setConfidenceData(null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setConfidenceLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [analysis?.id, confidenceAccess.allowed, token]);
+
+  useEffect(() => {
+    if (!analysis?.id) {
+      setReplayData(null);
+      setReplayOpen(false);
+      setChallengeOpen(false);
+      setChallengePromptedAnalysisId(null);
+      return;
+    }
+
+    setReplayData(null);
+  }, [analysis?.id]);
+
+  useEffect(() => {
+    if (!analysis?.id || loadedInteractionsAnalysisId !== analysis.id || challengePromptedAnalysisId === analysis.id || reactionResult) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setChallengeOpen(true);
+      setChallengePromptedAnalysisId(analysis.id);
+    }, 650);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [analysis?.id, challengePromptedAnalysisId, loadedInteractionsAnalysisId, reactionResult]);
+
   const handleAnalyze = async () => {
     if (!user || !token) {
       setAuthMode('login');
@@ -706,6 +825,60 @@ function AnalyzePageContent() {
     }
   };
 
+  const handleFeatureLocked = (feature: AnalysisFeatureName) => {
+    setUpgradeFeature(feature);
+  };
+
+  const handleOpenReplay = async () => {
+    if (!analysis?.id || !token) {
+      return;
+    }
+
+    if (!replayAccess.allowed) {
+      handleFeatureLocked('tradeReplay');
+      return;
+    }
+
+    if (replayData) {
+      setReplayOpen(true);
+      return;
+    }
+
+    setReplayLoading(true);
+    try {
+      const result = await api.getTradeReplay(analysis.id, token);
+      setReplayData(result.replay);
+      setReplayOpen(true);
+    } catch (replayError: any) {
+      if (replayError?.message?.toLowerCase().includes('requires')) {
+        handleFeatureLocked('tradeReplay');
+      }
+    } finally {
+      setReplayLoading(false);
+    }
+  };
+
+  const handleSubmitReactionChallenge = async (userEntry: number) => {
+    if (!analysis?.id || !token) {
+      return;
+    }
+
+    setChallengeSubmitting(true);
+    try {
+      const result = await api.createAnalysisInteraction(analysis.id, {
+        feature: 'reactionChallenge',
+        data: { userEntry },
+      }, token);
+
+      setReactionResult((result.result as ReactionChallengeResult | null) ?? null);
+      setReactionAttempts((current) => [result.interaction, ...current]);
+    } catch {
+      // Keep the modal open so the user can try again.
+    } finally {
+      setChallengeSubmitting(false);
+    }
+  };
+
   if (queueStarting && !isPro) {
     return <QueueTransitionScreen />;
   }
@@ -715,6 +888,12 @@ function AnalyzePageContent() {
   const originalChartUrl = preview || resolveAssetUrl(analysis?.originalImageUrl || analysis?.imageUrl || null);
   const markedChartUrl = resolveAssetUrl(analysis?.markedImageUrl || null);
   const displayedChartUrl = showAiZones && markedChartUrl ? markedChartUrl : originalChartUrl;
+  const challengeChartUrl = analysis?.isDualChart
+    ? resolveAssetUrl(analysis.ltfOriginalImageUrl || analysis.htfOriginalImageUrl || null) || preview2 || preview
+    : originalChartUrl;
+  const challengeChartBounds: ReactionChallengeBounds | null = analysis?.isDualChart
+    ? analysis.ltfChartBounds || analysis.htfChartBounds || null
+    : analysis?.chartBounds || null;
   const displayedSteps = ANALYSIS_STEPS.map((step, index) => ({
     step,
     complete: progress >= (index + 1) * 20 || currentStage === step,
@@ -1379,9 +1558,62 @@ function AnalyzePageContent() {
                 </div>
 
                 <div className="space-y-6">
-                  <Card className="mobile-card">
-                    <CardContent className="p-6">
-                      <ConfidenceMeter score={analysis.confidence || 0} />
+                  <ConfidenceThermometer
+                    data={confidenceData}
+                    loading={confidenceLoading}
+                    locked={!confidenceAccess.allowed}
+                    onUnlock={() => handleFeatureLocked('confidenceThermometer')}
+                  />
+
+                  <Card className="mobile-card border-cyan-400/20 bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.14),_transparent_45%),rgba(255,255,255,0.03)]">
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Crosshair className="h-5 w-5 text-cyan-300" />
+                        Reaction Challenge
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <p className="text-sm leading-relaxed text-muted-foreground">Pick your own entry on the chart, then compare it with the AI execution map for this setup.</p>
+                      {reactionAttempts.length > 0 ? (
+                        <p className="text-xs text-cyan-200/70">Saved attempts: {reactionAttempts.length}</p>
+                      ) : null}
+                      {reactionResult ? (
+                        <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/10 p-4">
+                          <div className="flex items-center justify-between gap-3">
+                            <div>
+                              <p className="text-xs uppercase tracking-[0.18em] text-cyan-200/70">Last score</p>
+                              <p className="mt-1 text-3xl font-semibold text-cyan-100">{reactionResult.score}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm font-medium text-white">{reactionResult.distanceLabel}</p>
+                              <p className="text-xs text-white/55 capitalize">{reactionResult.timing}</p>
+                            </div>
+                          </div>
+                          <p className="mt-3 text-sm text-white/75">{reactionResult.verdict}</p>
+                        </div>
+                      ) : null}
+                      <Button className="w-full bg-cyan-400 text-black hover:bg-cyan-300" onClick={() => setChallengeOpen(true)}>
+                        {reactionResult ? 'Retake Challenge' : 'Start Challenge'}
+                      </Button>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="mobile-card border-amber-400/20 bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.14),_transparent_48%),rgba(255,255,255,0.03)]">
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Sparkles className="h-5 w-5 text-amber-300" />
+                        Trade Replay Mode
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <p className="text-sm leading-relaxed text-muted-foreground">Preview three post-entry paths with animated continuation, pullback, and invalidation scenarios.</p>
+                      <Button
+                        className="w-full bg-amber-500 text-black hover:bg-amber-400"
+                        onClick={() => void handleOpenReplay()}
+                        disabled={replayLoading}
+                      >
+                        {replayLoading ? 'Building Replay...' : replayAccess.allowed ? 'Open Replay' : 'Unlock Replay'}
+                      </Button>
                     </CardContent>
                   </Card>
 
@@ -1469,7 +1701,7 @@ function AnalyzePageContent() {
                     </CardContent>
                   </Card>
 
-                  {isPro && (analysis.stopLoss || analysis.takeProfit1) ? (
+                  {isPro && reactionResult && (analysis.stopLoss || analysis.takeProfit1) ? (
                     <Card className="mobile-card border-amber-500/30 bg-amber-500/5">
                       <CardContent className="p-6 space-y-4">
                         <div className="flex items-center gap-2 mb-1">
@@ -1515,6 +1747,27 @@ function AnalyzePageContent() {
                             <p className="text-sm font-semibold pl-5">{formatPrice(analysis.takeProfit3, pair)}</p>
                           </div>
                         )}
+                      </CardContent>
+                    </Card>
+                  ) : null}
+
+                  {isPro && !reactionResult && (analysis.stopLoss || analysis.takeProfit1) ? (
+                    <Card className="mobile-card border-cyan-400/20 bg-cyan-400/5">
+                      <CardContent className="p-6">
+                        <div className="flex flex-col items-center text-center space-y-3">
+                          <div className="rounded-full bg-cyan-400/10 p-3">
+                            <Crosshair className="h-5 w-5 text-cyan-300" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium">Complete the Reaction Challenge</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Submit your own entry first to reveal the full AI entry, stop loss, and take profit map for this setup.
+                            </p>
+                          </div>
+                          <Button size="sm" className="bg-cyan-400 text-black hover:bg-cyan-300" onClick={() => setChallengeOpen(true)}>
+                            Open Challenge
+                          </Button>
+                        </div>
                       </CardContent>
                     </Card>
                   ) : null}
@@ -1661,6 +1914,35 @@ function AnalyzePageContent() {
               </motion.div>
             )}
           </AnimatePresence>
+
+          {analysis ? (
+            <ReactionChallengeModal
+              open={challengeOpen}
+              analysis={analysis}
+              imageUrl={challengeChartUrl}
+              bounds={challengeChartBounds}
+              submitting={challengeSubmitting}
+              initialResult={reactionResult}
+              onClose={() => setChallengeOpen(false)}
+              onSubmit={handleSubmitReactionChallenge}
+            />
+          ) : null}
+
+          {analysis ? (
+            <TradeReplayModal
+              open={replayOpen}
+              data={replayData}
+              pair={analysis.pair}
+              onClose={() => setReplayOpen(false)}
+            />
+          ) : null}
+
+          <FeatureUpgradeModal
+            open={Boolean(upgradeFeature)}
+            feature={upgradeFeature}
+            access={upgradeFeature ? canUseFeature(upgradeFeature) : null}
+            onClose={() => setUpgradeFeature(null)}
+          />
 
           <AuthModal
             open={authOpen}
