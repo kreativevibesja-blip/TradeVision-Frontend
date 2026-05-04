@@ -375,6 +375,13 @@ export interface AdminUserDetails {
     licenseStatus: string | null;
     expiresAt: string | null;
     mt5Account: string | null;
+    pendingLicenseKey: string | null;
+    pendingKeyIssuedAt: string | null;
+    pendingKeyExpiresAt: string | null;
+    pulseActive: boolean;
+    pulseSource: string | null;
+    pulsePlanName: string | null;
+    pulseExpiresAt: string | null;
   };
   openTickets: Array<{
     id: string;
@@ -982,11 +989,25 @@ export const api = {
         body: JSON.stringify(data),
         token,
       }),
-      grantGoldxAccess: (id: string, token: string) =>
-        apiFetch<{ success: boolean; created: boolean; licenseKey: string | null; message: string }>(`/goldx/admin/users/${encodeURIComponent(id)}/grant`, {
-          method: 'POST',
-          token,
-        }),
+    grantGoldxAccess: (id: string, token: string) =>
+      apiFetch<{ success: boolean; created: boolean; licenseKey: string | null; message: string }>(`/goldx/admin/users/${encodeURIComponent(id)}/grant`, {
+        method: 'POST',
+        token,
+      }),
+    getGoldxUsers: (token: string) =>
+      apiFetch<{ users: GoldxAdminUserRow[] }>('/goldx/admin/users', { token }),
+    getGoldxUserDetails: (userId: string, token: string) =>
+      apiFetch<{ user: GoldxAdminUserDetails }>(`/goldx/admin/users/${encodeURIComponent(userId)}`, { token }),
+    reissueGoldxLicense: (userId: string, token: string) =>
+      apiFetch<{ success: boolean; licenseKey: string | null; message: string }>(`/goldx/admin/users/${encodeURIComponent(userId)}/reissue-license`, {
+        method: 'POST',
+        token,
+      }),
+    sendGoldxFilesEmail: (userId: string, token: string) =>
+      apiFetch<{ success: boolean; attachments: string[] }>(`/goldx/admin/users/${encodeURIComponent(userId)}/send-files-email`, {
+        method: 'POST',
+        token,
+      }),
     getPaidSubscribers: (token: string) =>
       apiFetch<{ subscribers: PaidSubscriberItem[] }>('/admin/subscribers', { token }),
     sendRenewalReminder: (userId: string, token: string) =>
@@ -1946,6 +1967,64 @@ export interface GoldxAdminSubscription {
   status: string;
   currentPeriodEnd: string;
   createdAt: string;
+}
+
+export interface GoldxAdminUserRow {
+  userId: string;
+  email: string;
+  name: string | null;
+  platformSubscription: 'FREE' | 'PRO' | 'TOP_TIER' | 'VIP_AUTO_TRADER';
+  createdAt: string;
+  hasEa: boolean;
+  hasPulse: boolean;
+  labels: string[];
+  ea: {
+    subscriptionStatus: string | null;
+    currentPeriodEnd: string | null;
+    licenseId: string | null;
+    licenseStatus: string | null;
+    expiresAt: string | null;
+    mt5Account: string | null;
+  };
+  pulse: {
+    status: string | null;
+    expiresAt: string | null;
+    planName: string | null;
+  };
+}
+
+export interface GoldxAdminUserDetails {
+  id: string;
+  email: string;
+  name: string | null;
+  role: string;
+  platformSubscription: 'FREE' | 'PRO' | 'TOP_TIER' | 'VIP_AUTO_TRADER';
+  banned: boolean;
+  createdAt: string;
+  billing: AdminUserDetails['billing'];
+  goldxEa: {
+    hasAccess: boolean;
+    subscriptionId: string | null;
+    subscriptionStatus: string | null;
+    currentPeriodStart: string | null;
+    currentPeriodEnd: string | null;
+    licenseId: string | null;
+    licenseStatus: string | null;
+    expiresAt: string | null;
+    mt5Account: string | null;
+    deviceId: string | null;
+    lastCheckedAt: string | null;
+    pendingLicenseKey: string | null;
+    pendingKeyIssuedAt: string | null;
+    pendingKeyExpiresAt: string | null;
+  };
+  goldxPulse: {
+    active: boolean;
+    source: 'admin' | 'pulse-subscription' | 'platform-plan' | 'none';
+    planName: string | null;
+    expiresAt: string | null;
+    reason: string | null;
+  };
 }
 
 export interface GoldxAuditLog {
