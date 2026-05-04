@@ -11,6 +11,7 @@ import { api, type AdminUserDetails, type AdminUserListItem } from '@/lib/api';
 import { addDaysToDateInputValue, formatJamaicaDate, formatJamaicaDateTime, getEndOfJamaicaDayIso, getJamaicaDateInputValue, getStartOfJamaicaDayIso } from '@/lib/jamaica-time';
 import { Users, Search, Crown, Ban, ShieldCheck, Zap, X, CalendarRange, KeyRound, CheckCircle2, ShieldX } from 'lucide-react';
 import { ProSubscribersModal } from '@/components/ProSubscribersModal';
+import { GoldxUsersModal } from '@/components/GoldxUsersModal';
 
 type SubscriptionFilter = 'ALL' | 'FREE' | 'PRO' | 'TOP_TIER' | 'VIP_AUTO_TRADER';
 type DateFilter = 'ALL' | 'TODAY' | 'LAST_7_DAYS' | 'LAST_30_DAYS' | 'CUSTOM';
@@ -53,8 +54,11 @@ export default function AdminUsersPage() {
   const [loadingUserDetails, setLoadingUserDetails] = useState(false);
   const [resettingUsage, setResettingUsage] = useState(false);
   const [showProSubs, setShowProSubs] = useState(false);
+  const [showGoldxUsers, setShowGoldxUsers] = useState(false);
   const [grantingGoldx, setGrantingGoldx] = useState(false);
   const [revokingGoldx, setRevokingGoldx] = useState(false);
+  const [reissuingGoldx, setReissuingGoldx] = useState(false);
+  const [sendingGoldxFiles, setSendingGoldxFiles] = useState(false);
   const [goldxGrantMessage, setGoldxGrantMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -239,6 +243,41 @@ export default function AdminUsersPage() {
     }
   };
 
+  const reissueGoldxKey = async (userId: string) => {
+    if (!token) {
+      return;
+    }
+
+    try {
+      setReissuingGoldx(true);
+      const result = await api.admin.reissueGoldxLicense(userId, token);
+      setGoldxGrantMessage(result.licenseKey ? `New GoldX key issued: ${result.licenseKey}` : result.message);
+
+      const data = await api.admin.getUserDetails(userId, token);
+      setSelectedUserDetails(data.user);
+    } catch {
+      setGoldxGrantMessage('Failed to issue a new GoldX key.');
+    } finally {
+      setReissuingGoldx(false);
+    }
+  };
+
+  const sendGoldxFiles = async (userId: string) => {
+    if (!token) {
+      return;
+    }
+
+    try {
+      setSendingGoldxFiles(true);
+      await api.admin.sendGoldxFilesEmail(userId, token);
+      setGoldxGrantMessage('GoldX EA files and legal agreement were emailed to the user.');
+    } catch (error: any) {
+      setGoldxGrantMessage(error?.message || 'Failed to send the GoldX delivery email.');
+    } finally {
+      setSendingGoldxFiles(false);
+    }
+  };
+
   const paymentMethodLabel = (payment: AdminUserDetails['billing']['recentPayments'][number]) => {
     if (payment.paymentMethod === 'BANK_TRANSFER' && payment.bankTransferBank) {
       return `Bank Transfer (${payment.bankTransferBank})`;
@@ -254,16 +293,26 @@ export default function AdminUsersPage() {
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">User Management</h1>
-        <button
-          onClick={() => setShowProSubs(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-500/10 text-violet-300 hover:bg-violet-500/20 border border-violet-500/20 hover:border-violet-500/40 transition-all text-sm font-medium"
-        >
-          <Crown className="w-4 h-4" />
-          Pro Subscribers
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowGoldxUsers(true)}
+            className="flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-2 text-sm font-medium text-amber-200 transition-all hover:border-amber-500/40 hover:bg-amber-500/20"
+          >
+            <KeyRound className="h-4 w-4" />
+            GoldX Users
+          </button>
+          <button
+            onClick={() => setShowProSubs(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-500/10 text-violet-300 hover:bg-violet-500/20 border border-violet-500/20 hover:border-violet-500/40 transition-all text-sm font-medium"
+          >
+            <Crown className="w-4 h-4" />
+            Pro Subscribers
+          </button>
+        </div>
       </div>
 
       <ProSubscribersModal open={showProSubs} onClose={() => setShowProSubs(false)} token={token!} />
+      <GoldxUsersModal open={showGoldxUsers} onClose={() => setShowGoldxUsers(false)} token={token!} />
 
       <Card className="mb-6">
         <CardContent className="p-4">
@@ -592,6 +641,22 @@ export default function AdminUsersPage() {
                       {selectedUserDetails?.goldx.mt5Account ? (
                         <p className="mt-1 text-xs text-muted-foreground">MT5 account: {selectedUserDetails.goldx.mt5Account}</p>
                       ) : null}
+                      {selectedUserDetails?.goldx.pendingLicenseKey ? (
+                        <div className="mt-3 rounded-lg border border-amber-500/20 bg-black/20 px-3 py-2">
+                          <p className="text-[10px] uppercase tracking-[0.18em] text-amber-200/70">Visible license key</p>
+                          <p className="mt-2 break-all font-mono text-sm font-semibold text-amber-100">{selectedUserDetails.goldx.pendingLicenseKey}</p>
+                          <p className="mt-1 text-[11px] text-muted-foreground">
+                            Issued {selectedUserDetails.goldx.pendingKeyIssuedAt ? formatJamaicaDateTime(selectedUserDetails.goldx.pendingKeyIssuedAt) : 'recently'}
+                          </p>
+                        </div>
+                      ) : null}
+                      {selectedUserDetails ? (
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          GoldX Pulse: {selectedUserDetails.goldx.pulseActive
+                            ? `${selectedUserDetails.goldx.pulsePlanName || 'Active'}${selectedUserDetails.goldx.pulseExpiresAt ? ` until ${formatJamaicaDateTime(selectedUserDetails.goldx.pulseExpiresAt)}` : ''}`
+                            : 'Not active'}
+                        </p>
+                      ) : null}
                     </div>
                     {selectedUserDetails ? (
                       <Badge variant={selectedUserDetails.goldx.hasAccess ? 'success' : 'outline'}>
@@ -605,15 +670,32 @@ export default function AdminUsersPage() {
                       {grantingGoldx ? 'Granting GoldX...' : 'Grant GoldX Access'}
                     </Button>
                   ) : selectedUserDetails?.goldx.licenseId ? (
-                    <Button
-                      className="mt-4"
-                      variant="outline"
-                      onClick={() => revokeGoldxAccess(selectedUserDetails.goldx.licenseId!, selectedUser.id)}
-                      disabled={revokingGoldx || loadingUserDetails}
-                    >
-                      <ShieldX className="mr-2 h-4 w-4" />
-                      {revokingGoldx ? 'Revoking GoldX...' : 'Revoke GoldX Access'}
-                    </Button>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => revokeGoldxAccess(selectedUserDetails.goldx.licenseId!, selectedUser.id)}
+                        disabled={revokingGoldx || loadingUserDetails}
+                      >
+                        <ShieldX className="mr-2 h-4 w-4" />
+                        {revokingGoldx ? 'Revoking GoldX...' : 'Revoke GoldX Access'}
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        onClick={() => reissueGoldxKey(selectedUser.id)}
+                        disabled={reissuingGoldx || loadingUserDetails}
+                      >
+                        <KeyRound className="mr-2 h-4 w-4" />
+                        {reissuingGoldx ? 'Issuing Key...' : 'Issue New Key'}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => sendGoldxFiles(selectedUser.id)}
+                        disabled={sendingGoldxFiles || loadingUserDetails}
+                      >
+                        <CheckCircle2 className="mr-2 h-4 w-4" />
+                        {sendingGoldxFiles ? 'Emailing Files...' : 'Email EA Files'}
+                      </Button>
+                    </div>
                   ) : null}
                   {goldxGrantMessage ? (
                     <div className="mt-3 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-100">
