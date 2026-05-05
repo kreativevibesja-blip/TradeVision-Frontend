@@ -95,8 +95,8 @@ export function GoldxUsersModal({ open, onClose, token }: Props) {
     setBusyAction('email');
     setActionMessage(null);
     try {
-      await api.admin.sendGoldxFilesEmail(details.id, token);
-      setActionMessage('GoldX EA delivery email sent successfully.');
+      const result = await api.admin.sendGoldxFilesEmail(details.id, token);
+      setActionMessage(`GoldX delivery email sent successfully using: ${result.downloadUrl}`);
     } catch (error: any) {
       setActionMessage(error?.message || 'Failed to send the GoldX EA delivery email.');
     } finally {
