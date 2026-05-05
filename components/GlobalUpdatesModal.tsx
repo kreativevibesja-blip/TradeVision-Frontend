@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { usePathname, useRouter } from 'next/navigation';
-import { api, type Announcement, type AnnouncementType } from '@/lib/api';
+import { api, type Announcement, type AnnouncementPopupSettings, type AnnouncementType } from '@/lib/api';
 import { formatJamaicaDateTime } from '@/lib/jamaica-time';
 import {
   Megaphone, Sparkles, X, Clock3, Rocket, Wrench,
@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 
 const DISMISSED_UPDATES_KEY = 'tradevision_dismissed_updates';
+const DEFAULT_POPUP_SETTINGS: AnnouncementPopupSettings = { enabled: true, repeatHours: 24 };
 
 /* ─── Theme config per announcement type ─── */
 interface ThemeConfig {
@@ -190,7 +191,8 @@ export function GlobalUpdatesModal() {
   const pathname = usePathname();
   const router = useRouter();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [dismissedIds, setDismissedIds] = useState<string[]>([]);
+  const [dismissedAtById, setDismissedAtById] = useState<Record<string, number>>({});
+  const [popupSettings, setPopupSettings] = useState<AnnouncementPopupSettings>(DEFAULT_POPUP_SETTINGS);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -199,17 +201,20 @@ export function GlobalUpdatesModal() {
     }
 
     try {
-      const stored = sessionStorage.getItem(DISMISSED_UPDATES_KEY);
+      const stored = localStorage.getItem(DISMISSED_UPDATES_KEY);
       if (!stored) {
         return;
       }
 
       const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed)) {
-        setDismissedIds(parsed.filter((value): value is string => typeof value === 'string'));
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        const nextState = Object.fromEntries(
+          Object.entries(parsed).filter((entry): entry is [string, number] => typeof entry[0] === 'string' && typeof entry[1] === 'number')
+        );
+        setDismissedAtById(nextState);
       }
     } catch {
-      sessionStorage.removeItem(DISMISSED_UPDATES_KEY);
+      localStorage.removeItem(DISMISSED_UPDATES_KEY);
     }
   }, []);
 
@@ -224,11 +229,13 @@ export function GlobalUpdatesModal() {
       .then((data) => {
         if (!cancelled) {
           setAnnouncements(data.announcements || []);
+          setPopupSettings(data.popupSettings || DEFAULT_POPUP_SETTINGS);
         }
       })
       .catch(() => {
         if (!cancelled) {
           setAnnouncements([]);
+          setPopupSettings(DEFAULT_POPUP_SETTINGS);
         }
       });
 
@@ -237,14 +244,24 @@ export function GlobalUpdatesModal() {
     };
   }, [pathname]);
 
+  const isAnnouncementEligible = (announcement: Announcement) => {
+    const dismissedAt = dismissedAtById[announcement.id];
+    if (!dismissedAt) {
+      return true;
+    }
+
+    const cooldownMs = popupSettings.repeatHours * 60 * 60 * 1000;
+    return Date.now() - dismissedAt >= cooldownMs;
+  };
+
   const nextAnnouncement = useMemo(
-    () => announcements.find((announcement) => !dismissedIds.includes(announcement.id)),
-    [announcements, dismissedIds]
+    () => announcements.find((announcement) => isAnnouncementEligible(announcement)),
+    [announcements, dismissedAtById, popupSettings.repeatHours]
   );
 
   useEffect(() => {
-    setOpen(Boolean(nextAnnouncement) && !pathname.startsWith('/admin'));
-  }, [nextAnnouncement, pathname]);
+    setOpen(Boolean(popupSettings.enabled && nextAnnouncement) && !pathname.startsWith('/admin'));
+  }, [nextAnnouncement, pathname, popupSettings.enabled]);
 
   const closeAnnouncement = () => {
     if (!nextAnnouncement) {
@@ -252,15 +269,18 @@ export function GlobalUpdatesModal() {
       return;
     }
 
-    const nextDismissed = [...dismissedIds, nextAnnouncement.id];
-    setDismissedIds(nextDismissed);
+    const nextDismissed = {
+      ...dismissedAtById,
+      [nextAnnouncement.id]: Date.now(),
+    };
+    setDismissedAtById(nextDismissed);
     if (typeof window !== 'undefined') {
-      sessionStorage.setItem(DISMISSED_UPDATES_KEY, JSON.stringify(nextDismissed));
+      localStorage.setItem(DISMISSED_UPDATES_KEY, JSON.stringify(nextDismissed));
     }
     setOpen(false);
   };
 
-  if (!nextAnnouncement || pathname.startsWith('/admin')) {
+  if (!popupSettings.enabled || !nextAnnouncement || pathname.startsWith('/admin')) {
     return null;
   }
 
