@@ -61,18 +61,30 @@ export function ReactionChallengeModal({ open, analysis, imageUrl, bounds, submi
     }
   }, [open, result?.userEntry]);
 
-  const handleChartClick = (event: React.MouseEvent<HTMLImageElement>) => {
+  const applyPointerSelection = (clientY: number) => {
     if (!bounds || !imageRef.current) {
       return;
     }
 
     const rect = imageRef.current.getBoundingClientRect();
-    const y = clamp(event.clientY - rect.top, 0, rect.height);
+    const y = clamp(clientY - rect.top, 0, rect.height);
     const ratio = 1 - y / rect.height;
     const mappedPrice = bounds.minPrice + ratio * (bounds.maxPrice - bounds.minPrice);
 
     setMarkerY((y / rect.height) * 100);
     setUserEntry(String(Number(mappedPrice.toFixed(6))));
+  };
+
+  const handleChartClick = (event: React.MouseEvent<HTMLImageElement>) => {
+    applyPointerSelection(event.clientY);
+  };
+
+  const handleChartPointerDown = (event: React.PointerEvent<HTMLImageElement>) => {
+    if (event.pointerType === 'mouse' && event.button !== 0) {
+      return;
+    }
+
+    applyPointerSelection(event.clientY);
   };
 
   const submit = () => {
@@ -102,7 +114,15 @@ export function ReactionChallengeModal({ open, analysis, imageUrl, bounds, submi
                 <div className="mt-5 rounded-[24px] border border-white/10 bg-black/25 p-3">
                   {imageUrl ? (
                     <div className="relative overflow-hidden rounded-[18px] border border-white/10 bg-black/30">
-                      <img ref={imageRef} src={imageUrl} alt="Reaction challenge chart" className="max-h-[60vh] w-full object-contain" onClick={handleChartClick} />
+                      <img
+                        ref={imageRef}
+                        src={imageUrl}
+                        alt="Reaction challenge chart"
+                        className="max-h-[60vh] w-full cursor-crosshair object-contain"
+                        onClick={handleChartClick}
+                        onPointerDown={handleChartPointerDown}
+                        style={{ touchAction: 'manipulation' }}
+                      />
                       {markerY !== null ? (
                         <div className="pointer-events-none absolute inset-x-0" style={{ top: `${markerY}%` }}>
                           <div className="relative">
