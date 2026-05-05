@@ -65,6 +65,8 @@ export default function AdminSettingsPage() {
   const [scannerSlowEma, setScannerSlowEma] = useState('50');
   const [scannerPullbackTolerance, setScannerPullbackTolerance] = useState('0.12');
   const [scannerStrategies, setScannerStrategies] = useState<Record<ScannerStrategyToggleKey, boolean>>(DEFAULT_SCANNER_STRATEGIES);
+  const [announcementPopupsEnabled, setAnnouncementPopupsEnabled] = useState(true);
+  const [announcementPopupRepeatHours, setAnnouncementPopupRepeatHours] = useState('24');
 
   useEffect(() => {
     if (token) loadSettings();
@@ -90,6 +92,8 @@ export default function AdminSettingsPage() {
       const scannerSlow = data.settings.find((s: any) => s.key === 'scanner_execution_slow_ema_period');
       const scannerTolerance = data.settings.find((s: any) => s.key === 'scanner_execution_pullback_tolerance_pct');
       const scannerEnabledStrategies = data.settings.find((s: any) => s.key === 'scanner_enabled_strategies');
+      const announcementPopups = data.settings.find((s: any) => s.key === 'announcement_popups_enabled');
+      const announcementPopupRepeat = data.settings.find((s: any) => s.key === 'announcement_popup_repeat_hours');
       if (prompt) setAiPrompt(prompt.value);
       if (free) setFreeLimit(String(free.value));
       if (pro) setProLimit(String(pro.value));
@@ -109,6 +113,8 @@ export default function AdminSettingsPage() {
       if (scannerEnabledStrategies?.value && typeof scannerEnabledStrategies.value === 'object') {
         setScannerStrategies({ ...DEFAULT_SCANNER_STRATEGIES, ...scannerEnabledStrategies.value });
       }
+      if (announcementPopups) setAnnouncementPopupsEnabled(Boolean(announcementPopups.value));
+      if (announcementPopupRepeat?.value != null) setAnnouncementPopupRepeatHours(String(announcementPopupRepeat.value));
     } catch {
     } finally {
       setLoading(false);
@@ -132,6 +138,56 @@ export default function AdminSettingsPage() {
       <h1 className="text-2xl font-bold mb-6">System Settings</h1>
 
       <div className="grid gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Announcement Popups</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="rounded-lg border border-white/10 bg-background/50 p-4 space-y-3">
+                <div>
+                  <label className="text-sm text-muted-foreground">Global popup switch</label>
+                  <p className="mt-1 text-xs text-muted-foreground">Turn all active platform popups on or off for users without deleting the update itself.</p>
+                </div>
+                <Button
+                  type="button"
+                  variant={announcementPopupsEnabled ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setAnnouncementPopupsEnabled((current) => !current)}
+                >
+                  {announcementPopupsEnabled ? 'Enabled' : 'Disabled'}
+                </Button>
+              </div>
+
+              <div className="rounded-lg border border-white/10 bg-background/50 p-4 space-y-3">
+                <div>
+                  <label className="text-sm text-muted-foreground">Repeat every hours</label>
+                  <p className="mt-1 text-xs text-muted-foreground">Controls how long after dismissal the same popup can appear again for the same user.</p>
+                </div>
+                <Input
+                  value={announcementPopupRepeatHours}
+                  onChange={(e) => setAnnouncementPopupRepeatHours(e.target.value)}
+                  type="number"
+                  min="1"
+                />
+              </div>
+            </div>
+            <Button
+              size="sm"
+              onClick={async () => {
+                const repeatHours = Math.max(1, Number.parseInt(announcementPopupRepeatHours, 10) || 24);
+                await saveSetting('announcement_popups_enabled', announcementPopupsEnabled);
+                await saveSetting('announcement_popup_repeat_hours', repeatHours);
+                setAnnouncementPopupRepeatHours(String(repeatHours));
+              }}
+              disabled={saving}
+            >
+              {saving ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Save className="h-3 w-3 mr-1" />}
+              Save Popup Settings
+            </Button>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">

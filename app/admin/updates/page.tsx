@@ -100,6 +100,7 @@ export default function AdminUpdatesPage() {
   const [durationUnit, setDurationUnit] = useState<'hours' | 'days'>('hours');
   const [creating, setCreating] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (token) loadAnnouncements();
@@ -162,6 +163,17 @@ export default function AdminUpdatesPage() {
     } catch {
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const toggleAnnouncement = async (announcement: Announcement) => {
+    try {
+      setTogglingId(announcement.id);
+      await api.admin.updateAnnouncement(announcement.id, { isActive: !announcement.isActive }, token!);
+      await loadAnnouncements();
+    } catch {
+    } finally {
+      setTogglingId(null);
     }
   };
 
@@ -329,16 +341,27 @@ export default function AdminUpdatesPage() {
                         {a.targetPlan && <Badge variant="outline">{a.targetPlan === 'TOP_TIER' ? 'PRO+' : a.targetPlan === 'GOLDX' ? 'GoldX' : a.targetPlan === 'GOLDX_PULSE' ? 'GoldX Pulse' : a.targetPlan}</Badge>}
                       </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="self-start rounded-full text-red-300 hover:bg-red-500/10 hover:text-red-200"
-                      onClick={() => deleteAnnouncement(a.id)}
-                      disabled={deletingId === a.id}
-                      aria-label="Delete update"
-                    >
-                      {deletingId === a.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                    </Button>
+                    <div className="flex items-center gap-2 self-start">
+                      <Button
+                        variant={a.isActive ? 'outline' : 'default'}
+                        size="sm"
+                        onClick={() => toggleAnnouncement(a)}
+                        disabled={togglingId === a.id}
+                      >
+                        {togglingId === a.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                        {a.isActive ? 'Turn Off Popup' : 'Turn On Popup'}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="rounded-full text-red-300 hover:bg-red-500/10 hover:text-red-200"
+                        onClick={() => deleteAnnouncement(a.id)}
+                        disabled={deletingId === a.id}
+                        aria-label="Delete update"
+                      >
+                        {deletingId === a.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                      </Button>
+                    </div>
                   </div>
                   {a.imageUrl ? (
                     <div className="mb-3 overflow-hidden rounded-2xl border border-white/10 bg-black/20">
