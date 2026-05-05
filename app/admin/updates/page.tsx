@@ -1,17 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
-import { api, type Announcement, type AnnouncementType } from '@/lib/api';
+import { api, resolveAssetUrl, type Announcement, type AnnouncementType } from '@/lib/api';
 import { formatJamaicaDateTime } from '@/lib/jamaica-time';
 import {
   Megaphone, Plus, Loader2, Trash2, Clock3, Sparkles,
-  Rocket, Wrench, Percent, Shield, PartyPopper, Tag,
+  Rocket, Wrench, Percent, Shield, PartyPopper, Tag, ImagePlus, TimerReset,
 } from 'lucide-react';
 
 const PRESETS: { type: AnnouncementType; label: string; icon: typeof Rocket; color: string; bg: string; border: string; defaultTitle: string; defaultContent: string }[] = [
@@ -95,12 +95,21 @@ export default function AdminUpdatesPage() {
   const [content, setContent] = useState(PRESETS[0].defaultContent);
   const [couponCode, setCouponCode] = useState('');
   const [imageUrl, setImageUrl] = useState('');
+  const [imagePreviewUrl, setImagePreviewUrl] = useState('');
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imageError, setImageError] = useState('');
   const [targetPlan, setTargetPlan] = useState<'PRO' | 'TOP_TIER' | 'GOLDX' | 'GOLDX_PULSE' | ''>('');
   const [durationValue, setDurationValue] = useState('');
   const [durationUnit, setDurationUnit] = useState<'hours' | 'days'>('hours');
+  const [countdownEnabled, setCountdownEnabled] = useState(false);
   const [creating, setCreating] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+
+  const resolvedPreviewImage = useMemo(() => {
+    if (imagePreviewUrl) return imagePreviewUrl;
+    return resolveAssetUrl(imageUrl);
+  }, [imagePreviewUrl, imageUrl]);
 
   useEffect(() => {
     if (token) loadAnnouncements();
@@ -128,6 +137,7 @@ export default function AdminUpdatesPage() {
 
   const createAnnouncement = async () => {
     if (!title || !content) return;
+    if (countdownEnabled && !durationValue.trim()) return;
     try {
       setCreating(true);
       await api.admin.createAnnouncement(
@@ -137,6 +147,7 @@ export default function AdminUpdatesPage() {
           type: selectedType,
           ...(selectedType === 'discount' && couponCode.trim() ? { couponCode: couponCode.trim().toUpperCase() } : {}),
           ...(imageUrl.trim() ? { imageUrl: imageUrl.trim() } : {}),
+          ...(countdownEnabled ? { countdownEnabled: true } : {}),
           ...(targetPlan ? { targetPlan } : {}),
           ...(durationValue.trim() ? { durationValue: Number(durationValue), durationUnit } : {}),
         },
@@ -145,13 +156,38 @@ export default function AdminUpdatesPage() {
       selectPreset('update');
       setCouponCode('');
       setImageUrl('');
+      setImagePreviewUrl('');
+      setImageError('');
       setTargetPlan('');
       setDurationValue('');
       setDurationUnit('hours');
+      setCountdownEnabled(false);
       loadAnnouncements();
     } catch {
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleImageSelected = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !token) {
+      return;
+    }
+
+    try {
+      setImageUploading(true);
+      setImageError('');
+      setImagePreviewUrl(URL.createObjectURL(file));
+      const result = await api.admin.uploadAnnouncementImage(file, token);
+      setImageUrl(result.imageUrl);
+    } catch (error: any) {
+      setImageUrl('');
+      setImagePreviewUrl('');
+      setImageError(error?.message || 'Failed to upload popup image.');
+    } finally {
+      setImageUploading(false);
+      event.target.value = '';
     }
   };
 
@@ -223,16 +259,26 @@ export default function AdminUpdatesPage() {
           />
 
           <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-            <div className="mb-2 text-sm font-medium text-foreground">Popup Image <span className="text-xs font-normal text-muted-foreground">(optional)</span></div>
-            <Input
-              placeholder="https://example.com/update-image.png"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-            />
-            <p className="mt-2 text-xs text-muted-foreground">Paste a public image URL. It will appear inside the update popup above the message body.</p>
-            {imageUrl.trim() ? (
+            <div className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
+              <ImagePlus className="h-4 w-4 text-cyan-300" />
+              Popup Image <span className="text-xs font-normal text-muted-foreground">(optional)</span>
+            </div>
+            <label className="flex cursor-pointer items-center justify-center rounded-xl border border-dashed border-cyan-400/30 bg-cyan-400/5 px-4 py-6 text-center transition-colors hover:bg-cyan-400/10">
+              <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={handleImageSelected} />
+              <div>
+                <div className="text-sm font-medium text-cyan-200">{imageUploading ? 'Uploading image...' : 'Attach popup image'}</div>
+                <div className="mt-1 text-xs text-muted-foreground">PNG, JPG, or WebP up to 5MB</div>
+              </div>
+            </label>
+            {imageUrl ? (
+              <div className="mt-3 text-xs text-muted-foreground">Uploaded to {imageUrl}</div>
+            ) : null}
+            {imageError ? (
+              <div className="mt-3 rounded-lg border border-red-400/20 bg-red-500/10 px-3 py-2 text-xs text-red-200">{imageError}</div>
+            ) : null}
+            {resolvedPreviewImage ? (
               <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-black/20">
-                <img src={imageUrl.trim()} alt="Update preview" className="max-h-56 w-full object-cover" />
+                <img src={resolvedPreviewImage} alt="Update preview" className="max-h-56 w-full object-cover" />
               </div>
             ) : null}
           </div>
@@ -309,7 +355,21 @@ export default function AdminUpdatesPage() {
             </div>
           </div>
 
-          <Button onClick={createAnnouncement} disabled={creating || !title || !content}>
+          <div className="rounded-xl border border-white/10 bg-[radial-gradient(circle_at_top_left,_rgba(248,113,113,0.14),_transparent_28%),rgba(255,255,255,0.04)] p-4">
+            <div className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground">
+              <TimerReset className="h-4 w-4 text-rose-300" />
+              Live Countdown Urgency
+            </div>
+            <p className="text-xs text-muted-foreground">Turn this on to animate a live countdown inside the popup. It uses the expiry time above, so set a duration when you want urgency to show.</p>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <Button type="button" variant={countdownEnabled ? 'default' : 'outline'} size="sm" onClick={() => setCountdownEnabled((current) => !current)}>
+                {countdownEnabled ? 'Countdown On' : 'Countdown Off'}
+              </Button>
+              {countdownEnabled ? <span className="text-xs text-rose-200">Users will see a live ticking timer until this popup expires.</span> : null}
+            </div>
+          </div>
+
+          <Button onClick={createAnnouncement} disabled={creating || imageUploading || !title || !content || (countdownEnabled && !durationValue.trim())}>
             {creating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <activePreset.icon className="h-4 w-4 mr-2" />}
             Publish {activePreset.label}
           </Button>
@@ -337,6 +397,7 @@ export default function AdminUpdatesPage() {
                         <Badge className={`border ${typeBadge.className}`}>{typeBadge.label}</Badge>
                         <Badge variant={a.isActive ? 'success' : 'secondary'}>{a.isActive ? 'Active' : 'Hidden'}</Badge>
                         <Badge variant="outline">{a.expiresAt ? `Expires ${formatJamaicaDateTime(a.expiresAt)}` : 'No expiry'}</Badge>
+                        {a.countdownEnabled ? <Badge className="border border-rose-400/30 bg-rose-400/15 text-rose-200">Live Countdown</Badge> : null}
                         {a.couponCode && <Badge className="border border-pink-400/30 bg-pink-400/15 text-pink-300">Coupon: {a.couponCode}</Badge>}
                         {a.targetPlan && <Badge variant="outline">{a.targetPlan === 'TOP_TIER' ? 'PRO+' : a.targetPlan === 'GOLDX' ? 'GoldX' : a.targetPlan === 'GOLDX_PULSE' ? 'GoldX Pulse' : a.targetPlan}</Badge>}
                       </div>
@@ -365,7 +426,7 @@ export default function AdminUpdatesPage() {
                   </div>
                   {a.imageUrl ? (
                     <div className="mb-3 overflow-hidden rounded-2xl border border-white/10 bg-black/20">
-                      <img src={a.imageUrl} alt={a.title} className="max-h-56 w-full object-cover" />
+                      <img src={resolveAssetUrl(a.imageUrl) || a.imageUrl} alt={a.title} className="max-h-56 w-full object-cover" />
                     </div>
                   ) : null}
                   <p className="mb-3 text-sm leading-relaxed text-muted-foreground">{a.content}</p>
