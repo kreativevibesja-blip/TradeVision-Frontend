@@ -1004,7 +1004,7 @@ export const api = {
         token,
       }),
     sendGoldxFilesEmail: (userId: string, token: string) =>
-      apiFetch<{ success: boolean; attachments: string[] }>(`/goldx/admin/users/${encodeURIComponent(userId)}/send-files-email`, {
+      apiFetch<{ success: boolean; downloadUrl: string }>(`/goldx/admin/users/${encodeURIComponent(userId)}/send-files-email`, {
         method: 'POST',
         token,
       }),
