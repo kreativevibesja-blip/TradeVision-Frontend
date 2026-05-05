@@ -433,6 +433,7 @@ export interface Announcement {
   type: AnnouncementType;
   couponCode?: string | null;
   imageUrl?: string | null;
+  countdownEnabled?: boolean;
   targetPlan?: 'PRO' | 'TOP_TIER' | 'GOLDX' | 'GOLDX_PULSE' | null;
   createdAt: string;
   updatedAt: string;
@@ -1095,13 +1096,23 @@ export const api = {
       }),
     getAnnouncements: (token: string) =>
       apiFetch<{ announcements: Announcement[] }>('/admin/announcements', { token }),
-    createAnnouncement: (data: { title: string; content: string; durationValue?: number; durationUnit?: 'hours' | 'days'; type?: AnnouncementType; couponCode?: string; imageUrl?: string; targetPlan?: 'PRO' | 'TOP_TIER' | 'GOLDX' | 'GOLDX_PULSE' }, token: string) =>
+    uploadAnnouncementImage: (file: File, token: string) => {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      return apiFetch<{ imageUrl: string }>('/admin/announcements/upload-image', {
+        method: 'POST',
+        body: formData,
+        token,
+      });
+    },
+    createAnnouncement: (data: { title: string; content: string; durationValue?: number; durationUnit?: 'hours' | 'days'; type?: AnnouncementType; couponCode?: string; imageUrl?: string; countdownEnabled?: boolean; targetPlan?: 'PRO' | 'TOP_TIER' | 'GOLDX' | 'GOLDX_PULSE' }, token: string) =>
       apiFetch<{ announcement: Announcement }>('/admin/announcements', {
         method: 'POST',
         body: JSON.stringify(data),
         token,
       }),
-    updateAnnouncement: (id: string, data: { title?: string; content?: string; isActive?: boolean; durationValue?: number; durationUnit?: 'hours' | 'days'; clearExpiry?: boolean; type?: AnnouncementType; couponCode?: string; imageUrl?: string; targetPlan?: 'PRO' | 'TOP_TIER' | 'GOLDX' | 'GOLDX_PULSE' }, token: string) =>
+    updateAnnouncement: (id: string, data: { title?: string; content?: string; isActive?: boolean; durationValue?: number; durationUnit?: 'hours' | 'days'; clearExpiry?: boolean; type?: AnnouncementType; couponCode?: string; imageUrl?: string; countdownEnabled?: boolean; targetPlan?: 'PRO' | 'TOP_TIER' | 'GOLDX' | 'GOLDX_PULSE' }, token: string) =>
       apiFetch<{ announcement: Announcement }>(`/admin/announcements/${encodeURIComponent(id)}`, {
         method: 'PATCH',
         body: JSON.stringify(data),

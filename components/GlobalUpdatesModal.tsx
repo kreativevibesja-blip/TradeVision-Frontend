@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { usePathname, useRouter } from 'next/navigation';
-import { api, type Announcement, type AnnouncementPopupSettings, type AnnouncementType } from '@/lib/api';
+import { api, resolveAssetUrl, type Announcement, type AnnouncementPopupSettings, type AnnouncementType } from '@/lib/api';
 import { formatJamaicaDateTime } from '@/lib/jamaica-time';
 import {
   Megaphone, Sparkles, X, Clock3, Rocket, Wrench,
@@ -194,6 +194,7 @@ export function GlobalUpdatesModal() {
   const [dismissedAtById, setDismissedAtById] = useState<Record<string, number>>({});
   const [popupSettings, setPopupSettings] = useState<AnnouncementPopupSettings>(DEFAULT_POPUP_SETTINGS);
   const [open, setOpen] = useState(false);
+  const [nowMs, setNowMs] = useState(() => Date.now());
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -263,6 +264,15 @@ export function GlobalUpdatesModal() {
     setOpen(Boolean(popupSettings.enabled && nextAnnouncement) && !pathname.startsWith('/admin'));
   }, [nextAnnouncement, pathname, popupSettings.enabled]);
 
+  useEffect(() => {
+    if (!open || !nextAnnouncement?.countdownEnabled || !nextAnnouncement.expiresAt) {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => setNowMs(Date.now()), 1000);
+    return () => window.clearInterval(intervalId);
+  }, [open, nextAnnouncement?.countdownEnabled, nextAnnouncement?.expiresAt]);
+
   const closeAnnouncement = () => {
     if (!nextAnnouncement) {
       setOpen(false);
@@ -288,6 +298,7 @@ export function GlobalUpdatesModal() {
   const theme = THEMES[announcementType] || THEMES.update;
   const Icon = theme.icon;
   const BadgeIcon = theme.badgeIcon;
+  const imageSrc = resolveAssetUrl(nextAnnouncement.imageUrl) || nextAnnouncement.imageUrl || null;
 
   const isDiscount = announcementType === 'discount' && nextAnnouncement.couponCode;
   const discountBaseUrl = nextAnnouncement.targetPlan === 'GOLDX'
@@ -307,6 +318,14 @@ export function GlobalUpdatesModal() {
         : `/checkout?plan=${encodeURIComponent(nextAnnouncement.targetPlan!)}`)
     : null;
   const planLabel = PLAN_LABELS[nextAnnouncement.targetPlan || 'PRO'] || 'PRO';
+  const countdownMs = nextAnnouncement.countdownEnabled && nextAnnouncement.expiresAt
+    ? Math.max(0, new Date(nextAnnouncement.expiresAt).getTime() - nowMs)
+    : 0;
+  const showCountdown = Boolean(nextAnnouncement.countdownEnabled && nextAnnouncement.expiresAt && countdownMs > 0);
+  const countdownDays = Math.floor(countdownMs / (1000 * 60 * 60 * 24));
+  const countdownHours = Math.floor((countdownMs / (1000 * 60 * 60)) % 24);
+  const countdownMinutes = Math.floor((countdownMs / (1000 * 60)) % 60);
+  const countdownSeconds = Math.floor((countdownMs / 1000) % 60);
 
   return (
     <>
@@ -367,10 +386,36 @@ export function GlobalUpdatesModal() {
 
                 {/* Content */}
                 <div className="rounded-[24px] border border-white/10 bg-white/5 p-5 sm:p-6">
-                  {nextAnnouncement.imageUrl ? (
+                  {showCountdown ? (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mb-5 overflow-hidden rounded-[22px] border border-rose-300/25 bg-[radial-gradient(circle_at_top_left,_rgba(251,113,133,0.2),_transparent_32%),linear-gradient(135deg,rgba(15,23,42,0.9),rgba(30,41,59,0.8))] p-5"
+                    >
+                      <div className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-rose-200">
+                        <Clock3 className="h-3.5 w-3.5" />
+                        Limited Window
+                      </div>
+                      <div className="grid grid-cols-4 gap-3">
+                        {[
+                          { label: 'Days', value: String(countdownDays).padStart(2, '0') },
+                          { label: 'Hours', value: String(countdownHours).padStart(2, '0') },
+                          { label: 'Mins', value: String(countdownMinutes).padStart(2, '0') },
+                          { label: 'Secs', value: String(countdownSeconds).padStart(2, '0') },
+                        ].map((item) => (
+                          <motion.div key={item.label} layout className="rounded-2xl border border-white/10 bg-black/20 px-3 py-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+                            <div className="text-2xl font-black tracking-[0.08em] text-white sm:text-3xl">{item.value}</div>
+                            <div className="mt-1 text-[10px] uppercase tracking-[0.2em] text-rose-100/70">{item.label}</div>
+                          </motion.div>
+                        ))}
+                      </div>
+                      <div className="mt-3 text-xs text-rose-100/75">This update is time-sensitive. Once the countdown ends, the popup expires automatically.</div>
+                    </motion.div>
+                  ) : null}
+                  {imageSrc ? (
                     <div className="mb-5 overflow-hidden rounded-[20px] border border-white/10 bg-black/30">
                       <img
-                        src={nextAnnouncement.imageUrl}
+                        src={imageSrc}
                         alt={nextAnnouncement.title}
                         className="max-h-[320px] w-full object-cover"
                       />
