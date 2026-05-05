@@ -438,6 +438,11 @@ export interface Announcement {
   updatedAt: string;
 }
 
+export interface AnnouncementPopupSettings {
+  enabled: boolean;
+  repeatHours: number;
+}
+
 export type TicketStatus = 'OPEN' | 'IN_PROGRESS' | 'WAITING_ON_USER' | 'RESOLVED' | 'CLOSED';
 export type TicketPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
 export type TicketCategory = 'ACCOUNT' | 'BILLING' | 'ANALYSIS' | 'BUG' | 'FEATURE' | 'GENERAL';
@@ -774,7 +779,7 @@ export const api = {
     apiFetch<{ user: any }>('/auth/profile', { token }),
 
   getActiveAnnouncements: () =>
-    apiFetch<{ announcements: Announcement[] }>('/admin/public-announcements'),
+    apiFetch<{ announcements: Announcement[]; popupSettings: AnnouncementPopupSettings }>('/admin/public-announcements'),
 
   getPublicPricingPlans: () =>
     apiFetch<{ plans: PricingPlan[] }>('/admin/public-pricing-plans'),
@@ -1093,6 +1098,12 @@ export const api = {
     createAnnouncement: (data: { title: string; content: string; durationValue?: number; durationUnit?: 'hours' | 'days'; type?: AnnouncementType; couponCode?: string; imageUrl?: string; targetPlan?: 'PRO' | 'TOP_TIER' | 'GOLDX' | 'GOLDX_PULSE' }, token: string) =>
       apiFetch<{ announcement: Announcement }>('/admin/announcements', {
         method: 'POST',
+        body: JSON.stringify(data),
+        token,
+      }),
+    updateAnnouncement: (id: string, data: { title?: string; content?: string; isActive?: boolean; durationValue?: number; durationUnit?: 'hours' | 'days'; clearExpiry?: boolean; type?: AnnouncementType; couponCode?: string; imageUrl?: string; targetPlan?: 'PRO' | 'TOP_TIER' | 'GOLDX' | 'GOLDX_PULSE' }, token: string) =>
+      apiFetch<{ announcement: Announcement }>(`/admin/announcements/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
         body: JSON.stringify(data),
         token,
       }),
