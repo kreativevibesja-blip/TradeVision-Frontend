@@ -30,6 +30,15 @@ interface ThemeConfig {
   decorations: React.ReactNode;
 }
 
+interface CountdownThemeConfig {
+  label: string;
+  accentClass: string;
+  panelClass: string;
+  numberClass: string;
+  chipClass: string;
+  message: string;
+}
+
 const floatingKeyframes = `
 @keyframes float-slow { 0%,100%{transform:translateY(0) rotate(0deg)} 50%{transform:translateY(-8px) rotate(3deg)} }
 @keyframes float-med  { 0%,100%{transform:translateY(0) rotate(0deg)} 50%{transform:translateY(-12px) rotate(-2deg)} }
@@ -187,6 +196,57 @@ const THEMES: Record<AnnouncementType, ThemeConfig> = {
 
 const PLAN_LABELS: Record<string, string> = { PRO: 'PRO', TOP_TIER: 'PRO+', GOLDX: 'GoldX', GOLDX_PULSE: 'GoldX Pulse' };
 
+const COUNTDOWN_THEMES: Record<AnnouncementType, CountdownThemeConfig> = {
+  update: {
+    label: 'Launch Window',
+    accentClass: 'text-cyan-200',
+    panelClass: 'border-cyan-300/25 bg-[radial-gradient(circle_at_top_left,_rgba(34,211,238,0.2),_transparent_32%),linear-gradient(135deg,rgba(15,23,42,0.9),rgba(8,47,73,0.82))]',
+    numberClass: 'text-cyan-50',
+    chipClass: 'text-cyan-100/70',
+    message: 'This platform update is rolling live now. The countdown shows how long this launch window stays highlighted.',
+  },
+  maintenance: {
+    label: 'Maintenance Countdown',
+    accentClass: 'text-amber-200',
+    panelClass: 'border-amber-300/25 bg-[radial-gradient(circle_at_top_left,_rgba(251,191,36,0.22),_transparent_32%),linear-gradient(135deg,rgba(15,23,42,0.92),rgba(120,53,15,0.76))]',
+    numberClass: 'text-amber-50',
+    chipClass: 'text-amber-100/70',
+    message: 'This timer marks the remaining time before the maintenance notice expires from the live popup rotation.',
+  },
+  discount: {
+    label: 'Offer Ends In',
+    accentClass: 'text-pink-200',
+    panelClass: 'border-pink-300/25 bg-[radial-gradient(circle_at_top_left,_rgba(244,114,182,0.22),_transparent_32%),linear-gradient(135deg,rgba(15,23,42,0.92),rgba(112,26,117,0.8))]',
+    numberClass: 'text-pink-50',
+    chipClass: 'text-pink-100/70',
+    message: 'This offer countdown is meant to feel urgent. When it reaches zero, the discount popup is no longer shown.',
+  },
+  new_feature: {
+    label: 'Feature Drop Timer',
+    accentClass: 'text-emerald-200',
+    panelClass: 'border-emerald-300/25 bg-[radial-gradient(circle_at_top_left,_rgba(52,211,153,0.2),_transparent_32%),linear-gradient(135deg,rgba(15,23,42,0.92),rgba(6,78,59,0.8))]',
+    numberClass: 'text-emerald-50',
+    chipClass: 'text-emerald-100/70',
+    message: 'The feature-release clock keeps the announcement feeling fresh while the rollout is still active.',
+  },
+  security: {
+    label: 'Security Notice Window',
+    accentClass: 'text-rose-200',
+    panelClass: 'border-rose-300/25 bg-[radial-gradient(circle_at_top_left,_rgba(251,113,133,0.2),_transparent_32%),linear-gradient(135deg,rgba(15,23,42,0.92),rgba(127,29,29,0.8))]',
+    numberClass: 'text-rose-50',
+    chipClass: 'text-rose-100/70',
+    message: 'This security notice remains elevated only for a limited response window so users feel the urgency clearly.',
+  },
+  event: {
+    label: 'Event Starts Closing',
+    accentClass: 'text-yellow-200',
+    panelClass: 'border-yellow-300/25 bg-[radial-gradient(circle_at_top_left,_rgba(250,204,21,0.2),_transparent_32%),linear-gradient(135deg,rgba(15,23,42,0.92),rgba(133,77,14,0.78))]',
+    numberClass: 'text-yellow-50',
+    chipClass: 'text-yellow-100/70',
+    message: 'The event timer adds momentum and lets users know this announcement is only around for a short burst.',
+  },
+};
+
 export function GlobalUpdatesModal() {
   const pathname = usePathname();
   const router = useRouter();
@@ -318,6 +378,7 @@ export function GlobalUpdatesModal() {
         : `/checkout?plan=${encodeURIComponent(nextAnnouncement.targetPlan!)}`)
     : null;
   const planLabel = PLAN_LABELS[nextAnnouncement.targetPlan || 'PRO'] || 'PRO';
+  const countdownTheme = COUNTDOWN_THEMES[announcementType] || COUNTDOWN_THEMES.update;
   const countdownMs = nextAnnouncement.countdownEnabled && nextAnnouncement.expiresAt
     ? Math.max(0, new Date(nextAnnouncement.expiresAt).getTime() - nowMs)
     : 0;
@@ -390,11 +451,11 @@ export function GlobalUpdatesModal() {
                     <motion.div
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="mb-5 overflow-hidden rounded-[22px] border border-rose-300/25 bg-[radial-gradient(circle_at_top_left,_rgba(251,113,133,0.2),_transparent_32%),linear-gradient(135deg,rgba(15,23,42,0.9),rgba(30,41,59,0.8))] p-5"
+                      className={`mb-5 overflow-hidden rounded-[22px] border p-5 ${countdownTheme.panelClass}`}
                     >
-                      <div className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-rose-200">
+                      <div className={`mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.24em] ${countdownTheme.accentClass}`}>
                         <Clock3 className="h-3.5 w-3.5" />
-                        Limited Window
+                        {countdownTheme.label}
                       </div>
                       <div className="grid grid-cols-4 gap-3">
                         {[
@@ -402,14 +463,14 @@ export function GlobalUpdatesModal() {
                           { label: 'Hours', value: String(countdownHours).padStart(2, '0') },
                           { label: 'Mins', value: String(countdownMinutes).padStart(2, '0') },
                           { label: 'Secs', value: String(countdownSeconds).padStart(2, '0') },
-                        ].map((item) => (
-                          <motion.div key={item.label} layout className="rounded-2xl border border-white/10 bg-black/20 px-3 py-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
-                            <div className="text-2xl font-black tracking-[0.08em] text-white sm:text-3xl">{item.value}</div>
-                            <div className="mt-1 text-[10px] uppercase tracking-[0.2em] text-rose-100/70">{item.label}</div>
+                        ].map((item, index) => (
+                          <motion.div key={item.label} layout transition={{ delay: index * 0.03 }} className="rounded-2xl border border-white/10 bg-black/20 px-3 py-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+                            <div className={`text-2xl font-black tracking-[0.08em] sm:text-3xl ${countdownTheme.numberClass}`}>{item.value}</div>
+                            <div className={`mt-1 text-[10px] uppercase tracking-[0.2em] ${countdownTheme.chipClass}`}>{item.label}</div>
                           </motion.div>
                         ))}
                       </div>
-                      <div className="mt-3 text-xs text-rose-100/75">This update is time-sensitive. Once the countdown ends, the popup expires automatically.</div>
+                      <div className={`mt-3 text-xs ${countdownTheme.chipClass}`}>{countdownTheme.message}</div>
                     </motion.div>
                   ) : null}
                   {imageSrc ? (
