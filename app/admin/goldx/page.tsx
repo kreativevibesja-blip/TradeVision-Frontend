@@ -40,11 +40,33 @@ type Tab = 'overview' | 'licenses' | 'subscriptions' | 'audit' | 'trades' | 'set
 
 const PANEL_SCROLL_CLASS = 'h-[min(62vh,calc(100vh-17rem))] min-h-[20rem] overflow-auto overscroll-contain';
 const GOLDX_PULSE_SETTING_PREFIX = 'goldxPulse:subscription:';
+const GOLDX_DELIVERY_LINK_SETTING_KEY = 'delivery_download_link';
 
 type GoldxPulseAdminSetting = {
   status?: 'active' | 'inactive' | 'cancelled' | 'expired' | 'trial';
   expiresAt?: string | null;
   planName?: string;
+};
+
+type GoldxDeliveryLinkSetting = {
+  url?: string;
+};
+
+const getGoldxDeliveryLinkValue = (value: unknown) => {
+  if (!value) {
+    return '';
+  }
+
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  if (typeof value === 'object' && value !== null && 'url' in value) {
+    const url = (value as GoldxDeliveryLinkSetting).url;
+    return typeof url === 'string' ? url : '';
+  }
+
+  return '';
 };
 
 export default function AdminGoldxPage() {
@@ -72,6 +94,9 @@ export default function AdminGoldxPage() {
   const [pulseSearchQuery, setPulseSearchQuery] = useState('');
   const [pulseSearchResults, setPulseSearchResults] = useState<SearchedUser[]>([]);
   const [pulseSearchLoading, setPulseSearchLoading] = useState(false);
+  const [deliveryDownloadLink, setDeliveryDownloadLink] = useState('');
+  const [deliverySaving, setDeliverySaving] = useState(false);
+  const [deliveryMessage, setDeliveryMessage] = useState('');
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -101,6 +126,10 @@ export default function AdminGoldxPage() {
   }, [token]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    setDeliveryDownloadLink(getGoldxDeliveryLinkValue(settings?.[GOLDX_DELIVERY_LINK_SETTING_KEY]));
+  }, [settings]);
 
   const handleRevoke = async (licenseId: string) => {
     if (!token) return;
@@ -217,6 +246,38 @@ export default function AdminGoldxPage() {
       setPulseMessage('Failed to disable GoldX Pulse access.');
     } finally {
       setPulseSaving(false);
+    }
+  };
+
+  const handleSaveDeliveryLink = async () => {
+    if (!token) {
+      return;
+    }
+
+    const trimmed = deliveryDownloadLink.trim();
+    if (!trimmed) {
+      setDeliveryMessage('Enter the GoldX download URL before saving.');
+      return;
+    }
+
+    try {
+      new URL(trimmed);
+    } catch {
+      setDeliveryMessage('Enter a valid absolute URL for the GoldX download link.');
+      return;
+    }
+
+    try {
+      setDeliverySaving(true);
+      setDeliveryMessage('');
+      await api.goldx.admin.updateSettings(GOLDX_DELIVERY_LINK_SETTING_KEY, { url: trimmed }, token);
+      setDeliveryMessage('Saved the GoldX email download link.');
+      load();
+    } catch (err) {
+      console.error('Failed to save GoldX delivery link:', err);
+      setDeliveryMessage('Failed to save the GoldX email download link.');
+    } finally {
+      setDeliverySaving(false);
     }
   };
 
@@ -616,6 +677,49 @@ export default function AdminGoldxPage() {
       {/* Settings */}
       {tab === 'settings' && settings && (
         <div className="space-y-4">
+          <Card className="border-amber-400/20 bg-[radial-gradient(circle_at_top_left,_rgba(245,158,11,0.16),_transparent_30%),rgba(15,23,42,0.92)]">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <Key className="h-4 w-4 text-amber-300" />
+                GoldX Delivery Link
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                This link is used in the GoldX user email action. When an admin sends the delivery email, the button in that email takes the customer to this URL instead of attaching files.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2 rounded-2xl border border-white/10 bg-white/5 p-4">
+                <label className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Download URL</label>
+                <Input
+                  value={deliveryDownloadLink}
+                  onChange={(e) => setDeliveryDownloadLink(e.target.value)}
+                  placeholder="https://your-domain.com/goldx-download"
+                />
+                <div className="text-xs text-muted-foreground">
+                  Put the hosted download page or secure file link here. Include the EA package and legal agreement behind this URL.
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <Button onClick={handleSaveDeliveryLink} disabled={deliverySaving || !deliveryDownloadLink.trim()}>
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  {deliverySaving ? 'Saving…' : 'Save Download Link'}
+                </Button>
+                {deliveryDownloadLink.trim() ? (
+                  <Button variant="outline" asChild>
+                    <a href={deliveryDownloadLink.trim()} target="_blank" rel="noreferrer">
+                      Open Link
+                    </a>
+                  </Button>
+                ) : null}
+              </div>
+              {deliveryMessage ? (
+                <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-muted-foreground">
+                  {deliveryMessage}
+                </div>
+              ) : null}
+            </CardContent>
+          </Card>
+
           <Card className="border-cyan-400/20 bg-[radial-gradient(circle_at_top_left,_rgba(34,211,238,0.14),_transparent_28%),rgba(15,23,42,0.92)]">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base sm:text-lg">

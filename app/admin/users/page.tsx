@@ -269,8 +269,8 @@ export default function AdminUsersPage() {
 
     try {
       setSendingGoldxFiles(true);
-      await api.admin.sendGoldxFilesEmail(userId, token);
-      setGoldxGrantMessage('GoldX EA files and legal agreement were emailed to the user.');
+      const result = await api.admin.sendGoldxFilesEmail(userId, token);
+      setGoldxGrantMessage(`GoldX delivery email sent using: ${result.downloadUrl}`);
     } catch (error: any) {
       setGoldxGrantMessage(error?.message || 'Failed to send the GoldX delivery email.');
     } finally {
