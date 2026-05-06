@@ -21,22 +21,22 @@ type ScannerStrategyToggleKey =
   | 'sessionFlip';
 
 const DEFAULT_SCANNER_STRATEGIES: Record<ScannerStrategyToggleKey, boolean> = {
-  trendPullback: true,
-  countertrendReversal: true,
-  fvgContinuation: true,
+  trendPullback: false,
+  countertrendReversal: false,
+  fvgContinuation: false,
   emaReclaim: true,
-  equalLevelSweep: true,
-  poiReclaim: true,
-  rangeRejection: true,
-  zoneTap: true,
-  sessionFlip: true,
+  equalLevelSweep: false,
+  poiReclaim: false,
+  rangeRejection: false,
+  zoneTap: false,
+  sessionFlip: false,
 };
 
 const SCANNER_STRATEGY_LABELS: Array<{ key: ScannerStrategyToggleKey; title: string; detail: string }> = [
   { key: 'trendPullback', title: 'Trend Pullback', detail: 'Continuation pullbacks aligned with structure and trend flow.' },
   { key: 'countertrendReversal', title: 'Countertrend Reversal', detail: 'Reversal setups from supply or demand against the broader move.' },
   { key: 'fvgContinuation', title: 'FVG Continuation', detail: 'Fair value gap fill continuations that resume directional flow.' },
-  { key: 'emaReclaim', title: 'EMA Reclaim', detail: 'EMA reclaim and retest continuations.' },
+  { key: 'emaReclaim', title: 'GoldX SMC EMA', detail: 'GoldX SMC-style EMA reclaim continuation using the 9/14/50 stack.' },
   { key: 'equalLevelSweep', title: 'Equal-Level Sweep', detail: 'EQH or EQL liquidity sweep reversals.' },
   { key: 'poiReclaim', title: 'POI Reclaim', detail: 'Point-of-interest reclaim setups after reaction.' },
   { key: 'rangeRejection', title: 'Range Rejection', detail: 'Support and resistance range rotations.' },
@@ -60,7 +60,7 @@ export default function AdminSettingsPage() {
   const [supportWhatsappNumber, setSupportWhatsappNumber] = useState('18762797956');
   const [supportWhatsappMessage, setSupportWhatsappMessage] = useState('Hi TradeVision AI, I need support.');
   const [scannerUseEmaFilter, setScannerUseEmaFilter] = useState(true);
-  const [scannerFastEma, setScannerFastEma] = useState('10');
+  const [scannerFastEma, setScannerFastEma] = useState('9');
   const [scannerMidEma, setScannerMidEma] = useState('14');
   const [scannerSlowEma, setScannerSlowEma] = useState('50');
   const [scannerPullbackTolerance, setScannerPullbackTolerance] = useState('0.12');
@@ -266,7 +266,7 @@ export default function AdminSettingsPage() {
             <div className="rounded-lg border border-white/10 bg-background/50 p-4 space-y-4">
               <div>
                 <label className="text-sm text-muted-foreground">EMA execution filter</label>
-                <p className="mt-1 text-xs text-muted-foreground">Scanner executions must match the same EMA 10/14/50-style pullback and reclaim filter used for GoldX SMC behavior.</p>
+                <p className="mt-1 text-xs text-muted-foreground">Scanner executions must match the same EMA 9/14/50 pullback and reclaim filter used for GoldX SMC behavior.</p>
               </div>
               <Button type="button" variant={scannerUseEmaFilter ? 'default' : 'outline'} size="sm" onClick={() => setScannerUseEmaFilter((current) => !current)}>
                 EMA Filter {scannerUseEmaFilter ? 'On' : 'Off'}
