@@ -72,9 +72,9 @@ const config: Config = {
         sm: 'calc(var(--radius) - 4px)',
       },
       boxShadow: {
-        gold: '0 16px 50px rgba(212, 175, 55, 0.22)',
+        gold: '0 10px 28px rgba(212, 175, 55, 0.12)',
         panel: '0 28px 80px rgba(0, 0, 0, 0.42)',
-        neon: '0 0 0 1px rgba(255, 215, 0, 0.12), 0 0 32px rgba(255, 223, 112, 0.12)',
+        neon: '0 0 0 1px rgba(255, 215, 0, 0.08), 0 0 14px rgba(255, 223, 112, 0.08)',
       },
       keyframes: {
         'accordion-down': {
