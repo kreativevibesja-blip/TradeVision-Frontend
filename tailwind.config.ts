@@ -15,12 +15,20 @@ const config: Config = {
       screens: { '2xl': '1400px' },
     },
     extend: {
+      fontFamily: {
+        sans: ['var(--font-body)', 'sans-serif'],
+        display: ['var(--font-display)', 'sans-serif'],
+        mono: ['var(--font-mono)', 'monospace'],
+      },
       colors: {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
         background: 'hsl(var(--background))',
+        'background-secondary': 'hsl(var(--background-secondary))',
         foreground: 'hsl(var(--foreground))',
+        panel: 'hsl(var(--panel))',
+        'panel-elevated': 'hsl(var(--panel-elevated))',
         primary: {
           DEFAULT: 'hsl(var(--primary))',
           foreground: 'hsl(var(--primary-foreground))',
@@ -52,11 +60,21 @@ const config: Config = {
           yellow: '#eab308',
           purple: '#a855f7',
         },
+        gold: {
+          DEFAULT: 'var(--gold-primary)',
+          light: 'var(--gold-light)',
+          glow: 'var(--gold-glow)',
+        },
       },
       borderRadius: {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
+      },
+      boxShadow: {
+        gold: '0 16px 50px rgba(212, 175, 55, 0.22)',
+        panel: '0 28px 80px rgba(0, 0, 0, 0.42)',
+        neon: '0 0 0 1px rgba(255, 215, 0, 0.12), 0 0 32px rgba(255, 223, 112, 0.12)',
       },
       keyframes: {
         'accordion-down': {
@@ -80,6 +98,18 @@ const config: Config = {
           '50%': { transform: 'scaleY(1)', opacity: '1' },
           '100%': { transform: 'scaleY(0.3)', opacity: '0.5' },
         },
+        aurora: {
+          '0%, 100%': { transform: 'translate3d(0, 0, 0) scale(1)' },
+          '50%': { transform: 'translate3d(3%, -4%, 0) scale(1.05)' },
+        },
+        shimmer: {
+          '0%': { backgroundPosition: '0% 50%' },
+          '100%': { backgroundPosition: '200% 50%' },
+        },
+        'pulse-gold': {
+          '0%, 100%': { boxShadow: '0 0 0 rgba(255, 223, 112, 0.18)' },
+          '50%': { boxShadow: '0 0 28px rgba(255, 223, 112, 0.28)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -87,6 +117,9 @@ const config: Config = {
         'float': 'float 6s ease-in-out infinite',
         'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
         'candlestick': 'candlestick 2s ease-in-out infinite',
+        aurora: 'aurora 14s ease-in-out infinite',
+        shimmer: 'shimmer 2.8s linear infinite',
+        'pulse-gold': 'pulse-gold 2.2s ease-in-out infinite',
       },
     },
   },

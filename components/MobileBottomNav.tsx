@@ -20,8 +20,8 @@ export function MobileBottomNav() {
   }
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-background/95 px-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] pt-2 backdrop-blur-xl md:hidden">
-      <div className="mx-auto grid max-w-md grid-cols-4 gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 shadow-2xl">
+    <div className="fixed inset-x-0 bottom-0 z-50 px-3 pb-[calc(env(safe-area-inset-bottom)+0.6rem)] pt-2 md:hidden">
+      <div className="mx-auto grid max-w-md grid-cols-4 gap-2 rounded-[28px] border border-[rgba(255,223,112,0.14)] bg-[rgba(5,5,5,0.88)] p-2 shadow-[0_20px_60px_rgba(0,0,0,0.45)] backdrop-blur-2xl">
         {navItems.map((item) => {
           const isActive = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
           return (
@@ -29,8 +29,8 @@ export function MobileBottomNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex min-h-12 flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-medium transition-colors',
-                isActive ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:bg-white/5 hover:text-foreground'
+                'flex min-h-12 flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] transition-colors',
+                isActive ? 'bg-[linear-gradient(180deg,rgba(255,223,112,0.18),rgba(212,175,55,0.12))] text-[var(--gold-light)]' : 'text-muted-foreground hover:bg-white/[0.04] hover:text-foreground'
               )}
             >
               <item.icon className="h-5 w-5" />

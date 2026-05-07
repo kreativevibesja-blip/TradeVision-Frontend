@@ -12,6 +12,7 @@ interface User {
   name?: string;
   role: string;
   subscription: string;
+  themePreference?: 'legacy' | 'goldx-premium';
   dailyUsage?: number;
 }
 

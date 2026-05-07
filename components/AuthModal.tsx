@@ -73,27 +73,29 @@ export function AuthModal({ open, onOpenChange, mode, onModeChange }: AuthModalP
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/82 backdrop-blur-md p-4"
         onClick={() => onOpenChange(false)}
       >
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
-          className="glass-card p-8 w-full max-w-md relative"
+          className="premium-panel-muted relative w-full max-w-md overflow-hidden p-8"
           onClick={(e) => e.stopPropagation()}
         >
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-[radial-gradient(circle_at_top,rgba(255,223,112,0.18),transparent_70%)]" />
           <button
-            className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
+            className="absolute top-4 right-4 rounded-full border border-white/10 bg-white/[0.04] p-2 text-muted-foreground hover:text-foreground"
             onClick={() => onOpenChange(false)}
           >
             <X className="h-5 w-5" />
           </button>
 
-          <h2 className="text-2xl font-bold mb-2">
+          <div className="premium-kicker mb-4">{mode === 'login' ? 'Access Portal' : 'Create Access'}</div>
+          <h2 className="mb-2 font-display text-3xl font-bold uppercase tracking-[-0.05em]">
             {mode === 'login' ? 'Welcome Back' : 'Create Account'}
           </h2>
-          <p className="text-muted-foreground mb-6">
+          <p className="mb-6 text-muted-foreground">
             {mode === 'login'
               ? 'Sign in to access your trading analysis'
               : 'Start analyzing charts with AI'}
@@ -103,7 +105,7 @@ export function AuthModal({ open, onOpenChange, mode, onModeChange }: AuthModalP
             type="button"
             variant="outline"
             size="lg"
-            className="w-full mb-4 border-white/10 bg-white/5 hover:bg-white/10"
+            className="mb-4 w-full"
             onClick={handleGoogleAuth}
             disabled={loading}
           >
@@ -133,7 +135,7 @@ export function AuthModal({ open, onOpenChange, mode, onModeChange }: AuthModalP
               <span className="w-full border-t border-white/10" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-[#141414] px-2 text-muted-foreground">Or continue with email</span>
+              <span className="bg-[#0a0a0a] px-2 text-muted-foreground">Or continue with email</span>
             </div>
           </div>
 
@@ -186,7 +188,7 @@ export function AuthModal({ open, onOpenChange, mode, onModeChange }: AuthModalP
             </div>
 
             {error && (
-              <p className="text-sm text-red-400 bg-red-400/10 p-2 rounded-lg">{error}</p>
+              <p className="rounded-2xl border border-red-500/20 bg-red-400/10 p-3 text-sm text-red-300">{error}</p>
             )}
 
             <Button type="submit" variant="gradient" size="lg" className="w-full" disabled={loading}>

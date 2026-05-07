@@ -444,6 +444,12 @@ export interface AnnouncementPopupSettings {
   repeatHours: number;
 }
 
+export type PlatformTheme = 'legacy' | 'goldx-premium';
+
+export interface ThemePreferenceResponse {
+  themePreference: PlatformTheme;
+}
+
 export type TicketStatus = 'OPEN' | 'IN_PROGRESS' | 'WAITING_ON_USER' | 'RESOLVED' | 'CLOSED';
 export type TicketPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
 export type TicketCategory = 'ACCOUNT' | 'BILLING' | 'ANALYSIS' | 'BUG' | 'FEATURE' | 'GENERAL';
@@ -1534,6 +1540,15 @@ export const api = {
       clearResults: (token: string) =>
         apiFetch<{ success: boolean; snapshot: GoldxPulseSnapshot }>('/goldx-pulse/clear-results', {
           method: 'POST',
+          token,
+        }),
+    },
+    theme: {
+      getActive: () => apiFetch<{ activeTheme: PlatformTheme }>('/theme/active'),
+      setPreference: (themePreference: PlatformTheme, token: string) =>
+        apiFetch<ThemePreferenceResponse>('/theme/preference', {
+          method: 'POST',
+          body: JSON.stringify({ themePreference }),
           token,
         }),
     },
