@@ -34,7 +34,7 @@ const fallbackPlanDetails: Record<'FREE' | 'PRO' | 'TOP_TIER', Omit<DisplayPlan,
     period: '/month',
     description: 'Perfect for trying out AI chart analysis',
     icon: Zap,
-    color: 'from-gray-500 to-gray-600',
+    color: 'from-stone-500 to-stone-700',
     cta: 'Subscribe Now',
     ctaLink: '/checkout?plan=FREE',
     popular: false,
@@ -44,7 +44,7 @@ const fallbackPlanDetails: Record<'FREE' | 'PRO' | 'TOP_TIER', Omit<DisplayPlan,
     period: '/month',
     description: 'For serious traders who want premium AI analysis',
     icon: Crown,
-    color: 'from-blue-500 to-purple-600',
+    color: 'from-amber-300 to-yellow-600',
     cta: 'Subscribe Now',
     ctaLink: '/checkout?plan=PRO',
     popular: false,
@@ -54,7 +54,7 @@ const fallbackPlanDetails: Record<'FREE' | 'PRO' | 'TOP_TIER', Omit<DisplayPlan,
     period: '/month',
     description: 'Instant trade setups with Smart Session Scanner, advanced entry precision, and faster response time.',
     icon: Crown,
-    color: 'from-fuchsia-500 via-violet-500 to-cyan-500',
+    color: 'from-[#ffe38a] via-[#d4af37] to-[#8a6712]',
     cta: 'Upgrade to PRO+',
     ctaLink: '/checkout?plan=TOP_TIER',
     popular: true,
@@ -189,7 +189,7 @@ export default function PricingPage() {
           transition={{ duration: 0.28 }}
           className="text-center mb-16"
         >
-          <Badge className="mb-4" variant="outline">Pricing</Badge>
+          <Badge className="mb-4" variant="default">Pricing</Badge>
           <h1 className="mb-4 text-2xl font-bold sm:text-3xl md:text-4xl lg:text-5xl">
             Simple, Transparent <span className="text-gradient">Pricing</span>
           </h1>
@@ -211,9 +211,9 @@ export default function PricingPage() {
               whileHover={{ y: -8, scale: 1.015 }}
               className="h-full"
             >
-              <Card className={`relative h-full min-h-[34rem] overflow-hidden transition-all duration-300 hover:shadow-[0_22px_80px_rgba(15,23,42,0.28)] xl:min-h-[36rem] ${plan.popular ? 'border-fuchsia-400/40 shadow-[0_0_50px_rgba(217,70,239,0.14)]' : 'hover:border-white/20'}`}>
+              <Card className={`relative h-full min-h-[34rem] overflow-hidden transition-all duration-300 hover:shadow-[0_22px_80px_rgba(0,0,0,0.38)] xl:min-h-[36rem] ${plan.popular ? 'border-[rgba(255,223,112,0.34)] shadow-[0_0_50px_rgba(212,175,55,0.16)]' : 'hover:border-[rgba(255,223,112,0.18)]'}`}>
                 {plan.popular && (
-                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-fuchsia-500 via-violet-500 to-cyan-400" />
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#ffe38a] via-[#d4af37] to-[#8a6712]" />
                 )}
                 <CardContent className="flex h-full flex-col p-5 sm:p-6 lg:p-8">
                   <div className="flex items-center gap-3 mb-4">
@@ -283,7 +283,7 @@ export default function PricingPage() {
           transition={{ delay: 0.22 }}
           className="mx-auto mt-16 max-w-6xl sm:mt-20"
         >
-          <Card className="overflow-hidden border-amber-400/20 bg-[radial-gradient(circle_at_top_left,_rgba(245,158,11,0.18),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.12),_transparent_30%)]">
+          <Card className="overflow-hidden border-[rgba(255,223,112,0.2)] bg-[radial-gradient(circle_at_top_left,_rgba(255,223,112,0.18),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(212,175,55,0.14),_transparent_30%)]">
             <CardContent className="grid gap-8 p-6 sm:p-8 lg:grid-cols-[1.1fr_0.9fr] lg:p-10">
               <div>
                 <div className="mb-4 flex items-center gap-3">
@@ -348,7 +348,7 @@ export default function PricingPage() {
           transition={{ delay: 0.3 }}
           className="mx-auto mt-10 max-w-6xl sm:mt-12"
         >
-          <Card className="overflow-hidden border-cyan-400/20 bg-[radial-gradient(circle_at_top_left,_rgba(34,211,238,0.18),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(168,85,247,0.14),_transparent_30%)]">
+          <Card className="overflow-hidden border-[rgba(255,223,112,0.2)] bg-[radial-gradient(circle_at_top_left,_rgba(255,223,112,0.15),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(34,197,94,0.12),_transparent_30%)]">
             <CardContent className="grid gap-8 p-6 sm:p-8 lg:grid-cols-[1.1fr_0.9fr] lg:p-10">
               <div>
                 <div className="mb-4 flex items-center gap-3">
