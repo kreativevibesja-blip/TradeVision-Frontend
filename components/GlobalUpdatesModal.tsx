@@ -397,7 +397,7 @@ export function GlobalUpdatesModal() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/72 px-4 py-8 backdrop-blur-md"
+            className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/72 px-3 py-4 backdrop-blur-md sm:px-4 sm:py-6"
             onClick={closeAnnouncement}
           >
             <motion.div
@@ -406,7 +406,7 @@ export function GlobalUpdatesModal() {
               exit={{ opacity: 0, y: 18, scale: 0.96 }}
               transition={{ duration: 0.24 }}
               onClick={(event) => event.stopPropagation()}
-              className={`relative w-full max-w-2xl overflow-hidden rounded-[28px] border ${theme.borderColor} ${theme.gradient} p-6 ${theme.glow} sm:p-8`}
+              className={`relative my-auto flex max-h-[min(88vh,760px)] w-full max-w-[min(92vw,42rem)] flex-col overflow-hidden rounded-[24px] border ${theme.borderColor} ${theme.gradient} ${theme.glow} sm:max-h-[min(86vh,820px)] sm:max-w-[min(88vw,44rem)] sm:rounded-[28px]`}
             >
               {/* Decorative elements per type */}
               {theme.decorations}
@@ -422,13 +422,13 @@ export function GlobalUpdatesModal() {
                 <X className="h-4 w-4" />
               </button>
 
-              <div className="relative space-y-6">
+              <div className="relative space-y-5 overflow-y-auto px-4 py-5 sm:space-y-6 sm:px-6 sm:py-6">
                 {/* Header */}
-                <div className="flex items-start gap-4">
-                  <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${theme.iconBg} ${theme.iconColor} ring-1 ${theme.accentRing}`}>
-                    <Icon className="h-6 w-6" />
+                <div className="flex items-start gap-3 sm:gap-4">
+                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${theme.iconBg} ${theme.iconColor} ring-1 ${theme.accentRing} sm:h-12 sm:w-12`}>
+                    <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
                   </div>
-                  <div className="space-y-3">
+                  <div className="min-w-0 space-y-3">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className={`inline-flex items-center gap-1 rounded-full border ${theme.badgeBorder} ${theme.badgeBg} px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${theme.iconColor}`}>
                         <BadgeIcon className="h-3.5 w-3.5" />
@@ -441,48 +441,47 @@ export function GlobalUpdatesModal() {
                         </span>
                       )}
                     </div>
-                    <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">{nextAnnouncement.title}</h2>
+                    <h2 className="text-xl font-bold tracking-tight text-white sm:text-2xl lg:text-3xl">{nextAnnouncement.title}</h2>
                   </div>
                 </div>
 
                 {/* Content */}
-                <div className="rounded-[24px] border border-white/10 bg-white/5 p-5 sm:p-6">
+                <div className="rounded-[22px] border border-white/10 bg-white/5 p-4 sm:rounded-[24px] sm:p-5 lg:p-6">
                   {showCountdown ? (
                     <motion.div
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className={`mb-5 overflow-hidden rounded-[22px] border p-5 ${countdownTheme.panelClass}`}
+                      className={`mb-4 overflow-hidden rounded-[20px] border p-4 sm:mb-5 sm:rounded-[22px] sm:p-5 ${countdownTheme.panelClass}`}
                     >
                       <div className={`mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.24em] ${countdownTheme.accentClass}`}>
                         <Clock3 className="h-3.5 w-3.5" />
                         {countdownTheme.label}
                       </div>
-                      <div className="grid grid-cols-4 gap-3">
+                      <div className="grid grid-cols-4 gap-2 sm:gap-3">
                         {[
                           { label: 'Days', value: String(countdownDays).padStart(2, '0') },
                           { label: 'Hours', value: String(countdownHours).padStart(2, '0') },
                           { label: 'Mins', value: String(countdownMinutes).padStart(2, '0') },
                           { label: 'Secs', value: String(countdownSeconds).padStart(2, '0') },
                         ].map((item, index) => (
-                          <motion.div key={item.label} layout transition={{ delay: index * 0.03 }} className="rounded-2xl border border-white/10 bg-black/20 px-3 py-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
-                            <div className={`text-2xl font-black tracking-[0.08em] sm:text-3xl ${countdownTheme.numberClass}`}>{item.value}</div>
-                            <div className={`mt-1 text-[10px] uppercase tracking-[0.2em] ${countdownTheme.chipClass}`}>{item.label}</div>
+                          <motion.div key={item.label} layout transition={{ delay: index * 0.03 }} className="rounded-[18px] border border-white/10 bg-black/20 px-2 py-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] sm:rounded-2xl sm:px-3 sm:py-4">
+                            <div className={`text-xl font-black tracking-[0.04em] sm:text-2xl lg:text-3xl ${countdownTheme.numberClass}`}>{item.value}</div>
+                            <div className={`mt-1 text-[9px] uppercase tracking-[0.16em] sm:text-[10px] sm:tracking-[0.2em] ${countdownTheme.chipClass}`}>{item.label}</div>
                           </motion.div>
                         ))}
                       </div>
-                      <div className={`mt-3 text-xs ${countdownTheme.chipClass}`}>{countdownTheme.message}</div>
                     </motion.div>
                   ) : null}
                   {imageSrc ? (
-                    <div className="mb-5 overflow-hidden rounded-[20px] border border-white/10 bg-black/30">
+                    <div className="mb-4 overflow-hidden rounded-[18px] border border-white/10 bg-black/30 sm:mb-5 sm:rounded-[20px]">
                       <img
                         src={imageSrc}
                         alt={nextAnnouncement.title}
-                        className="max-h-[320px] w-full object-cover"
+                        className="max-h-[220px] w-full object-contain sm:max-h-[260px] lg:max-h-[320px]"
                       />
                     </div>
                   ) : null}
-                  <p className="whitespace-pre-wrap text-sm leading-7 text-slate-200 sm:text-base">{nextAnnouncement.content}</p>
+                  <p className="whitespace-pre-wrap text-sm leading-6 text-slate-200 sm:text-base sm:leading-7">{nextAnnouncement.content}</p>
                 </div>
 
                 {/* Discount CTA */}
@@ -491,7 +490,7 @@ export function GlobalUpdatesModal() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.15 }}
-                    className="rounded-[20px] border border-pink-400/20 bg-gradient-to-r from-pink-500/10 via-fuchsia-500/10 to-purple-500/10 p-5"
+                    className="rounded-[18px] border border-pink-400/20 bg-gradient-to-r from-pink-500/10 via-fuchsia-500/10 to-purple-500/10 p-4 sm:rounded-[20px] sm:p-5"
                   >
                     <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
                       <div className="text-center sm:text-left">
@@ -525,7 +524,7 @@ export function GlobalUpdatesModal() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.15 }}
-                    className={`rounded-[20px] border ${theme.borderColor} bg-gradient-to-r from-white/5 via-white/[0.03] to-white/5 p-5`}
+                    className={`rounded-[18px] border ${theme.borderColor} bg-gradient-to-r from-white/5 via-white/[0.03] to-white/5 p-4 sm:rounded-[20px] sm:p-5`}
                   >
                     <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
                       <div className="text-center sm:text-left">
