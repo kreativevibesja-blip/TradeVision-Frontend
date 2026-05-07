@@ -8,14 +8,14 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'border-transparent bg-primary text-primary-foreground shadow-gold hover:-translate-y-px hover:brightness-105',
+        default: 'border-transparent bg-primary text-primary-foreground hover:-translate-y-px hover:brightness-105',
         destructive: 'border-red-500/30 bg-destructive/85 text-destructive-foreground hover:bg-destructive',
         outline: 'border-[rgba(255,223,112,0.2)] bg-white/[0.03] text-foreground hover:border-[rgba(255,223,112,0.42)] hover:bg-white/[0.06]',
         secondary: 'border-white/10 bg-secondary text-secondary-foreground hover:bg-secondary/80',
         ghost: 'border-transparent bg-transparent text-muted-foreground hover:border-white/10 hover:bg-white/[0.04] hover:text-foreground',
         link: 'text-primary underline-offset-4 hover:underline',
-        gradient: 'border-transparent bg-[linear-gradient(135deg,#ffe38a_0%,#d4af37_48%,#9a7513_100%)] text-[#120f04] shadow-gold hover:-translate-y-px hover:brightness-105',
-        glow: 'border-[rgba(255,223,112,0.28)] bg-[linear-gradient(135deg,rgba(255,223,112,0.2),rgba(212,175,55,0.18))] text-white shadow-neon hover:-translate-y-px hover:shadow-gold',
+        gradient: 'border-transparent bg-[linear-gradient(135deg,#ffe38a_0%,#d4af37_48%,#9a7513_100%)] text-[#120f04] hover:-translate-y-px hover:brightness-105',
+        glow: 'border-[rgba(255,223,112,0.28)] bg-[linear-gradient(135deg,rgba(255,223,112,0.2),rgba(212,175,55,0.18))] text-white hover:-translate-y-px',
       },
       size: {
         default: 'h-12 px-5 py-3',
