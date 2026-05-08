@@ -13,7 +13,6 @@ import { VisitorHeartbeat } from '@/components/VisitorHeartbeat';
 import { WhatsAppSupportButton } from '@/components/WhatsAppSupportButton';
 import { ReferralCapture } from '@/components/ReferralCapture';
 import { FeedbackTrigger } from '@/components/FeedbackTrigger';
-import { MobileBottomNav } from '@/components/MobileBottomNav';
 
 const bodyFont = Manrope({ subsets: ['latin'], variable: '--font-body' });
 const displayFont = Sora({ subsets: ['latin'], variable: '--font-display' });
@@ -51,8 +50,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <VisitorHeartbeat />
               <GlobalUpdatesModal />
               <PlatformIntroModal />
-              <main className="flex-1 pt-20 pb-28 md:pb-0">{children}</main>
-              <MobileBottomNav />
+              <main className="flex-1 pt-20">{children}</main>
               <WhatsAppSupportButton />
               <FeedbackTrigger />
             </div>
