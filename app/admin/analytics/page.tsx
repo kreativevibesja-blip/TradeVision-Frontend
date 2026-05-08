@@ -184,11 +184,45 @@ export default function AdminAnalyticsPage() {
   const revenue = processGroupedData(analytics?.revenueData, 'amount');
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-      <div className="flex flex-col gap-4 mb-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-bold">Analytics</h1>
-          <div className="flex flex-wrap gap-2">
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+      <section className="premium-panel premium-noise overflow-hidden p-6 sm:p-8">
+        <div className="ambient-orb -left-12 top-0 h-36 w-36 opacity-60" />
+        <div className="ambient-orb bottom-0 right-0 h-44 w-44 opacity-40" />
+        <div className="relative flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+          <div className="max-w-3xl">
+            <div className="premium-kicker mb-4">Live Intelligence</div>
+            <h1 className="font-display text-3xl font-bold uppercase tracking-[-0.05em] text-white sm:text-4xl">Analytics</h1>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-white/64">Track traffic, execution demand, and revenue movement through a denser control surface built for live operating decisions.</p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="mobile-card rounded-[22px] p-4">
+              <div className="metric-label">Live visitors</div>
+              <div className="metric-value mt-2 text-cyan-100">{analytics?.liveMetrics.currentVisitors || 0}</div>
+            </div>
+            <div className="mobile-card rounded-[22px] p-4">
+              <div className="metric-label">Visitors today</div>
+              <div className="metric-value mt-2 text-white">{analytics?.liveMetrics.totalVisitorsToday || 0}</div>
+            </div>
+            <div className="mobile-card rounded-[22px] p-4">
+              <div className="metric-label">Active analyses</div>
+              <div className="metric-value mt-2 text-rose-100">{analytics?.liveMetrics.activeAnalyses || 0}</div>
+            </div>
+            <div className="mobile-card rounded-[22px] p-4">
+              <div className="metric-label">Analyses today</div>
+              <div className="metric-value mt-2 text-[var(--gold-light)]">{analytics?.liveMetrics.totalAnalysesToday || 0}</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div className="premium-panel-muted p-5 sm:p-6">
+        <div className="flex flex-col gap-4 mb-2">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="premium-kicker">Date Controls</div>
+              <p className="mt-3 text-sm text-muted-foreground">Switch between live operating windows or pin a custom range for closer review.</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
             {[
               { label: 'Today', value: 'today' },
               { label: 'Yesterday', value: 'yesterday' },
@@ -205,15 +239,17 @@ export default function AdminAnalyticsPage() {
                 {option.label}
               </Button>
             ))}
-          </div>
+              </div>
+            </div>
         </div>
 
-        <Card>
+        <Card className="border-[rgba(255,223,112,0.1)] bg-white/[0.02] shadow-none">
           <CardContent className="p-4">
             <div className="flex flex-col md:flex-row md:items-end gap-3">
               <div className="space-y-2">
-                <label className="text-sm font-medium">From</label>
+                <label className="metric-label">From</label>
                 <Input
+                  className="premium-input"
                   type="date"
                   value={fromDate}
                   onChange={(event) => {
@@ -223,8 +259,9 @@ export default function AdminAnalyticsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">To</label>
+                <label className="metric-label">To</label>
                 <Input
+                  className="premium-input"
                   type="date"
                   value={toDate}
                   onChange={(event) => {
@@ -241,8 +278,8 @@ export default function AdminAnalyticsPage() {
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <Card>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 mt-4">
+          <Card className="premium-panel premium-noise border-[rgba(255,223,112,0.08)] bg-transparent">
             <CardContent className="p-5">
               <div className="flex items-center justify-between gap-3">
                 <div>
@@ -257,7 +294,7 @@ export default function AdminAnalyticsPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="premium-panel premium-noise border-[rgba(255,223,112,0.08)] bg-transparent">
             <CardContent className="p-5">
               <div className="flex items-center justify-between gap-3">
                 <div>
@@ -272,7 +309,7 @@ export default function AdminAnalyticsPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="premium-panel premium-noise border-[rgba(255,223,112,0.08)] bg-transparent">
             <CardContent className="p-5">
               <div className="flex items-center justify-between gap-3">
                 <div>
@@ -287,7 +324,7 @@ export default function AdminAnalyticsPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="premium-panel premium-noise border-[rgba(255,223,112,0.08)] bg-transparent">
             <CardContent className="p-5">
               <div className="flex items-center justify-between gap-3">
                 <div>
@@ -305,7 +342,7 @@ export default function AdminAnalyticsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+        <Card className="premium-panel premium-noise border-[rgba(255,223,112,0.12)] bg-transparent">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Users className="h-5 w-5 text-blue-400" />
@@ -314,7 +351,7 @@ export default function AdminAnalyticsPage() {
           </CardHeader>
           <CardContent>
             {userGrowth.labels.length > 0 ? (
-              <div className="h-80">
+              <div className="h-80 rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01))] p-3">
                 <Line
                   data={{
                     labels: userGrowth.labels,
@@ -335,7 +372,7 @@ export default function AdminAnalyticsPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="premium-panel premium-noise border-[rgba(255,223,112,0.12)] bg-transparent">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <BarChart3 className="h-5 w-5 text-green-400" />
@@ -344,7 +381,7 @@ export default function AdminAnalyticsPage() {
           </CardHeader>
           <CardContent>
             {analysesPerDay.labels.length > 0 ? (
-              <div className="h-80">
+              <div className="h-80 rounded-[24px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01))] p-3">
                 <Bar
                   data={{
                     labels: analysesPerDay.labels,
@@ -365,7 +402,7 @@ export default function AdminAnalyticsPage() {
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-2">
+        <Card className="premium-panel premium-noise border-[rgba(255,223,112,0.12)] bg-transparent lg:col-span-2">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <DollarSign className="h-5 w-5 text-yellow-400" />
@@ -374,7 +411,7 @@ export default function AdminAnalyticsPage() {
           </CardHeader>
           <CardContent>
             {revenue.labels.length > 0 ? (
-              <div className="h-96">
+              <div className="h-96 rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01))] p-3">
                 <Line
                   data={{
                     labels: revenue.labels,

@@ -171,17 +171,37 @@ export default function GoldxSetupPage() {
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <Badge className="border-white/10 bg-white/5 text-slate-200">
-              <Sparkles className="mr-1 h-3.5 w-3.5" /> GoldX Onboarding
-            </Badge>
-            <h1 className="mt-4 text-4xl font-bold tracking-tight">Set Up GoldX EA in Minutes</h1>
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">
-              Works on MT5 desktop, runs fully automated once installed, and keeps execution controls inside the terminal. Most users finish setup in under 10 minutes.
-            </p>
+        <div className="mb-8 overflow-hidden rounded-[34px] border border-[rgba(255,223,112,0.14)] bg-[linear-gradient(145deg,rgba(255,223,112,0.08),rgba(255,255,255,0.02),rgba(0,0,0,0.24))] p-6 sm:p-8">
+          <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
+            <div>
+              <Badge className="border-white/10 bg-white/5 text-slate-200">
+                <Sparkles className="mr-1 h-3.5 w-3.5" /> GoldX Onboarding
+              </Badge>
+              <h1 className="mt-4 text-4xl font-bold tracking-[-0.06em] text-white">Set Up GoldX EA in Minutes</h1>
+              <p className="mt-3 max-w-3xl text-sm leading-7 text-white/66">
+                The setup flow now matches the premium system: clear progression, MT5-first guidance, assisted onboarding, and stronger visibility into what happens before live execution starts.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="mobile-card rounded-[24px] p-4">
+                <div className="metric-label">Platform</div>
+                <div className="mt-2 text-sm font-semibold text-white">MT5 Desktop</div>
+              </div>
+              <div className="mobile-card rounded-[24px] p-4">
+                <div className="metric-label">Typical setup</div>
+                <div className="mt-2 text-sm font-semibold text-[var(--gold-light)]">Under 10 min</div>
+              </div>
+              <div className="mobile-card rounded-[24px] p-4">
+                <div className="metric-label">Controls live in</div>
+                <div className="mt-2 text-sm font-semibold text-white">MT5 terminal</div>
+              </div>
+              <div className="mobile-card rounded-[24px] p-4">
+                <div className="metric-label">Help option</div>
+                <div className="mt-2 text-sm font-semibold text-white">Assisted setup</div>
+              </div>
+            </div>
           </div>
-          <div className="flex gap-3">
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
             <Link href="/dashboard/goldx">
               <Button variant="outline">Back to GoldX</Button>
             </Link>
@@ -298,7 +318,7 @@ export default function GoldxSetupPage() {
                       value={form.note}
                       onChange={(e) => setForm({ ...form, note: e.target.value })}
                       placeholder="Share anything that will help us complete setup faster."
-                      className="min-h-28 w-full rounded-xl border border-input bg-background px-4 py-3 text-sm outline-none focus:border-primary/40"
+                      className="premium-input min-h-28 w-full"
                     />
                   </div>
                 </div>

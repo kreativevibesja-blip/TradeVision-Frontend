@@ -908,13 +908,39 @@ function AnalyzePageContent() {
           transition={{ duration: 0.28 }}
           className="max-w-7xl mx-auto"
         >
-          <div className="text-center mb-8">
-            <h1 className="mb-2 text-2xl font-bold sm:text-3xl md:text-4xl">
-              <span className="text-gradient">SMC Signal Engine</span>
-            </h1>
-            <p className="mx-auto max-w-2xl text-sm text-muted-foreground sm:text-base">
-              TradeVision analyzes charts through Smart Money Concepts, prioritizing market structure, liquidity, and confirmation over forced entries.
-            </p>
+          <div className="mb-8 overflow-hidden rounded-[34px] border border-[rgba(255,223,112,0.14)] bg-[linear-gradient(145deg,rgba(255,223,112,0.08),rgba(255,255,255,0.02),rgba(0,0,0,0.24))] p-6 sm:p-8">
+            <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
+              <div>
+                <Badge className="mb-4" variant="default">
+                  <Sparkles className="mr-2 h-3.5 w-3.5" />
+                  Analysis workspace
+                </Badge>
+                <h1 className="text-3xl font-bold tracking-[-0.08em] text-white sm:text-4xl lg:text-5xl">
+                  <span className="text-gradient">SMC Signal Engine</span>
+                </h1>
+                <p className="mt-4 max-w-2xl text-sm leading-7 text-white/66 sm:text-base">
+                  TradeVision analyzes charts through Smart Money Concepts, prioritizing market structure, liquidity, and confirmation over forced entries. The intake, staging, and result surfaces now follow the same premium system as the rest of the platform.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="mobile-card rounded-[24px] p-4">
+                  <div className="metric-label">Chart input</div>
+                  <div className="mt-2 text-sm font-semibold text-white">Single or dual timeframe</div>
+                </div>
+                <div className="mobile-card rounded-[24px] p-4">
+                  <div className="metric-label">Engine</div>
+                  <div className="mt-2 text-sm font-semibold text-[var(--gold-light)]">SMC-first reasoning</div>
+                </div>
+                <div className="mobile-card rounded-[24px] p-4">
+                  <div className="metric-label">Outputs</div>
+                  <div className="mt-2 text-sm font-semibold text-white">Entry, zones, replay, command</div>
+                </div>
+                <div className="mobile-card rounded-[24px] p-4">
+                  <div className="metric-label">Mobile</div>
+                  <div className="mt-2 text-sm font-semibold text-white">Touch-first review flow</div>
+                </div>
+              </div>
+            </div>
           </div>
 
           {!analysis ? (
@@ -929,7 +955,7 @@ function AnalyzePageContent() {
                 <CardContent className="space-y-4">
                   <div
                     {...getRootProps()}
-                    className={`cursor-pointer rounded-2xl border-2 border-dashed p-5 text-center transition-all duration-200 sm:p-8 ${
+                    className={`cursor-pointer rounded-[28px] border-2 border-dashed p-5 text-center transition-all duration-200 sm:p-8 ${
                       isDragActive
                         ? 'border-primary bg-primary/10'
                         : 'border-white/10 hover:border-white/20 hover:bg-white/5'
@@ -1072,7 +1098,7 @@ function AnalyzePageContent() {
                       ) : (
                         <div
                           {...getRootProps2()}
-                          className={`cursor-pointer rounded-2xl border-2 border-dashed p-4 text-center transition-all duration-200 ${
+                          className={`cursor-pointer rounded-[24px] border-2 border-dashed p-4 text-center transition-all duration-200 ${
                             isDragActive2
                               ? 'border-primary bg-primary/10'
                               : 'border-white/10 hover:border-white/20 hover:bg-white/5'
@@ -1123,7 +1149,7 @@ function AnalyzePageContent() {
                     <select
                       value={pair}
                       onChange={(event) => setPair(event.target.value)}
-                      className="h-12 w-full rounded-xl border border-input bg-background/50 px-3 text-sm focus:ring-2 focus:ring-ring"
+                      className="premium-input h-12 w-full"
                     >
                       <option value="">Select pair or index...</option>
                       {PAIRS.map((option) => (
@@ -1268,8 +1294,9 @@ function AnalyzePageContent() {
               transition={{ duration: 0.28 }}
               className="mx-auto max-w-6xl space-y-6 sm:space-y-8"
             >
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex flex-wrap items-center gap-3">
+              <div className="overflow-hidden rounded-[32px] border border-[rgba(255,223,112,0.14)] bg-[linear-gradient(145deg,rgba(255,223,112,0.07),rgba(255,255,255,0.02),rgba(0,0,0,0.22))] p-5 sm:p-6">
+                <div className="flex flex-col gap-4 sm:gap-5">
+                  <div className="flex flex-wrap items-center gap-3">
                   <Badge variant={trend === 'bullish' ? 'success' : trend === 'bearish' ? 'destructive' : 'warning'} className="text-base px-4 py-1">
                     {trend === 'bullish'
                       ? <TrendingUp className="h-4 w-4 mr-1" />
@@ -1296,6 +1323,20 @@ function AnalyzePageContent() {
                   <span className="text-muted-foreground">
                     {pair} · {analysis?.isDualChart ? `${timeframe} / ${timeframe2}` : timeframe}
                   </span>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="mobile-card rounded-[22px] p-4">
+                    <div className="metric-label">Signal</div>
+                    <div className="mt-2 text-sm font-semibold text-white capitalize">{signalType}</div>
+                  </div>
+                  <div className="mobile-card rounded-[22px] p-4">
+                    <div className="metric-label">Setup quality</div>
+                    <div className="mt-2 text-sm font-semibold text-white capitalize">{analysis.setupQuality}</div>
+                  </div>
+                  <div className="mobile-card rounded-[22px] p-4">
+                    <div className="metric-label">Asset class</div>
+                    <div className="mt-2 text-sm font-semibold text-white capitalize">{analysis.assetClass || 'market'}</div>
+                  </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <Button
@@ -1330,6 +1371,7 @@ function AnalyzePageContent() {
                   </Button>
                   {analysis?.id && <TrackSetupButton analysisId={analysis.id} />}
                 </div>
+              </div>
               </div>
 
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6">
@@ -1446,7 +1488,7 @@ function AnalyzePageContent() {
                     </Card>
                   )}
 
-                  <Card className="mobile-card">
+                  <Card className="premium-panel premium-noise overflow-hidden border-[rgba(255,223,112,0.12)] bg-transparent">
                     <CardHeader>
                       <CardTitle className="text-lg flex items-center gap-2">
                         <Brain className="h-5 w-5 text-primary" />
@@ -1454,11 +1496,13 @@ function AnalyzePageContent() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-muted-foreground leading-relaxed">{analysis.reasoning}</p>
+                      <div className="premium-panel-muted p-5">
+                        <p className="text-muted-foreground leading-relaxed">{analysis.reasoning}</p>
+                      </div>
                     </CardContent>
                   </Card>
 
-                  <Card className="mobile-card">
+                  <Card className="premium-panel premium-noise overflow-hidden border-[rgba(255,223,112,0.12)] bg-transparent">
                     <CardHeader>
                       <CardTitle className="text-lg flex items-center gap-2">
                         <BarChart3 className="h-5 w-5 text-primary" />
@@ -1466,56 +1510,56 @@ function AnalyzePageContent() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-5">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <div>
-                          <p className="text-sm text-muted-foreground mb-1">Trend</p>
+                          <p className="metric-label mb-2">Trend</p>
                           <p className="font-semibold capitalize">{analysis.trend}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-muted-foreground mb-1">Market Condition</p>
+                          <p className="metric-label mb-2">Market Condition</p>
                           <p className="font-semibold capitalize">{analysis.marketCondition || 'Not identified'}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-muted-foreground mb-1">Structure State</p>
+                          <p className="metric-label mb-2">Structure State</p>
                           <p className="font-semibold capitalize">{analysis.structure.state || 'transition'}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-muted-foreground mb-1">Primary Strategy</p>
+                          <p className="metric-label mb-2">Primary Strategy</p>
                           <p className="font-semibold">{analysis.primaryStrategy || 'Not selected'}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-muted-foreground mb-1">Current Price Position</p>
+                          <p className="metric-label mb-2">Current Price Position</p>
                           <p className="font-semibold capitalize">{analysis.currentPricePosition}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-muted-foreground mb-1">BOS</p>
+                          <p className="metric-label mb-2">BOS</p>
                           <p className="font-semibold capitalize">{analysis.structure.bos}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-muted-foreground mb-1">CHoCH</p>
+                          <p className="metric-label mb-2">CHoCH</p>
                           <p className="font-semibold capitalize">{analysis.structure.choch}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-muted-foreground mb-1">Setup Quality</p>
+                          <p className="metric-label mb-2">Setup Quality</p>
                           <p className="font-semibold capitalize">{analysis.setupQuality}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-muted-foreground mb-1">Signal Type</p>
+                          <p className="metric-label mb-2">Signal Type</p>
                           <p className="font-semibold capitalize">{signalType}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-muted-foreground mb-1">Entry Logic</p>
+                          <p className="metric-label mb-2">Entry Logic</p>
                           <p className="font-semibold capitalize">{analysis.entryLogic.type}</p>
                         </div>
                         {analysis.entryPlan && (
                           <div>
-                            <p className="text-sm text-muted-foreground mb-1">Entry Bias</p>
+                            <p className="metric-label mb-2">Entry Bias</p>
                             <p className="font-semibold capitalize">{analysis.entryPlan.bias}</p>
                           </div>
                         )}
                       </div>
 
-                      <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                      <div className="premium-panel-muted p-4">
                         <p className="text-sm text-muted-foreground mb-2">Confirmations</p>
                         {analysis.confirmations && analysis.confirmations.length > 0 ? (
                           <div className="flex flex-wrap gap-2">
@@ -1535,19 +1579,19 @@ function AnalyzePageContent() {
                       </div>
 
                       {isPro && analysis.pricePosition?.explanation && (
-                        <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                        <div className="premium-panel-muted p-4">
                           <p className="text-sm text-muted-foreground mb-2">Premium / Discount Explanation</p>
                           <p className="text-sm leading-relaxed">{analysis.pricePosition.explanation}</p>
                         </div>
                       )}
 
-                      <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                      <div className="premium-panel-muted p-4">
                         <p className="text-sm text-muted-foreground mb-2">System Message</p>
                         <p className="text-sm leading-relaxed">{analysis.message}</p>
                       </div>
 
                       {isPro && analysis.entryPlan?.reason && (
-                        <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                        <div className="premium-panel-muted p-4">
                           <p className="text-sm text-muted-foreground mb-2">Entry Plan Reason</p>
                           <p className="text-sm leading-relaxed">{analysis.entryPlan.reason}</p>
                         </div>
@@ -1617,19 +1661,19 @@ function AnalyzePageContent() {
                     </CardContent>
                   </Card>
 
-                  <Card className="mobile-card">
+                  <Card className="premium-panel premium-noise overflow-hidden border-[rgba(255,223,112,0.12)] bg-transparent">
                     <CardHeader>
                       <CardTitle className="text-lg">Support And Resistance</CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-2">
+                    <CardContent className="grid gap-4">
+                      <div className="premium-panel-muted space-y-2 p-4">
                         <div className="flex items-center gap-2 text-sm font-medium">
                           <CircleDollarSign className="h-4 w-4 text-emerald-400" />
                           Current Price
                         </div>
                         <p className="text-sm text-muted-foreground pl-6">{formatPrice(analysis.currentPrice, pair)}</p>
                       </div>
-                      <div className="space-y-2">
+                      <div className="premium-panel-muted space-y-2 p-4">
                         <div className="flex items-center gap-2 text-sm font-medium">
                           <ShieldAlert className="h-4 w-4 text-red-400" />
                           Resistance Zone
@@ -1637,7 +1681,7 @@ function AnalyzePageContent() {
                         <p className="text-sm text-muted-foreground pl-6">{formatStructuredZone(analysis.zones.supplyZone, pair)}</p>
                         <p className="text-xs text-muted-foreground pl-6">{formatZoneReason(analysis.zones.supplyZone?.reason)}</p>
                       </div>
-                      <div className="space-y-2">
+                      <div className="premium-panel-muted space-y-2 p-4">
                         <div className="flex items-center gap-2 text-sm font-medium">
                           <CheckCircle2 className="h-4 w-4 text-green-400" />
                           Support Zone
@@ -1648,23 +1692,23 @@ function AnalyzePageContent() {
                     </CardContent>
                   </Card>
 
-                  <Card className="mobile-card">
-                    <CardContent className="p-6 space-y-4">
-                      <div>
+                  <Card className="premium-panel premium-noise overflow-hidden border-[rgba(255,223,112,0.12)] bg-transparent">
+                    <CardContent className="grid gap-4 p-6 md:grid-cols-2">
+                      <div className="premium-panel-muted p-4">
                         <div className="flex items-center gap-2 mb-2">
                           <Zap className="h-4 w-4 text-purple-400" />
                           <span className="text-sm font-medium">Signal Type</span>
                         </div>
                         <p className="text-sm text-purple-400 font-semibold capitalize">{signalType}</p>
                       </div>
-                      <div>
+                      <div className="premium-panel-muted p-4">
                         <div className="flex items-center gap-2 mb-2">
                           <Target className="h-4 w-4 text-cyan-400" />
                           <span className="text-sm font-medium">Entry Zone</span>
                         </div>
                         <p className="text-sm text-muted-foreground">{formatStructuredZone(analysis.entryZone, pair)}</p>
                       </div>
-                      <div>
+                      <div className="premium-panel-muted p-4">
                         <div className="flex items-center gap-2 mb-2">
                           <Clock className="h-4 w-4 text-yellow-400" />
                           <span className="text-sm font-medium">Wait For</span>
@@ -1673,21 +1717,21 @@ function AnalyzePageContent() {
                           {analysis.confirmation === 'none' ? 'No confirmation yet' : `${analysis.confirmation} confirmation`}
                         </p>
                       </div>
-                      <div>
+                      <div className="premium-panel-muted p-4">
                         <div className="flex items-center gap-2 mb-2">
                           <Sparkles className="h-4 w-4 text-emerald-400" />
                           <span className="text-sm font-medium">Confirmation Needed</span>
                         </div>
                         <p className="text-sm text-muted-foreground">{analysis.confirmationNeeded ? 'Yes' : 'No'}</p>
                       </div>
-                      <div>
+                      <div className="premium-panel-muted p-4">
                         <div className="flex items-center gap-2 mb-2">
                           <AlertTriangle className="h-4 w-4 text-orange-400" />
                           <span className="text-sm font-medium">System Message</span>
                         </div>
                         <p className="text-sm text-muted-foreground">{analysis.message}</p>
                       </div>
-                      <div>
+                      <div className="premium-panel-muted p-4 md:col-span-2">
                         <div className="flex items-center gap-2 mb-2">
                           <ShieldAlert className="h-4 w-4 text-red-400" />
                           <span className="text-sm font-medium">Invalidation</span>
@@ -1702,7 +1746,7 @@ function AnalyzePageContent() {
                   </Card>
 
                   {isPro && reactionResult && (analysis.stopLoss || analysis.takeProfit1) ? (
-                    <Card className="mobile-card border-amber-500/30 bg-amber-500/5">
+                    <Card className="premium-panel premium-noise overflow-hidden border-amber-500/30 bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.12),_transparent_50%),rgba(245,158,11,0.04)]">
                       <CardContent className="p-6 space-y-4">
                         <div className="flex items-center gap-2 mb-1">
                           <Target className="h-4 w-4 text-amber-400" />
@@ -1752,7 +1796,7 @@ function AnalyzePageContent() {
                   ) : null}
 
                   {isPro && !reactionResult && (analysis.stopLoss || analysis.takeProfit1) ? (
-                    <Card className="mobile-card border-cyan-400/20 bg-cyan-400/5">
+                    <Card className="premium-panel premium-noise overflow-hidden border-cyan-400/20 bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.12),_transparent_50%),rgba(34,211,238,0.04)]">
                       <CardContent className="p-6">
                         <div className="flex flex-col items-center text-center space-y-3">
                           <div className="rounded-full bg-cyan-400/10 p-3">
@@ -1773,7 +1817,7 @@ function AnalyzePageContent() {
                   ) : null}
 
                   {analysis.leftSidePlan?.bias && analysis.leftSidePlan.bias !== 'none' ? (
-                    <Card className="mobile-card border-amber-500/30 bg-amber-500/5">
+                    <Card className="premium-panel premium-noise overflow-hidden border-amber-500/30 bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.12),_transparent_50%),rgba(245,158,11,0.04)]">
                       <CardContent className="p-6 space-y-4">
                         <div className="flex items-center gap-2 mb-1">
                           <Target className="h-4 w-4 text-amber-300" />

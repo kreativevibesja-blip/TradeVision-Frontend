@@ -125,12 +125,33 @@ export default function GoldxDashboardPage() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">GoldX SMC EA</h1>
-          <p className="text-muted-foreground">24/7 volatility execution workspace for MT5</p>
+      <div className="mb-8 overflow-hidden rounded-[34px] border border-[rgba(255,223,112,0.14)] bg-[linear-gradient(145deg,rgba(255,223,112,0.08),rgba(255,255,255,0.02),rgba(0,0,0,0.24))] p-6 sm:p-8">
+        <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
+          <div>
+            <div className="premium-kicker mb-4">GoldX Workspace</div>
+            <h1 className="text-3xl font-bold tracking-[-0.06em] text-white sm:text-4xl lg:text-5xl">GoldX SMC EA</h1>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-white/66 sm:text-base">GoldX is now framed like an elite execution product: entitlement, MT5 binding, session awareness, and setup support in one premium workspace while MT5 handles the live strategy layer.</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="mobile-card rounded-[24px] p-4">
+              <div className="metric-label">Access</div>
+              <div className="mt-2 text-sm font-semibold text-white">{hasLicenseAccess ? 'Licensed' : 'Inactive'}</div>
+            </div>
+            <div className="mobile-card rounded-[24px] p-4">
+              <div className="metric-label">MT5 Bind</div>
+              <div className="mt-2 text-sm font-semibold text-[var(--gold-light)]">{hasMt5Binding ? 'Connected' : 'Pending'}</div>
+            </div>
+            <div className="mobile-card rounded-[24px] p-4">
+              <div className="metric-label">Session</div>
+              <div className="mt-2 text-sm font-semibold text-white">{SESSION_STATUS_DETAILS[sessionStatus].label}</div>
+            </div>
+            <div className="mobile-card rounded-[24px] p-4">
+              <div className="metric-label">Workspace role</div>
+              <div className="mt-2 text-sm font-semibold text-white">Visibility + support</div>
+            </div>
+          </div>
         </div>
-        <div className="flex flex-col gap-3 sm:items-end">
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
           {hasLicenseAccess ? (
             <Badge variant="default" className="w-fit bg-amber-500/20 text-amber-300">
               <Shield className="mr-1 h-3 w-3" /> {subscription?.status === 'cancelled' ? 'Access Active Until Expiry' : 'Active'}
@@ -251,7 +272,6 @@ export default function GoldxDashboardPage() {
                 </CardContent>
               </Card>
             )}
-            {/* Subscription Info */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-sm uppercase tracking-wider text-muted-foreground">
@@ -323,7 +343,6 @@ export default function GoldxDashboardPage() {
               </CardContent>
             </Card>
 
-            {/* Trading Stats */}
             {accountState && (
               <Card>
                 <CardHeader>
@@ -356,7 +375,6 @@ export default function GoldxDashboardPage() {
             )}
           </div>
 
-          {/* Right — Workspace Essentials */}
           <div className="space-y-4">
             {!hasMt5Binding && (
               <Card className="border-amber-500/20 bg-amber-500/10">

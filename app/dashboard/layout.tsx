@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import PushNotificationPrompt from '@/components/PushNotificationPrompt';
 import { useAuth } from '@/hooks/useAuth';
+import { BrandLogo } from '@/components/BrandLogo';
 import { CandlestickChart, CreditCard, LayoutDashboard, RadioTower, Users, Radar, Crosshair, Target, TrendingUp, Sparkles } from 'lucide-react';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -36,7 +37,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className={`grid gap-6 lg:items-start ${isGoldxPulseWorkspace ? 'lg:grid-cols-[13rem_minmax(0,1fr)]' : 'lg:grid-cols-[max-content_1fr]'}`}>
           <aside className="lg:sticky lg:top-24 lg:self-start">
             <Card className="mobile-card overflow-hidden lg:w-fit">
-              <CardContent className="p-2 sm:p-3">
+              <CardContent className="p-3 sm:p-4">
+                <div className="mb-4 hidden lg:block">
+                  <BrandLogo compact showTagline={false} className="justify-center" />
+                  <div className="mt-3 text-center text-[10px] uppercase tracking-[0.28em] text-muted-foreground">Trading Floor</div>
+                </div>
                 <nav className="-mx-0.5 flex gap-1 overflow-x-auto scrollbar-none sm:gap-1.5 lg:flex-col lg:items-start">
                   {dashboardNav.map((item) => {
                     const isActive = pathname === item.href;
@@ -44,8 +49,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       <Link
                         key={item.href}
                         href={item.href}
-                        className={`inline-flex shrink-0 items-center gap-1.5 rounded-xl px-2.5 py-2 text-xs whitespace-nowrap transition-colors sm:gap-2 sm:px-4 sm:py-3 sm:text-sm lg:min-h-0 lg:w-auto lg:px-3.5 lg:py-2.5 ${
-                          isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-white/5 hover:text-foreground'
+                        className={`inline-flex shrink-0 items-center gap-1.5 rounded-2xl px-2.5 py-2 text-xs whitespace-nowrap transition-colors sm:gap-2 sm:px-4 sm:py-3 sm:text-sm lg:min-h-0 lg:w-full lg:px-3.5 lg:py-3 ${
+                          isActive ? 'bg-[linear-gradient(135deg,rgba(255,223,112,0.18),rgba(212,175,55,0.08))] text-[var(--gold-light)]' : 'text-muted-foreground hover:bg-white/[0.04] hover:text-foreground'
                         }`}
                       >
                         <item.icon className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />

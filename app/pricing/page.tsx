@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { api, type PricingPlan } from '@/lib/api';
-import { CheckCircle2, X, Zap, Crown, TrendingUp, Shield } from 'lucide-react';
+import { CheckCircle2, Crown, Radar, Shield, Sparkles, TrendingUp, X, Zap } from 'lucide-react';
 
 type DisplayPlan = PricingPlan & {
   period: string;
@@ -183,22 +183,43 @@ export default function PricingPage() {
   return (
     <div className="page-stack min-h-screen">
       <div className="page-shell">
-        <motion.div
+        <motion.section
           initial={false}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.28 }}
-          className="text-center mb-16"
+          transition={{ duration: 0.32 }}
+          className="relative mb-12 overflow-hidden rounded-[36px] border border-[rgba(255,223,112,0.14)] bg-[linear-gradient(145deg,rgba(255,223,112,0.08),rgba(255,255,255,0.02),rgba(0,0,0,0.24))] p-6 sm:mb-16 sm:p-8 lg:p-10"
         >
-          <Badge className="mb-4" variant="default">Pricing</Badge>
-          <h1 className="mb-4 text-2xl font-bold sm:text-3xl md:text-4xl lg:text-5xl">
-            Simple, Transparent <span className="text-gradient">Pricing</span>
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-            Choose the plan that fits your trading needs. Upgrade or downgrade anytime.
-          </p>
-        </motion.div>
+          <div className="ambient-orb left-[8%] top-[12%] h-44 w-44" />
+          <div className="ambient-orb right-[5%] top-[0%] h-56 w-56" />
+          <div className="relative z-10 grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
+            <div>
+              <Badge className="mb-4" variant="default">
+                <Sparkles className="mr-2 h-3.5 w-3.5" />
+                Premium pricing architecture
+              </Badge>
+              <h1 className="text-3xl font-bold tracking-[-0.08em] text-white sm:text-5xl lg:text-6xl">
+                Pricing that feels like the product.
+              </h1>
+              <p className="mt-5 max-w-2xl text-sm leading-7 text-white/68 sm:text-base">
+                The new pricing stack separates discretionary AI traders, scanner-heavy operators, and GoldX automation users with stronger hierarchy, higher trust, and faster decision paths.
+              </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+              {[
+                ['Core plans', 'Free, Pro, PRO+'],
+                ['GoldX suite', 'EA + Pulse add-ons'],
+                ['Cancel control', 'Upgrade or downgrade anytime'],
+              ].map(([label, value]) => (
+                <div key={label} className="mobile-card rounded-[24px] p-4">
+                  <div className="metric-label">{label}</div>
+                  <div className="mt-2 text-sm font-semibold text-white sm:text-base">{value}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </motion.section>
 
-        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 md:gap-6 lg:gap-8">
+        <section className="mb-16 grid gap-4 lg:grid-cols-3">
           {plans.map((plan, i) => {
             const previewFeatures = plan.features.slice(0, 3);
             const remainingFeatures = plan.features.length - previewFeatures.length;
@@ -211,45 +232,41 @@ export default function PricingPage() {
               whileHover={{ y: -8, scale: 1.015 }}
               className="h-full"
             >
-              <Card className={`relative h-full min-h-[34rem] overflow-hidden transition-all duration-300 hover:shadow-[0_22px_80px_rgba(0,0,0,0.38)] xl:min-h-[36rem] ${plan.popular ? 'border-[rgba(255,223,112,0.34)] shadow-[0_0_50px_rgba(212,175,55,0.16)]' : 'hover:border-[rgba(255,223,112,0.18)]'}`}>
+              <Card className={`relative h-full min-h-[34rem] overflow-hidden transition-all duration-300 xl:min-h-[36rem] ${plan.popular ? 'border-[rgba(255,223,112,0.34)] shadow-luxe-strong' : 'hover:border-[rgba(255,223,112,0.18)]'}`}>
                 {plan.popular && (
                   <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#ffe38a] via-[#d4af37] to-[#8a6712]" />
                 )}
                 <CardContent className="flex h-full flex-col p-5 sm:p-6 lg:p-8">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className={`p-2.5 rounded-xl bg-gradient-to-br ${plan.color}`}>
+                  <div className="mb-6 flex items-center justify-between gap-3">
+                    <div className={`rounded-2xl bg-gradient-to-br p-3 ${plan.color}`}>
                       <plan.icon className="h-5 w-5 text-white" />
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-xl font-semibold">{plan.name}</h3>
-                        {plan.badge ? <Badge variant="default">{plan.badge}</Badge> : null}
-                      </div>
-                    </div>
+                    {plan.badge ? <Badge variant="default">{plan.badge}</Badge> : <Badge variant="outline">{plan.tier}</Badge>}
                   </div>
 
-                  <div className="mb-4">
-                    <span className="text-5xl font-bold">${plan.price}</span>
-                    <span className="text-muted-foreground">{plan.period}</span>
+                  <div>
+                    <h3 className="text-2xl font-semibold tracking-[-0.05em] text-white">{plan.name}</h3>
+                    <p className="mt-3 text-sm leading-6 text-white/62">{plan.description}</p>
                   </div>
 
-                  <p className="text-sm text-muted-foreground mb-6">{plan.description}</p>
+                  <div className="mb-6 mt-8 flex items-end gap-2">
+                    <span className="font-mono text-5xl font-bold tracking-[-0.08em] text-white">${plan.price}</span>
+                    <span className="pb-1 text-sm uppercase tracking-[0.24em] text-muted-foreground">{plan.period}</span>
+                  </div>
 
-                  <ul className="space-y-3 mb-6 text-sm">
+                  <div className="mb-6 luxury-divider" />
+
+                  <ul className="mb-6 space-y-3 text-sm">
                     {previewFeatures.map((feature) => (
-                      <li key={feature} className="flex items-center gap-3 text-sm">
-                        {true ? (
-                          <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
-                        ) : (
-                          <X className="h-4 w-4 text-muted-foreground/50 flex-shrink-0" />
-                        )}
+                      <li key={feature} className="flex items-center gap-3 text-sm text-white/76">
+                        <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
                         <span>{feature}</span>
                       </li>
                     ))}
                   </ul>
 
                   {remainingFeatures > 0 ? (
-                    <p className="mb-6 text-xs text-muted-foreground">
+                    <p className="mb-6 text-xs uppercase tracking-[0.2em] text-muted-foreground">
                       +{remainingFeatures} more features in the comparison table below
                     </p>
                   ) : <div className="mb-6" />}
@@ -268,7 +285,7 @@ export default function PricingPage() {
             </motion.div>
           );
           })}
-        </div>
+        </section>
 
         {!loading && plans.length === 0 ? (
           <div className="mt-8 text-center text-sm text-muted-foreground">
@@ -283,7 +300,7 @@ export default function PricingPage() {
           transition={{ delay: 0.22 }}
           className="mx-auto mt-16 max-w-6xl sm:mt-20"
         >
-          <Card className="overflow-hidden border-[rgba(255,223,112,0.2)] bg-[radial-gradient(circle_at_top_left,_rgba(255,223,112,0.18),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(212,175,55,0.14),_transparent_30%)]">
+          <Card className="overflow-hidden border-[rgba(255,223,112,0.24)] bg-[radial-gradient(circle_at_top_left,_rgba(255,223,112,0.18),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(212,175,55,0.14),_transparent_30%)]">
             <CardContent className="grid gap-8 p-6 sm:p-8 lg:grid-cols-[1.1fr_0.9fr] lg:p-10">
               <div>
                 <div className="mb-4 flex items-center gap-3">
@@ -300,6 +317,19 @@ export default function PricingPage() {
                   GoldX is the standalone GoldX SMC EA for traders who want a license-protected MT5 execution system.
                   Subscribe here, then use the platform to manage access, onboarding, and MT5 account binding while the EA handles live execution from the terminal.
                 </p>
+
+                <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                  {[
+                    ['Modes', 'Fast, Prop, Hybrid'],
+                    ['Execution style', 'Terminal-first automation'],
+                    ['Best fit', 'Elite gold operators'],
+                  ].map(([label, value]) => (
+                    <div key={label} className="mobile-card rounded-[22px] p-4">
+                      <div className="metric-label">{label}</div>
+                      <div className="mt-2 text-sm text-white">{value}</div>
+                    </div>
+                  ))}
+                </div>
 
                 <div className="mt-6 grid gap-3 sm:grid-cols-2">
                   {goldxPlan.features.map((feature) => (
@@ -348,7 +378,7 @@ export default function PricingPage() {
           transition={{ delay: 0.3 }}
           className="mx-auto mt-10 max-w-6xl sm:mt-12"
         >
-          <Card className="overflow-hidden border-[rgba(255,223,112,0.2)] bg-[radial-gradient(circle_at_top_left,_rgba(255,223,112,0.15),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(34,197,94,0.12),_transparent_30%)]">
+          <Card className="overflow-hidden border-[rgba(88,235,255,0.18)] bg-[radial-gradient(circle_at_top_left,_rgba(255,223,112,0.15),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(34,197,94,0.12),_transparent_30%)]">
             <CardContent className="grid gap-8 p-6 sm:p-8 lg:grid-cols-[1.1fr_0.9fr] lg:p-10">
               <div>
                 <div className="mb-4 flex items-center gap-3">
@@ -364,6 +394,19 @@ export default function PricingPage() {
                 <p className="max-w-2xl text-sm text-muted-foreground sm:text-base">
                   GoldX Pulse is the live Deriv options workspace for digit analytics, assisted execution, and streaming tick intelligence. It runs as a dedicated add-on alongside your main platform plan.
                 </p>
+
+                <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                  {[
+                    ['Workspace', 'Dedicated Pulse dashboard'],
+                    ['Signal style', 'Digits and assisted execution'],
+                    ['Best fit', 'Deriv-focused options traders'],
+                  ].map(([label, value]) => (
+                    <div key={label} className="mobile-card rounded-[22px] p-4">
+                      <div className="metric-label">{label}</div>
+                      <div className="mt-2 text-sm text-white">{value}</div>
+                    </div>
+                  ))}
+                </div>
 
                 <div className="mt-6 grid gap-3 sm:grid-cols-2">
                   {goldxPulsePlan.features.map((feature) => (
@@ -412,8 +455,11 @@ export default function PricingPage() {
           transition={{ delay: 0.35 }}
           className="mx-auto mt-16 max-w-5xl sm:mt-20"
         >
-          <h2 className="text-2xl font-bold text-center mb-8">Feature Comparison</h2>
-          <Card className="overflow-hidden">
+          <div className="mb-8 text-center">
+            <Badge variant="outline">Comparison</Badge>
+            <h2 className="mt-4 text-3xl font-semibold tracking-[-0.06em] text-white">Pick the right operating tier</h2>
+          </div>
+          <Card className="terminal-table overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -462,7 +508,10 @@ export default function PricingPage() {
           transition={{ delay: 0.4 }}
           className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24"
         >
-          <h2 className="text-2xl font-bold text-center mb-8">Frequently Asked Questions</h2>
+          <div className="mb-8 text-center">
+            <Badge variant="outline">FAQ</Badge>
+            <h2 className="mt-4 text-3xl font-semibold tracking-[-0.06em] text-white">Questions traders ask before upgrading</h2>
+          </div>
           <div className="space-y-4">
             {[
               {
@@ -484,8 +533,13 @@ export default function PricingPage() {
             ].map((faq) => (
               <Card key={faq.q}>
                 <CardContent className="p-6">
-                  <h4 className="font-semibold mb-2">{faq.q}</h4>
-                  <p className="text-sm text-muted-foreground">{faq.a}</p>
+                  <div className="mb-3 flex items-center gap-3">
+                    <div className="rounded-xl border border-[rgba(255,223,112,0.14)] bg-[rgba(255,223,112,0.08)] p-2 text-[var(--gold-light)]">
+                      <Radar className="h-4 w-4" />
+                    </div>
+                    <h4 className="font-semibold text-white">{faq.q}</h4>
+                  </div>
+                  <p className="text-sm leading-7 text-muted-foreground">{faq.a}</p>
                 </CardContent>
               </Card>
             ))}

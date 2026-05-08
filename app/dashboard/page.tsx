@@ -27,6 +27,10 @@ import {
   CandlestickChart,
   RadioTower,
   Target,
+  BrainCircuit,
+  Activity,
+  ShieldCheck,
+  CheckCircle2,
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -87,25 +91,54 @@ export default function DashboardPage() {
   const usageLabel = isPaidPlan ? 'Monthly Usage' : 'Daily Usage';
   const usageValue = isPaidPlan ? monthlyLimitLabel : '2';
   const usagePercent = isPaidPlan ? 0 : ((user.dailyUsage || 0) / 2) * 100;
+  const quickMetrics = [
+    { label: 'Subscription', value: user.subscription, icon: Crown, tone: isPaidPlan ? 'text-[var(--gold-light)]' : 'text-white' },
+    { label: isPaidPlan ? 'Monthly allowance' : 'Daily allowance', value: isPaidPlan ? monthlyLimitLabel : `${user.dailyUsage || 0}/2`, icon: Activity, tone: 'text-white' },
+    { label: 'Total analyses', value: String(total), icon: BarChart3, tone: 'text-white' },
+    { label: 'Workspace access', value: isPaidPlan ? 'Pro active' : 'Free tier', icon: ShieldCheck, tone: isPaidPlan ? 'text-emerald-300' : 'text-white' },
+  ];
 
   return (
     <div>
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.28 }}>
-          {/* Header */}
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-            <div>
-              <h1 className="text-3xl font-bold mb-1">Dashboard</h1>
-              <p className="text-muted-foreground">Welcome back, {user.name || user.email.split('@')[0]}</p>
+          <div className="mb-8 overflow-hidden rounded-[34px] border border-[rgba(255,223,112,0.14)] bg-[linear-gradient(145deg,rgba(255,223,112,0.08),rgba(255,255,255,0.02),rgba(0,0,0,0.24))] p-6 sm:p-8">
+            <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
+              <div>
+                <div className="premium-kicker mb-4">Trader Workspace</div>
+                <h1 className="font-display text-3xl font-bold uppercase tracking-[-0.06em] text-white sm:text-4xl lg:text-5xl">Dashboard</h1>
+                <p className="mt-3 max-w-2xl text-sm leading-7 text-white/66 sm:text-base">
+                  Welcome back, {user.name || user.email.split('@')[0]}. Your workspace is now framed as a premium command surface with analysis flow, live chart access, GoldX entry points, and billing controls in one place.
+                </p>
+                <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                  <Link href="/analyze">
+                    <Button variant="gradient" className="w-full gap-2 sm:w-auto">
+                      <Upload className="h-4 w-4" />
+                      New Analysis
+                    </Button>
+                  </Link>
+                  <Link href="/dashboard/billing">
+                    <Button variant="outline" className="w-full gap-2 sm:w-auto">
+                      <CreditCard className="h-4 w-4" />
+                      Billing Control
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                {quickMetrics.map((metric) => (
+                  <div key={metric.label} className="mobile-card rounded-[24px] p-4">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="metric-label">{metric.label}</div>
+                      <metric.icon className="h-4 w-4 text-[var(--gold-light)]" />
+                    </div>
+                    <div className={`mt-3 font-mono text-lg font-semibold tracking-[-0.05em] sm:text-2xl ${metric.tone}`}>{metric.value}</div>
+                  </div>
+                ))}
+              </div>
             </div>
-            <Link href="/analyze">
-              <Button variant="gradient" className="gap-2">
-                <Upload className="h-4 w-4" />
-                New Analysis
-              </Button>
-            </Link>
           </div>
 
-          {/* Stats */}
           <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-4 md:gap-6">
             <Card>
               <CardContent className="p-6">
@@ -143,6 +176,7 @@ export default function DashboardPage() {
               <CardContent className="p-6">
                 <span className="text-sm text-muted-foreground">Total Analyses</span>
                 <p className="text-3xl font-bold mt-2">{total}</p>
+                <p className="mt-2 text-sm text-muted-foreground">Your personal analysis archive and replay history.</p>
               </CardContent>
             </Card>
 
@@ -163,40 +197,64 @@ export default function DashboardPage() {
             </Card>
           </div>
 
-          <Card className="mobile-card mb-8 border-amber-400/20 bg-[radial-gradient(circle_at_top_left,_rgba(245,158,11,0.14),_transparent_32%)]">
-            <CardContent className="flex flex-col gap-4 p-6 lg:flex-row lg:items-center lg:justify-between">
-              <div className="min-w-0 max-w-2xl flex-1">
-                <div className="mb-2 flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-amber-300" />
-                  <span className="text-sm font-medium text-amber-200">GoldX EA</span>
+          <div className="mb-8 grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+            <Card className="mobile-card border-amber-400/20 bg-[radial-gradient(circle_at_top_left,_rgba(245,158,11,0.14),_transparent_32%)]">
+              <CardContent className="flex h-full flex-col gap-5 p-6 lg:justify-between">
+                <div>
+                  <div className="mb-3 flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4 text-amber-300" />
+                    <span className="text-sm font-medium text-amber-200">GoldX EA</span>
+                  </div>
+                  <h2 className="text-2xl font-semibold tracking-[-0.05em] text-white">Elite automation, controlled from the workspace</h2>
+                  <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground">
+                    Access the GoldX SMC EA for 24/7 volatility execution, then return here to manage your license, MT5 account binding, onboarding, and workspace visibility.
+                  </p>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  Access the GoldX SMC EA for 24/7 volatility execution, then return here to manage your license, MT5 account binding, onboarding, and workspace visibility.
-                </p>
-              </div>
-              <div className="flex w-full flex-col gap-3 sm:flex-row lg:w-auto lg:shrink-0 lg:flex-nowrap">
-                <Link href="/pricing#goldx" className="w-full sm:flex-1 lg:w-auto lg:flex-none">
-                  <Button className="w-full gap-2 bg-amber-600 text-white hover:bg-amber-500 lg:w-auto">
-                    <TrendingUp className="h-4 w-4" />
-                    Explore GoldX Plans
-                  </Button>
-                </Link>
-                <Link href="/dashboard/goldx" className="w-full sm:flex-1 lg:w-auto lg:flex-none">
-                  <Button variant="outline" className="w-full gap-2 lg:w-auto">
-                    Open GoldX Workspace
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
+                <div className="flex w-full flex-col gap-3 sm:flex-row">
+                  <Link href="/pricing#goldx" className="w-full sm:w-auto">
+                    <Button className="w-full gap-2 bg-amber-600 text-white hover:bg-amber-500 sm:w-auto">
+                      <TrendingUp className="h-4 w-4" />
+                      Explore GoldX Plans
+                    </Button>
+                  </Link>
+                  <Link href="/dashboard/goldx" className="w-full sm:w-auto">
+                    <Button variant="outline" className="w-full gap-2 sm:w-auto">
+                      Open GoldX Workspace
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
 
-          {/* Recent Analyses */}
+            <Card>
+              <CardContent className="p-6">
+                <div className="mb-3 flex items-center gap-2 text-[var(--gold-light)]">
+                  <BrainCircuit className="h-4 w-4" />
+                  <span className="text-sm font-medium">Workspace priorities</span>
+                </div>
+                <div className="space-y-3">
+                  {[
+                    'Run a new AI chart readout',
+                    'Open live TradingView or Deriv chart tools',
+                    'Check billing, expiry, and plan status',
+                    'Launch command center from recent analyses',
+                  ].map((item) => (
+                    <div key={item} className="flex items-center gap-3 rounded-2xl border border-white/8 bg-white/5 px-4 py-3 text-sm text-white/78">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-300" />
+                      <span>{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
           <div className="mb-8 grid grid-cols-1 gap-4 xl:grid-cols-3">
             <Card className="mobile-card overflow-hidden">
               <CardContent className="flex h-full flex-col justify-between gap-5 p-6">
                 <div className="space-y-3">
-                  <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-cyan-400/20 bg-cyan-400/10 text-cyan-300">
+                  <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-[rgba(255,223,112,0.2)] bg-[rgba(255,223,112,0.1)] text-[var(--gold-light)]">
                     <CandlestickChart className="h-5 w-5" />
                   </div>
                   <div>
@@ -218,7 +276,7 @@ export default function DashboardPage() {
                   ) : (
                     <>
                       <Link href="/pricing">
-                        <Button className="gap-2 bg-cyan-600 text-white hover:bg-cyan-500">
+                        <Button className="gap-2">
                           <Crown className="h-4 w-4" />
                           Unlock Pro Access
                         </Button>
@@ -267,20 +325,44 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
 
+            <Card className="mobile-card overflow-hidden">
+              <CardContent className="flex h-full flex-col justify-between gap-5 p-6">
+                <div className="space-y-3">
+                  <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-[rgba(255,223,112,0.2)] bg-[rgba(255,223,112,0.08)] text-[var(--gold-light)]">
+                    <Target className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold">Trade Command Center</h2>
+                    <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+                      Promote any saved analysis into a live execution guidance surface with entry context, current price awareness, and fast action flow.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="rounded-2xl border border-white/8 bg-white/5 px-4 py-3 text-sm text-white/76">
+                    Available from recent analyses below.
+                  </div>
+                  <div className="rounded-2xl border border-white/8 bg-white/5 px-4 py-3 text-sm text-white/76">
+                    Designed for mobile-first trade review.
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
           </div>
 
-          {/* Command Center Info Banner */}
           {analyses.length > 0 && (
-            <Card className="mobile-card border-blue-500/20 bg-gradient-to-r from-blue-500/5 via-transparent to-blue-500/5">
+            <Card className="mobile-card border-[rgba(255,223,112,0.2)] bg-gradient-to-r from-[rgba(255,223,112,0.08)] via-transparent to-[rgba(255,223,112,0.04)]">
               <CardContent className="p-4 sm:p-5">
                 <div className="flex items-center gap-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 border border-blue-500/20">
-                    <Target className="h-5 w-5 text-blue-400" />
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[rgba(255,223,112,0.2)] bg-[rgba(255,223,112,0.1)]">
+                    <Target className="h-5 w-5 text-[var(--gold-light)]" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <h3 className="text-sm font-semibold text-white">Trade Command Center</h3>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      Click the blue <span className="text-blue-400 font-medium">Command</span> button on any analysis below for real-time trade execution guidance.
+                      Click the <span className="text-[var(--gold-light)] font-medium">Command</span> button on any analysis below for real-time trade execution guidance.
                     </p>
                   </div>
                 </div>

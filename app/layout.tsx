@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from 'next';
 import { Suspense } from 'react';
-import { Inter } from 'next/font/google';
+import { IBM_Plex_Mono, Manrope, Sora } from 'next/font/google';
 import '@/styles/globals.css';
 import { AuthProvider } from '@/hooks/useAuth';
+import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { GlobalBackButton } from '@/components/GlobalBackButton';
@@ -12,8 +13,11 @@ import { VisitorHeartbeat } from '@/components/VisitorHeartbeat';
 import { WhatsAppSupportButton } from '@/components/WhatsAppSupportButton';
 import { ReferralCapture } from '@/components/ReferralCapture';
 import { FeedbackTrigger } from '@/components/FeedbackTrigger';
+import { MobileBottomNav } from '@/components/MobileBottomNav';
 
-const inter = Inter({ subsets: ['latin'] });
+const bodyFont = Manrope({ subsets: ['latin'], variable: '--font-body' });
+const displayFont = Sora({ subsets: ['latin'], variable: '--font-display' });
+const monoFont = IBM_Plex_Mono({ subsets: ['latin'], variable: '--font-mono', weight: ['400', '500', '600'] });
 
 export const metadata: Metadata = {
   title: 'TradeVision AI - AI Trading Chart Analysis',
@@ -34,23 +38,26 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${inter.className} min-h-screen bg-background antialiased overflow-x-hidden`}>
+    <html lang="en" data-theme="goldx-premium">
+      <body className={`${bodyFont.variable} ${displayFont.variable} ${monoFont.variable} min-h-screen bg-background font-sans antialiased overflow-x-hidden`}>
         <AuthProvider>
-          <Suspense><ReferralCapture /></Suspense>
-          <div className="relative flex min-h-screen flex-col overflow-x-hidden">
-            <Navbar />
-            <Suspense fallback={null}>
-              <GlobalBackButton />
-            </Suspense>
-            <VisitorHeartbeat />
-            <GlobalUpdatesModal />
-            <PlatformIntroModal />
-            <main className="flex-1 pt-16 pb-20 md:pb-0">{children}</main>
-            <WhatsAppSupportButton />
-            <FeedbackTrigger />
-          </div>
-          <Footer />
+          <ThemeProvider>
+            <Suspense><ReferralCapture /></Suspense>
+            <div className="relative flex min-h-screen flex-col overflow-x-hidden">
+              <Navbar />
+              <Suspense fallback={null}>
+                <GlobalBackButton />
+              </Suspense>
+              <VisitorHeartbeat />
+              <GlobalUpdatesModal />
+              <PlatformIntroModal />
+              <main className="flex-1 pt-20 pb-28 md:pb-0">{children}</main>
+              <MobileBottomNav />
+              <WhatsAppSupportButton />
+              <FeedbackTrigger />
+            </div>
+            <Footer />
+          </ThemeProvider>
         </AuthProvider>
       </body>
     </html>

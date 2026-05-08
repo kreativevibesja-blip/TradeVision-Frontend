@@ -89,7 +89,66 @@ export default function AdminDashboardPage() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.28 }}>
-      <h1 className="mb-6 text-xl font-bold sm:text-2xl">Dashboard Overview</h1>
+      <div className="mb-8 grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
+        <Card className="premium-panel-muted overflow-hidden">
+          <CardContent className="p-6 sm:p-8">
+            <div className="premium-kicker mb-4">Platform Pulse</div>
+            <h1 className="font-display text-3xl font-bold uppercase tracking-[-0.05em] sm:text-4xl">Dashboard Overview</h1>
+            <p className="mt-3 max-w-2xl text-sm text-muted-foreground sm:text-base">
+              See revenue, demand, live trading activity, and support pressure from one premium control surface.
+            </p>
+            <div className="mt-6 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-[22px] border border-[rgba(255,223,112,0.14)] bg-white/[0.03] p-4">
+                <div className="metric-label">Users</div>
+                <div className="metric-value mt-2">{totalUsers}</div>
+              </div>
+              <div className="rounded-[22px] border border-[rgba(255,223,112,0.14)] bg-white/[0.03] p-4">
+                <div className="metric-label">Subscribers</div>
+                <div className="metric-value mt-2">{activeSubscribers}</div>
+              </div>
+              <div className="rounded-[22px] border border-[rgba(255,223,112,0.14)] bg-white/[0.03] p-4">
+                <div className="metric-label">Revenue</div>
+                <div className="metric-value mt-2">${totalRevenue.toFixed(0)}</div>
+              </div>
+            </div>
+            <div className="mt-6 luxury-divider" />
+            <div className="mt-6 grid gap-3 sm:grid-cols-3">
+              <div className="mobile-card rounded-[22px] p-4">
+                <div className="metric-label">Conversion</div>
+                <div className="mt-2 font-mono text-2xl text-white">{totalUsers > 0 ? `${((activeSubscribers / totalUsers) * 100).toFixed(1)}%` : '0%'}</div>
+              </div>
+              <div className="mobile-card rounded-[22px] p-4">
+                <div className="metric-label">Rev / Sub</div>
+                <div className="mt-2 font-mono text-2xl text-white">${activeSubscribers > 0 ? (totalRevenue / activeSubscribers).toFixed(2) : '0.00'}</div>
+              </div>
+              <div className="mobile-card rounded-[22px] p-4">
+                <div className="metric-label">Analyses / User</div>
+                <div className="mt-2 font-mono text-2xl text-white">{totalUsers > 0 ? (totalAnalyses / totalUsers).toFixed(1) : '0'}</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6 sm:p-8">
+            <div className="premium-kicker mb-4">Status Grid</div>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-3">
+                <span className="text-sm text-muted-foreground">API Status</span>
+                <span className="inline-flex items-center gap-2 text-sm text-emerald-300"><span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />Online</span>
+              </div>
+              <div className="flex items-center justify-between rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-3">
+                <span className="text-sm text-muted-foreground">AI Runtime</span>
+                <span className="inline-flex items-center gap-2 text-sm text-emerald-300"><span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />Active</span>
+              </div>
+              <div className="flex items-center justify-between rounded-[20px] border border-white/10 bg-white/[0.03] px-4 py-3">
+                <span className="text-sm text-muted-foreground">Payments</span>
+                <span className="inline-flex items-center gap-2 text-sm text-emerald-300"><span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />Connected</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {loading ? (
         <div className="text-center py-12 text-muted-foreground">Loading dashboard...</div>
@@ -106,11 +165,11 @@ export default function AdminDashboardPage() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <span className="text-sm text-muted-foreground">{stat.label}</span>
-                    <div className={`p-2 rounded-lg bg-gradient-to-br ${stat.color}`}>
+                    <div className={`rounded-2xl border border-white/10 bg-gradient-to-br p-3 ${stat.color}`}>
                       <stat.icon className="h-4 w-4 text-white" />
                     </div>
                   </div>
-                  <p className="text-3xl font-bold">{stat.value}</p>
+                  <p className="metric-value">{stat.value}</p>
                 </CardContent>
               </Card>
             </motion.div>
@@ -118,7 +177,6 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      {/* Quick Info Cards */}
       <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
         <Card>
           <CardHeader>

@@ -7,7 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api';
-import { Settings, Save, Loader2 } from 'lucide-react';
+import { platformThemes, PLATFORM_THEME_SETTING_KEY, type PlatformTheme } from '@/lib/theme';
+import { useThemeStore } from '@/stores/theme-store';
+import { Settings, Save, Loader2, Palette } from 'lucide-react';
 
 type ScannerStrategyToggleKey =
   | 'trendPullback'
@@ -67,6 +69,8 @@ export default function AdminSettingsPage() {
   const [scannerStrategies, setScannerStrategies] = useState<Record<ScannerStrategyToggleKey, boolean>>(DEFAULT_SCANNER_STRATEGIES);
   const [announcementPopupsEnabled, setAnnouncementPopupsEnabled] = useState(true);
   const [announcementPopupRepeatHours, setAnnouncementPopupRepeatHours] = useState('24');
+  const [platformTheme, setPlatformTheme] = useState<PlatformTheme>('goldx-premium');
+  const setActiveTheme = useThemeStore((state) => state.setActiveTheme);
 
   useEffect(() => {
     if (token) loadSettings();
@@ -94,6 +98,7 @@ export default function AdminSettingsPage() {
       const scannerEnabledStrategies = data.settings.find((s: any) => s.key === 'scanner_enabled_strategies');
       const announcementPopups = data.settings.find((s: any) => s.key === 'announcement_popups_enabled');
       const announcementPopupRepeat = data.settings.find((s: any) => s.key === 'announcement_popup_repeat_hours');
+      const activeTheme = data.settings.find((s: any) => s.key === PLATFORM_THEME_SETTING_KEY);
       if (prompt) setAiPrompt(prompt.value);
       if (free) setFreeLimit(String(free.value));
       if (pro) setProLimit(String(pro.value));
@@ -115,6 +120,7 @@ export default function AdminSettingsPage() {
       }
       if (announcementPopups) setAnnouncementPopupsEnabled(Boolean(announcementPopups.value));
       if (announcementPopupRepeat?.value != null) setAnnouncementPopupRepeatHours(String(announcementPopupRepeat.value));
+      if (activeTheme?.value === 'legacy' || activeTheme?.value === 'goldx-premium') setPlatformTheme(activeTheme.value);
     } catch {
     } finally {
       setLoading(false);
@@ -134,17 +140,91 @@ export default function AdminSettingsPage() {
   const connectedWhatsappNumber = supportWhatsappNumber.trim() || 'Not configured';
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-      <h1 className="text-2xl font-bold mb-6">System Settings</h1>
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+      <section className="premium-panel premium-noise overflow-hidden p-6 sm:p-8">
+        <div className="ambient-orb -left-10 top-0 h-36 w-36 opacity-60" />
+        <div className="ambient-orb bottom-0 right-0 h-44 w-44 opacity-40" />
+        <div className="relative flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+          <div className="max-w-3xl">
+            <div className="premium-kicker mb-4">Platform Controls</div>
+            <h1 className="font-display text-3xl font-bold uppercase tracking-[-0.05em] text-white sm:text-4xl">System Settings</h1>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-white/64">Update premium appearance, AI behavior, support channels, scanner execution rules, and platform-wide operating defaults without restarting the app.</p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="mobile-card rounded-[22px] p-4">
+              <div className="metric-label">Theme</div>
+              <div className="mt-2 text-sm font-semibold text-[var(--gold-light)]">{platformTheme}</div>
+            </div>
+            <div className="mobile-card rounded-[22px] p-4">
+              <div className="metric-label">Popup cadence</div>
+              <div className="mt-2 text-sm font-semibold text-white">{announcementPopupRepeatHours} hrs</div>
+            </div>
+            <div className="mobile-card rounded-[22px] p-4">
+              <div className="metric-label">Support line</div>
+              <div className="mt-2 text-sm font-semibold text-white">{connectedWhatsappNumber}</div>
+            </div>
+            <div className="mobile-card rounded-[22px] p-4">
+              <div className="metric-label">EMA filter</div>
+              <div className="mt-2 text-sm font-semibold text-cyan-100">{scannerUseEmaFilter ? 'Enabled' : 'Disabled'}</div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <div className="grid gap-6">
-        <Card>
+        <Card className="premium-panel premium-noise border-[rgba(255,223,112,0.12)] bg-transparent">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Palette className="h-5 w-5 text-primary" />
+              Appearance Settings
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              {platformThemes.map((theme) => {
+                const selected = platformTheme === theme.id;
+                return (
+                  <button
+                    key={theme.id}
+                    type="button"
+                    onClick={() => setPlatformTheme(theme.id)}
+                    className={`rounded-[24px] border p-5 text-left transition-all ${selected ? 'border-[rgba(255,223,112,0.34)] bg-[rgba(255,223,112,0.08)] shadow-neon' : 'border-white/10 bg-white/[0.03] hover:border-[rgba(255,223,112,0.18)] hover:bg-white/[0.05]'}`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <div className="text-sm font-semibold uppercase tracking-[0.18em] text-white">{theme.label}</div>
+                        <p className="mt-2 text-sm text-muted-foreground">{theme.description}</p>
+                      </div>
+                      <div className={`h-4 w-4 rounded-full border ${selected ? 'border-[var(--gold-light)] bg-[var(--gold-light)] shadow-neon' : 'border-white/20'}`} />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="premium-panel-muted p-4 text-sm text-muted-foreground">
+              Admin theme changes are broadcast through live state sync. Active users will update to the selected theme as the shared platform setting changes.
+            </div>
+            <Button
+              size="sm"
+              onClick={async () => {
+                await saveSetting(PLATFORM_THEME_SETTING_KEY, platformTheme);
+                setActiveTheme(platformTheme);
+              }}
+              disabled={saving}
+            >
+              {saving ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Save className="h-3 w-3 mr-1" />}
+              Save Platform Theme
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="premium-panel premium-noise border-[rgba(255,223,112,0.12)] bg-transparent">
           <CardHeader>
             <CardTitle className="text-lg">Announcement Popups</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div className="rounded-lg border border-white/10 bg-background/50 p-4 space-y-3">
+              <div className="premium-panel-muted space-y-3 p-4">
                 <div>
                   <label className="text-sm text-muted-foreground">Global popup switch</label>
                   <p className="mt-1 text-xs text-muted-foreground">Turn all active platform popups on or off for users without deleting the update itself.</p>
@@ -159,12 +239,13 @@ export default function AdminSettingsPage() {
                 </Button>
               </div>
 
-              <div className="rounded-lg border border-white/10 bg-background/50 p-4 space-y-3">
+              <div className="premium-panel-muted space-y-3 p-4">
                 <div>
                   <label className="text-sm text-muted-foreground">Repeat every hours</label>
                   <p className="mt-1 text-xs text-muted-foreground">Controls how long after dismissal the same popup can appear again for the same user.</p>
                 </div>
                 <Input
+                  className="premium-input"
                   value={announcementPopupRepeatHours}
                   onChange={(e) => setAnnouncementPopupRepeatHours(e.target.value)}
                   type="number"
@@ -188,7 +269,7 @@ export default function AdminSettingsPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="premium-panel premium-noise border-[rgba(255,223,112,0.12)] bg-transparent">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Settings className="h-5 w-5 text-primary" />
@@ -196,7 +277,7 @@ export default function AdminSettingsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="rounded-lg border border-white/10 bg-background/50 p-4">
+            <div className="premium-panel-muted p-4">
               <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Current connected number</p>
               <p className="mt-2 text-lg font-semibold">{connectedWhatsappNumber}</p>
             </div>
@@ -205,6 +286,7 @@ export default function AdminSettingsPage() {
               <div>
                 <label className="text-sm text-muted-foreground">WhatsApp number</label>
                 <Input
+                  className="premium-input"
                   value={supportWhatsappNumber}
                   onChange={(e) => setSupportWhatsappNumber(e.target.value)}
                   placeholder="18762797956"
@@ -213,6 +295,7 @@ export default function AdminSettingsPage() {
               <div>
                 <label className="text-sm text-muted-foreground">Support message</label>
                 <Input
+                  className="premium-input"
                   value={supportWhatsappMessage}
                   onChange={(e) => setSupportWhatsappMessage(e.target.value)}
                   placeholder="Hi TradeVision AI, I need support."
@@ -234,7 +317,7 @@ export default function AdminSettingsPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="premium-panel premium-noise border-[rgba(255,223,112,0.12)] bg-transparent">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Settings className="h-5 w-5 text-primary" />
@@ -245,7 +328,7 @@ export default function AdminSettingsPage() {
             <div>
               <label className="text-sm text-muted-foreground">Custom AI Analysis Prompt (optional override)</label>
               <textarea
-                className="w-full mt-1 h-32 p-3 rounded-lg border border-input bg-background/50 text-sm focus:ring-2 focus:ring-ring resize-none"
+                className="premium-input mt-1 min-h-32 w-full resize-none"
                 value={aiPrompt}
                 onChange={(e) => setAiPrompt(e.target.value)}
                 placeholder="Leave empty to use default prompt..."
@@ -258,12 +341,12 @@ export default function AdminSettingsPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="premium-panel premium-noise border-[rgba(255,223,112,0.12)] bg-transparent">
           <CardHeader>
             <CardTitle className="text-lg">Scanner Execution Settings</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="rounded-lg border border-white/10 bg-background/50 p-4 space-y-4">
+            <div className="premium-panel-muted space-y-4 p-4">
               <div>
                 <label className="text-sm text-muted-foreground">EMA execution filter</label>
                 <p className="mt-1 text-xs text-muted-foreground">Scanner executions must match the same EMA 9/14/50 pullback and reclaim filter used for GoldX SMC behavior.</p>
@@ -276,25 +359,25 @@ export default function AdminSettingsPage() {
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
               <div>
                 <label className="text-sm text-muted-foreground">Fast EMA</label>
-                <Input value={scannerFastEma} onChange={(e) => setScannerFastEma(e.target.value)} type="number" />
+                <Input className="premium-input" value={scannerFastEma} onChange={(e) => setScannerFastEma(e.target.value)} type="number" />
               </div>
               <div>
                 <label className="text-sm text-muted-foreground">Mid EMA</label>
-                <Input value={scannerMidEma} onChange={(e) => setScannerMidEma(e.target.value)} type="number" />
+                <Input className="premium-input" value={scannerMidEma} onChange={(e) => setScannerMidEma(e.target.value)} type="number" />
               </div>
               <div>
                 <label className="text-sm text-muted-foreground">Slow EMA</label>
-                <Input value={scannerSlowEma} onChange={(e) => setScannerSlowEma(e.target.value)} type="number" />
+                <Input className="premium-input" value={scannerSlowEma} onChange={(e) => setScannerSlowEma(e.target.value)} type="number" />
               </div>
               <div>
                 <label className="text-sm text-muted-foreground">Pullback tolerance %</label>
-                <Input value={scannerPullbackTolerance} onChange={(e) => setScannerPullbackTolerance(e.target.value)} type="number" step="0.01" />
+                <Input className="premium-input" value={scannerPullbackTolerance} onChange={(e) => setScannerPullbackTolerance(e.target.value)} type="number" step="0.01" />
               </div>
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
               {SCANNER_STRATEGY_LABELS.map((item) => (
-                <div key={item.key} className="rounded-lg border border-white/10 bg-background/50 p-4 space-y-3">
+                <div key={item.key} className="premium-panel-muted space-y-3 p-4">
                   <div>
                     <label className="text-sm text-muted-foreground">{item.title}</label>
                     <p className="mt-1 text-xs text-muted-foreground">{item.detail}</p>
@@ -329,7 +412,7 @@ export default function AdminSettingsPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="premium-panel premium-noise border-[rgba(255,223,112,0.12)] bg-transparent">
           <CardHeader>
             <CardTitle className="text-lg">Daily Limits</CardTitle>
           </CardHeader>
@@ -337,11 +420,11 @@ export default function AdminSettingsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm text-muted-foreground">Free Plan Daily Limit</label>
-                <Input value={freeLimit} onChange={(e) => setFreeLimit(e.target.value)} type="number" />
+                <Input className="premium-input" value={freeLimit} onChange={(e) => setFreeLimit(e.target.value)} type="number" />
               </div>
               <div>
                 <label className="text-sm text-muted-foreground">Pro Plan Daily Limit</label>
-                <Input value={proLimit} onChange={(e) => setProLimit(e.target.value)} type="number" />
+                <Input className="premium-input" value={proLimit} onChange={(e) => setProLimit(e.target.value)} type="number" />
               </div>
             </div>
             <Button
@@ -358,17 +441,17 @@ export default function AdminSettingsPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="premium-panel premium-noise border-[rgba(255,223,112,0.12)] bg-transparent">
           <CardHeader>
             <CardTitle className="text-lg">AI Providers By Plan</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="rounded-lg border border-white/10 bg-background/50 p-4">
+            <div className="premium-panel-muted p-4">
               <p className="text-sm text-muted-foreground">When both providers are enabled, Gemini is used first and GPT-5.1 is used as fallback if Gemini fails.</p>
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div className="rounded-lg border border-white/10 bg-background/50 p-4 space-y-4">
+              <div className="premium-panel-muted space-y-4 p-4">
                 <div>
                   <label className="text-sm text-muted-foreground">Free Plan AI Providers</label>
                   <p className="text-xs text-muted-foreground mt-1">Choose which providers can serve Free analysis requests.</p>
@@ -383,7 +466,7 @@ export default function AdminSettingsPage() {
                 </div>
               </div>
 
-              <div className="rounded-lg border border-white/10 bg-background/50 p-4 space-y-4">
+              <div className="premium-panel-muted space-y-4 p-4">
                 <div>
                   <label className="text-sm text-muted-foreground">Pro Plan AI Providers</label>
                   <p className="text-xs text-muted-foreground mt-1">Choose which providers can serve Pro analysis requests.</p>
@@ -415,13 +498,13 @@ export default function AdminSettingsPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="premium-panel premium-noise border-[rgba(255,223,112,0.12)] bg-transparent">
           <CardHeader>
             <CardTitle className="text-lg">Chart Markup By Plan</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div className="rounded-lg border border-white/10 bg-background/50 p-4 space-y-3">
+              <div className="premium-panel-muted space-y-3 p-4">
                 <div>
                   <label className="text-sm text-muted-foreground">Free Plan Markup</label>
                   <p className="text-xs text-muted-foreground mt-1">Controls whether Free users receive marked charts with AI zones.</p>
@@ -436,7 +519,7 @@ export default function AdminSettingsPage() {
                 </Button>
               </div>
 
-              <div className="rounded-lg border border-white/10 bg-background/50 p-4 space-y-3">
+              <div className="premium-panel-muted space-y-3 p-4">
                 <div>
                   <label className="text-sm text-muted-foreground">Pro Plan Markup</label>
                   <p className="text-xs text-muted-foreground mt-1">Controls whether Pro users receive marked charts with AI zones.</p>

@@ -135,19 +135,24 @@ export default function AdminPaymentsPage() {
     ? payments.filter((p) => p.paymentMethod === 'BANK_TRANSFER' && p.status === 'PENDING').length
     : pendingPayments;
   const secondaryStatValue = activeView === 'bank-transfers' ? String(pendingCount) : String(pendingCount);
-  const secondaryStatClasses = 'rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3';
+  const bankTransfers = payments.filter((payment) => payment.paymentMethod === 'BANK_TRANSFER').length;
+  const secondaryStatClasses = 'mobile-card rounded-[22px] px-4 py-3';
   const secondaryStatLabelClasses = 'text-xs uppercase tracking-[0.2em] text-amber-200/80';
   const secondaryStatValueClasses = 'mt-1 text-2xl font-semibold text-amber-100';
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-      <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Payments</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Review automated checkouts, track bank transfers, and approve manual upgrades from one workspace.</p>
-        </div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+      <section className="premium-panel premium-noise overflow-hidden p-6 sm:p-8">
+        <div className="ambient-orb -left-10 top-0 h-36 w-36 opacity-60" />
+        <div className="ambient-orb bottom-0 right-0 h-40 w-40 opacity-40" />
+        <div className="relative flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+          <div className="max-w-3xl">
+            <div className="premium-kicker mb-4">Revenue Desk</div>
+            <h1 className="font-display text-3xl font-bold uppercase tracking-[-0.05em] text-white sm:text-4xl">Payments</h1>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-white/64">Review automated checkout flow, verify bank transfers, and trigger recovery nudges from a dedicated premium operations surface.</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="mobile-card rounded-[22px] px-4 py-3">
             <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{recordCountLabel}</div>
             <div className="mt-1 text-2xl font-semibold">{payments.length}</div>
           </div>
@@ -155,24 +160,29 @@ export default function AdminPaymentsPage() {
             <div className={secondaryStatLabelClasses}>{secondaryStatLabel}</div>
             <div className={secondaryStatValueClasses}>{secondaryStatValue}</div>
           </div>
-          <div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/10 px-4 py-3">
+          <div className="mobile-card rounded-[22px] px-4 py-3">
             <div className="text-xs uppercase tracking-[0.2em] text-cyan-200/80">Revenue</div>
             <div className="mt-1 text-2xl font-semibold text-cyan-100">${visibleRevenue.toFixed(2)}</div>
           </div>
+          <div className="mobile-card rounded-[22px] px-4 py-3">
+            <div className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Transfers</div>
+            <div className="mt-1 text-2xl font-semibold text-white">{bankTransfers}</div>
+          </div>
         </div>
-      </div>
+        </div>
+      </section>
 
-      <Card>
+      <Card className="premium-panel premium-noise border-[rgba(255,223,112,0.12)] bg-transparent">
         <CardContent className="p-0">
           {loading ? (
             <div className="text-center py-12 text-muted-foreground">Loading...</div>
           ) : (
-            <div className="space-y-4 p-4">
+            <div className="space-y-4 p-4 sm:p-5">
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
                   onClick={() => { setPage(1); setStatus('ALL'); setActiveView('all-payments'); }}
-                  className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition ${activeView === 'all-payments' ? 'border-primary/40 bg-primary/10 text-foreground' : 'border-white/10 bg-white/5 text-muted-foreground hover:bg-white/10'}`}
+                  className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition ${activeView === 'all-payments' ? 'border-[rgba(255,223,112,0.34)] bg-[rgba(255,223,112,0.12)] text-[var(--gold-light)]' : 'border-white/10 bg-white/5 text-muted-foreground hover:bg-white/10'}`}
                 >
                   <Wallet className="h-4 w-4" />
                   All Payments
@@ -180,7 +190,7 @@ export default function AdminPaymentsPage() {
                 <button
                   type="button"
                   onClick={() => { setPage(1); setActiveView('bank-transfers'); }}
-                  className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition ${activeView === 'bank-transfers' ? 'border-primary/40 bg-primary/10 text-foreground' : 'border-white/10 bg-white/5 text-muted-foreground hover:bg-white/10'}`}
+                  className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition ${activeView === 'bank-transfers' ? 'border-[rgba(255,223,112,0.34)] bg-[rgba(255,223,112,0.12)] text-[var(--gold-light)]' : 'border-white/10 bg-white/5 text-muted-foreground hover:bg-white/10'}`}
                 >
                   <Landmark className="h-4 w-4" />
                   Bank Transfers
@@ -191,7 +201,7 @@ export default function AdminPaymentsPage() {
                 <select
                   value={plan}
                   onChange={(event) => { setPage(1); setPlan(event.target.value as AdminPaymentPlanFilter); }}
-                  className="h-8 rounded-lg border border-input bg-background/50 px-2 text-xs outline-none focus:ring-2 focus:ring-ring"
+                  className="premium-input h-10 px-3 text-xs"
                 >
                   <option value="ALL">All plans</option>
                   {paymentPlans.map((paymentPlan) => (
@@ -202,7 +212,7 @@ export default function AdminPaymentsPage() {
                 <select
                   value={status}
                   onChange={(event) => { setPage(1); setStatus(event.target.value as AdminPaymentStatusFilter); }}
-                  className="h-8 rounded-lg border border-input bg-background/50 px-2 text-xs outline-none focus:ring-2 focus:ring-ring"
+                  className="premium-input h-10 px-3 text-xs"
                 >
                   <option value="ALL">All statuses</option>
                   {paymentStatuses.map((paymentStatus) => (
@@ -213,7 +223,7 @@ export default function AdminPaymentsPage() {
                 <select
                   value={dateRange}
                   onChange={(event) => { setPage(1); setDateRange(event.target.value as AdminPaymentDateRangeFilter); }}
-                  className="h-8 rounded-lg border border-input bg-background/50 px-2 text-xs outline-none focus:ring-2 focus:ring-ring"
+                  className="premium-input h-10 px-3 text-xs"
                 >
                   <option value="7d">Last 7 days</option>
                   <option value="30d">Last 30 days</option>
@@ -223,10 +233,10 @@ export default function AdminPaymentsPage() {
               </div>
 
               {activeView === 'all-payments' ? (
-                <div className="max-h-[70vh] overflow-auto rounded-2xl border border-white/10">
+                <div className="terminal-table max-h-[70vh] overflow-auto rounded-[28px]">
                   <table className="w-full min-w-[1020px] text-sm">
                     <thead className="sticky top-0 bg-background/95 backdrop-blur-xl">
-                      <tr className="border-b border-white/10">
+                      <tr className="border-b border-[rgba(255,223,112,0.12)]">
                         <th className="p-4 text-left font-medium text-muted-foreground">User</th>
                         <th className="p-4 text-left font-medium text-muted-foreground">Reference</th>
                         <th className="p-4 text-left font-medium text-muted-foreground">Method</th>
@@ -279,10 +289,10 @@ export default function AdminPaymentsPage() {
                   </table>
                 </div>
               ) : (
-                <div className="max-h-[70vh] overflow-auto rounded-2xl border border-white/10">
+                <div className="terminal-table max-h-[70vh] overflow-auto rounded-[28px]">
                   <table className="w-full min-w-[980px] text-sm">
                     <thead className="sticky top-0 bg-background/95 backdrop-blur-xl">
-                      <tr className="border-b border-white/10">
+                      <tr className="border-b border-[rgba(255,223,112,0.12)]">
                         <th className="p-4 text-left font-medium text-muted-foreground">User</th>
                         <th className="p-4 text-left font-medium text-muted-foreground">Bank</th>
                         <th className="p-4 text-left font-medium text-muted-foreground">Reference</th>
@@ -396,7 +406,7 @@ export default function AdminPaymentsPage() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-[#111118] shadow-2xl"
+              className="premium-panel premium-noise w-full max-w-md overflow-hidden rounded-[28px] border-[rgba(255,223,112,0.12)] bg-[rgba(8,8,8,0.96)] shadow-luxe-strong"
             >
               {/* Modal Header */}
               <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
@@ -417,7 +427,7 @@ export default function AdminPaymentsPage() {
               {/* Modal Body */}
               <div className="space-y-4 px-6 py-5">
                 {/* Recipient info */}
-                <div className="rounded-xl border border-white/8 bg-white/3 p-4">
+                <div className="premium-panel-muted p-4">
                   <div className="flex items-center gap-3">
                     <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-sm font-bold text-white">
                       {(reminderTarget.user?.name?.[0] || '?').toUpperCase()}
@@ -455,14 +465,14 @@ export default function AdminPaymentsPage() {
                       placeholder="Enter coupon code e.g. SAVE20"
                       value={reminderCoupon}
                       onChange={(e) => setReminderCoupon(e.target.value.toUpperCase())}
-                      className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-muted-foreground outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30 font-mono tracking-wider"
+                      className="premium-input w-full font-mono tracking-wider"
                     />
                     <input
                       type="text"
                       placeholder="Discount label e.g. 20% OFF — Save $3.99"
                       value={reminderDiscountLabel}
                       onChange={(e) => setReminderDiscountLabel(e.target.value)}
-                      className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-muted-foreground outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30"
+                      className="premium-input w-full"
                     />
                   </div>
 

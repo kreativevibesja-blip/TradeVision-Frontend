@@ -289,37 +289,77 @@ export default function AdminUsersPage() {
     return 'Bank Transfer';
   };
 
+  const premiumUsers = users.filter((user) => user.subscription !== 'FREE').length;
+  const bannedUsers = users.filter((user) => user.banned).length;
+  const monthlyUsers = users.filter((user) => user.usage?.period === 'month').length;
+
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">User Management</h1>
-        <div className="flex items-center gap-3">
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+      <section className="premium-panel premium-noise overflow-hidden p-6 sm:p-8">
+        <div className="ambient-orb -left-16 top-0 h-40 w-40 opacity-60" />
+        <div className="ambient-orb bottom-0 right-0 h-44 w-44 opacity-40" />
+        <div className="relative flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+          <div className="max-w-3xl">
+            <div className="premium-kicker mb-4">User Command Surface</div>
+            <h1 className="font-display text-3xl font-bold uppercase tracking-[-0.05em] text-white sm:text-4xl">User Management</h1>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-white/64">Review subscription state, intervene on entitlements, and move high-value users across TradeVision and GoldX without leaving the command room.</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={() => setShowGoldxUsers(true)}
-            className="flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-2 text-sm font-medium text-amber-200 transition-all hover:border-amber-500/40 hover:bg-amber-500/20"
+            className="premium-button-shell inline-flex items-center gap-2 rounded-2xl border border-amber-500/20 bg-[linear-gradient(135deg,rgba(255,223,112,0.18),rgba(255,223,112,0.05))] px-4 py-3 text-sm font-medium text-amber-100 transition hover:border-amber-400/40"
           >
             <KeyRound className="h-4 w-4" />
             GoldX Users
           </button>
           <button
             onClick={() => setShowProSubs(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-500/10 text-violet-300 hover:bg-violet-500/20 border border-violet-500/20 hover:border-violet-500/40 transition-all text-sm font-medium"
+            className="premium-button-shell inline-flex items-center gap-2 rounded-2xl border border-violet-500/20 bg-[linear-gradient(135deg,rgba(139,92,246,0.18),rgba(139,92,246,0.05))] px-4 py-3 text-sm font-medium text-violet-100 transition hover:border-violet-400/40"
           >
             <Crown className="w-4 h-4" />
             Pro Subscribers
           </button>
         </div>
-      </div>
+        </div>
+        <div className="relative mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="mobile-card rounded-[24px] p-4">
+            <div className="metric-label">Visible users</div>
+            <div className="metric-value mt-2 text-white">{users.length}</div>
+            <p className="mt-2 text-xs text-white/50">Current result set</p>
+          </div>
+          <div className="mobile-card rounded-[24px] p-4">
+            <div className="metric-label">Premium plans</div>
+            <div className="metric-value mt-2 text-[var(--gold-light)]">{premiumUsers}</div>
+            <p className="mt-2 text-xs text-white/50">Pro and PRO+ users</p>
+          </div>
+          <div className="mobile-card rounded-[24px] p-4">
+            <div className="metric-label">Restricted</div>
+            <div className="metric-value mt-2 text-rose-100">{bannedUsers}</div>
+            <p className="mt-2 text-xs text-white/50">Currently banned accounts</p>
+          </div>
+          <div className="mobile-card rounded-[24px] p-4">
+            <div className="metric-label">Monthly tracked</div>
+            <div className="metric-value mt-2 text-cyan-100">{monthlyUsers}</div>
+            <p className="mt-2 text-xs text-white/50">Usage resets monthly</p>
+          </div>
+        </div>
+      </section>
 
       <ProSubscribersModal open={showProSubs} onClose={() => setShowProSubs(false)} token={token!} />
       <GoldxUsersModal open={showGoldxUsers} onClose={() => setShowGoldxUsers(false)} token={token!} />
 
-      <Card className="mb-6">
-        <CardContent className="p-4">
+      <div className="premium-panel-muted p-5 sm:p-6">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <div className="premium-kicker">Filters</div>
+            <p className="mt-3 max-w-xl text-sm text-muted-foreground">Narrow the list by plan tier, join window, or operator search before opening the detail command drawer.</p>
+          </div>
+        </div>
           <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
             <div className="flex flex-1 flex-col gap-2">
-              <label className="text-xs font-medium text-muted-foreground">Search</label>
+              <label className="metric-label">Search</label>
               <Input
+                className="premium-input"
                 placeholder="Search by email or name..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -327,11 +367,11 @@ export default function AdminUsersPage() {
               />
             </div>
             <div className="flex flex-col gap-2 lg:w-44">
-              <label className="text-xs font-medium text-muted-foreground">Plan</label>
+              <label className="metric-label">Plan</label>
               <select
                 value={subscriptionFilter}
                 onChange={(e) => setSubscriptionFilter(e.target.value as SubscriptionFilter)}
-                className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                className="premium-input h-12"
               >
                 <option value="ALL">All users</option>
                 <option value="FREE">Free users</option>
@@ -340,11 +380,11 @@ export default function AdminUsersPage() {
               </select>
             </div>
             <div className="flex flex-col gap-2 lg:w-48">
-              <label className="text-xs font-medium text-muted-foreground">Joined</label>
+              <label className="metric-label">Joined</label>
               <select
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value as DateFilter)}
-                className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                className="premium-input h-12"
               >
                 <option value="ALL">All time</option>
                 <option value="TODAY">Today</option>
@@ -356,12 +396,12 @@ export default function AdminUsersPage() {
             {dateFilter === 'CUSTOM' ? (
               <>
                 <div className="flex flex-col gap-2 lg:w-40">
-                  <label className="text-xs font-medium text-muted-foreground">From</label>
-                  <Input type="date" value={customDateFrom} onChange={(e) => setCustomDateFrom(e.target.value)} />
+                  <label className="metric-label">From</label>
+                  <Input className="premium-input" type="date" value={customDateFrom} onChange={(e) => setCustomDateFrom(e.target.value)} />
                 </div>
                 <div className="flex flex-col gap-2 lg:w-40">
-                  <label className="text-xs font-medium text-muted-foreground">To</label>
-                  <Input type="date" value={customDateTo} onChange={(e) => setCustomDateTo(e.target.value)} />
+                  <label className="metric-label">To</label>
+                  <Input className="premium-input" type="date" value={customDateTo} onChange={(e) => setCustomDateTo(e.target.value)} />
                 </div>
               </>
             ) : null}
@@ -375,18 +415,17 @@ export default function AdminUsersPage() {
               </Button>
             </div>
           </div>
-        </CardContent>
-      </Card>
+      </div>
 
-      <Card>
+      <Card className="premium-panel premium-noise overflow-hidden border-[rgba(255,223,112,0.12)] bg-transparent">
         <CardContent className="p-0">
           {loading ? (
             <div className="text-center py-12 text-muted-foreground">Loading users...</div>
           ) : (
-            <div className="max-h-[70vh] overflow-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-white/10">
+            <div className="terminal-table max-h-[72vh] overflow-auto rounded-none border-0 shadow-none">
+              <table className="w-full min-w-[980px] text-sm">
+                <thead className="sticky top-0 z-10 backdrop-blur-xl">
+                  <tr className="border-b border-[rgba(255,223,112,0.12)]">
                     <th className="text-left p-4 font-medium text-muted-foreground">User</th>
                     <th className="text-left p-4 font-medium text-muted-foreground">Plan</th>
                     <th className="text-left p-4 font-medium text-muted-foreground">Status</th>
@@ -398,7 +437,7 @@ export default function AdminUsersPage() {
                 </thead>
                 <tbody>
                   {users.map((u) => (
-                    <tr key={u.id} className="cursor-pointer border-b border-white/5 hover:bg-white/5" onClick={() => setSelectedUser(u)}>
+                    <tr key={u.id} className="cursor-pointer border-b border-white/5 transition" onClick={() => setSelectedUser(u)}>
                       <td className="p-4">
                         <div>
                           <p className="font-medium">{u.name || 'No name'}</p>
@@ -500,7 +539,7 @@ export default function AdminUsersPage() {
               </table>
 
               {totalPages > 1 && (
-                <div className="flex items-center justify-center gap-2 p-4">
+                <div className="flex items-center justify-center gap-2 border-t border-[rgba(255,223,112,0.08)] p-4">
                   <Button variant="outline" size="sm" onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1}>
                     Previous
                   </Button>
@@ -517,11 +556,11 @@ export default function AdminUsersPage() {
 
       {selectedUser ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setSelectedUser(null)}>
-          <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl border border-white/10 bg-slate-950 shadow-2xl" onClick={(event) => event.stopPropagation()}>
-            <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
+          <div className="premium-panel premium-noise max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-[30px] border-[rgba(255,223,112,0.12)] bg-[rgba(6,6,6,0.96)] shadow-luxe-strong" onClick={(event) => event.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-[rgba(255,223,112,0.1)] px-6 py-5">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">User Details</p>
-                <h2 className="mt-1 text-xl font-semibold">{selectedUser.name || selectedUser.email}</h2>
+                <p className="premium-kicker">User Details</p>
+                <h2 className="mt-3 font-display text-2xl font-semibold uppercase tracking-[-0.05em] text-white">{selectedUser.name || selectedUser.email}</h2>
               </div>
               <Button variant="ghost" size="sm" onClick={() => setSelectedUser(null)}>
                 <X className="h-4 w-4" />
@@ -530,30 +569,30 @@ export default function AdminUsersPage() {
 
             <div className="grid gap-6 p-6 md:grid-cols-2">
               <div className="space-y-4">
-                <div>
+                <div className="premium-panel-muted p-4">
                   <p className="text-xs text-muted-foreground">Email</p>
                   <p className="mt-1 text-sm font-medium">{selectedUser.email}</p>
                 </div>
-                <div>
+                <div className="premium-panel-muted p-4">
                   <p className="text-xs text-muted-foreground">User ID</p>
                   <p className="mt-1 break-all text-sm font-medium">{selectedUser.id}</p>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
+                  <div className="premium-panel-muted p-4">
                     <p className="text-xs text-muted-foreground">Role</p>
                     <p className="mt-1 text-sm font-medium uppercase">{selectedUser.role}</p>
                   </div>
-                  <div>
+                  <div className="premium-panel-muted p-4">
                     <p className="text-xs text-muted-foreground">Plan</p>
                     <p className="mt-1 text-sm font-medium">{selectedUser.subscription}</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
+                  <div className="premium-panel-muted p-4">
                     <p className="text-xs text-muted-foreground">Status</p>
                     <p className="mt-1 text-sm font-medium">{selectedUser.banned ? 'Banned' : 'Active'}</p>
                   </div>
-                  <div>
+                  <div className="premium-panel-muted p-4">
                     <p className="text-xs text-muted-foreground">Joined</p>
                     <p className="mt-1 text-sm font-medium">{formatJamaicaDateTime(selectedUser.createdAt)}</p>
                   </div>
