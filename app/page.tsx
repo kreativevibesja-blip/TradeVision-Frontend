@@ -57,18 +57,18 @@ const marketMetrics = [
 
 const featureColumns = [
   {
-    title: 'Institutional chart intelligence',
-    description: 'BOS, CHOCH, FVG, liquidity sweeps, supply-demand zones, and scenario context appear like a trading desk tool, not a marketing widget.',
+    title: 'Chart analysis with structure',
+    description: 'Upload a chart and get BOS, CHOCH, FVG, liquidity sweeps, supply and demand zones, and directional context in a format that helps you decide faster.',
     icon: BrainCircuit,
   },
   {
-    title: 'Mobile-first command center',
-    description: 'Every core surface collapses into tactile, swipe-friendly modules with dense metrics, fast thumb actions, and clean hierarchy on iPhone-sized screens.',
+    title: 'Built for fast trading decisions',
+    description: 'Use the same workflow on desktop or mobile when you need a quick second opinion before entry, a clearer invalidation level, or more disciplined execution.',
     icon: Radar,
   },
   {
-    title: 'Premium GoldX ecosystem',
-    description: 'GoldX modes, bot activity, execution counters, and performance surfaces are framed like an elite quant product with cinematic depth.',
+    title: 'GoldX automation and execution tools',
+    description: 'Run GoldX for XAUUSD with mode control, execution tracking, licensing, and workspace telemetry when you want automation alongside your discretionary process.',
     icon: Crown,
   },
 ];
@@ -76,31 +76,31 @@ const featureColumns = [
 const platformSurfaces = [
   {
     title: 'AI Analysis',
-    subtitle: 'Staged reveal, replay, confidence, reaction challenge',
+    subtitle: 'Upload charts, get trade context, and review confidence, replay, and reaction training in one flow.',
     icon: Eye,
   },
   {
     title: 'Dashboard',
-    subtitle: 'Portfolio, sentiment, scanners, models online, signals',
+    subtitle: 'Track your activity, active tools, scanner signals, and workspace access from one home base.',
     icon: Layers3,
   },
   {
     title: 'Live Charts',
-    subtitle: 'Cinematic overlays for BOS, CHOCH, liquidity, FVG',
+    subtitle: 'Follow live chart structure with key zones, liquidity behavior, and execution context.',
     icon: CandlestickChart,
   },
   {
     title: 'Admin Command',
-    subtitle: 'Subscriptions, errors, licenses, system health, GoldX bots',
+    subtitle: 'Manage subscriptions, payments, support, licensing, settings, and platform operations.',
     icon: ShieldCheck,
   },
 ];
 
 const goldxModes = [
-  { mode: 'Day', summary: 'Sharp intraday filtering with aggressive session bias.' },
-  { mode: 'Night', summary: 'Low-noise gold flow tuned for overnight execution windows.' },
-  { mode: 'Hybrid', summary: 'Balanced control layer blending speed, protection, and confluence.' },
-  { mode: 'All Session', summary: 'Persistent orchestration for prop-style, round-the-clock coverage.' },
+  { mode: 'Day', summary: 'Focus on active intraday gold conditions when you want sharper session-based filtering.' },
+  { mode: 'Night', summary: 'Reduce noise during quieter hours with behavior tuned for overnight market conditions.' },
+  { mode: 'Hybrid', summary: 'Balance speed and protection when you want one mode that can adapt across changing conditions.' },
+  { mode: 'All Session', summary: 'Keep GoldX operating across the full trading day when you want continuous coverage.' },
 ];
 
 const pricing = [
@@ -250,17 +250,18 @@ export default function HomePage() {
                 <BrandLogo className="mb-6" />
                 <Badge className="px-4 py-2 text-[11px]" variant="default">
                   <Sparkles className="mr-2 h-3.5 w-3.5" />
-                  Premium 3D trading intelligence
+                  AI analysis, GoldX automation, and live trader tools
                 </Badge>
               </motion.div>
 
               <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, delay: 0.08 }}>
                 <h1 className="max-w-3xl text-[2.6rem] font-bold leading-[0.95] tracking-[-0.08em] text-white sm:text-[3.6rem] lg:text-[5.4rem]">
-                  The trading platform that looks and feels
-                  <span className="text-gradient"> institutional.</span>
+                  Read the chart,
+                  <span className="text-gradient"> plan the trade,</span>
+                  and execute with more clarity.
                 </h1>
                 <p className="mt-5 max-w-2xl text-sm leading-7 text-white/72 sm:text-base sm:leading-8 lg:text-lg">
-                  TradeVision is rebuilt as a cinematic AI command surface: live chart analysis, GoldX automation, premium dashboards, and admin controls wrapped in deep glass layers, sharp metrics, and luxury motion.
+                  TradeVision helps traders turn screenshots and market structure into actionable trade plans. Use AI analysis to read trend, liquidity, entries, invalidation, and targets, then move into GoldX, scanners, dashboards, and replay tools when you want more execution support.
                 </p>
               </motion.div>
 
@@ -299,7 +300,7 @@ export default function HomePage() {
           <div className="marquee-track flex min-w-max items-center gap-8 whitespace-nowrap text-xs uppercase tracking-[0.28em] text-white/56 sm:text-sm">
             {[0, 1].map((copy) => (
               <div key={copy} className="flex items-center gap-8 pr-8">
-                {['Bloomberg-grade hierarchy', 'GoldX automation', 'AI confidence engine', 'Live session scanner', 'Mobile-first command center', 'Admin control surface'].map((item) => (
+                {['AI chart analysis', 'GoldX automation', 'Confidence engine', 'Live session scanner', 'Trade replay', 'Admin controls'].map((item) => (
                   <span key={`${copy}-${item}`} className="inline-flex items-center gap-3">
                     <span>{item}</span>
                     <span className="text-[var(--gold-light)]">•</span>
@@ -313,10 +314,10 @@ export default function HomePage() {
 
       <section className="page-shell page-stack">
         <Reveal className="mb-10 text-center sm:mb-14">
-          <Badge variant="outline">Design language</Badge>
-          <h2 className="premium-heading mt-4">A premium stack for every core surface</h2>
+          <Badge variant="outline">What You Get</Badge>
+          <h2 className="premium-heading mt-4">One platform for analysis, execution support, and automation</h2>
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-white/68 sm:text-base">
-            The redesign is structured like a luxury fintech product system: disciplined typography, terminal density, cinematic surfaces, and motion with control rather than noise.
+            TradeVision is built to help you understand the setup, avoid impulsive entries, and work from clearer trade plans whether you trade manually or use GoldX automation.
           </p>
         </Reveal>
 
@@ -345,7 +346,7 @@ export default function HomePage() {
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <Badge variant="default">Platform suite</Badge>
-                    <h2 className="mt-4 text-3xl font-semibold tracking-[-0.06em] text-white sm:text-4xl">Every screen rebuilt as a luxury command layer</h2>
+                    <h2 className="mt-4 text-3xl font-semibold tracking-[-0.06em] text-white sm:text-4xl">Use the right workspace for each part of the trade</h2>
                   </div>
                   <div className="hidden rounded-[24px] border border-[rgba(255,223,112,0.16)] bg-[rgba(255,223,112,0.06)] p-4 text-[var(--gold-light)] md:block">
                     <Layers3 className="h-8 w-8" />
@@ -359,7 +360,7 @@ export default function HomePage() {
                         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 text-[var(--gold-light)]">
                           <surface.icon className="h-5 w-5" />
                         </div>
-                        <div className="metric-label">Premium</div>
+                        <div className="metric-label">Workspace</div>
                       </div>
                       <div className="mt-5 text-xl font-semibold tracking-[-0.05em] text-white">{surface.title}</div>
                       <p className="mt-2 text-sm leading-6 text-white/66">{surface.subtitle}</p>
@@ -376,9 +377,9 @@ export default function HomePage() {
                 <Badge variant="outline">Analysis journey</Badge>
                 <div className="mt-5 space-y-4">
                   {[
-                    ['01', 'Upload or snap a chart', 'Fast mobile-first ingestion for MT5, TradingView, and Deriv screenshots.'],
-                    ['02', 'AI stages the readout', 'Confidence, structure, liquidity, and scenarios reveal in sequence instead of dumping a wall of text.'],
-                    ['03', 'Act with context', 'Replay, reaction challenge, and scenario simulator keep execution disciplined.'],
+                    ['01', 'Upload or snap a chart', 'Send charts from MT5, TradingView, Deriv, or your phone and start analysis without a complicated setup.'],
+                    ['02', 'Get a structured trade read', 'Review trend, structure, zones, confirmation needs, invalidation, and scenario context without guessing what the chart is doing.'],
+                    ['03', 'Execute with more discipline', 'Use replay, reaction challenge, and follow-up tools to slow down bad decisions and validate better entries.'],
                   ].map(([step, title, copy]) => (
                     <div key={step} className="mobile-card rounded-[24px] p-5">
                       <div className="flex items-start gap-4">
@@ -404,10 +405,10 @@ export default function HomePage() {
           <Reveal>
             <Card className="h-full overflow-hidden border-[rgba(255,223,112,0.24)]">
               <CardContent className="p-6 sm:p-7">
-                <Badge variant="default">GoldX elite layer</Badge>
-                <h2 className="mt-4 text-3xl font-semibold tracking-[-0.06em] text-white sm:text-4xl">GoldX now reads like an elite execution product</h2>
+                <Badge variant="default">GoldX</Badge>
+                <h2 className="mt-4 text-3xl font-semibold tracking-[-0.06em] text-white sm:text-4xl">Automate XAUUSD with more control</h2>
                 <p className="mt-4 text-sm leading-7 text-white/66 sm:text-base">
-                  Mode switching, bot activity, performance telemetry, and licensing context are framed with dramatic depth, restrained gold lighting, and tactile controls instead of flat promo cards.
+                  GoldX gives gold traders a dedicated automation workspace with mode switching, execution tracking, and account visibility so you can manage how the bot behaves instead of running it blind.
                 </p>
                 <div className="mt-8 grid grid-cols-2 gap-3">
                   {[
@@ -433,7 +434,7 @@ export default function HomePage() {
                   <CardContent className="p-5 sm:p-6">
                     <div className="flex items-center justify-between">
                       <div className="text-xl font-semibold tracking-[-0.05em] text-white">{item.mode}</div>
-                      <div className="rounded-full border border-[rgba(255,223,112,0.16)] px-3 py-1 text-[10px] uppercase tracking-[0.24em] text-[var(--gold-light)]">3D mode</div>
+                      <div className="rounded-full border border-[rgba(255,223,112,0.16)] px-3 py-1 text-[10px] uppercase tracking-[0.24em] text-[var(--gold-light)]">Gold mode</div>
                     </div>
                     <p className="mt-4 text-sm leading-6 text-white/66">{item.summary}</p>
                     <div className="mt-6 h-32 rounded-[24px] border border-white/8 bg-[radial-gradient(circle_at_top,rgba(245,217,123,0.18),transparent_40%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))]" />
@@ -448,9 +449,9 @@ export default function HomePage() {
       <section className="page-shell page-stack">
         <Reveal className="mb-10 text-center sm:mb-14">
           <Badge variant="outline">Pricing</Badge>
-          <h2 className="premium-heading mt-4">Luxury pricing, clear conversion</h2>
+          <h2 className="premium-heading mt-4">Choose the level that matches how you trade</h2>
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-white/68 sm:text-base">
-            The pricing experience is rebuilt to feel expensive and decisive: strong hierarchy, strong plan separation, and action surfaces that read like premium fintech.
+            Start free to test chart analysis, move to Pro for deeper trade planning tools, or use GoldX when you want automated XAUUSD execution support.
           </p>
         </Reveal>
 
@@ -498,16 +499,16 @@ export default function HomePage() {
             <Card className="h-full">
               <CardContent className="p-6 sm:p-7">
                 <Badge variant="outline">Trust and proof</Badge>
-                <h2 className="mt-4 text-3xl font-semibold tracking-[-0.06em] text-white sm:text-4xl">Built to convert with proof, not noise</h2>
+                <h2 className="mt-4 text-3xl font-semibold tracking-[-0.06em] text-white sm:text-4xl">Built to help traders make better decisions</h2>
                 <p className="mt-4 max-w-xl text-sm leading-7 text-white/66 sm:text-base">
-                  Strong visuals are paired with live metrics, premium hierarchy, and public social proof so the platform sells like a category leader rather than a tool bundle.
+                  The goal is simple: help you read the chart faster, keep your execution disciplined, and give you enough context to avoid low-quality trades.
                 </p>
                 <div className="mt-8 grid gap-3 sm:grid-cols-2">
                   {[
-                    ['Signal quality', 'Institutional context first'],
-                    ['Mobile UX', 'Thumb-driven actions'],
-                    ['Realtime theme control', 'Admin and user-level switching'],
-                    ['Performance target', 'Lighthouse-oriented surface design'],
+                    ['Trade clarity', 'Trend, zones, confirmations, and invalidation in one readout'],
+                    ['Execution discipline', 'Replay and reaction tools that slow down impulsive entries'],
+                    ['Cross-device access', 'Analyze and manage trades from desktop or mobile'],
+                    ['Operational depth', 'Admin, billing, GoldX, and trader workspaces under one platform'],
                   ].map(([title, copy]) => (
                     <div key={title} className="mobile-card rounded-[22px] p-4">
                       <div className="text-sm font-semibold text-white">{title}</div>
@@ -524,7 +525,7 @@ export default function HomePage() {
               <CardContent className="grid h-full gap-8 p-6 sm:p-7">
                 <div>
                   <Badge variant="default">Trustpilot</Badge>
-                  <p className="mt-4 text-sm leading-7 text-white/66">If TradeVision has improved your execution discipline, leave a public review so other traders can evaluate the product with real signal.</p>
+                  <p className="mt-4 text-sm leading-7 text-white/66">If TradeVision has helped you read setups better or trade with more discipline, leave a public review so other traders can judge it from real user experience.</p>
                 </div>
                 <div className="rounded-[28px] border border-white/10 bg-white/95 p-4 shadow-2xl shadow-black/25">
                   <div
@@ -554,12 +555,12 @@ export default function HomePage() {
             <CardContent className="relative p-6 text-center sm:p-10 lg:p-14">
               <div className="ambient-orb left-[10%] top-[20%] h-40 w-40" />
               <div className="ambient-orb right-[8%] top-[12%] h-52 w-52" />
-              <Badge variant="default">TradeVision premium</Badge>
+                <Badge variant="default">TradeVision</Badge>
               <h2 className="mx-auto mt-5 max-w-3xl text-3xl font-semibold tracking-[-0.06em] text-white sm:text-4xl lg:text-5xl">
-                A luxury trading experience should look expensive before it earns trust. Now it does both.
+                Use AI to understand the chart faster and trade with a clearer plan.
               </h2>
               <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-white/68 sm:text-base">
-                Enter through analysis, pricing, GoldX, or the dashboard and the platform keeps the same premium visual logic across every surface.
+                Start with a chart upload, explore the plan that fits your style, or move straight into GoldX if you want dedicated gold automation.
               </p>
               <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
                 <Link href="/analyze">
