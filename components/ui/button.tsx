@@ -4,18 +4,18 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex min-h-12 items-center justify-center whitespace-nowrap rounded-2xl border text-sm font-semibold uppercase tracking-[0.16em] ring-offset-background transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98] touch-manipulation',
+  'premium-button-shell inline-flex min-h-12 items-center justify-center whitespace-nowrap rounded-2xl border text-sm font-semibold uppercase tracking-[0.16em] ring-offset-background transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.985] touch-manipulation will-change-transform',
   {
     variants: {
       variant: {
-        default: 'border-transparent bg-primary text-primary-foreground hover:-translate-y-px hover:brightness-105',
-        destructive: 'border-red-500/30 bg-destructive/85 text-destructive-foreground hover:bg-destructive',
-        outline: 'border-[rgba(255,223,112,0.2)] bg-white/[0.03] text-foreground hover:border-[rgba(255,223,112,0.42)] hover:bg-white/[0.06]',
-        secondary: 'border-white/10 bg-secondary text-secondary-foreground hover:bg-secondary/80',
-        ghost: 'border-transparent bg-transparent text-muted-foreground hover:border-white/10 hover:bg-white/[0.04] hover:text-foreground',
-        link: 'text-primary underline-offset-4 hover:underline',
-        gradient: 'border-transparent bg-[linear-gradient(135deg,#ffe38a_0%,#d4af37_48%,#9a7513_100%)] text-[#120f04] hover:-translate-y-px hover:brightness-105',
-        glow: 'border-[rgba(255,223,112,0.28)] bg-[linear-gradient(135deg,rgba(255,223,112,0.2),rgba(212,175,55,0.18))] text-white hover:-translate-y-px',
+        default: 'border-[rgba(255,223,112,0.28)] bg-[linear-gradient(145deg,rgba(245,217,123,0.94),rgba(212,175,55,0.9)_45%,rgba(138,101,17,0.95))] text-[#120f04] hover:-translate-y-px hover:brightness-105 hover:shadow-luxe-strong',
+        destructive: 'border-red-500/30 bg-[linear-gradient(145deg,rgba(255,117,117,0.18),rgba(255,77,77,0.34))] text-destructive-foreground hover:bg-destructive/90',
+        outline: 'border-[rgba(255,223,112,0.18)] bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))] text-foreground hover:border-[rgba(255,223,112,0.42)] hover:bg-white/[0.08] hover:-translate-y-px',
+        secondary: 'border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.07),rgba(255,255,255,0.02))] text-secondary-foreground hover:bg-white/[0.08] hover:-translate-y-px',
+        ghost: 'border-transparent bg-transparent text-muted-foreground shadow-none hover:border-white/10 hover:bg-white/[0.04] hover:text-foreground',
+        link: 'border-transparent bg-transparent px-0 py-0 text-primary shadow-none underline-offset-4 hover:underline',
+        gradient: 'border-[rgba(255,223,112,0.36)] bg-[linear-gradient(135deg,#fff2b8_0%,#f5d97b_20%,#d4af37_52%,#8c6714_100%)] text-[#120f04] hover:-translate-y-px hover:brightness-105 hover:shadow-luxe-strong',
+        glow: 'border-[rgba(255,223,112,0.28)] bg-[linear-gradient(145deg,rgba(255,223,112,0.18),rgba(212,175,55,0.18)_45%,rgba(255,255,255,0.04))] text-white hover:-translate-y-px hover:shadow-luxe',
       },
       size: {
         default: 'h-12 px-5 py-3',

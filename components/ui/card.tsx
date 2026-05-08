@@ -6,7 +6,7 @@ const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElemen
     <div
       ref={ref}
       className={cn(
-        'premium-panel',
+        'premium-panel premium-noise tilt-card',
         className
       )}
       {...props}
@@ -26,7 +26,7 @@ const CardTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HT
   ({ className, ...props }, ref) => (
     <h3
       ref={ref}
-      className={cn('font-display text-xl font-bold uppercase tracking-[-0.04em] sm:text-2xl', className)}
+      className={cn('font-display text-xl font-bold uppercase tracking-[-0.05em] sm:text-2xl', className)}
       {...props}
     />
   )

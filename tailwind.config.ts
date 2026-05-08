@@ -75,6 +75,8 @@ const config: Config = {
         gold: '0 10px 28px rgba(212, 175, 55, 0.12)',
         panel: '0 28px 80px rgba(0, 0, 0, 0.42)',
         neon: '0 0 0 1px rgba(255, 215, 0, 0.08), 0 0 14px rgba(255, 223, 112, 0.08)',
+        luxe: '0 28px 80px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255,255,255,0.04)',
+        'luxe-strong': '0 36px 120px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255,223,112,0.08)',
       },
       keyframes: {
         'accordion-down': {
@@ -110,6 +112,14 @@ const config: Config = {
           '0%, 100%': { boxShadow: '0 0 0 rgba(255, 223, 112, 0.18)' },
           '50%': { boxShadow: '0 0 28px rgba(255, 223, 112, 0.28)' },
         },
+        'float-slow': {
+          '0%, 100%': { transform: 'translate3d(0, 0, 0)' },
+          '50%': { transform: 'translate3d(0, -10px, 0)' },
+        },
+        'glow-drift': {
+          '0%, 100%': { opacity: '0.35', transform: 'translate3d(0, 0, 0) scale(1)' },
+          '50%': { opacity: '0.7', transform: 'translate3d(2%, -3%, 0) scale(1.04)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -120,6 +130,8 @@ const config: Config = {
         aurora: 'aurora 14s ease-in-out infinite',
         shimmer: 'shimmer 2.8s linear infinite',
         'pulse-gold': 'pulse-gold 2.2s ease-in-out infinite',
+        'float-slow': 'float-slow 8s ease-in-out infinite',
+        'glow-drift': 'glow-drift 9s ease-in-out infinite',
       },
     },
   },
