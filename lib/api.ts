@@ -1971,6 +1971,7 @@ export interface GoldxUserStatus {
     createdAt: string;
     updatedAt: string;
   } | null;
+  recentTrades: GoldxTradeHistoryEntry[];
   latestGrant: {
     licenseKey: string;
     issuedAt: string;
@@ -2089,6 +2090,12 @@ export interface GoldxTradeHistoryEntry {
   profit: number | null;
   openedAt: string;
   closedAt: string | null;
+  batchId?: string | null;
+  batchIndex?: number | null;
+  userId?: string | null;
+  ownerEmail?: string | null;
+  ownerName?: string | null;
+  ownerDisplayName?: string | null;
 }
 
 export interface GoldxAdminSetupRequest {
