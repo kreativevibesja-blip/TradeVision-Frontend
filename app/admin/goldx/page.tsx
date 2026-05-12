@@ -559,6 +559,8 @@ export default function AdminGoldxPage() {
               <table className="w-full text-sm">
                 <thead className="sticky top-0 bg-background/95 backdrop-blur">
                   <tr className="border-b border-white/10">
+                    <th className="p-4 text-left font-medium text-muted-foreground">Owner</th>
+                    <th className="p-4 text-left font-medium text-muted-foreground">MT5 Account</th>
                     <th className="p-4 text-left font-medium text-muted-foreground">Symbol</th>
                     <th className="p-4 text-left font-medium text-muted-foreground">Direction</th>
                     <th className="p-4 text-left font-medium text-muted-foreground">Mode</th>
@@ -574,6 +576,11 @@ export default function AdminGoldxPage() {
                 <tbody>
                   {trades.map((t) => (
                     <tr key={t.id} className="border-b border-white/5 hover:bg-white/5">
+                      <td className="p-4 text-xs">
+                        <div className="font-medium text-foreground">{t.ownerDisplayName ?? t.ownerEmail ?? 'Unassigned'}</div>
+                        <div className="text-muted-foreground">{t.ownerEmail ?? 'No platform user linked'}</div>
+                      </td>
+                      <td className="p-4 font-mono text-xs">{t.mt5Account || '—'}</td>
                       <td className="p-4 font-medium">{t.symbol}</td>
                       <td className="p-4">
                         <Badge variant={t.direction === 'buy' ? 'default' : 'destructive'}>
@@ -603,7 +610,7 @@ export default function AdminGoldxPage() {
                     </tr>
                   ))}
                   {trades.length === 0 && (
-                    <tr><td colSpan={10} className="p-8 text-center text-muted-foreground">No trades yet</td></tr>
+                    <tr><td colSpan={12} className="p-8 text-center text-muted-foreground">No trades yet</td></tr>
                   )}
                 </tbody>
               </table>

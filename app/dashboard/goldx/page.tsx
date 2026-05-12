@@ -112,6 +112,7 @@ export default function GoldxDashboardPage() {
   const subscription = status?.subscription ?? null;
   const license = status?.license ?? null;
   const accountState = status?.accountState ?? null;
+  const recentTrades = status?.recentTrades ?? [];
   const latestGrant = status?.latestGrant ?? null;
   const hasLicenseAccess = Boolean(
     license
@@ -370,6 +371,75 @@ export default function GoldxDashboardPage() {
                       </div>
                     ))}
                   </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {hasMt5Binding && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-sm uppercase tracking-wider text-muted-foreground">
+                    <Activity className="h-4 w-4" /> Recent EA Trades
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {recentTrades.length ? (
+                    <div className="space-y-3">
+                      {recentTrades.map((trade) => (
+                        <div key={trade.id} className="rounded-xl border border-white/10 bg-white/5 p-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium text-white">{trade.symbol}</p>
+                                <Badge variant={trade.direction === 'buy' ? 'default' : 'destructive'}>
+                                  {trade.direction.toUpperCase()}
+                                </Badge>
+                                <Badge variant="secondary">{trade.mode}</Badge>
+                                {trade.outcome ? (
+                                  <Badge variant={trade.outcome === 'tp' ? 'default' : trade.outcome === 'be' ? 'secondary' : 'destructive'}>
+                                    {trade.outcome.toUpperCase()}
+                                  </Badge>
+                                ) : null}
+                              </div>
+                              <p className="mt-2 text-xs text-muted-foreground">
+                                MT5 {trade.mt5Account} • {new Date(trade.openedAt).toLocaleString()}
+                              </p>
+                              {trade.closedAt ? (
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                  Closed {new Date(trade.closedAt).toLocaleString()}
+                                </p>
+                              ) : null}
+                            </div>
+                            <div className={`text-sm font-semibold ${(trade.profit ?? 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                              {trade.profit != null ? `$${trade.profit.toFixed(2)}` : 'Open'}
+                            </div>
+                          </div>
+                          <div className="mt-3 grid grid-cols-2 gap-3 text-xs sm:grid-cols-4">
+                            <div>
+                              <p className="text-muted-foreground">Entry</p>
+                              <p className="mt-1 font-medium text-white">{trade.entryPrice?.toFixed(2) ?? '—'}</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Stop Loss</p>
+                              <p className="mt-1 font-medium text-red-300">{trade.slPrice?.toFixed(2) ?? '—'}</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Take Profit</p>
+                              <p className="mt-1 font-medium text-emerald-300">{trade.tpPrice?.toFixed(2) ?? '—'}</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Lot Size</p>
+                              <p className="mt-1 font-medium text-white">{trade.lotSize ?? '—'}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-muted-foreground">
+                      No EA trades have been reported for this MT5 account yet.
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
