@@ -110,14 +110,20 @@ export default function AdminSettingsPage() {
       if (proOpenAi) setProOpenAiEnabled(Boolean(proOpenAi.value));
       if (whatsappNumber?.value) setSupportWhatsappNumber(String(whatsappNumber.value));
       if (whatsappMessage?.value) setSupportWhatsappMessage(String(whatsappMessage.value));
-      if (scannerUseEma) setScannerUseEmaFilter(Boolean(scannerUseEma.value));
-      if (scannerFast?.value != null) setScannerFastEma(String(scannerFast.value));
-      if (scannerMid?.value != null) setScannerMidEma(String(scannerMid.value));
-      if (scannerSlow?.value != null) setScannerSlowEma(String(scannerSlow.value));
-      if (scannerTolerance?.value != null) setScannerPullbackTolerance(String(scannerTolerance.value));
-      if (scannerEnabledStrategies?.value && typeof scannerEnabledStrategies.value === 'object') {
-        setScannerStrategies({ ...DEFAULT_SCANNER_STRATEGIES, ...scannerEnabledStrategies.value });
-      }
+      const nextScannerUseEma = scannerUseEma ? Boolean(scannerUseEma.value) : true;
+      const nextScannerFastEma = scannerFast?.value != null ? String(scannerFast.value) : '9';
+      const nextScannerMidEma = scannerMid?.value != null ? String(scannerMid.value) : '14';
+      const nextScannerSlowEma = scannerSlow?.value != null ? String(scannerSlow.value) : '50';
+      const nextScannerTolerance = scannerTolerance?.value != null ? String(scannerTolerance.value) : '0.12';
+      const nextScannerStrategies = scannerEnabledStrategies?.value && typeof scannerEnabledStrategies.value === 'object'
+        ? { ...DEFAULT_SCANNER_STRATEGIES, ...scannerEnabledStrategies.value }
+        : DEFAULT_SCANNER_STRATEGIES;
+      setScannerUseEmaFilter(nextScannerUseEma);
+      setScannerFastEma(nextScannerFastEma);
+      setScannerMidEma(nextScannerMidEma);
+      setScannerSlowEma(nextScannerSlowEma);
+      setScannerPullbackTolerance(nextScannerTolerance);
+      setScannerStrategies(nextScannerStrategies);
       if (announcementPopups) setAnnouncementPopupsEnabled(Boolean(announcementPopups.value));
       if (announcementPopupRepeat?.value != null) setAnnouncementPopupRepeatHours(String(announcementPopupRepeat.value));
       if (activeTheme?.value === 'legacy' || activeTheme?.value === 'goldx-premium') setPlatformTheme(activeTheme.value);
