@@ -317,11 +317,10 @@
     mix-blend-mode: soft-light;
   }
   .tilt-card {
-    transform-style: preserve-3d;
     transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
   }
   .tilt-card:hover {
-    transform: perspective(1200px) rotateX(3deg) rotateY(-4deg) translateY(-4px);
+    transform: translateY(-4px);
     box-shadow: var(--surface-depth-shadow-strong);
     border-color: var(--surface-line-strong);
   }
