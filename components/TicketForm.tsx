@@ -47,7 +47,6 @@ export function TicketForm({ open }: TicketFormProps) {
   const [subject, setSubject] = useState('');
   const [category, setCategory] = useState<TicketCategory>('GENERAL');
   const [priority, setPriority] = useState<TicketPriority>('MEDIUM');
-  const [whatsappNumber, setWhatsappNumber] = useState('');
   const [message, setMessage] = useState('');
 
   const userInitials = useMemo(() => {
@@ -99,7 +98,6 @@ export function TicketForm({ open }: TicketFormProps) {
           subject,
           category,
           priority,
-          whatsappNumber,
           message,
         },
         token
@@ -109,7 +107,6 @@ export function TicketForm({ open }: TicketFormProps) {
       setSubject('');
       setCategory('GENERAL');
       setPriority('MEDIUM');
-      setWhatsappNumber('');
       setMessage('');
       await loadTickets();
     } catch (submitError) {
@@ -186,15 +183,9 @@ export function TicketForm({ open }: TicketFormProps) {
             </div>
           ) : null}
 
-          <div className="grid gap-3 md:grid-cols-2">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Subject</label>
-              <Input value={subject} onChange={(event) => setSubject(event.target.value)} placeholder="Describe the issue clearly" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">WhatsApp number</label>
-              <Input value={whatsappNumber} onChange={(event) => setWhatsappNumber(event.target.value)} placeholder="Optional for faster replies" />
-            </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">Subject</label>
+            <Input value={subject} onChange={(event) => setSubject(event.target.value)} placeholder="Describe the issue clearly" />
           </div>
 
           <div className="grid gap-3 md:grid-cols-2">

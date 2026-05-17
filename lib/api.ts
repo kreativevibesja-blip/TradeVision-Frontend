@@ -285,11 +285,6 @@ export interface DerivLiveChartMarketData {
   source: 'deriv-backend';
 }
 
-export interface PublicSupportSettings {
-  whatsappNumber: string;
-  whatsappMessage: string;
-}
-
 export interface AdminAnalysisLog {
   id: string;
   pair: string;
@@ -490,7 +485,6 @@ export interface SupportTicket {
   userId: string;
   userEmail: string;
   userName: string | null;
-  whatsappNumber: string | null;
   subject: string;
   category: TicketCategory;
   priority: TicketPriority;
@@ -502,7 +496,6 @@ export interface SupportTicket {
   closedAt: string | null;
   createdAt: string;
   updatedAt: string;
-  canReplyByWhatsApp: boolean;
   canReplyByEmail: boolean;
 }
 
@@ -793,9 +786,6 @@ export const api = {
   getPublicPricingPlans: () =>
     apiFetch<{ plans: PricingPlan[] }>('/admin/public-pricing-plans'),
 
-  getPublicSupportSettings: () =>
-    apiFetch<PublicSupportSettings>('/admin/public-support-settings'),
-
   logUploadError: (payload: UploadErrorLogPayload) =>
     apiFetch<{ success: boolean }>('/upload-errors', {
       method: 'POST',
@@ -947,7 +937,6 @@ export const api = {
       category: TicketCategory;
       priority: TicketPriority;
       message: string;
-      whatsappNumber?: string;
     },
     token: string
   ) =>
@@ -1167,7 +1156,6 @@ export const api = {
     createTicket: (
       data: {
         userId: string;
-        whatsappNumber?: string;
         subject: string;
         category: TicketCategory;
         priority: TicketPriority;
