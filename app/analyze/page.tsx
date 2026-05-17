@@ -21,7 +21,6 @@ import {
 } from '@/lib/chart-upload';
 import { AuthModal } from '@/components/AuthModal';
 import { ChartLightbox } from '@/components/ChartLightbox';
-import { ConfidenceThermometer } from '@/components/ConfidenceThermometer';
 import { FeatureUpgradeModal } from '@/components/FeatureUpgradeModal';
 import { ReactionChallengeModal, type ReactionChallengeBounds, type ReactionChallengeResult } from '@/components/ReactionChallengeModal';
 import TradeCommandCenterModal from '@/components/TradeCommandCenterModal';
@@ -51,9 +50,8 @@ import {
   CircleDollarSign,
   Lock,
   Crown,
-  Bot,
 } from 'lucide-react';
-import type { AnalysisFeatureName, AnalysisInteractionRecord, ConfidenceThermometerData, TradeReplayData } from '@/lib/api';
+import type { AnalysisFeatureName, AnalysisInteractionRecord, TradeReplayData } from '@/lib/api';
 
 const PAIRS = [
   'EUR/USD', 'GBP/USD', 'USD/JPY', 'AUD/USD', 'USD/CAD', 'NZD/USD',
@@ -106,6 +104,8 @@ interface UploadIssue {
   message: string;
   file: File | null;
 }
+
+type ResultTabKey = 'overview' | 'structure' | 'levels' | 'advanced';
 
 const dataUrlToFile = async ({ name, type, dataUrl }: StoredAnalyzeFile) => {
   const response = await fetch(dataUrl);
@@ -205,32 +205,78 @@ function CandlestickWave() {
   );
 }
 
-function ConfidenceMeter({ score }: { score: number }) {
-  const getColor = (value: number) => {
-    if (value >= 70) return 'text-green-400';
-    if (value >= 40) return 'text-yellow-400';
-    return 'text-red-400';
-  };
+const formatLabel = (value: string | null | undefined, fallback: string) => {
+  if (!value) {
+    return fallback;
+  }
 
-  const getBarColor = (value: number) => {
-    if (value >= 70) return 'bg-gradient-to-r from-green-500 to-emerald-400';
-    if (value >= 40) return 'bg-gradient-to-r from-yellow-500 to-orange-400';
-    return 'bg-gradient-to-r from-red-500 to-rose-400';
+  return value
+    .split(/[_\s-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(' ');
+};
+
+const getTrendAccent = (trend: 'bullish' | 'bearish' | 'ranging') => {
+  if (trend === 'bullish') {
+    return {
+      border: 'border-emerald-500/30',
+      bg: 'bg-emerald-500/10',
+      text: 'text-emerald-300',
+      muted: 'Higher lows stepping into higher highs',
+    };
+  }
+
+  if (trend === 'bearish') {
+    return {
+      border: 'border-rose-500/30',
+      bg: 'bg-rose-500/10',
+      text: 'text-rose-300',
+      muted: 'Lower highs rolling into lower lows',
+    };
+  }
+
+  return {
+    border: 'border-amber-500/30',
+    bg: 'bg-amber-500/10',
+    text: 'text-amber-300',
+    muted: 'Price rotating between range extremes',
   };
+};
+
+function TrendArrow({ trend }: { trend: 'bullish' | 'bearish' | 'ranging' }) {
+  const accent = getTrendAccent(trend);
+  const polyline = trend === 'bullish'
+    ? '10,46 28,34 48,38 68,20 88,10'
+    : trend === 'bearish'
+      ? '10,10 28,22 48,18 68,36 88,46'
+      : '10,30 26,22 42,32 58,24 74,34 88,28';
+  const head = trend === 'bullish'
+    ? '82,16 88,10 84,22'
+    : trend === 'bearish'
+      ? '82,40 88,46 84,34'
+      : '82,34 88,28 82,22';
 
   return (
-    <div className="space-y-3">
-      <div className="flex justify-between items-end">
-        <span className="text-sm text-muted-foreground">Confidence</span>
-        <span className={`text-3xl font-bold ${getColor(score)}`}>
-          {score}
-          <span className="text-lg text-muted-foreground">/100</span>
-        </span>
-      </div>
-      <Progress value={score} className="h-3" indicatorClassName={getBarColor(score)} />
-      <p className={`text-sm font-medium ${getColor(score)}`}>
-        {score >= 80 ? 'High conviction setup' : score >= 60 ? 'Tradable with confirmation' : score >= 40 ? 'Lower-quality setup' : 'Wait for better structure'}
-      </p>
+    <div className={`flex h-24 w-full items-center justify-center rounded-[24px] border ${accent.border} ${accent.bg}`}>
+      <svg viewBox="0 0 100 56" className="h-20 w-full max-w-[220px] overflow-visible" fill="none" aria-hidden="true">
+        <polyline
+          points={polyline}
+          className={accent.text}
+          stroke="currentColor"
+          strokeWidth="3.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <polyline
+          points={head}
+          className={accent.text}
+          stroke="currentColor"
+          strokeWidth="3.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
     </div>
   );
 }
@@ -326,7 +372,6 @@ function AnalyzePageContent() {
   const { user, token, refreshUser } = useAuth();
   const isPro = user?.subscription !== 'FREE';
   const { canUseFeature } = useAnalysisFeatureAccess(user?.subscription);
-  const confidenceAccess = canUseFeature('confidenceThermometer');
   const replayAccess = canUseFeature('tradeReplay');
   const retryMode = searchParams.get('retry') === '1';
   const [file, setFile] = useState<File | null>(null);
@@ -355,8 +400,6 @@ function AnalyzePageContent() {
   const [queueStarting, setQueueStarting] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState<AnalysisFeatureName | null>(null);
   const [reactionAttempts, setReactionAttempts] = useState<AnalysisInteractionRecord[]>([]);
-  const [confidenceData, setConfidenceData] = useState<ConfidenceThermometerData | null>(null);
-  const [confidenceLoading, setConfidenceLoading] = useState(false);
   const [replayData, setReplayData] = useState<TradeReplayData | null>(null);
   const [replayLoading, setReplayLoading] = useState(false);
   const [replayOpen, setReplayOpen] = useState(false);
@@ -365,6 +408,7 @@ function AnalyzePageContent() {
   const [reactionResult, setReactionResult] = useState<ReactionChallengeResult | null>(null);
   const [loadedInteractionsAnalysisId, setLoadedInteractionsAnalysisId] = useState<string | null>(null);
   const [challengePromptedAnalysisId, setChallengePromptedAnalysisId] = useState<string | null>(null);
+  const [activeResultTab, setActiveResultTab] = useState<ResultTabKey>('overview');
   const analysisId = searchParams.get('analysisId');
 
   const reportUploadFailure = useCallback(async (
@@ -673,38 +717,6 @@ function AnalyzePageContent() {
   }, [analysis?.id, token]);
 
   useEffect(() => {
-    if (!analysis?.id || !token || !confidenceAccess.allowed) {
-      setConfidenceData(null);
-      setConfidenceLoading(false);
-      return;
-    }
-
-    let cancelled = false;
-    setConfidenceLoading(true);
-
-    void api.getAnalysisConfidence(analysis.id, token)
-      .then((result) => {
-        if (!cancelled) {
-          setConfidenceData(result.confidence);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setConfidenceData(null);
-        }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setConfidenceLoading(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [analysis?.id, confidenceAccess.allowed, token]);
-
-  useEffect(() => {
     if (!analysis?.id) {
       setReplayData(null);
       setReplayOpen(false);
@@ -730,6 +742,12 @@ function AnalyzePageContent() {
       window.clearTimeout(timeoutId);
     };
   }, [analysis?.id, challengePromptedAnalysisId, loadedInteractionsAnalysisId, reactionResult]);
+
+  useEffect(() => {
+    if (!isPro && activeResultTab === 'advanced') {
+      setActiveResultTab('overview');
+    }
+  }, [activeResultTab, isPro]);
 
   const handleAnalyze = async () => {
     if (!user || !token) {
@@ -894,6 +912,22 @@ function AnalyzePageContent() {
   const challengeChartBounds: ReactionChallengeBounds | null = analysis?.isDualChart
     ? analysis.ltfChartBounds || analysis.htfChartBounds || null
     : analysis?.chartBounds || null;
+  const entryBias = analysis?.entryPlan?.bias && analysis.entryPlan.bias !== 'none'
+    ? analysis.entryPlan.bias
+    : null;
+  const trendAccent = getTrendAccent(trend);
+  const resultTabs: Array<{ key: ResultTabKey; label: string; icon: typeof Sparkles }> = isPro
+    ? [
+        { key: 'overview', label: 'Overview', icon: Sparkles },
+        { key: 'structure', label: 'Structure', icon: BarChart3 },
+        { key: 'levels', label: 'Levels', icon: Target },
+        { key: 'advanced', label: 'Advanced', icon: Crown },
+      ]
+    : [
+        { key: 'overview', label: 'Overview', icon: Sparkles },
+        { key: 'structure', label: 'Structure', icon: BarChart3 },
+        { key: 'levels', label: 'Levels', icon: Target },
+      ];
   const displayedSteps = ANALYSIS_STEPS.map((step, index) => ({
     step,
     complete: progress >= (index + 1) * 20 || currentStage === step,
@@ -1330,12 +1364,12 @@ function AnalyzePageContent() {
                     <div className="mt-2 text-sm font-semibold text-white capitalize">{signalType}</div>
                   </div>
                   <div className="mobile-card rounded-[22px] p-4">
-                    <div className="metric-label">Setup quality</div>
-                    <div className="mt-2 text-sm font-semibold text-white capitalize">{analysis.setupQuality}</div>
+                    <div className="metric-label">Trend</div>
+                    <div className="mt-2 text-sm font-semibold text-white capitalize">{analysis.trend}</div>
                   </div>
                   <div className="mobile-card rounded-[22px] p-4">
-                    <div className="metric-label">Asset class</div>
-                    <div className="mt-2 text-sm font-semibold text-white capitalize">{analysis.assetClass || 'market'}</div>
+                    <div className="metric-label">Market</div>
+                    <div className="mt-2 text-sm font-semibold text-white capitalize">{analysis.marketCondition || 'ranging'}</div>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -1353,6 +1387,7 @@ function AnalyzePageContent() {
                       setSecondaryPreviewConfirmed(false);
                       setTimeframe2('');
                       setActiveChart('ltf');
+                      setActiveResultTab('overview');
                       setShowAiZones(true);
                       setProgress(0);
                       setCurrentStage(ANALYSIS_STEPS[0]);
@@ -1374,134 +1409,214 @@ function AnalyzePageContent() {
               </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6">
-                <div className="lg:col-span-2 space-y-6">
-                  {analysis?.isDualChart ? (
-                    <Card className="mobile-card">
-                      <CardHeader>
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                          <CardTitle className="text-lg flex items-center gap-2">
-                            <Eye className="h-5 w-5 text-primary" />
-                            {activeChart === 'htf' ? `HTF Chart (${analysis.htfTimeframe || timeframe})` : `LTF Chart (${analysis.ltfTimeframe || timeframe2})`}
-                          </CardTitle>
-                          <div className="flex items-center gap-2">
-                            <div className="flex rounded-lg border border-white/10 overflow-hidden">
-                              <button
-                                onClick={() => setActiveChart('htf')}
-                                className={`px-3 py-1.5 text-sm font-medium transition-all ${
-                                  activeChart === 'htf'
-                                    ? 'bg-primary/20 text-primary'
-                                    : 'text-muted-foreground hover:text-foreground'
-                                }`}
-                              >
-                                HTF
-                              </button>
-                              <button
-                                onClick={() => setActiveChart('ltf')}
-                                className={`px-3 py-1.5 text-sm font-medium transition-all ${
-                                  activeChart === 'ltf'
-                                    ? 'bg-primary/20 text-primary'
-                                    : 'text-muted-foreground hover:text-foreground'
-                                }`}
-                              >
-                                LTF
-                              </button>
-                            </div>
-                            <Button
-                              variant={showAiZones ? 'default' : 'outline'}
-                              size="sm"
-                              onClick={() => setShowAiZones((current) => !current)}
+              <div className="space-y-6">
+                {analysis?.isDualChart ? (
+                  <Card className="mobile-card">
+                    <CardHeader>
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <Eye className="h-5 w-5 text-primary" />
+                          {activeChart === 'htf' ? `HTF Chart (${analysis.htfTimeframe || timeframe})` : `LTF Chart (${analysis.ltfTimeframe || timeframe2})`}
+                        </CardTitle>
+                        <div className="flex items-center gap-2">
+                          <div className="flex rounded-lg border border-white/10 overflow-hidden">
+                            <button
+                              onClick={() => setActiveChart('htf')}
+                              className={`px-3 py-1.5 text-sm font-medium transition-all ${
+                                activeChart === 'htf'
+                                  ? 'bg-primary/20 text-primary'
+                                  : 'text-muted-foreground hover:text-foreground'
+                              }`}
                             >
-                              Show AI Zones
-                            </Button>
+                              HTF
+                            </button>
+                            <button
+                              onClick={() => setActiveChart('ltf')}
+                              className={`px-3 py-1.5 text-sm font-medium transition-all ${
+                                activeChart === 'ltf'
+                                  ? 'bg-primary/20 text-primary'
+                                  : 'text-muted-foreground hover:text-foreground'
+                              }`}
+                            >
+                              LTF
+                            </button>
                           </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        {activeChart === 'htf' ? (
-                          <>
-                            <img
-                              src={(showAiZones && analysis.htfMarkedImageUrl ? resolveAssetUrl(analysis.htfMarkedImageUrl) : resolveAssetUrl(analysis.htfOriginalImageUrl || null)) || preview || ''}
-                              alt="HTF Chart"
-                              className="h-auto max-h-[400px] w-full rounded-xl object-contain md:max-h-[600px] cursor-pointer hover:opacity-90 transition-opacity"
-                              onClick={() => setLightboxSrc((showAiZones && analysis.htfMarkedImageUrl ? resolveAssetUrl(analysis.htfMarkedImageUrl) : resolveAssetUrl(analysis.htfOriginalImageUrl || null)) || preview || '')}
-                            />
-                            {analysis.htfChartBounds && (
-                              <p className="mt-3 text-xs text-muted-foreground">
-                                HTF markup range: {formatPrice(analysis.htfChartBounds.minPrice, pair)} to {formatPrice(analysis.htfChartBounds.maxPrice, pair)}
-                              </p>
-                            )}
-                          </>
-                        ) : (
-                          <>
-                            <img
-                              src={(showAiZones && analysis.ltfMarkedImageUrl ? resolveAssetUrl(analysis.ltfMarkedImageUrl) : resolveAssetUrl(analysis.ltfOriginalImageUrl || null)) || preview2 || preview || ''}
-                              alt="LTF Chart"
-                              className="h-auto max-h-[400px] w-full rounded-xl object-contain md:max-h-[600px] cursor-pointer hover:opacity-90 transition-opacity"
-                              onClick={() => setLightboxSrc((showAiZones && analysis.ltfMarkedImageUrl ? resolveAssetUrl(analysis.ltfMarkedImageUrl) : resolveAssetUrl(analysis.ltfOriginalImageUrl || null)) || preview2 || preview || '')}
-                            />
-                            {analysis.ltfChartBounds && (
-                              <p className="mt-3 text-xs text-muted-foreground">
-                                LTF markup range: {formatPrice(analysis.ltfChartBounds.minPrice, pair)} to {formatPrice(analysis.ltfChartBounds.maxPrice, pair)}
-                              </p>
-                            )}
-                          </>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ) : displayedChartUrl && (
-                    <Card className="mobile-card">
-                      <CardHeader>
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                          <CardTitle className="text-lg flex items-center gap-2">
-                            <Eye className="h-5 w-5 text-primary" />
-                            {showAiZones && markedChartUrl ? 'Marked Chart' : 'Original Chart'}
-                          </CardTitle>
                           <Button
                             variant={showAiZones ? 'default' : 'outline'}
                             size="sm"
                             onClick={() => setShowAiZones((current) => !current)}
-                            disabled={!markedChartUrl}
                           >
                             Show AI Zones
                           </Button>
                         </div>
-                      </CardHeader>
-                      <CardContent>
-                        <img
-                          src={displayedChartUrl}
-                          alt="Chart"
-                          className="h-auto max-h-[400px] w-full rounded-xl object-contain md:max-h-[600px] cursor-pointer hover:opacity-90 transition-opacity"
-                          onClick={() => displayedChartUrl && setLightboxSrc(displayedChartUrl)}
-                        />
-                        {!markedChartUrl && (
-                          <p className="mt-3 text-xs text-muted-foreground">
-                            Markup was unavailable for this analysis, so the original chart is shown.
-                          </p>
-                        )}
-                        {analysis?.chartBounds && (
-                          <p className="mt-3 text-xs text-muted-foreground">
-                            Markup mapping range: {formatPrice(analysis.chartBounds.minPrice, pair)} to {formatPrice(analysis.chartBounds.maxPrice, pair)} ({analysis.chartBounds.source === 'input' ? 'manual' : 'auto-mapped'})
-                          </p>
-                        )}
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  <Card className="premium-panel premium-noise overflow-hidden border-[rgba(255,223,112,0.12)] bg-transparent">
-                    <CardHeader>
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        <Brain className="h-5 w-5 text-primary" />
-                        SMC Reasoning
-                      </CardTitle>
+                      </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="premium-panel-muted p-5">
-                        <p className="text-muted-foreground leading-relaxed">{analysis.reasoning}</p>
-                      </div>
+                      {activeChart === 'htf' ? (
+                        <>
+                          <img
+                            src={(showAiZones && analysis.htfMarkedImageUrl ? resolveAssetUrl(analysis.htfMarkedImageUrl) : resolveAssetUrl(analysis.htfOriginalImageUrl || null)) || preview || ''}
+                            alt="HTF Chart"
+                            className="h-auto max-h-[400px] w-full rounded-xl object-contain md:max-h-[600px] cursor-pointer hover:opacity-90 transition-opacity"
+                            onClick={() => setLightboxSrc((showAiZones && analysis.htfMarkedImageUrl ? resolveAssetUrl(analysis.htfMarkedImageUrl) : resolveAssetUrl(analysis.htfOriginalImageUrl || null)) || preview || '')}
+                          />
+                          {analysis.htfChartBounds && (
+                            <p className="mt-3 text-xs text-muted-foreground">
+                              HTF markup range: {formatPrice(analysis.htfChartBounds.minPrice, pair)} to {formatPrice(analysis.htfChartBounds.maxPrice, pair)}
+                            </p>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <img
+                            src={(showAiZones && analysis.ltfMarkedImageUrl ? resolveAssetUrl(analysis.ltfMarkedImageUrl) : resolveAssetUrl(analysis.ltfOriginalImageUrl || null)) || preview2 || preview || ''}
+                            alt="LTF Chart"
+                            className="h-auto max-h-[400px] w-full rounded-xl object-contain md:max-h-[600px] cursor-pointer hover:opacity-90 transition-opacity"
+                            onClick={() => setLightboxSrc((showAiZones && analysis.ltfMarkedImageUrl ? resolveAssetUrl(analysis.ltfMarkedImageUrl) : resolveAssetUrl(analysis.ltfOriginalImageUrl || null)) || preview2 || preview || '')}
+                          />
+                          {analysis.ltfChartBounds && (
+                            <p className="mt-3 text-xs text-muted-foreground">
+                              LTF markup range: {formatPrice(analysis.ltfChartBounds.minPrice, pair)} to {formatPrice(analysis.ltfChartBounds.maxPrice, pair)}
+                            </p>
+                          )}
+                        </>
+                      )}
                     </CardContent>
                   </Card>
+                ) : displayedChartUrl && (
+                  <Card className="mobile-card">
+                    <CardHeader>
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <Eye className="h-5 w-5 text-primary" />
+                          {showAiZones && markedChartUrl ? 'Marked Chart' : 'Original Chart'}
+                        </CardTitle>
+                        <Button
+                          variant={showAiZones ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => setShowAiZones((current) => !current)}
+                          disabled={!markedChartUrl}
+                        >
+                          Show AI Zones
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <img
+                        src={displayedChartUrl}
+                        alt="Chart"
+                        className="h-auto max-h-[400px] w-full rounded-xl object-contain md:max-h-[600px] cursor-pointer hover:opacity-90 transition-opacity"
+                        onClick={() => displayedChartUrl && setLightboxSrc(displayedChartUrl)}
+                      />
+                      {!markedChartUrl && (
+                        <p className="mt-3 text-xs text-muted-foreground">
+                          Markup was unavailable for this analysis, so the original chart is shown.
+                        </p>
+                      )}
+                      {analysis?.chartBounds && (
+                        <p className="mt-3 text-xs text-muted-foreground">
+                          Markup mapping range: {formatPrice(analysis.chartBounds.minPrice, pair)} to {formatPrice(analysis.chartBounds.maxPrice, pair)} ({analysis.chartBounds.source === 'input' ? 'manual' : 'auto-mapped'})
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
 
+                <div className="flex flex-wrap gap-2 rounded-[26px] border border-white/10 bg-white/[0.03] p-2">
+                  {resultTabs.map((tab) => {
+                    const Icon = tab.icon;
+                    const active = activeResultTab === tab.key;
+                    return (
+                      <button
+                        key={tab.key}
+                        type="button"
+                        onClick={() => setActiveResultTab(tab.key)}
+                        className={`inline-flex min-h-11 items-center gap-2 rounded-2xl px-4 py-2 text-sm font-medium transition ${
+                          active
+                            ? 'bg-[rgba(255,223,112,0.16)] text-[var(--gold-light)] shadow-[0_10px_30px_rgba(255,223,112,0.08)]'
+                            : 'text-muted-foreground hover:bg-white/[0.04] hover:text-white'
+                        }`}
+                      >
+                        <Icon className="h-4 w-4" />
+                        {tab.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {activeResultTab === 'overview' ? (
+                  <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+                    <Card className="premium-panel premium-noise overflow-hidden border-[rgba(255,223,112,0.12)] bg-transparent">
+                      <CardHeader>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <Brain className="h-5 w-5 text-primary" />
+                          SMC Narrative
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="premium-panel-muted p-5">
+                          <p className="text-muted-foreground leading-relaxed">{analysis.reasoning}</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <div className="grid gap-4">
+                      <Card className="premium-panel premium-noise overflow-hidden border-[rgba(255,223,112,0.12)] bg-transparent">
+                        <CardContent className="grid gap-4 p-6 sm:grid-cols-2">
+                          <div className="premium-panel-muted p-4">
+                            <div className="metric-label">Current Price</div>
+                            <p className="mt-2 text-sm font-semibold text-white">{formatPrice(analysis.currentPrice, pair)}</p>
+                          </div>
+                          <div className="premium-panel-muted p-4">
+                            <div className="metric-label">Entry Zone</div>
+                            <p className="mt-2 text-sm font-semibold text-white">{formatStructuredZone(analysis.entryZone, pair)}</p>
+                          </div>
+                          <div className="premium-panel-muted p-4">
+                            <div className="metric-label">Wait For</div>
+                            <p className="mt-2 text-sm font-semibold text-white capitalize">
+                              {analysis.confirmation === 'none' ? 'No confirmation yet' : `${analysis.confirmation} confirmation`}
+                            </p>
+                          </div>
+                          <div className="premium-panel-muted p-4">
+                            <div className="metric-label">Invalidation</div>
+                            <p className="mt-2 text-sm font-semibold text-white">
+                              {typeof analysis.invalidationLevel === 'number'
+                                ? formatPrice(analysis.invalidationLevel, pair)
+                                : 'Structure break'}
+                            </p>
+                            <p className="mt-1 text-xs text-muted-foreground">{analysis.invalidationReason || 'Invalidation explanation not available'}</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {analysis.confirmations && analysis.confirmations.length > 0 ? (
+                        <Card className="premium-panel premium-noise overflow-hidden border-[rgba(255,223,112,0.12)] bg-transparent">
+                          <CardHeader>
+                            <CardTitle className="text-lg flex items-center gap-2">
+                              <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+                              Returned Confirmations
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="flex flex-wrap gap-2">
+                              {analysis.confirmations.map((confirmationItem, index) => (
+                                <Badge
+                                  key={`${confirmationItem}-${index}`}
+                                  variant="outline"
+                                  className="border-cyan-500/30 bg-cyan-500/10 text-cyan-200"
+                                >
+                                  {confirmationItem}
+                                </Badge>
+                              ))}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : null}
+
+                {activeResultTab === 'structure' ? (
                   <Card className="premium-panel premium-noise overflow-hidden border-[rgba(255,223,112,0.12)] bg-transparent">
                     <CardHeader>
                       <CardTitle className="text-lg flex items-center gap-2">
@@ -1509,414 +1624,323 @@ function AnalyzePageContent() {
                         Market Structure
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-5">
-                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                        <div>
+                    <CardContent className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+                      <div className="space-y-3">
+                        <TrendArrow trend={trend} />
+                        <div className={`rounded-[22px] border ${trendAccent.border} ${trendAccent.bg} p-4`}>
+                          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Structure Read</p>
+                          <p className={`mt-2 text-base font-semibold capitalize ${trendAccent.text}`}>{trend}</p>
+                          <p className="mt-1 text-sm text-muted-foreground">{trendAccent.muted}</p>
+                        </div>
+                      </div>
+
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="premium-panel-muted p-4">
                           <p className="metric-label mb-2">Trend</p>
                           <p className="font-semibold capitalize">{analysis.trend}</p>
                         </div>
-                        <div>
+                        <div className="premium-panel-muted p-4">
                           <p className="metric-label mb-2">Market Condition</p>
                           <p className="font-semibold capitalize">{analysis.marketCondition || 'Not identified'}</p>
                         </div>
-                        <div>
-                          <p className="metric-label mb-2">Structure State</p>
-                          <p className="font-semibold capitalize">{analysis.structure.state || 'transition'}</p>
-                        </div>
-                        <div>
-                          <p className="metric-label mb-2">Primary Strategy</p>
-                          <p className="font-semibold">{analysis.primaryStrategy || 'Not selected'}</p>
-                        </div>
-                        <div>
-                          <p className="metric-label mb-2">Current Price Position</p>
-                          <p className="font-semibold capitalize">{analysis.currentPricePosition}</p>
-                        </div>
-                        <div>
-                          <p className="metric-label mb-2">BOS</p>
-                          <p className="font-semibold capitalize">{analysis.structure.bos}</p>
-                        </div>
-                        <div>
-                          <p className="metric-label mb-2">CHoCH</p>
-                          <p className="font-semibold capitalize">{analysis.structure.choch}</p>
-                        </div>
-                        <div>
-                          <p className="metric-label mb-2">Setup Quality</p>
-                          <p className="font-semibold capitalize">{analysis.setupQuality}</p>
-                        </div>
-                        <div>
+                        <div className="premium-panel-muted p-4">
                           <p className="metric-label mb-2">Signal Type</p>
                           <p className="font-semibold capitalize">{signalType}</p>
                         </div>
-                        <div>
-                          <p className="metric-label mb-2">Entry Logic</p>
-                          <p className="font-semibold capitalize">{analysis.entryLogic.type}</p>
+                        <div className="premium-panel-muted p-4">
+                          <p className="metric-label mb-2">{isPro ? 'Entry Bias' : 'Structure State'}</p>
+                          <p className="font-semibold capitalize">
+                            {isPro ? (entryBias ? formatLabel(entryBias, 'Not identified') : 'Not identified') : formatLabel(analysis.structure.state, 'Transition')}
+                          </p>
                         </div>
-                        {analysis.entryPlan && (
-                          <div>
-                            <p className="metric-label mb-2">Entry Bias</p>
-                            <p className="font-semibold capitalize">{analysis.entryPlan.bias}</p>
-                          </div>
-                        )}
                       </div>
+                    </CardContent>
+                  </Card>
+                ) : null}
 
-                      <div className="premium-panel-muted p-4">
-                        <p className="text-sm text-muted-foreground mb-2">Confirmations</p>
-                        {analysis.confirmations && analysis.confirmations.length > 0 ? (
-                          <div className="flex flex-wrap gap-2">
-                            {analysis.confirmations.map((confirmationItem, index) => (
-                              <Badge
-                                key={`${confirmationItem}-${index}`}
-                                variant="outline"
-                                className="border-cyan-500/30 bg-cyan-500/10 text-cyan-200"
-                              >
-                                {confirmationItem}
-                              </Badge>
-                            ))}
+                {activeResultTab === 'levels' ? (
+                  <div className="grid gap-6 lg:grid-cols-2">
+                    <Card className="premium-panel premium-noise overflow-hidden border-[rgba(255,223,112,0.12)] bg-transparent">
+                      <CardHeader>
+                        <CardTitle className="text-lg">Support And Resistance</CardTitle>
+                      </CardHeader>
+                      <CardContent className="grid gap-4">
+                        <div className="premium-panel-muted space-y-2 p-4">
+                          <div className="flex items-center gap-2 text-sm font-medium">
+                            <CircleDollarSign className="h-4 w-4 text-emerald-400" />
+                            Current Price
                           </div>
+                          <p className="text-sm text-muted-foreground pl-6">{formatPrice(analysis.currentPrice, pair)}</p>
+                        </div>
+                        <div className="premium-panel-muted space-y-2 p-4">
+                          <div className="flex items-center gap-2 text-sm font-medium">
+                            <ShieldAlert className="h-4 w-4 text-red-400" />
+                            Resistance Zone
+                          </div>
+                          <p className="text-sm text-muted-foreground pl-6">{formatStructuredZone(analysis.zones.supplyZone, pair)}</p>
+                          <p className="text-xs text-muted-foreground pl-6">{formatZoneReason(analysis.zones.supplyZone?.reason)}</p>
+                        </div>
+                        <div className="premium-panel-muted space-y-2 p-4">
+                          <div className="flex items-center gap-2 text-sm font-medium">
+                            <CheckCircle2 className="h-4 w-4 text-green-400" />
+                            Support Zone
+                          </div>
+                          <p className="text-sm text-muted-foreground pl-6">{formatStructuredZone(analysis.zones.demandZone, pair)}</p>
+                          <p className="text-xs text-muted-foreground pl-6">{formatZoneReason(analysis.zones.demandZone?.reason)}</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <div className="grid gap-6">
+                      <Card className="premium-panel premium-noise overflow-hidden border-[rgba(255,223,112,0.12)] bg-transparent">
+                        <CardContent className="grid gap-4 p-6 md:grid-cols-2">
+                          <div className="premium-panel-muted p-4">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Zap className="h-4 w-4 text-purple-400" />
+                              <span className="text-sm font-medium">Signal Type</span>
+                            </div>
+                            <p className="text-sm text-purple-400 font-semibold capitalize">{signalType}</p>
+                          </div>
+                          <div className="premium-panel-muted p-4">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Target className="h-4 w-4 text-cyan-400" />
+                              <span className="text-sm font-medium">Entry Zone</span>
+                            </div>
+                            <p className="text-sm text-muted-foreground">{formatStructuredZone(analysis.entryZone, pair)}</p>
+                          </div>
+                          <div className="premium-panel-muted p-4">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Clock className="h-4 w-4 text-yellow-400" />
+                              <span className="text-sm font-medium">Wait For</span>
+                            </div>
+                            <p className="text-sm text-muted-foreground capitalize">
+                              {analysis.confirmation === 'none' ? 'No confirmation yet' : `${analysis.confirmation} confirmation`}
+                            </p>
+                          </div>
+                          <div className="premium-panel-muted p-4">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Sparkles className="h-4 w-4 text-emerald-400" />
+                              <span className="text-sm font-medium">Confirmation Needed</span>
+                            </div>
+                            <p className="text-sm text-muted-foreground">{analysis.confirmationNeeded ? 'Yes' : 'No'}</p>
+                          </div>
+                          <div className="premium-panel-muted p-4 md:col-span-2">
+                            <div className="flex items-center gap-2 mb-2">
+                              <ShieldAlert className="h-4 w-4 text-red-400" />
+                              <span className="text-sm font-medium">Invalidation</span>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {typeof analysis.invalidationLevel === 'number'
+                                ? `${formatPrice(analysis.invalidationLevel, pair)} · ${analysis.invalidationReason || 'Invalidation explanation not available'}`
+                                : analysis.invalidationReason || 'Invalidation explanation not available'}
+                            </p>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {isPro ? (
+                        reactionResult && (analysis.stopLoss || analysis.takeProfit1) ? (
+                          <Card className="premium-panel premium-noise overflow-hidden border-amber-500/30 bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.12),_transparent_50%),rgba(245,158,11,0.04)]">
+                            <CardContent className="p-6 space-y-4">
+                              <div className="flex items-center gap-2 mb-1">
+                                <Target className="h-4 w-4 text-amber-400" />
+                                <span className="text-sm font-medium">Risk Management Levels</span>
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-500/40 text-amber-300">
+                                  {analysis.finalVerdict?.action === 'enter' ? 'DEFINITIVE' : 'PROJECTED'}
+                                </Badge>
+                              </div>
+                              {analysis.stopLoss != null && (
+                                <div>
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <ShieldAlert className="h-3.5 w-3.5 text-red-400" />
+                                    <span className="text-xs font-medium text-red-400">Stop Loss</span>
+                                  </div>
+                                  <p className="text-sm font-semibold pl-5">{formatPrice(analysis.stopLoss, pair)}</p>
+                                </div>
+                              )}
+                              {analysis.takeProfit1 != null && (
+                                <div>
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <CheckCircle2 className="h-3.5 w-3.5 text-green-400" />
+                                    <span className="text-xs font-medium text-green-400">Take Profit 1</span>
+                                  </div>
+                                  <p className="text-sm font-semibold pl-5">{formatPrice(analysis.takeProfit1, pair)}</p>
+                                </div>
+                              )}
+                              {analysis.takeProfit2 != null && (
+                                <div>
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                                    <span className="text-xs font-medium text-emerald-400">Take Profit 2</span>
+                                  </div>
+                                  <p className="text-sm font-semibold pl-5">{formatPrice(analysis.takeProfit2, pair)}</p>
+                                </div>
+                              )}
+                              {analysis.takeProfit3 != null && (
+                                <div>
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <CheckCircle2 className="h-3.5 w-3.5 text-teal-400" />
+                                    <span className="text-xs font-medium text-teal-400">Take Profit 3</span>
+                                  </div>
+                                  <p className="text-sm font-semibold pl-5">{formatPrice(analysis.takeProfit3, pair)}</p>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
                         ) : (
-                          <p className="text-sm leading-relaxed text-muted-foreground">No explicit confirmations were returned for this setup.</p>
-                        )}
-                      </div>
-
-                      {isPro && analysis.pricePosition?.explanation && (
-                        <div className="premium-panel-muted p-4">
-                          <p className="text-sm text-muted-foreground mb-2">Premium / Discount Explanation</p>
-                          <p className="text-sm leading-relaxed">{analysis.pricePosition.explanation}</p>
-                        </div>
+                          (analysis.stopLoss || analysis.takeProfit1) ? (
+                            <Card className="premium-panel premium-noise overflow-hidden border-cyan-400/20 bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.12),_transparent_50%),rgba(34,211,238,0.04)]">
+                              <CardContent className="p-6">
+                                <div className="flex flex-col items-center text-center space-y-3">
+                                  <div className="rounded-full bg-cyan-400/10 p-3">
+                                    <Crosshair className="h-5 w-5 text-cyan-300" />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-medium">Complete the Reaction Challenge</p>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      Submit your own entry first to reveal the full AI entry, stop loss, and take profit map for this setup.
+                                    </p>
+                                  </div>
+                                  <Button size="sm" className="bg-cyan-400 text-black hover:bg-cyan-300" onClick={() => setChallengeOpen(true)}>
+                                    Open Challenge
+                                  </Button>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ) : null
+                        )
+                      ) : (
+                        <Card className="mobile-card border-purple-500/30 bg-purple-500/5">
+                          <CardContent className="p-6">
+                            <div className="flex flex-col items-center text-center space-y-3">
+                              <div className="rounded-full bg-purple-500/10 p-3">
+                                <Lock className="h-5 w-5 text-purple-400" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium">Stop Loss & Take Profit Levels</p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  Upgrade to Pro for exact SL/TP levels, deeper analysis, and AI chart markup.
+                                </p>
+                              </div>
+                              <Link href="/pricing">
+                                <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white">
+                                  <Crown className="h-3.5 w-3.5 mr-1.5" />
+                                  Upgrade to Pro
+                                </Button>
+                              </Link>
+                            </div>
+                          </CardContent>
+                        </Card>
                       )}
+                    </div>
+                  </div>
+                ) : null}
 
-                      <div className="premium-panel-muted p-4">
-                        <p className="text-sm text-muted-foreground mb-2">System Message</p>
-                        <p className="text-sm leading-relaxed">{analysis.message}</p>
-                      </div>
-
-                      {isPro && analysis.entryPlan?.reason && (
-                        <div className="premium-panel-muted p-4">
-                          <p className="text-sm text-muted-foreground mb-2">Entry Plan Reason</p>
-                          <p className="text-sm leading-relaxed">{analysis.entryPlan.reason}</p>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-
-                </div>
-
-                <div className="space-y-6">
-                  <ConfidenceThermometer
-                    data={confidenceData}
-                    loading={confidenceLoading}
-                    locked={!confidenceAccess.allowed}
-                    onUnlock={() => handleFeatureLocked('confidenceThermometer')}
-                  />
-
-                  <Card className="mobile-card border-cyan-400/20 bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.14),_transparent_45%),rgba(255,255,255,0.03)]">
-                    <CardHeader>
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        <Crosshair className="h-5 w-5 text-cyan-300" />
-                        Reaction Challenge
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <p className="text-sm leading-relaxed text-muted-foreground">Pick your own entry on the chart, then compare it with the AI execution map for this setup.</p>
-                      {reactionAttempts.length > 0 ? (
-                        <p className="text-xs text-cyan-200/70">Saved attempts: {reactionAttempts.length}</p>
-                      ) : null}
-                      {reactionResult ? (
-                        <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/10 p-4">
-                          <div className="flex items-center justify-between gap-3">
-                            <div>
-                              <p className="text-xs uppercase tracking-[0.18em] text-cyan-200/70">Last score</p>
-                              <p className="mt-1 text-3xl font-semibold text-cyan-100">{reactionResult.score}</p>
+                {activeResultTab === 'advanced' && isPro ? (
+                  <div className="grid gap-6 lg:grid-cols-3">
+                    <Card className="mobile-card border-cyan-400/20 bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.14),_transparent_45%),rgba(255,255,255,0.03)]">
+                      <CardHeader>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <Crosshair className="h-5 w-5 text-cyan-300" />
+                          Reaction Challenge
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <p className="text-sm leading-relaxed text-muted-foreground">Pick your own entry on the chart, then compare it with the AI execution map for this setup.</p>
+                        {reactionAttempts.length > 0 ? (
+                          <p className="text-xs text-cyan-200/70">Saved attempts: {reactionAttempts.length}</p>
+                        ) : null}
+                        {reactionResult ? (
+                          <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/10 p-4">
+                            <div className="flex items-center justify-between gap-3">
+                              <div>
+                                <p className="text-xs uppercase tracking-[0.18em] text-cyan-200/70">Last score</p>
+                                <p className="mt-1 text-3xl font-semibold text-cyan-100">{reactionResult.score}</p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-sm font-medium text-white">{reactionResult.distanceLabel}</p>
+                                <p className="text-xs text-white/55 capitalize">{reactionResult.timing}</p>
+                              </div>
                             </div>
-                            <div className="text-right">
-                              <p className="text-sm font-medium text-white">{reactionResult.distanceLabel}</p>
-                              <p className="text-xs text-white/55 capitalize">{reactionResult.timing}</p>
-                            </div>
+                            <p className="mt-3 text-sm text-white/75">{reactionResult.verdict}</p>
                           </div>
-                          <p className="mt-3 text-sm text-white/75">{reactionResult.verdict}</p>
-                        </div>
-                      ) : null}
-                      <Button className="w-full bg-cyan-400 text-black hover:bg-cyan-300" onClick={() => setChallengeOpen(true)}>
-                        {reactionResult ? 'Retake Challenge' : 'Start Challenge'}
-                      </Button>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="mobile-card border-amber-400/20 bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.14),_transparent_48%),rgba(255,255,255,0.03)]">
-                    <CardHeader>
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        <Sparkles className="h-5 w-5 text-amber-300" />
-                        Trade Replay Mode
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <p className="text-sm leading-relaxed text-muted-foreground">Preview three post-entry paths with animated continuation, pullback, and invalidation scenarios.</p>
-                      <Button
-                        className="w-full bg-amber-500 text-black hover:bg-amber-400"
-                        onClick={() => void handleOpenReplay()}
-                        disabled={replayLoading}
-                      >
-                        {replayLoading ? 'Building Replay...' : replayAccess.allowed ? 'Open Replay' : 'Unlock Replay'}
-                      </Button>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="premium-panel premium-noise overflow-hidden border-[rgba(255,223,112,0.12)] bg-transparent">
-                    <CardHeader>
-                      <CardTitle className="text-lg">Support And Resistance</CardTitle>
-                    </CardHeader>
-                    <CardContent className="grid gap-4">
-                      <div className="premium-panel-muted space-y-2 p-4">
-                        <div className="flex items-center gap-2 text-sm font-medium">
-                          <CircleDollarSign className="h-4 w-4 text-emerald-400" />
-                          Current Price
-                        </div>
-                        <p className="text-sm text-muted-foreground pl-6">{formatPrice(analysis.currentPrice, pair)}</p>
-                      </div>
-                      <div className="premium-panel-muted space-y-2 p-4">
-                        <div className="flex items-center gap-2 text-sm font-medium">
-                          <ShieldAlert className="h-4 w-4 text-red-400" />
-                          Resistance Zone
-                        </div>
-                        <p className="text-sm text-muted-foreground pl-6">{formatStructuredZone(analysis.zones.supplyZone, pair)}</p>
-                        <p className="text-xs text-muted-foreground pl-6">{formatZoneReason(analysis.zones.supplyZone?.reason)}</p>
-                      </div>
-                      <div className="premium-panel-muted space-y-2 p-4">
-                        <div className="flex items-center gap-2 text-sm font-medium">
-                          <CheckCircle2 className="h-4 w-4 text-green-400" />
-                          Support Zone
-                        </div>
-                        <p className="text-sm text-muted-foreground pl-6">{formatStructuredZone(analysis.zones.demandZone, pair)}</p>
-                        <p className="text-xs text-muted-foreground pl-6">{formatZoneReason(analysis.zones.demandZone?.reason)}</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="premium-panel premium-noise overflow-hidden border-[rgba(255,223,112,0.12)] bg-transparent">
-                    <CardContent className="grid gap-4 p-6 md:grid-cols-2">
-                      <div className="premium-panel-muted p-4">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Zap className="h-4 w-4 text-purple-400" />
-                          <span className="text-sm font-medium">Signal Type</span>
-                        </div>
-                        <p className="text-sm text-purple-400 font-semibold capitalize">{signalType}</p>
-                      </div>
-                      <div className="premium-panel-muted p-4">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Target className="h-4 w-4 text-cyan-400" />
-                          <span className="text-sm font-medium">Entry Zone</span>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{formatStructuredZone(analysis.entryZone, pair)}</p>
-                      </div>
-                      <div className="premium-panel-muted p-4">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Clock className="h-4 w-4 text-yellow-400" />
-                          <span className="text-sm font-medium">Wait For</span>
-                        </div>
-                        <p className="text-sm text-muted-foreground capitalize">
-                          {analysis.confirmation === 'none' ? 'No confirmation yet' : `${analysis.confirmation} confirmation`}
-                        </p>
-                      </div>
-                      <div className="premium-panel-muted p-4">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Sparkles className="h-4 w-4 text-emerald-400" />
-                          <span className="text-sm font-medium">Confirmation Needed</span>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{analysis.confirmationNeeded ? 'Yes' : 'No'}</p>
-                      </div>
-                      <div className="premium-panel-muted p-4">
-                        <div className="flex items-center gap-2 mb-2">
-                          <AlertTriangle className="h-4 w-4 text-orange-400" />
-                          <span className="text-sm font-medium">System Message</span>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{analysis.message}</p>
-                      </div>
-                      <div className="premium-panel-muted p-4 md:col-span-2">
-                        <div className="flex items-center gap-2 mb-2">
-                          <ShieldAlert className="h-4 w-4 text-red-400" />
-                          <span className="text-sm font-medium">Invalidation</span>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          {typeof analysis.invalidationLevel === 'number'
-                            ? `${formatPrice(analysis.invalidationLevel, pair)} · ${analysis.invalidationReason || 'Invalidation explanation not available'}`
-                            : analysis.invalidationReason || 'Invalidation explanation not available'}
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {isPro && reactionResult && (analysis.stopLoss || analysis.takeProfit1) ? (
-                    <Card className="premium-panel premium-noise overflow-hidden border-amber-500/30 bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.12),_transparent_50%),rgba(245,158,11,0.04)]">
-                      <CardContent className="p-6 space-y-4">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Target className="h-4 w-4 text-amber-400" />
-                          <span className="text-sm font-medium">Risk Management Levels</span>
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-500/40 text-amber-300">
-                            {analysis.finalVerdict?.action === 'enter' ? 'DEFINITIVE' : 'PROJECTED'}
-                          </Badge>
-                        </div>
-                        {analysis.stopLoss != null && (
-                          <div>
-                            <div className="flex items-center gap-2 mb-1">
-                              <ShieldAlert className="h-3.5 w-3.5 text-red-400" />
-                              <span className="text-xs font-medium text-red-400">Stop Loss</span>
-                            </div>
-                            <p className="text-sm font-semibold pl-5">{formatPrice(analysis.stopLoss, pair)}</p>
-                          </div>
-                        )}
-                        {analysis.takeProfit1 != null && (
-                          <div>
-                            <div className="flex items-center gap-2 mb-1">
-                              <CheckCircle2 className="h-3.5 w-3.5 text-green-400" />
-                              <span className="text-xs font-medium text-green-400">Take Profit 1</span>
-                            </div>
-                            <p className="text-sm font-semibold pl-5">{formatPrice(analysis.takeProfit1, pair)}</p>
-                          </div>
-                        )}
-                        {analysis.takeProfit2 != null && (
-                          <div>
-                            <div className="flex items-center gap-2 mb-1">
-                              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-                              <span className="text-xs font-medium text-emerald-400">Take Profit 2</span>
-                            </div>
-                            <p className="text-sm font-semibold pl-5">{formatPrice(analysis.takeProfit2, pair)}</p>
-                          </div>
-                        )}
-                        {analysis.takeProfit3 != null && (
-                          <div>
-                            <div className="flex items-center gap-2 mb-1">
-                              <CheckCircle2 className="h-3.5 w-3.5 text-teal-400" />
-                              <span className="text-xs font-medium text-teal-400">Take Profit 3</span>
-                            </div>
-                            <p className="text-sm font-semibold pl-5">{formatPrice(analysis.takeProfit3, pair)}</p>
-                          </div>
-                        )}
+                        ) : null}
+                        <Button className="w-full bg-cyan-400 text-black hover:bg-cyan-300" onClick={() => setChallengeOpen(true)}>
+                          {reactionResult ? 'Retake Challenge' : 'Start Challenge'}
+                        </Button>
                       </CardContent>
                     </Card>
-                  ) : null}
 
-                  {isPro && !reactionResult && (analysis.stopLoss || analysis.takeProfit1) ? (
-                    <Card className="premium-panel premium-noise overflow-hidden border-cyan-400/20 bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.12),_transparent_50%),rgba(34,211,238,0.04)]">
-                      <CardContent className="p-6">
-                        <div className="flex flex-col items-center text-center space-y-3">
-                          <div className="rounded-full bg-cyan-400/10 p-3">
-                            <Crosshair className="h-5 w-5 text-cyan-300" />
+                    <Card className="mobile-card border-amber-400/20 bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.14),_transparent_48%),rgba(255,255,255,0.03)]">
+                      <CardHeader>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <Sparkles className="h-5 w-5 text-amber-300" />
+                          Trade Replay Mode
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <p className="text-sm leading-relaxed text-muted-foreground">Preview three post-entry paths with animated continuation, pullback, and invalidation scenarios.</p>
+                        <Button
+                          className="w-full bg-amber-500 text-black hover:bg-amber-400"
+                          onClick={() => void handleOpenReplay()}
+                          disabled={replayLoading}
+                        >
+                          {replayLoading ? 'Building Replay...' : replayAccess.allowed ? 'Open Replay' : 'Unlock Replay'}
+                        </Button>
+                      </CardContent>
+                    </Card>
+
+                    {analysis.leftSidePlan?.bias && analysis.leftSidePlan.bias !== 'none' ? (
+                      <Card className="premium-panel premium-noise overflow-hidden border-amber-500/30 bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.12),_transparent_50%),rgba(245,158,11,0.04)] lg:col-span-1">
+                        <CardContent className="p-6 space-y-4">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Target className="h-4 w-4 text-amber-300" />
+                            <span className="text-sm font-medium">Left-Side Potential Setup</span>
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-400/40 text-amber-200">
+                              FUTURE
+                            </Badge>
                           </div>
+                          <p className="text-xs leading-relaxed text-amber-100/90">{analysis.leftSidePlan.warning}</p>
                           <div>
-                            <p className="text-sm font-medium">Complete the Reaction Challenge</p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Submit your own entry first to reveal the full AI entry, stop loss, and take profit map for this setup.
+                            <div className="flex items-center gap-2 mb-1">
+                              <Zap className="h-3.5 w-3.5 text-amber-300" />
+                              <span className="text-xs font-medium text-amber-200">Bias / Action</span>
+                            </div>
+                            <p className="text-sm font-semibold pl-5 capitalize">
+                              {analysis.leftSidePlan.bias} · {analysis.leftSidePlan.action}
                             </p>
                           </div>
-                          <Button size="sm" className="bg-cyan-400 text-black hover:bg-cyan-300" onClick={() => setChallengeOpen(true)}>
-                            Open Challenge
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ) : null}
-
-                  {analysis.leftSidePlan?.bias && analysis.leftSidePlan.bias !== 'none' ? (
-                    <Card className="premium-panel premium-noise overflow-hidden border-amber-500/30 bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.12),_transparent_50%),rgba(245,158,11,0.04)]">
-                      <CardContent className="p-6 space-y-4">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Target className="h-4 w-4 text-amber-300" />
-                          <span className="text-sm font-medium">Left-Side Potential Setup</span>
-                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-400/40 text-amber-200">
-                            FUTURE
-                          </Badge>
-                        </div>
-                        <p className="text-xs leading-relaxed text-amber-100/90">{analysis.leftSidePlan.warning}</p>
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <Zap className="h-3.5 w-3.5 text-amber-300" />
-                            <span className="text-xs font-medium text-amber-200">Bias / Action</span>
-                          </div>
-                          <p className="text-sm font-semibold pl-5 capitalize">
-                            {analysis.leftSidePlan.bias} · {analysis.leftSidePlan.action}
-                          </p>
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <Target className="h-3.5 w-3.5 text-cyan-300" />
-                            <span className="text-xs font-medium text-cyan-200">Future Entry Zone</span>
-                          </div>
-                          <p className="text-sm pl-5 text-muted-foreground">{formatStructuredZone(analysis.leftSidePlan.entryZone, pair)}</p>
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <Clock className="h-3.5 w-3.5 text-amber-300" />
-                            <span className="text-xs font-medium text-amber-200">Wait For</span>
-                          </div>
-                          <p className="text-sm pl-5 text-muted-foreground capitalize">
-                            {analysis.leftSidePlan.confirmation === 'none'
-                              ? 'Return into the older left-side zone and confirm'
-                              : analysis.leftSidePlan.confirmation}
-                          </p>
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <Sparkles className="h-3.5 w-3.5 text-amber-300" />
-                            <span className="text-xs font-medium text-amber-200">Reason</span>
-                          </div>
-                          <p className="text-sm pl-5 text-muted-foreground">{analysis.leftSidePlan.reason}</p>
-                        </div>
-                        {analysis.leftSidePlan.stopLoss != null ? (
                           <div>
                             <div className="flex items-center gap-2 mb-1">
-                              <ShieldAlert className="h-3.5 w-3.5 text-red-300" />
-                              <span className="text-xs font-medium text-red-200">Stop Loss</span>
+                              <Target className="h-3.5 w-3.5 text-cyan-300" />
+                              <span className="text-xs font-medium text-cyan-200">Future Entry Zone</span>
                             </div>
-                            <p className="text-sm font-semibold pl-5">{formatPrice(analysis.leftSidePlan.stopLoss, pair)}</p>
+                            <p className="text-sm pl-5 text-muted-foreground">{formatStructuredZone(analysis.leftSidePlan.entryZone, pair)}</p>
                           </div>
-                        ) : null}
-                        {analysis.leftSidePlan.takeProfit1 != null ? (
                           <div>
                             <div className="flex items-center gap-2 mb-1">
-                              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-300" />
-                              <span className="text-xs font-medium text-emerald-200">Take Profit 1</span>
+                              <Clock className="h-3.5 w-3.5 text-amber-300" />
+                              <span className="text-xs font-medium text-amber-200">Wait For</span>
                             </div>
-                            <p className="text-sm font-semibold pl-5">{formatPrice(analysis.leftSidePlan.takeProfit1, pair)}</p>
-                          </div>
-                        ) : null}
-                        {analysis.leftSidePlan.takeProfit2 != null ? (
-                          <div>
-                            <div className="flex items-center gap-2 mb-1">
-                              <CheckCircle2 className="h-3.5 w-3.5 text-teal-300" />
-                              <span className="text-xs font-medium text-teal-200">Take Profit 2</span>
-                            </div>
-                            <p className="text-sm font-semibold pl-5">{formatPrice(analysis.leftSidePlan.takeProfit2, pair)}</p>
-                          </div>
-                        ) : null}
-                      </CardContent>
-                    </Card>
-                  ) : null}
-
-                  {!isPro ? (
-                    <Card className="mobile-card border-purple-500/30 bg-purple-500/5">
-                      <CardContent className="p-6">
-                        <div className="flex flex-col items-center text-center space-y-3">
-                          <div className="rounded-full bg-purple-500/10 p-3">
-                            <Lock className="h-5 w-5 text-purple-400" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium">Stop Loss & Take Profit Levels</p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Upgrade to Pro for exact SL/TP levels, deeper analysis, and AI chart markup.
+                            <p className="text-sm pl-5 text-muted-foreground capitalize">
+                              {analysis.leftSidePlan.confirmation === 'none'
+                                ? 'Return into the older left-side zone and confirm'
+                                : analysis.leftSidePlan.confirmation}
                             </p>
                           </div>
-                          <Link href="/pricing">
-                            <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white">
-                              <Crown className="h-3.5 w-3.5 mr-1.5" />
-                              Upgrade to Pro
-                            </Button>
-                          </Link>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ) : null}
-
-                </div>
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      <Card className="premium-panel premium-noise overflow-hidden border-[rgba(255,223,112,0.12)] bg-transparent lg:col-span-1">
+                        <CardContent className="flex h-full min-h-[220px] flex-col items-center justify-center p-6 text-center">
+                          <Target className="h-6 w-6 text-[var(--gold-light)]" />
+                          <p className="mt-4 text-sm font-medium text-white">No left-side setup stored</p>
+                          <p className="mt-2 text-xs text-muted-foreground">This result did not return a separate historical POI to revisit later.</p>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+                ) : null}
               </div>
             </motion.div>
           )}
