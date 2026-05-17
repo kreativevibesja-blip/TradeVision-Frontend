@@ -534,6 +534,22 @@ export type AdminPaymentMethodFilter = AdminPayment['paymentMethod'] | 'ALL';
 export type AdminPaymentDateRangeFilter = '7d' | '30d' | '90d' | 'all';
 export type AdminPaymentScope = 'COMPLETED_CHECKOUTS' | 'BANK_TRANSFERS' | 'ALL_PAYMENTS';
 
+export interface AdminPolicyAcceptance {
+  id: string;
+  user_id: string;
+  plan_id: string;
+  policy_type: 'NO_REFUND';
+  policy_version: string;
+  accepted: boolean;
+  accepted_at: string;
+  ip_address: string | null;
+  user_agent: string | null;
+  user: {
+    email: string | null;
+    name: string | null;
+  } | null;
+}
+
 export interface PricingPlan {
   id: string;
   name: string;
@@ -891,13 +907,13 @@ export const api = {
   // Payments
   getPayPalClientToken: (token: string) =>
     apiFetch<{ clientToken: string }>('/paypal-client-token', { token }),
-  createPayment: (plan: string, token: string, couponCode?: string, method: 'PAYPAL' | 'CARD' = 'PAYPAL') =>
+  createPayment: (plan: string, token: string, couponCode?: string, method: 'PAYPAL' | 'CARD' = 'PAYPAL', policyAccepted = false) =>
     apiFetch<{ orderId: string | null; approveUrl: string | null; freeActivation?: boolean }>('/create-payment', {
       method: 'POST',
-      body: JSON.stringify({ plan, method, ...(couponCode ? { couponCode } : {}) }),
+      body: JSON.stringify({ plan, method, policyAccepted, ...(couponCode ? { couponCode } : {}) }),
       token,
     }),
-  createBankTransferRequest: (plan: string, bank: 'SCOTIABANK' | 'NCB', token: string, couponCode?: string) =>
+  createBankTransferRequest: (plan: string, bank: 'SCOTIABANK' | 'NCB', token: string, couponCode?: string, policyAccepted = false) =>
     apiFetch<{
       success: boolean;
       payment: {
@@ -910,14 +926,14 @@ export const api = {
       };
     }>('/bank-transfer-request', {
       method: 'POST',
-      body: JSON.stringify({ plan, bank, ...(couponCode ? { couponCode } : {}) }),
+      body: JSON.stringify({ plan, bank, policyAccepted, ...(couponCode ? { couponCode } : {}) }),
       token,
     }),
 
-  paymentSuccess: (orderId: string, token: string) =>
+  paymentSuccess: (orderId: string, token: string, policyAccepted = false) =>
     apiFetch<{ success: boolean }>('/payment-success', {
       method: 'POST',
-      body: JSON.stringify({ orderId }),
+      body: JSON.stringify({ orderId, policyAccepted }),
       token,
     }),
   getBillingSummary: (token: string) =>
@@ -1053,6 +1069,12 @@ export const api = {
       if (options.paymentMethod && options.paymentMethod !== 'ALL') params.set('paymentMethod', options.paymentMethod);
       if (options.dateRange) params.set('dateRange', options.dateRange);
       return apiFetch<{ payments: AdminPayment[]; total: number; page: number; pages: number }>(`/admin/payments?${params.toString()}`, { token });
+    },
+    getPolicyAcceptances: (token: string, options: { page?: number; search?: string } = {}) => {
+      const params = new URLSearchParams();
+      params.set('page', String(options.page ?? 1));
+      if (options.search) params.set('search', options.search);
+      return apiFetch<{ acceptances: AdminPolicyAcceptance[]; total: number; page: number; pages: number }>(`/admin/policies?${params.toString()}`, { token });
     },
     updatePaymentStatus: (id: string, status: 'COMPLETED' | 'FAILED', token: string) =>
       apiFetch<{ payment: AdminPayment }>(`/admin/payments/${encodeURIComponent(id)}`, {
@@ -1450,15 +1472,16 @@ export const api = {
         method: 'POST',
         token,
       }),
-    createPayment: (token: string) =>
+    createPayment: (token: string, policyAccepted = false) =>
       apiFetch<{ orderId: string; planId: string }>('/goldx/payment/create', {
         method: 'POST',
+        body: JSON.stringify({ policyAccepted }),
         token,
       }),
-    capturePayment: (orderId: string, planId: string, token: string) =>
+    capturePayment: (orderId: string, planId: string, token: string, policyAccepted = false) =>
       apiFetch<{ success: boolean; subscriptionId: string; licenseKey: string; message: string }>('/goldx/payment/capture', {
         method: 'POST',
-        body: JSON.stringify({ orderId, planId }),
+        body: JSON.stringify({ orderId, planId, policyAccepted }),
         token,
       }),
     admin: {
