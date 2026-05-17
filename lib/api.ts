@@ -585,6 +585,20 @@ export interface PricingPlan {
   updatedAt: string;
 }
 
+export interface CouponSpecialOffer {
+  overridePrice: number;
+  grantPlan: 'PRO' | 'TOP_TIER';
+  grantDurationDays: number;
+}
+
+export interface CouponValidationResult {
+  valid: boolean;
+  discount?: { type: 'percentage' | 'fixed'; value: number };
+  couponId?: string;
+  specialOffer?: CouponSpecialOffer;
+  message: string;
+}
+
 interface FetchOptions extends RequestInit {
   token?: string;
 }
@@ -874,7 +888,7 @@ export const api = {
 
   // Coupons
   validateCoupon: (code: string, token: string) =>
-    apiFetch<{ valid: boolean; discount?: { type: string; value: number }; couponId?: string; message: string }>('/coupons/validate', {
+    apiFetch<CouponValidationResult>('/coupons/validate', {
       method: 'POST',
       body: JSON.stringify({ code }),
       token,
@@ -1192,7 +1206,20 @@ export const api = {
       }),
     getCoupons: (token: string) =>
       apiFetch<{ coupons: any[] }>('/admin/coupons', { token }),
-    createCoupon: (data: { code: string; type: string; value: number; maxUses: number; perUserLimit: number; expiresAt?: string | null }, token: string) =>
+    createCoupon: (
+      data: {
+        code: string;
+        type: string;
+        value: number;
+        maxUses: number;
+        perUserLimit: number;
+        expiresAt?: string | null;
+        overridePrice?: number | null;
+        grantPlan?: 'PRO' | 'TOP_TIER' | null;
+        grantDurationDays?: number | null;
+      },
+      token: string,
+    ) =>
       apiFetch<{ coupon: any }>('/admin/coupons', {
         method: 'POST',
         body: JSON.stringify(data),
