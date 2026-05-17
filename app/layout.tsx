@@ -8,7 +8,6 @@ import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { GlobalBackButton } from '@/components/GlobalBackButton';
 import { GlobalUpdatesModal } from '@/components/GlobalUpdatesModal';
-import { PlatformIntroModal } from '@/components/PlatformIntroModal';
 import { VisitorHeartbeat } from '@/components/VisitorHeartbeat';
 import { SupportButton } from '@/components/SupportButton';
 import { ReferralCapture } from '@/components/ReferralCapture';
@@ -39,6 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" data-theme="goldx-premium">
       <body className={`${bodyFont.variable} ${displayFont.variable} ${monoFont.variable} min-h-screen bg-background font-sans antialiased overflow-x-hidden`}>
+        <GlobalUpdatesModal />
         <AuthProvider>
           <ThemeProvider>
             <Suspense><ReferralCapture /></Suspense>
@@ -48,8 +48,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <GlobalBackButton />
               </Suspense>
               <VisitorHeartbeat />
-              <GlobalUpdatesModal />
-              <PlatformIntroModal />
               <main className="flex-1 pt-20">{children}</main>
               <SupportButton />
               <FeedbackTrigger />
