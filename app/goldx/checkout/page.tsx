@@ -8,8 +8,9 @@ import { api } from '@/lib/api';
 import type { GoldxPlan } from '@/lib/api';
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { RefundPolicyAcceptance } from '@/components/RefundPolicyAcceptance';
+import { NO_REFUND_POLICY_STORAGE_KEY, NO_REFUND_POLICY_TOOLTIP } from '@/lib/refundPolicy';
 import {
   TrendingUp,
   Shield,
@@ -30,12 +31,29 @@ export default function GoldxCheckoutPage() {
   const [licenseKey, setLicenseKey] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [planId, setPlanId] = useState<string | null>(null);
+  const [policyAccepted, setPolicyAccepted] = useState(false);
 
   useEffect(() => {
     api.goldx.getPlan()
       .then((p) => { setPlan(p); setPlanId(p.id); })
       .catch(() => setError('Failed to load plan'))
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    setPolicyAccepted(window.sessionStorage.getItem(NO_REFUND_POLICY_STORAGE_KEY) === 'true');
+  }, []);
+
+  const handlePolicyAcceptedChange = useCallback((next: boolean) => {
+    setPolicyAccepted(next);
+
+    if (next) {
+      window.sessionStorage.setItem(NO_REFUND_POLICY_STORAGE_KEY, 'true');
+      setError(null);
+      return;
+    }
+
+    window.sessionStorage.removeItem(NO_REFUND_POLICY_STORAGE_KEY);
   }, []);
 
   const handleCopyKey = () => {
@@ -154,54 +172,70 @@ export default function GoldxCheckoutPage() {
             <Card>
               <CardContent className="p-6">
                 <h3 className="mb-4 text-lg font-bold">Payment</h3>
+                <div className="mb-4">
+                  <RefundPolicyAcceptance checked={policyAccepted} onCheckedChange={handlePolicyAcceptedChange} />
+                </div>
                 {!user ? (
                   <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-4 text-center text-sm">
                     <p className="mb-2">You need to be signed in to subscribe.</p>
                     <Button onClick={() => router.push('/auth')}>Sign In</Button>
                   </div>
                 ) : (
-                  <PayPalScriptProvider options={{
-                    clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || '',
-                    currency: 'USD',
-                  }}>
-                    <PayPalButtons
-                      style={{ layout: 'vertical', color: 'gold', shape: 'rect', label: 'subscribe' }}
-                      disabled={processing}
-                      createOrder={async () => {
-                        if (!token) throw new Error('Not authenticated');
-                        setError(null);
-                        setProcessing(true);
-                        try {
-                          const result = await api.goldx.createPayment(token);
-                          setPlanId(result.planId);
-                          return result.orderId;
-                        } catch (err: any) {
-                          setError(err.message || 'Failed to create order');
+                  <div title={!policyAccepted ? NO_REFUND_POLICY_TOOLTIP : undefined}>
+                    <PayPalScriptProvider options={{
+                      clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || '',
+                      currency: 'USD',
+                    }}>
+                      <PayPalButtons
+                        style={{ layout: 'vertical', color: 'gold', shape: 'rect', label: 'subscribe' }}
+                        disabled={processing || !policyAccepted}
+                        createOrder={async () => {
+                          if (!token) throw new Error('Not authenticated');
+                          if (!policyAccepted) {
+                            setError(NO_REFUND_POLICY_TOOLTIP);
+                            throw new Error(NO_REFUND_POLICY_TOOLTIP);
+                          }
+
+                          setError(null);
+                          setProcessing(true);
+                          try {
+                            const result = await api.goldx.createPayment(token, policyAccepted);
+                            setPlanId(result.planId);
+                            return result.orderId;
+                          } catch (err: any) {
+                            setError(err.message || 'Failed to create order');
+                            setProcessing(false);
+                            throw err;
+                          }
+                        }}
+                        onApprove={async (data) => {
+                          if (!token || !planId) return;
+                          try {
+                            const result = await api.goldx.capturePayment(data.orderID, planId, token, policyAccepted);
+                            setLicenseKey(result.licenseKey);
+                          } catch (err: any) {
+                            setError(err.message || 'Payment failed');
+                          } finally {
+                            setProcessing(false);
+                          }
+                        }}
+                        onError={() => {
+                          setError('PayPal error — please try again');
                           setProcessing(false);
-                          throw err;
-                        }
-                      }}
-                      onApprove={async (data) => {
-                        if (!token || !planId) return;
-                        try {
-                          const result = await api.goldx.capturePayment(data.orderID, planId, token);
-                          setLicenseKey(result.licenseKey);
-                        } catch (err: any) {
-                          setError(err.message || 'Payment failed');
-                        } finally {
+                        }}
+                        onCancel={() => {
                           setProcessing(false);
-                        }
-                      }}
-                      onError={(err) => {
-                        setError('PayPal error — please try again');
-                        setProcessing(false);
-                      }}
-                      onCancel={() => {
-                        setProcessing(false);
-                      }}
-                    />
-                  </PayPalScriptProvider>
+                        }}
+                      />
+                    </PayPalScriptProvider>
+                  </div>
                 )}
+
+                {!policyAccepted ? (
+                  <div className="mt-4 rounded-lg border border-amber-500/20 bg-amber-500/10 p-3 text-sm text-amber-200">
+                    {NO_REFUND_POLICY_TOOLTIP}
+                  </div>
+                ) : null}
 
                 {error && (
                   <div className="mt-4 rounded-lg border border-red-500/20 bg-red-500/5 p-3 text-sm text-red-400">

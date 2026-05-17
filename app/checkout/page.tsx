@@ -12,6 +12,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api';
 import { formatJamaicaDateTime } from '@/lib/jamaica-time';
 import { AuthModal } from '@/components/AuthModal';
+import { RefundPolicyAcceptance } from '@/components/RefundPolicyAcceptance';
+import { NO_REFUND_POLICY_STORAGE_KEY, NO_REFUND_POLICY_TOOLTIP } from '@/lib/refundPolicy';
 import {
   ArrowRight,
   Building2,
@@ -176,6 +178,7 @@ function PayPalButtonStack({
   token,
   planKey,
   formReady,
+  policyAccepted,
   couponCode,
   onRequireAuth,
   onRequireForm,
@@ -188,6 +191,7 @@ function PayPalButtonStack({
   token: string;
   planKey: PlanKey;
   formReady: boolean;
+  policyAccepted: boolean;
   couponCode: string;
   onRequireAuth: () => void;
   onRequireForm: () => void;
@@ -203,6 +207,11 @@ function PayPalButtonStack({
       throw new Error('Please sign in to continue.');
     }
 
+    if (!policyAccepted) {
+      onError(NO_REFUND_POLICY_TOOLTIP);
+      throw new Error(NO_REFUND_POLICY_TOOLTIP);
+    }
+
     if (!formReady) {
       onRequireForm();
       throw new Error('Please complete your shipping and billing details before continuing.');
@@ -212,7 +221,7 @@ function PayPalButtonStack({
     sessionStorage.setItem('tradevision_checkout_method', method);
 
     if (planKey === 'GOLDX') {
-      const result = await api.goldx.createPayment(token);
+      const result = await api.goldx.createPayment(token, policyAccepted);
       onGoldxPlanId(result.planId);
       sessionStorage.setItem('goldx_plan_id', result.planId);
       sessionStorage.setItem('tradevision_order_id', result.orderId);
@@ -220,7 +229,7 @@ function PayPalButtonStack({
       return result.orderId;
     }
 
-    const result = await api.createPayment(planKey, token, couponCode || undefined, method === 'card' ? 'CARD' : 'PAYPAL');
+    const result = await api.createPayment(planKey, token, couponCode || undefined, method === 'card' ? 'CARD' : 'PAYPAL', policyAccepted);
 
     if (result.freeActivation) {
       sessionStorage.removeItem('tradevision_order_id');
@@ -261,7 +270,7 @@ function PayPalButtonStack({
               height: 42,
               label: 'paypal',
             }}
-            disabled={!formReady}
+            disabled={!formReady || !policyAccepted}
             createOrder={() => createOrder('paypal')}
             onApprove={async (data) => {
               if (!data.orderID) {
@@ -287,7 +296,7 @@ function PayPalButtonStack({
               shape: 'rect',
               height: 42,
             }}
-            disabled={!formReady}
+            disabled={!formReady || !policyAccepted}
             createOrder={() => createOrder('card')}
             onApprove={async (data) => {
               if (!data.orderID) {
@@ -381,6 +390,7 @@ function CheckoutPageContent() {
   const [referralDiscount, setReferralDiscount] = useState<number>(0);
   const [goldxPlanId, setGoldxPlanId] = useState<string | null>(null);
   const [goldxLicenseKey, setGoldxLicenseKey] = useState<string | null>(null);
+  const [policyAccepted, setPolicyAccepted] = useState(false);
 
   const isSuccess = searchParams.get('success') === 'true';
   const isCanceled = searchParams.get('canceled') === 'true';
@@ -430,6 +440,22 @@ function CheckoutPageContent() {
   const handleFreeActivation = async () => {
     await refreshUser();
     setSuccess(true);
+  };
+
+  useEffect(() => {
+    setPolicyAccepted(window.sessionStorage.getItem(NO_REFUND_POLICY_STORAGE_KEY) === 'true');
+  }, []);
+
+  const handlePolicyAcceptedChange = (next: boolean) => {
+    setPolicyAccepted(next);
+
+    if (next) {
+      window.sessionStorage.setItem(NO_REFUND_POLICY_STORAGE_KEY, 'true');
+      setError('');
+      return;
+    }
+
+    window.sessionStorage.removeItem(NO_REFUND_POLICY_STORAGE_KEY);
   };
 
   useEffect(() => {
@@ -502,13 +528,13 @@ function CheckoutPageContent() {
   }, [planKey, token]);
 
   useEffect(() => {
-    if (isSuccess && token) {
+    if (isSuccess && token && policyAccepted) {
       const orderId = sessionStorage.getItem('tradevision_order_id') || sessionStorage.getItem('chartmind_order_id');
       if (orderId) {
         handlePaymentCapture(orderId);
       }
     }
-  }, [isSuccess, token]);
+  }, [isSuccess, token, policyAccepted]);
 
   const handlePaymentCapture = async (orderId: string, method: CheckoutMethod = 'paypal') => {
     try {
@@ -519,11 +545,11 @@ function CheckoutPageContent() {
           throw new Error('GoldX plan information is missing. Please restart checkout.');
         }
 
-        const result = await api.goldx.capturePayment(orderId, planId, token!);
+        const result = await api.goldx.capturePayment(orderId, planId, token!, policyAccepted);
         setGoldxLicenseKey(result.licenseKey);
         sessionStorage.removeItem('goldx_plan_id');
       } else {
-        await api.paymentSuccess(orderId, token!);
+        await api.paymentSuccess(orderId, token!, policyAccepted);
       }
 
       sessionStorage.removeItem('tradevision_order_id');
@@ -541,6 +567,11 @@ function CheckoutPageContent() {
   const openBankTransferFlow = () => {
     if (!user || !token) {
       setAuthOpen(true);
+      return;
+    }
+
+    if (!policyAccepted) {
+      setError(NO_REFUND_POLICY_TOOLTIP);
       return;
     }
 
@@ -571,7 +602,7 @@ function CheckoutPageContent() {
 
     try {
       setBankTransferSubmitting(true);
-      const result = await api.createBankTransferRequest(planKey, selectedTransferBank, token, couponApplied ? couponCode : undefined);
+      const result = await api.createBankTransferRequest(planKey, selectedTransferBank, token, couponApplied ? couponCode : undefined, policyAccepted);
       setSubmittedTransfer(result.payment);
       setBankTransferOpen(false);
       setBankTransferConfirmOpen(true);
@@ -593,6 +624,11 @@ function CheckoutPageContent() {
   const handleCheckout = async (method: CheckoutMethod) => {
     if (!user || !token) {
       setAuthOpen(true);
+      return;
+    }
+
+    if (!policyAccepted) {
+      setError(NO_REFUND_POLICY_TOOLTIP);
       return;
     }
 
@@ -620,7 +656,7 @@ function CheckoutPageContent() {
       setLoadingMethod(method);
       setError('');
       sessionStorage.setItem('tradevision_checkout_method', method);
-      const result = await api.createPayment(planKey, token, couponApplied ? couponCode : undefined, method === 'card' ? 'CARD' : 'PAYPAL');
+      const result = await api.createPayment(planKey, token, couponApplied ? couponCode : undefined, method === 'card' ? 'CARD' : 'PAYPAL', policyAccepted);
 
       if (result.freeActivation) {
         sessionStorage.removeItem('tradevision_order_id');
@@ -907,6 +943,8 @@ function CheckoutPageContent() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                <RefundPolicyAcceptance checked={policyAccepted} onCheckedChange={handlePolicyAcceptedChange} />
+
                 <p className="text-sm text-muted-foreground">
                   {planKey === 'GOLDX'
                     ? 'Choose PayPal or card checkout to activate GoldX automatically and receive your license key right after payment.'
@@ -922,37 +960,49 @@ function CheckoutPageContent() {
                 {planKey !== 'FREE' ? (
                   hasValidPayPalClientId ? (
                     <div className="space-y-3">
-                      <PayPalButtonStack
-                        token={token || ''}
-                        planKey={planKey}
-                        formReady={formReady}
-                        couponCode={couponApplied ? couponCode : ''}
-                        onRequireAuth={() => setAuthOpen(true)}
-                        onRequireForm={() => setError('Please complete your shipping and billing details before continuing.')}
-                        onCapture={handlePaymentCapture}
-                        onFreeActivation={handleFreeActivation}
-                        onError={setError}
-                        onLoadingChange={setLoadingMethod}
-                        onGoldxPlanId={setGoldxPlanId}
-                      />
+                      <div title={!policyAccepted ? NO_REFUND_POLICY_TOOLTIP : undefined}>
+                        <PayPalButtonStack
+                          token={token || ''}
+                          planKey={planKey}
+                          formReady={formReady}
+                          policyAccepted={policyAccepted}
+                          couponCode={couponApplied ? couponCode : ''}
+                          onRequireAuth={() => setAuthOpen(true)}
+                          onRequireForm={() => setError('Please complete your shipping and billing details before continuing.')}
+                          onCapture={handlePaymentCapture}
+                          onFreeActivation={handleFreeActivation}
+                          onError={setError}
+                          onLoadingChange={setLoadingMethod}
+                          onGoldxPlanId={setGoldxPlanId}
+                        />
+                      </div>
 
                       {planKey !== 'GOLDX' ? (
-                        <button
-                          type="button"
-                          onClick={openBankTransferFlow}
-                          className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-left transition hover:border-primary/40 hover:bg-white/10"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-2.5 text-emerald-300">
-                              <Landmark className="h-5 w-5" />
+                        <div title={!policyAccepted ? NO_REFUND_POLICY_TOOLTIP : undefined}>
+                          <button
+                            type="button"
+                            onClick={openBankTransferFlow}
+                            disabled={!policyAccepted}
+                            className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-left transition hover:border-primary/40 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-2.5 text-emerald-300">
+                                <Landmark className="h-5 w-5" />
+                              </div>
+                              <div>
+                                <div className="font-medium">Bank Transfer</div>
+                                <div className="text-sm text-muted-foreground">Submit a manual transfer and send your receipt to WhatsApp for verification.</div>
+                              </div>
                             </div>
-                            <div>
-                              <div className="font-medium">Bank Transfer</div>
-                              <div className="text-sm text-muted-foreground">Submit a manual transfer and send your receipt to WhatsApp for verification.</div>
-                            </div>
-                          </div>
-                          <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                        </button>
+                            <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                          </button>
+                        </div>
+                      ) : null}
+
+                      {!policyAccepted ? (
+                        <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-amber-200">
+                          {NO_REFUND_POLICY_TOOLTIP}
+                        </div>
                       ) : null}
 
                       {!formReady ? (
@@ -973,15 +1023,18 @@ function CheckoutPageContent() {
                     </div>
                   )
                 ) : (
-                  <Button
-                    variant="gradient"
-                    size="xl"
-                    className="w-full gap-2"
-                    onClick={() => handleCheckout('paypal')}
-                  >
-                    <Zap className="h-5 w-5" />
-                    Continue with Free Plan
-                  </Button>
+                  <div title={!policyAccepted ? NO_REFUND_POLICY_TOOLTIP : undefined}>
+                    <Button
+                      variant="gradient"
+                      size="xl"
+                      className="w-full gap-2"
+                      onClick={() => handleCheckout('paypal')}
+                      disabled={!policyAccepted}
+                    >
+                      <Zap className="h-5 w-5" />
+                      Continue with Free Plan
+                    </Button>
+                  </div>
                 )}
 
                 <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">

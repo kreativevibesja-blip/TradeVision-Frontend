@@ -33,6 +33,7 @@ const adminNav = [
   { label: 'Users', href: '/admin/users', icon: Users },
   { label: 'Analyses', href: '/admin/analyses', icon: FileText },
   { label: 'Payments', href: '/admin/payments', icon: CreditCard, badgeKey: 'payments' as const },
+  { label: 'Policies', href: '/admin/policies', icon: FileText },
   { label: 'Referrals', href: '/admin/referrals', icon: Gift },
   { label: 'Pricing Plans', href: '/admin/pricing', icon: Tag },
   { label: 'Coupons', href: '/admin/coupons', icon: Percent },
