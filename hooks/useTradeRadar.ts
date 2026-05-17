@@ -3,11 +3,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, type TrackedTrade } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
+import { usePageActivity } from '@/hooks/usePageActivity';
+import { trackPollingMetric } from '@/lib/egressMetrics';
 
 const POLL_INTERVAL_MS = 5000;
 
 export function useTradeRadar() {
   const { token } = useAuth();
+  const { isActive } = usePageActivity();
   const [trades, setTrades] = useState<TrackedTrade[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +34,9 @@ export function useTradeRadar() {
 
   useEffect(() => {
     mountedRef.current = true;
-    if (!token) return;
+    if (!token || !isActive) return;
+
+    const stopMetric = trackPollingMetric('trade-radar');
 
     setLoading(true);
     fetchTrades().finally(() => {
@@ -42,9 +47,10 @@ export function useTradeRadar() {
 
     return () => {
       mountedRef.current = false;
+      stopMetric();
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [token, fetchTrades]);
+  }, [isActive, token, fetchTrades]);
 
   const addTrade = useCallback(async (tradeId: string) => {
     if (!token) return;

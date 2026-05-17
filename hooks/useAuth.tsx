@@ -3,7 +3,8 @@
 import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { api } from '@/lib/api';
-import { hasSupabaseEnv, missingSupabaseEnvMessage, recordTokenRefresh, setCachedSession, supabase } from '@/lib/supabase';
+import { hasSupabaseEnv, missingSupabaseEnvMessage, recordTokenRefresh, setCachedSession, supabase } from '@/lib/supabase/client';
+import { recordAuthRefreshMetric, recordSessionFetchMetric, setListenerCountMetric, setMetricsUser } from '@/lib/egressMetrics';
 import { getReferralCode, clearReferralCode } from '@/components/ReferralCapture';
 
 interface User {
@@ -39,6 +40,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     userRef.current = user;
   }, [user]);
+
+  useEffect(() => {
+    setMetricsUser(user?.id ?? null);
+  }, [user?.id]);
 
   const clearLegacyTokens = () => {
     localStorage.removeItem('tradevision_token');
@@ -105,6 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           data: { session },
           error,
         } = await supabaseClient.auth.getSession();
+        recordSessionFetchMetric();
 
         if (error) {
           throw error;
@@ -129,7 +135,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const {
       data: { subscription },
     } = supabaseClient.auth.onAuthStateChange((event: AuthChangeEvent, session: Session | null) => {
+      setListenerCountMetric(1);
+
       if (event === 'TOKEN_REFRESHED') {
+        recordAuthRefreshMetric();
         recordTokenRefresh(session);
       } else {
         setCachedSession(session);
@@ -169,6 +178,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => {
       active = false;
+      setListenerCountMetric(0);
       subscription.unsubscribe();
     };
   }, []);

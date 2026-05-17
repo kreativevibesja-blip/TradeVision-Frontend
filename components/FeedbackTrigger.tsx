@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { FeedbackModal } from '@/components/FeedbackModal';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase/client';
 
 function getDismissUntilTimestamp() {
   const nextMidnight = new Date();

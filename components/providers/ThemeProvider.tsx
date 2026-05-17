@@ -3,9 +3,10 @@
 import { useEffect } from 'react';
 import { api } from '@/lib/api';
 import { resolvePlatformTheme } from '@/lib/theme';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase/client';
 import { useThemeStore } from '@/stores/theme-store';
 import { useAuth } from '@/hooks/useAuth';
+import { trackChannelMetric } from '@/lib/egressMetrics';
 
 type SystemThemeRow = {
   value?: unknown;
@@ -78,6 +79,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         }
       )
       .subscribe();
+    const stopSystemMetric = trackChannelMetric('theme-system');
 
     const userChannel = user?.id
       ? client
@@ -97,8 +99,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
           )
           .subscribe()
       : null;
+    const stopUserMetric = user?.id ? trackChannelMetric(`theme-user-${user.id}`) : null;
 
     return () => {
+      stopSystemMetric();
+      stopUserMetric?.();
       void client.removeChannel(systemChannel);
       if (userChannel) {
         void client.removeChannel(userChannel);

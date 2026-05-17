@@ -1,4 +1,4 @@
-import { getCachedAccessToken } from '@/lib/supabase';
+import { getCachedAccessToken } from '@/lib/supabase/client';
 
 const DEFAULT_API_URL = 'http://localhost:4000/api';
 
@@ -408,6 +408,36 @@ export interface AdminDashboardStats {
   totalAnalyses: number;
   totalRevenue: number;
   liveMetrics: LivePlatformMetrics;
+  pendingBankTransferCount?: number;
+  feedbackUnreadCount?: number;
+}
+
+export interface AdminWorkspaceBadges {
+  pendingBankTransferCount: number;
+  feedbackUnreadCount: number;
+}
+
+export interface AdminFeedbackRow {
+  id: string;
+  user_id: string;
+  rating: number;
+  reason: string;
+  message: string | null;
+  created_at: string;
+  admin_seen: boolean;
+}
+
+export interface ClientEgressMetricRow {
+  minute: string;
+  userId: string;
+  tabId: string;
+  route: string;
+  authRefreshCount: number;
+  sessionFetchCount: number;
+  listenerCount: number;
+  pollingCount: number;
+  activeChannels: number;
+  lastSeenAt: string;
 }
 
 export interface AdminAnalyticsResponse {
@@ -933,6 +963,8 @@ export const api = {
   admin: {
     getDashboard: (token: string) =>
       apiFetch<AdminDashboardStats>('/admin/dashboard', { token }),
+    getWorkspaceBadges: (token: string) =>
+      apiFetch<AdminWorkspaceBadges>('/admin/workspace-badges', { token }),
     getUsers: (
       token: string,
       options?: {
@@ -1051,6 +1083,21 @@ export const api = {
       const query = params.toString();
       return apiFetch<AdminAnalyticsResponse>(`/admin/analytics${query ? `?${query}` : ''}`, { token });
     },
+    getFeedback: (token: string) =>
+      apiFetch<{ rows: AdminFeedbackRow[] }>('/admin/feedback', { token }),
+    markFeedbackSeen: (ids: string[], token: string) =>
+      apiFetch<{ success: boolean; updated: number }>('/admin/feedback/seen', {
+        method: 'POST',
+        body: JSON.stringify({ ids }),
+        token,
+      }),
+    deleteFeedback: (id: string, token: string) =>
+      apiFetch<{ success: boolean }>(`/admin/feedback/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        token,
+      }),
+    getClientEgress: (token: string, limit = 250) =>
+      apiFetch<{ rows: ClientEgressMetricRow[] }>(`/debug/client-egress?limit=${limit}`, { token }),
     getPricingPlans: (token: string) =>
       apiFetch<any>('/admin/pricing-plans', { token }),
     createPricingPlan: (data: any, token: string) =>

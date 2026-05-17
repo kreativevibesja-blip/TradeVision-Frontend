@@ -3,11 +3,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, type CommandCenterSnapshot } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
+import { usePageActivity } from '@/hooks/usePageActivity';
+import { trackPollingMetric } from '@/lib/egressMetrics';
 
-const POLL_INTERVAL_MS = 4000;
+const POLL_INTERVAL_MS = 5000;
 
 export function useCommandCenter(tradeId: string | null, currentPrice?: number) {
   const { token } = useAuth();
+  const { isActive } = usePageActivity();
   const [snapshot, setSnapshot] = useState<CommandCenterSnapshot | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +34,9 @@ export function useCommandCenter(tradeId: string | null, currentPrice?: number) 
 
   useEffect(() => {
     mountedRef.current = true;
-    if (!tradeId) return;
+    if (!tradeId || !isActive) return;
+
+    const stopMetric = trackPollingMetric(`command-center:${tradeId}`);
 
     setLoading(true);
     fetchSnapshot().finally(() => {
@@ -42,9 +47,10 @@ export function useCommandCenter(tradeId: string | null, currentPrice?: number) 
 
     return () => {
       mountedRef.current = false;
+      stopMetric();
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [tradeId, fetchSnapshot]);
+  }, [isActive, tradeId, fetchSnapshot]);
 
   const refresh = useCallback(() => {
     fetchSnapshot();

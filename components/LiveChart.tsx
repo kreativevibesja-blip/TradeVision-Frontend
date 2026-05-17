@@ -7,6 +7,8 @@ import { DERIV_ANALYSIS_CANDLE_COUNT, type DerivCandle, getDerivCacheKey } from 
 import { AnnotatedCandlesChart } from '@/components/AnnotatedCandlesChart';
 import type { ChartOverlaySet } from '@/lib/live-chart-drawings';
 import { cn } from '@/lib/utils';
+import { usePageActivity } from '@/hooks/usePageActivity';
+import { trackPollingMetric } from '@/lib/egressMetrics';
 
 interface LiveChartProps {
   symbol: string;
@@ -98,6 +100,7 @@ export function LiveChart({
   className,
   height,
 }: LiveChartProps) {
+  const { isActive } = usePageActivity();
   const hostRef = useRef<HTMLDivElement | null>(null);
   const candlesRef = useRef<DerivCandle[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
@@ -148,6 +151,7 @@ export function LiveChart({
     }
 
     let active = true;
+    const stopMetric = trackPollingMetric(`live-chart:${symbol}:${granularity}`);
 
     const applyIncomingCandles = (incoming: DerivCandle[], replaceAll = false) => {
       const nextCandles = replaceAll ? incoming.slice(-MAX_CANDLES) : mergeCandles(candlesRef.current, incoming);
@@ -186,15 +190,20 @@ export function LiveChart({
 
     void fetchSnapshot(SNAPSHOT_LIMIT, true);
 
-    const intervalId = window.setInterval(() => {
-      void fetchSnapshot(3, false);
-    }, POLL_INTERVAL_MS);
+    const intervalId = isActive
+      ? window.setInterval(() => {
+          void fetchSnapshot(3, false);
+        }, POLL_INTERVAL_MS)
+      : null;
 
     return () => {
       active = false;
-      window.clearInterval(intervalId);
+      stopMetric();
+      if (intervalId) {
+        window.clearInterval(intervalId);
+      }
     };
-  }, [symbol, granularity, token, onCandlesChange, onError]);
+  }, [granularity, isActive, onCandlesChange, onError, symbol, token]);
 
   const StatusIcon = statusMeta.icon;
 
