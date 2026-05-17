@@ -30,6 +30,9 @@ interface Coupon {
   usedCount: number;
   perUserLimit: number;
   expiresAt: string | null;
+  overridePrice: number | null;
+  grantPlan: 'PRO' | 'TOP_TIER' | null;
+  grantDurationDays: number | null;
   active: boolean;
   createdAt: string;
 }
@@ -50,6 +53,10 @@ export default function AdminCouponsPage() {
     maxUses: '',
     perUserLimit: '1',
     expiresAt: '',
+    specialAccessEnabled: false,
+    overridePrice: '1.95',
+    grantPlan: 'TOP_TIER' as 'PRO' | 'TOP_TIER',
+    grantDurationDays: '5',
   });
 
   useEffect(() => {
@@ -70,23 +77,28 @@ export default function AdminCouponsPage() {
   const handleCreate = async () => {
     setError('');
     if (!form.code.trim()) { setError('Code is required'); return; }
-    if (!form.value || Number(form.value) <= 0) { setError('Value must be a positive number'); return; }
-    if (form.type === 'percentage' && Number(form.value) > 100) { setError('Percentage cannot exceed 100'); return; }
+    if (!form.specialAccessEnabled && (!form.value || Number(form.value) <= 0)) { setError('Value must be a positive number'); return; }
+    if (!form.specialAccessEnabled && form.type === 'percentage' && Number(form.value) > 100) { setError('Percentage cannot exceed 100'); return; }
+    if (form.specialAccessEnabled && (!form.overridePrice || Number(form.overridePrice) <= 0)) { setError('Special access price must be positive'); return; }
+    if (form.specialAccessEnabled && (!form.grantDurationDays || Number(form.grantDurationDays) <= 0)) { setError('Special access duration must be at least 1 day'); return; }
 
     try {
       setCreating(true);
       await api.admin.createCoupon(
         {
           code: form.code.toUpperCase().trim(),
-          type: form.type,
-          value: Number(form.value),
+          type: form.specialAccessEnabled ? 'fixed' : form.type,
+          value: form.specialAccessEnabled ? 0 : Number(form.value),
           maxUses: parseInt(form.maxUses, 10) || 0,
           perUserLimit: parseInt(form.perUserLimit, 10) || 1,
           expiresAt: form.expiresAt || null,
+          overridePrice: form.specialAccessEnabled ? Number(form.overridePrice) : null,
+          grantPlan: form.specialAccessEnabled ? form.grantPlan : null,
+          grantDurationDays: form.specialAccessEnabled ? parseInt(form.grantDurationDays, 10) || 5 : null,
         },
         token!
       );
-      setForm({ code: '', type: 'percentage', value: '', maxUses: '', perUserLimit: '1', expiresAt: '' });
+      setForm({ code: '', type: 'percentage', value: '', maxUses: '', perUserLimit: '1', expiresAt: '', specialAccessEnabled: false, overridePrice: '1.95', grantPlan: 'TOP_TIER', grantDurationDays: '5' });
       setShowCreate(false);
       loadCoupons();
     } catch (err: any) {
@@ -181,6 +193,7 @@ export default function AdminCouponsPage() {
                       <select
                         value={form.type}
                         onChange={(e) => setForm({ ...form, type: e.target.value as 'percentage' | 'fixed' })}
+                        disabled={form.specialAccessEnabled}
                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       >
                         <option value="percentage">Percentage (%)</option>
@@ -196,10 +209,61 @@ export default function AdminCouponsPage() {
                         placeholder={form.type === 'percentage' ? '20' : '5.00'}
                         value={form.value}
                         onChange={(e) => setForm({ ...form, value: e.target.value })}
+                        disabled={form.specialAccessEnabled}
                         min="0"
                         step={form.type === 'fixed' ? '0.01' : '1'}
                       />
                     </div>
+                  </div>
+
+                  <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 p-3 space-y-3">
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={form.specialAccessEnabled}
+                        onChange={(e) => setForm({ ...form, specialAccessEnabled: e.target.checked })}
+                        className="mt-1 h-4 w-4 rounded border-white/20 bg-background"
+                      />
+                      <div>
+                        <div className="text-sm font-medium text-white">Timed Pro / Pro+ access offer</div>
+                        <div className="text-xs text-muted-foreground">Use this for the 5-day $1.95 promo or any other temporary access coupon.</div>
+                      </div>
+                    </label>
+
+                    {form.specialAccessEnabled && (
+                      <div className="grid grid-cols-3 gap-3">
+                        <div>
+                          <label className="text-sm text-muted-foreground mb-1 block">Offer Price ($)</label>
+                          <Input
+                            type="number"
+                            value={form.overridePrice}
+                            onChange={(e) => setForm({ ...form, overridePrice: e.target.value })}
+                            min="0.01"
+                            step="0.01"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm text-muted-foreground mb-1 block">Access Plan</label>
+                          <select
+                            value={form.grantPlan}
+                            onChange={(e) => setForm({ ...form, grantPlan: e.target.value as 'PRO' | 'TOP_TIER' })}
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          >
+                            <option value="PRO">PRO</option>
+                            <option value="TOP_TIER">PRO+</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-sm text-muted-foreground mb-1 block">Days</label>
+                          <Input
+                            type="number"
+                            value={form.grantDurationDays}
+                            onChange={(e) => setForm({ ...form, grantDurationDays: e.target.value })}
+                            min="1"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
@@ -299,9 +363,13 @@ export default function AdminCouponsPage() {
                             </button>
                           </div>
                         </td>
-                        <td className="p-4 text-muted-foreground capitalize">{coupon.type}</td>
+                        <td className="p-4 text-muted-foreground capitalize">
+                          {coupon.overridePrice != null && coupon.grantPlan && coupon.grantDurationDays ? 'special access' : coupon.type}
+                        </td>
                         <td className="p-4 font-medium">
-                          {coupon.type === 'percentage' ? `${coupon.value}%` : `$${coupon.value.toFixed(2)}`}
+                          {coupon.overridePrice != null && coupon.grantPlan && coupon.grantDurationDays
+                            ? `$${coupon.overridePrice.toFixed(2)} / ${coupon.grantDurationDays}d ${coupon.grantPlan === 'TOP_TIER' ? 'PRO+' : 'PRO'}`
+                            : coupon.type === 'percentage' ? `${coupon.value}%` : `$${coupon.value.toFixed(2)}`}
                         </td>
                         <td className="p-4 text-muted-foreground">
                           {coupon.usedCount} / {coupon.maxUses === 0 ? '∞' : coupon.maxUses}

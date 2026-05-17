@@ -38,6 +38,16 @@ import Link from 'next/link';
 type PlanKey = 'FREE' | 'PRO' | 'TOP_TIER' | 'GOLDX' | 'GOLDX_PULSE';
 type CheckoutMethod = 'paypal' | 'card' | 'bank-transfer';
 type BankTransferBank = 'SCOTIABANK' | 'NCB';
+type AppliedCoupon = {
+  type?: 'percentage' | 'fixed';
+  value?: number;
+  message: string;
+  specialOffer?: {
+    overridePrice: number;
+    grantPlan: 'PRO' | 'TOP_TIER';
+    grantDurationDays: number;
+  };
+};
 
 const BANK_TRANSFER_JMD_RATE = 158;
 const formatJmdCurrency = new Intl.NumberFormat('en-JM', {
@@ -370,7 +380,7 @@ function CheckoutPageContent() {
 
   // Coupon state
   const [couponCode, setCouponCode] = useState('');
-  const [couponApplied, setCouponApplied] = useState<{ type: string; value: number; message: string } | null>(null);
+  const [couponApplied, setCouponApplied] = useState<AppliedCoupon | null>(null);
   const [couponError, setCouponError] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
   const [bankTransferOpen, setBankTransferOpen] = useState(false);
@@ -403,12 +413,15 @@ function CheckoutPageContent() {
 
   const referralDiscountAmount = plan.price * referralDiscount / 100;
   const priceAfterReferral = Math.max(0, plan.price - referralDiscountAmount);
+  const specialOfferPrice = couponApplied?.specialOffer?.overridePrice ?? null;
   const discountAmount = couponApplied
-    ? couponApplied.type === 'percentage'
-      ? priceAfterReferral * couponApplied.value / 100
-      : couponApplied.value
+    ? couponApplied.specialOffer
+      ? 0
+      : couponApplied.type === 'percentage'
+        ? priceAfterReferral * (couponApplied.value ?? 0) / 100
+        : (couponApplied.value ?? 0)
     : 0;
-  const finalPrice = Math.max(0, priceAfterReferral - discountAmount);
+  const finalPrice = specialOfferPrice ?? Math.max(0, priceAfterReferral - discountAmount);
   const bankTransferAmountJmd = finalPrice * BANK_TRANSFER_JMD_RATE;
 
   const handleApplyCoupon = async () => {
@@ -419,8 +432,13 @@ function CheckoutPageContent() {
     setCouponLoading(true);
     try {
       const result = await api.validateCoupon(couponCode.trim(), token);
-      if (result.valid && result.discount) {
-        setCouponApplied({ type: result.discount.type, value: result.discount.value, message: result.message || 'Coupon applied!' });
+      if (result.valid && (result.discount || result.specialOffer)) {
+        setCouponApplied({
+          type: result.discount?.type,
+          value: result.discount?.value,
+          message: result.message || 'Coupon applied!',
+          specialOffer: result.specialOffer,
+        });
       } else {
         setCouponError(result.message || 'Invalid coupon code');
       }
@@ -496,8 +514,13 @@ function CheckoutPageContent() {
     setCouponLoading(true);
     api.validateCoupon(requestedCoupon.trim(), token)
       .then((result) => {
-        if (result.valid && result.discount) {
-          setCouponApplied({ type: result.discount.type, value: result.discount.value, message: result.message || 'Coupon applied!' });
+        if (result.valid && (result.discount || result.specialOffer)) {
+          setCouponApplied({
+            type: result.discount?.type,
+            value: result.discount?.value,
+            message: result.message || 'Coupon applied!',
+            specialOffer: result.specialOffer,
+          });
         } else {
           setCouponError(result.message || 'Invalid coupon code');
         }
@@ -725,7 +748,9 @@ function CheckoutPageContent() {
               ) : (
                 <>
                   <p className="text-muted-foreground mb-6">
-                    Your {plan.name} plan is now active. Enjoy the app.
+                    {couponApplied?.specialOffer
+                      ? `Your ${couponApplied.specialOffer.grantPlan === 'TOP_TIER' ? 'PRO+' : 'PRO'} access is active for ${couponApplied.specialOffer.grantDurationDays} days.`
+                      : `Your ${plan.name} plan is now active. Enjoy the app.`}
                   </p>
                   <Link href="/analyze">
                     <Button variant="gradient" size="lg">Start Analyzing</Button>
@@ -899,8 +924,12 @@ function CheckoutPageContent() {
                             </div>
                           )}
                           <div className="flex justify-between text-green-400">
-                            <span>Coupon ({couponApplied.type === 'percentage' ? `${couponApplied.value}%` : `$${couponApplied.value.toFixed(2)}`})</span>
-                            <span>-${discountAmount.toFixed(2)}</span>
+                            <span>
+                              {couponApplied.specialOffer
+                                ? `Special offer (${couponApplied.specialOffer.grantDurationDays}d ${couponApplied.specialOffer.grantPlan === 'TOP_TIER' ? 'PRO+' : 'PRO'})`
+                                : `Coupon (${couponApplied.type === 'percentage' ? `${couponApplied.value}%` : `$${(couponApplied.value ?? 0).toFixed(2)}`})`}
+                            </span>
+                            <span>{couponApplied.specialOffer ? `$${finalPrice.toFixed(2)}` : `-${discountAmount.toFixed(2)}`}</span>
                           </div>
                           <div className="flex justify-between font-semibold pt-1 border-t border-white/10">
                             <span>Total</span>
