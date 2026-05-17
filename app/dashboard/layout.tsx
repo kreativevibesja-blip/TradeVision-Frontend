@@ -11,16 +11,16 @@ import { CandlestickChart, CreditCard, LayoutDashboard, RadioTower, Users, Radar
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, token } = useAuth();
-  const isLiveWorkspace = pathname === '/dashboard/tradingview' || pathname === '/dashboard/deriv';
+  const isLiveWorkspace = pathname === '/dashboard/tradingview' || pathname === '/dashboard/deriv' || pathname === '/dashboard/signals';
   const isGoldxPulseWorkspace = pathname === '/dashboard/goldx-pulse';
-  const showPushPrompt = user?.subscription === 'TOP_TIER' && Boolean(token);
+  const showPushPrompt = user?.subscription !== 'FREE' && Boolean(token);
   const dashboardNav = [
     { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
     { href: '/dashboard/tradingview', label: 'Live Chart', icon: CandlestickChart },
     { href: '/dashboard/deriv', label: 'Deriv Live', icon: RadioTower },
     { href: '/dashboard/goldx-pulse', label: 'GoldX Pulse', icon: Sparkles },
     { href: '/dashboard/command-center', label: 'Command Center', icon: Target },
-    { href: '/dashboard/scanner', label: 'Scanner', icon: Radar },
+    { href: '/dashboard/signals', label: 'Signals', icon: Radar },
     { href: '/dashboard/radar', label: 'Trade Radar', icon: Crosshair },
     { href: '/dashboard/goldx', label: 'GoldX', icon: TrendingUp },
     { href: '/dashboard/billing', label: 'Billing', icon: CreditCard },
