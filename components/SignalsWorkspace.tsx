@@ -655,98 +655,94 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
   }
 
   return (
-    <div className="space-y-4 text-slate-100">
-      <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.24 }}>
-        <Card className="border-white/10 bg-slate-950/85 backdrop-blur-sm">
-          <CardContent className="space-y-5 p-5 sm:p-6">
+    <div className="space-y-6 text-slate-100">
+      <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.24 }} className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+        <Card className="mobile-card border-white/10">
+          <CardContent className="p-5 sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-slate-400">
-                  <Sparkles className="h-3.5 w-3.5 text-emerald-300" />
+                <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-white/45">
+                  <Sparkles className="h-4 w-4 text-[var(--gold-light)]" />
                   {pageLabel}
                 </div>
-                <h1 className="mt-2 text-2xl font-semibold text-slate-50">Signals Dashboard</h1>
-                <p className="mt-2 max-w-3xl text-sm text-slate-300">
-                  Same scanner-style workspace, but the live feed column is now an active signals column. The chart stays live while the right side tracks the best current setups and the bottom section keeps past signals.
+                <h1 className="mt-2 text-2xl font-semibold text-white">Signals</h1>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-white/60">
+                  Live chart, active session signals, and past signal history in the same dashboard flow the scanner used.
                 </p>
-                <p className="mt-2 text-xs uppercase tracking-[0.18em] text-slate-500">{providerLabel} · {providerDescription}</p>
+                <p className="mt-2 text-xs uppercase tracking-[0.18em] text-white/40">{providerLabel} · {providerDescription}</p>
               </div>
 
-              <div className="rounded-xl border border-white/10 bg-slate-900/80 px-3 py-2">
-                <Badge variant="outline" className={statusTone.className}>
-                  <StatusIcon className={`mr-2 h-3.5 w-3.5 ${liveStatus.loadingHistory ? 'animate-spin' : ''}`} />
-                  {statusTone.label}
-                </Badge>
-              </div>
+              <Badge variant="outline" className={statusTone.className}>
+                <StatusIcon className={`mr-2 h-3.5 w-3.5 ${liveStatus.loadingHistory ? 'animate-spin' : ''}`} />
+                {statusTone.label}
+              </Badge>
             </div>
 
-            <div className="grid gap-3 lg:grid-cols-[1.2fr_1fr]">
-              <div className="space-y-4 rounded-2xl border border-white/10 bg-slate-900/55 p-4">
-                <div>
-                  <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
-                    <Waves className="h-4 w-4 text-cyan-300" />
-                    Controls
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {[
+                { icon: Radar, label: 'Active Signals', value: `${signalCount}/3` },
+                { icon: CandlestickChart, label: 'Current Price', value: currentPrice == null ? '-' : formatPrice(currentPrice) },
+                { icon: Target, label: 'Risk Model', value: '1 : 2' },
+                { icon: BellRing, label: 'Alerts', value: 'Server On' },
+              ].map((item) => (
+                <div key={item.label} className="rounded-2xl border border-white/8 bg-white/5 p-4">
+                  <div className="flex items-center justify-between gap-3 text-[11px] uppercase tracking-[0.18em] text-white/45">
+                    <span>{item.label}</span>
+                    <item.icon className="h-4 w-4 text-white/60" />
                   </div>
-                  <p className="mt-2 text-sm text-slate-400">Choose the market and timeframe the signals engine should track.</p>
+                  <div className="mt-3 text-2xl font-semibold text-white">{item.value}</div>
                 </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
-                <div>
-                  <label className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Quick symbols</label>
-                  <div className="flex flex-wrap gap-2">
-                    {quickSymbols.map((value) => {
-                      const option = isDeriv ? getDerivSymbol(value) : getLiveChartSymbol(value);
-                      const active = symbol === value;
-                      return (
-                        <button
-                          key={value}
-                          type="button"
-                          onClick={() => setSymbol(value)}
-                          className={`rounded-full border px-3 py-1.5 text-xs transition ${active ? 'border-emerald-300/40 bg-emerald-400/15 text-emerald-100' : 'border-white/10 bg-slate-950/55 text-slate-300 hover:border-white/20 hover:text-slate-100'}`}
-                        >
-                          {option.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+        <Card className="mobile-card border-white/10">
+          <CardContent className="p-5 sm:p-6">
+            <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-white/45">
+              <Waves className="h-4 w-4 text-cyan-300" />
+              Controls
+            </div>
 
-                <div className="grid gap-3 md:grid-cols-2">
-                  <label className="block text-sm text-slate-300">
-                    <span className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Index / pair</span>
-                    <select value={symbol} onChange={(event) => setSymbol(event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-cyan-300/40">
-                      {symbolOptions.map((option) => (
-                        <option key={option.value} value={option.value}>{option.label}</option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label className="block text-sm text-slate-300">
-                    <span className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Signal timeframe</span>
-                    <select value={timeframe} onChange={(event) => setTimeframe(event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-cyan-300/40">
-                      {timeframeOptions.map((option) => (
-                        <option key={option.value} value={option.value}>{option.label}</option>
-                      ))}
-                    </select>
-                  </label>
+            <div className="mt-4 space-y-4">
+              <div>
+                <label className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.18em] text-white/45">Quick symbols</label>
+                <div className="flex flex-wrap gap-2">
+                  {quickSymbols.map((value) => {
+                    const option = isDeriv ? getDerivSymbol(value) : getLiveChartSymbol(value);
+                    const active = symbol === value;
+                    return (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => setSymbol(value)}
+                        className={`rounded-full border px-3 py-1.5 text-xs transition ${active ? 'border-[rgba(255,223,112,0.35)] bg-white/10 text-white' : 'border-white/10 bg-white/5 text-white/70 hover:border-white/20 hover:text-white'}`}
+                      >
+                        {option.label}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                {[
-                  { icon: Radar, label: 'Active Signals', value: `${signalCount}/3`, detail: 'Best valid setup per session.' },
-                  { icon: CandlestickChart, label: 'Current Price', value: currentPrice == null ? '-' : formatPrice(currentPrice), detail: 'Streaming from the active chart.' },
-                  { icon: Target, label: 'Risk Model', value: '1 : 2', detail: 'All tickets use a fixed 2R target.' },
-                  { icon: BellRing, label: 'Alerts', value: 'On', detail: 'Server keeps the active watchlist synced.' },
-                ].map((item) => (
-                  <div key={item.label} className="rounded-2xl border border-white/10 bg-slate-900/55 p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-[11px] uppercase tracking-[0.18em] text-slate-400">{item.label}</span>
-                      <item.icon className="h-4 w-4 text-slate-300" />
-                    </div>
-                    <div className="mt-3 text-2xl font-semibold text-slate-50">{item.value}</div>
-                    <p className="mt-2 text-xs leading-5 text-slate-400">{item.detail}</p>
-                  </div>
-                ))}
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="block text-sm text-slate-300">
+                  <span className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.18em] text-white/45">Index / pair</span>
+                  <select value={symbol} onChange={(event) => setSymbol(event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-cyan-300/40">
+                    {symbolOptions.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="block text-sm text-slate-300">
+                  <span className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.18em] text-white/45">Signal timeframe</span>
+                  <select value={timeframe} onChange={(event) => setTimeframe(event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-cyan-300/40">
+                    {timeframeOptions.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </label>
               </div>
             </div>
           </CardContent>
@@ -754,15 +750,15 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
       </motion.section>
 
       <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.28, delay: 0.03 }} className="grid gap-4 xl:grid-cols-[1.5fr_0.9fr]">
-        <Card className="overflow-hidden border-white/10 bg-slate-950/85 backdrop-blur-sm">
+        <Card className="mobile-card overflow-hidden border-white/10">
           <CardContent className="p-4 sm:p-5">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Chart</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-white/45">Chart</p>
                 <h2 className="mt-1 text-lg font-semibold text-slate-50">EMA50 / EMA200 signal map</h2>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-white/45">
                 <span>{selectedSymbol.label}</span>
                 <span>·</span>
                 <span>{selectedTimeframe.label}</span>
@@ -806,9 +802,9 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
         </Card>
 
         <div className="space-y-4">
-          <Card className="border-white/10 bg-slate-950/85 backdrop-blur-sm">
+          <Card className="mobile-card border-white/10">
             <CardContent className="p-5 sm:p-6">
-              <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
+              <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-white/45">
                 <Activity className="h-4 w-4 text-emerald-300" />
                 Active Signals
               </div>
@@ -821,11 +817,11 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
                       key={session}
                       type="button"
                       onClick={() => setSelectedSession(session)}
-                      className={`w-full rounded-2xl border p-4 text-left transition ${active ? 'border-cyan-300/35 bg-slate-900/90' : 'border-white/8 bg-slate-900/55 hover:border-white/16'}`}
+                      className={`w-full rounded-2xl border p-4 text-left transition ${active ? 'border-[rgba(255,223,112,0.3)] bg-white/10' : 'border-white/8 bg-white/5 hover:border-white/16'}`}
                     >
                       <div className="flex items-center justify-between gap-3">
                         <div>
-                          <div className="text-[11px] uppercase tracking-[0.18em] text-slate-400">{SESSION_META[session].label}</div>
+                          <div className="text-[11px] uppercase tracking-[0.18em] text-white/45">{SESSION_META[session].label}</div>
                           <div className="mt-1 text-sm font-medium text-slate-100">{signal ? selectedSymbol.label : 'No active signal'}</div>
                         </div>
                         <Badge variant="outline" className={signal ? (signal.direction === 'buy' ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-100' : 'border-rose-400/30 bg-rose-500/10 text-rose-100') : 'border-white/10 bg-transparent text-slate-400'}>
@@ -835,11 +831,11 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
 
                       <div className="mt-3 grid grid-cols-2 gap-3 text-xs text-slate-300">
                         <div>
-                          <div className="text-slate-500">Entry</div>
+                          <div className="text-white/40">Entry</div>
                           <div className="mt-1 font-medium text-slate-100">{signal ? formatPrice(signal.entry) : '-'}</div>
                         </div>
                         <div>
-                          <div className="text-slate-500">Time</div>
+                          <div className="text-white/40">Time</div>
                           <div className="mt-1 font-medium text-slate-100">{signal ? formatSignalTime(signal.candleTime) : 'Waiting'}</div>
                         </div>
                       </div>
@@ -850,11 +846,11 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
             </CardContent>
           </Card>
 
-          <Card className="border-white/10 bg-slate-950/85 backdrop-blur-sm">
+          <Card className="mobile-card border-white/10">
             <CardContent className="p-5 sm:p-6">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Selected Signal</p>
+                  <p className="text-xs uppercase tracking-[0.2em] text-white/45">Selected Signal</p>
                   <h2 className="mt-1 text-lg font-semibold text-slate-50">Active ticket</h2>
                 </div>
                 {activeSignal ? (
@@ -866,14 +862,14 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
 
               {activeSignal ? (
                 <div className="mt-4 space-y-4">
-                  <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <div className="text-[11px] uppercase tracking-[0.18em] text-slate-400">{SESSION_META[activeSignal.session].label}</div>
+                        <div className="text-[11px] uppercase tracking-[0.18em] text-white/45">{SESSION_META[activeSignal.session].label}</div>
                         <div className="mt-1 text-lg font-semibold text-slate-50">{activeSignal.setupLabel}</div>
                         <p className="mt-2 text-sm text-slate-300">{activeSignal.reason}</p>
                       </div>
-                      <div className="text-right text-xs text-slate-400">
+                      <div className="text-right text-xs text-white/45">
                         <div>Confidence</div>
                         <div className="mt-1 text-lg font-semibold text-slate-50">{activeSignal.confidence}%</div>
                       </div>
@@ -890,8 +886,8 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
                         ['TP', formatPrice(activeSignal.takeProfit)],
                         ['Risk / reward', '1 : 2'],
                       ].map(([label, value]) => (
-                        <div key={label} className="rounded-xl border border-white/8 bg-slate-950/60 p-3">
-                          <div className="text-[10px] uppercase tracking-[0.16em] text-slate-500">{label}</div>
+                        <div key={label} className="rounded-xl border border-white/8 bg-white/5 p-3">
+                          <div className="text-[10px] uppercase tracking-[0.16em] text-white/40">{label}</div>
                           <div className="mt-1 font-medium text-slate-100">{value}</div>
                         </div>
                       ))}
@@ -899,26 +895,26 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
                   </div>
 
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-2xl border border-white/8 bg-slate-900/55 p-4 text-sm text-slate-300">
+                    <div className="rounded-2xl border border-white/8 bg-white/5 p-4 text-sm text-slate-300">
                       <div className="flex items-center gap-2 text-slate-100">
                         <Clock3 className="h-4 w-4 text-cyan-300" />
                         Triggered {formatSignalTime(activeSignal.candleTime)}
                       </div>
-                      <p className="mt-3 text-xs leading-5 text-slate-400">{activeSignal.executionNote}</p>
+                      <p className="mt-3 text-xs leading-5 text-white/45">{activeSignal.executionNote}</p>
                     </div>
-                    <div className="rounded-2xl border border-white/8 bg-slate-900/55 p-4 text-sm text-slate-300">
+                    <div className="rounded-2xl border border-white/8 bg-white/5 p-4 text-sm text-slate-300">
                       <div className="flex items-center gap-2 text-slate-100">
                         <ArrowUpRight className="h-4 w-4 text-emerald-300" />
                         Market distance
                       </div>
-                      <p className="mt-3 text-xs leading-5 text-slate-400">
+                      <p className="mt-3 text-xs leading-5 text-white/45">
                         {distanceToEntry == null ? 'Waiting for enough live candles to measure distance from entry.' : `${distanceToEntry.toFixed(2)}% away from the active entry price.`}
                       </p>
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="mt-4 rounded-2xl border border-dashed border-white/12 bg-slate-900/50 p-5 text-sm text-slate-300">
+                <div className="mt-4 rounded-2xl border border-dashed border-white/12 bg-white/5 p-5 text-sm text-slate-300">
                   No active signal yet. The chart is still live; this panel fills as soon as a session logs a valid EMA reclaim.
                 </div>
               )}
@@ -928,15 +924,15 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
       </motion.section>
 
       <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.06 }} className="grid gap-4 xl:grid-cols-[1.25fr_0.75fr]">
-        <Card className="border-white/10 bg-slate-950/85 backdrop-blur-sm">
+        <Card className="mobile-card border-white/10">
           <CardContent className="p-5 sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
+                <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-white/45">
                   <History className="h-4 w-4 text-emerald-300" />
                   Past Signals
                 </div>
-                <p className="mt-2 text-sm text-slate-400">Archived signals for the current feed. Filter by asset class to narrow the list.</p>
+                <p className="mt-2 text-sm text-white/55">Archived signals for the current feed. Filter by asset class to narrow the list.</p>
               </div>
 
               <div className="flex flex-wrap gap-2">
@@ -955,11 +951,11 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
 
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               {filteredHistory.length > 0 ? filteredHistory.slice(0, 8).map((item) => (
-                <div key={item.key} className="rounded-2xl border border-white/8 bg-slate-900/55 p-4 text-sm">
+                <div key={item.key} className="rounded-2xl border border-white/8 bg-white/5 p-4 text-sm">
                   <div className="flex items-center justify-between gap-2">
                     <div>
                       <div className="font-medium text-slate-100">{item.symbolLabel}</div>
-                      <div className="mt-1 text-xs text-slate-500">{item.assetClass} · {SESSION_META[item.session].shortLabel}</div>
+                      <div className="mt-1 text-xs text-white/40">{item.assetClass} · {SESSION_META[item.session].shortLabel}</div>
                     </div>
                     <Badge variant="outline" className={item.direction === 'buy' ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-100' : 'border-rose-400/30 bg-rose-500/10 text-rose-100'}>
                       {item.direction.toUpperCase()}
@@ -967,18 +963,18 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
                   </div>
 
                   <div className="mt-3 grid grid-cols-3 gap-2 text-[11px] text-slate-300">
-                    <div className="rounded-xl border border-white/8 bg-slate-950/60 p-2">E {formatPrice(item.entry)}</div>
-                    <div className="rounded-xl border border-white/8 bg-slate-950/60 p-2">SL {formatPrice(item.stopLoss)}</div>
-                    <div className="rounded-xl border border-white/8 bg-slate-950/60 p-2">TP {formatPrice(item.takeProfit)}</div>
+                    <div className="rounded-xl border border-white/8 bg-white/5 p-2">E {formatPrice(item.entry)}</div>
+                    <div className="rounded-xl border border-white/8 bg-white/5 p-2">SL {formatPrice(item.stopLoss)}</div>
+                    <div className="rounded-xl border border-white/8 bg-white/5 p-2">TP {formatPrice(item.takeProfit)}</div>
                   </div>
 
-                  <div className="mt-3 flex items-center justify-between text-xs text-slate-400">
+                  <div className="mt-3 flex items-center justify-between text-xs text-white/45">
                     <span>{item.timeframe}</span>
                     <span>{formatSignalTime(item.candleTime)}</span>
                   </div>
                 </div>
               )) : (
-                <div className="md:col-span-2 rounded-2xl border border-dashed border-white/10 bg-slate-900/45 p-5 text-sm text-slate-400">
+                <div className="md:col-span-2 rounded-2xl border border-dashed border-white/10 bg-white/5 p-5 text-sm text-white/45">
                   {history.length > 0 ? 'No archived signals match the selected asset class yet.' : 'Past signals will appear here as new session signals are generated.'}
                 </div>
               )}
@@ -986,34 +982,34 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
           </CardContent>
         </Card>
 
-        <Card className="border-white/10 bg-slate-950/85 backdrop-blur-sm">
+        <Card className="mobile-card border-white/10">
           <CardContent className="space-y-4 p-5 sm:p-6">
-            <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
+            <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-white/45">
               <ShieldCheck className="h-4 w-4 text-emerald-300" />
               Session Performance
             </div>
 
             {sessionStats.map((item) => (
-              <div key={item.session} className="rounded-2xl border border-white/8 bg-slate-900/55 p-4">
+              <div key={item.session} className="rounded-2xl border border-white/8 bg-white/5 p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <div className="text-sm font-medium text-slate-100">{SESSION_META[item.session].label}</div>
-                    <div className="mt-1 text-xs text-slate-500">{item.total} archived signals in the current filter</div>
+                    <div className="mt-1 text-xs text-white/40">{item.total} archived signals in the current filter</div>
                   </div>
                   <div className="text-right">
-                    <div className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Avg confidence</div>
+                    <div className="text-[10px] uppercase tracking-[0.16em] text-white/40">Avg confidence</div>
                     <div className="mt-1 text-lg font-semibold text-slate-50">{item.total > 0 ? `${item.avgConfidence}%` : '-'}</div>
                   </div>
                 </div>
                 <div className="mt-3 grid grid-cols-3 gap-2 text-xs text-slate-300">
-                  <div className="rounded-xl border border-white/8 bg-slate-950/60 px-3 py-2">Total {item.total}</div>
-                  <div className="rounded-xl border border-white/8 bg-slate-950/60 px-3 py-2">Buys {item.buyCount}</div>
-                  <div className="rounded-xl border border-white/8 bg-slate-950/60 px-3 py-2">Sells {item.sellCount}</div>
+                  <div className="rounded-xl border border-white/8 bg-white/5 px-3 py-2">Total {item.total}</div>
+                  <div className="rounded-xl border border-white/8 bg-white/5 px-3 py-2">Buys {item.buyCount}</div>
+                  <div className="rounded-xl border border-white/8 bg-white/5 px-3 py-2">Sells {item.sellCount}</div>
                 </div>
               </div>
             ))}
 
-            <div className="rounded-2xl border border-white/8 bg-slate-900/55 p-4 text-sm leading-6 text-slate-300">
+            <div className="rounded-2xl border border-white/8 bg-white/5 p-4 text-sm leading-6 text-slate-300">
               Keep the chart on 15m or 30m for cleaner structure. Lower timeframes can still work, but they naturally produce noisier session signals.
             </div>
           </CardContent>
