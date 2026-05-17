@@ -991,7 +991,7 @@ function CheckoutPageContent() {
                               </div>
                               <div>
                                 <div className="font-medium">Bank Transfer</div>
-                                <div className="text-sm text-muted-foreground">Submit a manual transfer and send your receipt to WhatsApp for verification.</div>
+                                <div className="text-sm text-muted-foreground">Submit a manual transfer for billing-team verification.</div>
                               </div>
                             </div>
                             <ArrowRight className="h-4 w-4 text-muted-foreground" />
@@ -1134,7 +1134,7 @@ function CheckoutPageContent() {
                   </div>
 
                   <div className="mt-6 rounded-2xl border border-white/10 bg-black/15 p-4 text-sm text-slate-200">
-                    After making payment, please share an image of the transfer receipt to our WhatsApp <a href="https://wa.me/18762797956" target="_blank" rel="noreferrer" className="font-semibold text-white underline underline-offset-4">+1-876-2797956</a> along with your registered email address.
+                    After making payment, click Done below to log the transfer for review using your registered account details.
                   </div>
                 </div>
               ) : null}

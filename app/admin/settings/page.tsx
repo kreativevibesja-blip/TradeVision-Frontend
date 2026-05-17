@@ -59,8 +59,6 @@ export default function AdminSettingsPage() {
   const [freeOpenAiEnabled, setFreeOpenAiEnabled] = useState(false);
   const [proGeminiEnabled, setProGeminiEnabled] = useState(true);
   const [proOpenAiEnabled, setProOpenAiEnabled] = useState(false);
-  const [supportWhatsappNumber, setSupportWhatsappNumber] = useState('18762797956');
-  const [supportWhatsappMessage, setSupportWhatsappMessage] = useState('Hi TradeVision AI, I need support.');
   const [scannerUseEmaFilter, setScannerUseEmaFilter] = useState(true);
   const [scannerFastEma, setScannerFastEma] = useState('9');
   const [scannerMidEma, setScannerMidEma] = useState('14');
@@ -88,8 +86,6 @@ export default function AdminSettingsPage() {
       const freeOpenAi = data.settings.find((s: any) => s.key === 'ai_model_openai_free_enabled');
       const proGemini = data.settings.find((s: any) => s.key === 'ai_model_gemini_pro_enabled');
       const proOpenAi = data.settings.find((s: any) => s.key === 'ai_model_openai_pro_enabled');
-      const whatsappNumber = data.settings.find((s: any) => s.key === 'support_whatsapp_number');
-      const whatsappMessage = data.settings.find((s: any) => s.key === 'support_whatsapp_message');
       const scannerUseEma = data.settings.find((s: any) => s.key === 'scanner_execution_use_ema_filter');
       const scannerFast = data.settings.find((s: any) => s.key === 'scanner_execution_fast_ema_period');
       const scannerMid = data.settings.find((s: any) => s.key === 'scanner_execution_mid_ema_period');
@@ -108,8 +104,6 @@ export default function AdminSettingsPage() {
       if (freeOpenAi) setFreeOpenAiEnabled(Boolean(freeOpenAi.value));
       if (proGemini) setProGeminiEnabled(Boolean(proGemini.value));
       if (proOpenAi) setProOpenAiEnabled(Boolean(proOpenAi.value));
-      if (whatsappNumber?.value) setSupportWhatsappNumber(String(whatsappNumber.value));
-      if (whatsappMessage?.value) setSupportWhatsappMessage(String(whatsappMessage.value));
       const nextScannerUseEma = scannerUseEma ? Boolean(scannerUseEma.value) : true;
       const nextScannerFastEma = scannerFast?.value != null ? String(scannerFast.value) : '9';
       const nextScannerMidEma = scannerMid?.value != null ? String(scannerMid.value) : '14';
@@ -143,8 +137,6 @@ export default function AdminSettingsPage() {
     }
   };
 
-  const connectedWhatsappNumber = supportWhatsappNumber.trim() || 'Not configured';
-
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
       <section className="premium-panel premium-noise overflow-hidden p-6 sm:p-8">
@@ -164,10 +156,6 @@ export default function AdminSettingsPage() {
             <div className="mobile-card rounded-[22px] p-4">
               <div className="metric-label">Popup cadence</div>
               <div className="mt-2 text-sm font-semibold text-white">{announcementPopupRepeatHours} hrs</div>
-            </div>
-            <div className="mobile-card rounded-[22px] p-4">
-              <div className="metric-label">Support line</div>
-              <div className="mt-2 text-sm font-semibold text-white">{connectedWhatsappNumber}</div>
             </div>
             <div className="mobile-card rounded-[22px] p-4">
               <div className="metric-label">EMA filter</div>
@@ -271,54 +259,6 @@ export default function AdminSettingsPage() {
             >
               {saving ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Save className="h-3 w-3 mr-1" />}
               Save Popup Settings
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="premium-panel premium-noise border-[rgba(255,223,112,0.12)] bg-transparent">
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Settings className="h-5 w-5 text-primary" />
-              WhatsApp Support Settings
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="premium-panel-muted p-4">
-              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Current connected number</p>
-              <p className="mt-2 text-lg font-semibold">{connectedWhatsappNumber}</p>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <label className="text-sm text-muted-foreground">WhatsApp number</label>
-                <Input
-                  className="premium-input"
-                  value={supportWhatsappNumber}
-                  onChange={(e) => setSupportWhatsappNumber(e.target.value)}
-                  placeholder="18762797956"
-                />
-              </div>
-              <div>
-                <label className="text-sm text-muted-foreground">Support message</label>
-                <Input
-                  className="premium-input"
-                  value={supportWhatsappMessage}
-                  onChange={(e) => setSupportWhatsappMessage(e.target.value)}
-                  placeholder="Hi TradeVision AI, I need support."
-                />
-              </div>
-            </div>
-
-            <Button
-              size="sm"
-              onClick={async () => {
-                await saveSetting('support_whatsapp_number', supportWhatsappNumber.trim());
-                await saveSetting('support_whatsapp_message', supportWhatsappMessage.trim());
-              }}
-              disabled={saving}
-            >
-              {saving ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Save className="h-3 w-3 mr-1" />}
-              Save WhatsApp Settings
             </Button>
           </CardContent>
         </Card>

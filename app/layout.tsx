@@ -10,7 +10,7 @@ import { GlobalBackButton } from '@/components/GlobalBackButton';
 import { GlobalUpdatesModal } from '@/components/GlobalUpdatesModal';
 import { PlatformIntroModal } from '@/components/PlatformIntroModal';
 import { VisitorHeartbeat } from '@/components/VisitorHeartbeat';
-import { WhatsAppSupportButton } from '@/components/WhatsAppSupportButton';
+import { SupportButton } from '@/components/SupportButton';
 import { ReferralCapture } from '@/components/ReferralCapture';
 import { FeedbackTrigger } from '@/components/FeedbackTrigger';
 
@@ -51,7 +51,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <GlobalUpdatesModal />
               <PlatformIntroModal />
               <main className="flex-1 pt-20">{children}</main>
-              <WhatsAppSupportButton />
+              <SupportButton />
               <FeedbackTrigger />
             </div>
             <Footer />

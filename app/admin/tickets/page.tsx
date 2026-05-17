@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { api, type SearchedUser, type SupportTicket, type TicketCategory, type TicketPriority, type TicketStatus } from '@/lib/api';
 import { formatJamaicaDate, formatJamaicaDateTime } from '@/lib/jamaica-time';
-import { Loader2, MessageCircle, RefreshCw, Save, Search, Ticket, TimerReset, Send, CheckCircle2, AlertTriangle, X, Plus, UserRound } from 'lucide-react';
+import { Loader2, RefreshCw, Save, Search, Ticket, TimerReset, Send, CheckCircle2, AlertTriangle, X, Plus, UserRound } from 'lucide-react';
 
 type StatusFilter = TicketStatus | 'ALL';
 type PriorityFilter = TicketPriority | 'ALL';
@@ -23,16 +23,6 @@ const statusVariant = (status: TicketStatus) => {
   if (status === 'WAITING_ON_USER') return 'warning';
   if (status === 'IN_PROGRESS') return 'secondary';
   return 'outline';
-};
-
-const buildWhatsAppUrl = (ticket: SupportTicket) => {
-  if (!ticket.whatsappNumber) {
-    return null;
-  }
-
-  const number = ticket.whatsappNumber.replace(/[^\d]/g, '');
-  const message = encodeURIComponent(`Hi ${ticket.userName || 'there'}, this is ChartMind AI support replying to ticket ${ticket.ticketNumber}: `);
-  return `https://wa.me/${number}?text=${message}`;
 };
 
 export default function AdminTicketsPage() {
@@ -62,7 +52,6 @@ export default function AdminTicketsPage() {
   const [createSearchLoading, setCreateSearchLoading] = useState(false);
   const [showCreateResults, setShowCreateResults] = useState(false);
   const [selectedUser, setSelectedUser] = useState<SearchedUser | null>(null);
-  const [createWhatsappNumber, setCreateWhatsappNumber] = useState('');
   const [createCategory, setCreateCategory] = useState<TicketCategory>('GENERAL');
   const [createPriority, setCreatePriority] = useState<TicketPriority>('MEDIUM');
   const [createSubject, setCreateSubject] = useState('');
@@ -100,7 +89,6 @@ export default function AdminTicketsPage() {
     setCreateSearchLoading(false);
     setShowCreateResults(false);
     setSelectedUser(null);
-    setCreateWhatsappNumber('');
     setCreateCategory('GENERAL');
     setCreatePriority('MEDIUM');
     setCreateSubject('');
@@ -284,7 +272,6 @@ export default function AdminTicketsPage() {
       const data = await api.admin.createTicket(
         {
           userId: selectedUser.id,
-          whatsappNumber: createWhatsappNumber.trim() || undefined,
           subject: createSubject.trim(),
           category: createCategory,
           priority: createPriority,
@@ -310,7 +297,7 @@ export default function AdminTicketsPage() {
       <div className="flex flex-shrink-0 flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h1 className="text-xl font-bold">Support Tickets</h1>
-          <p className="text-xs text-muted-foreground">Review issues, create follow-up tickets from WhatsApp support, and reply via email or WhatsApp.</p>
+          <p className="text-xs text-muted-foreground">Review issues, create follow-up tickets, and reply by email.</p>
         </div>
         <div className="flex items-center gap-2">
           <Button size="sm" onClick={openCreateModal} className="gap-2">
@@ -435,12 +422,6 @@ export default function AdminTicketsPage() {
                       <Send className="h-3.5 w-3.5" />
                       Reply via Email
                     </button>
-                    {buildWhatsAppUrl(selectedTicket) ? (
-                      <a href={buildWhatsAppUrl(selectedTicket)!} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-400/20 bg-emerald-500/10 px-2.5 py-1.5 text-xs text-emerald-100 transition-colors hover:bg-emerald-500/15">
-                        <MessageCircle className="h-3.5 w-3.5" />
-                        WhatsApp
-                      </a>
-                    ) : null}
                   </div>
                 </div>
 
@@ -453,7 +434,7 @@ export default function AdminTicketsPage() {
                   <div className="rounded-xl border border-white/10 bg-white/5 p-3">
                     <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Priority</p>
                     <p className="mt-1 text-xs font-medium">{selectedTicket.priority}</p>
-                    <p className="mt-0.5 text-[11px] text-muted-foreground">{selectedTicket.whatsappNumber || 'No WhatsApp'}</p>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground">{selectedTicket.respondedAt ? 'Responded' : 'Awaiting response'}</p>
                   </div>
                   <div className="rounded-xl border border-white/10 bg-white/5 p-3">
                     <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Activity</p>
@@ -576,7 +557,7 @@ export default function AdminTicketsPage() {
                   <Plus className="h-4 w-4 text-cyan-300" />
                   <h3 className="text-sm font-semibold">Create Admin Ticket</h3>
                 </div>
-                <p className="mt-1 text-[11px] text-muted-foreground">Capture a WhatsApp support issue so it stays in the ticket queue for follow-up.</p>
+                <p className="mt-1 text-[11px] text-muted-foreground">Create a tracked support issue so it stays in the ticket queue for follow-up.</p>
               </div>
               <button type="button" onClick={() => !createSubmitting && setCreateOpen(false)} className="rounded-lg p-1 text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground">
                 <X className="h-4 w-4" />
@@ -645,11 +626,6 @@ export default function AdminTicketsPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-foreground">WhatsApp number</label>
-                  <Input value={createWhatsappNumber} onChange={(event) => setCreateWhatsappNumber(event.target.value)} placeholder="Optional WhatsApp number used in support chat" className="h-10 text-sm" />
-                </div>
-
-                <div className="space-y-1.5">
                   <label className="text-xs font-medium text-foreground">Subject</label>
                   <Input value={createSubject} onChange={(event) => setCreateSubject(event.target.value)} placeholder="Short issue headline" className="h-10 text-sm" />
                 </div>
@@ -661,7 +637,7 @@ export default function AdminTicketsPage() {
                     onChange={(event) => setCreateMessage(event.target.value)}
                     rows={6}
                     className="w-full rounded-xl border border-input bg-background/50 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-                    placeholder="Summarize what the customer reported on WhatsApp, what they need, and any useful reproduction details."
+                    placeholder="Summarize what the customer reported, what they need, and any useful reproduction details."
                   />
                 </div>
               </div>
@@ -679,7 +655,7 @@ export default function AdminTicketsPage() {
                       <Badge variant="outline" className="mt-2 text-[10px] px-1.5 py-0">{selectedUser.subscription}</Badge>
                     </div>
                   ) : (
-                    <p className="mt-3 text-xs text-muted-foreground">Search and select the user account this WhatsApp issue belongs to.</p>
+                    <p className="mt-3 text-xs text-muted-foreground">Search and select the user account this support issue belongs to.</p>
                   )}
                 </div>
 
@@ -696,7 +672,7 @@ export default function AdminTicketsPage() {
 
                 <div className="rounded-2xl border border-cyan-400/15 bg-cyan-500/5 p-4 text-xs text-muted-foreground">
                   <p className="font-medium text-foreground">Recommended capture</p>
-                  <p className="mt-2">Include the exact user problem, what was already tried on WhatsApp, and what someone should check next when they pick this up later.</p>
+                  <p className="mt-2">Include the exact user problem, what was already tried, and what someone should check next when they pick this up later.</p>
                 </div>
 
                 {createError ? (
