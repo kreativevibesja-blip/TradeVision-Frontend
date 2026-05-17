@@ -49,23 +49,12 @@ export function FeedbackModal({ open, onClose, userId }: FeedbackModalProps) {
     setSubmitError(null);
     setSubmitting(true);
     try {
-      const {
-        data: { session },
-        error: sessionError,
-      } = await supabase.auth.getSession();
-
-      if (sessionError) {
-        throw sessionError;
-      }
-
-      const authenticatedUserId = session?.user?.id ?? userId;
-
-      if (!authenticatedUserId) {
+      if (!userId) {
         throw new Error('You need to be signed in to send feedback.');
       }
 
       const { error } = await supabase.from('feedback').insert({
-        user_id: authenticatedUserId,
+        user_id: userId,
         rating,
         reason,
         message: message.trim() || null,

@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { api } from '@/lib/api';
-import { hasSupabaseEnv, missingSupabaseEnvMessage, supabase } from '@/lib/supabase';
+import { hasSupabaseEnv, missingSupabaseEnvMessage, recordTokenRefresh, setCachedSession, supabase } from '@/lib/supabase';
 import { getReferralCode, clearReferralCode } from '@/components/ReferralCapture';
 
 interface User {
@@ -12,6 +12,7 @@ interface User {
   name?: string;
   role: string;
   subscription: string;
+  createdAt?: string;
   themePreference?: 'legacy' | 'goldx-premium';
   dailyUsage?: number;
 }
@@ -47,6 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const clearAuthState = () => {
     setUser(null);
     setToken(null);
+    setCachedSession(null);
     clearLegacyTokens();
   };
 
@@ -108,6 +110,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           throw error;
         }
 
+        setCachedSession(session ?? null);
+
         if (session?.access_token) {
           await syncProfile(session.access_token);
         } else {
@@ -125,6 +129,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const {
       data: { subscription },
     } = supabaseClient.auth.onAuthStateChange((event: AuthChangeEvent, session: Session | null) => {
+      if (event === 'TOKEN_REFRESHED') {
+        recordTokenRefresh(session);
+      } else {
+        setCachedSession(session);
+      }
+
       const accessToken = session?.access_token ?? null;
 
       if (!accessToken) {
@@ -286,10 +296,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     await supabase.auth.signOut();
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem('tradevision_token');
-    localStorage.removeItem('chartmind_token');
+    clearAuthState();
   };
 
   const refreshUser = async () => {

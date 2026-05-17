@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { getCachedAccessToken } from '@/lib/supabase';
 
 const DEFAULT_API_URL = 'http://localhost:4000/api';
 
@@ -566,40 +566,7 @@ interface FetchOptions extends RequestInit {
   token?: string;
 }
 
-const ACCESS_TOKEN_REFRESH_BUFFER_MS = 60 * 1000;
-
-const resolveAuthToken = async (token?: string | null) => {
-  if (!supabase) {
-    return token ?? null;
-  }
-
-  try {
-    const {
-      data: { session },
-      error,
-    } = await supabase.auth.getSession();
-
-    if (error) {
-      return token ?? null;
-    }
-
-    if (!session) {
-      return token ?? null;
-    }
-
-    const expiresAt = session.expires_at ? session.expires_at * 1000 : null;
-    if (expiresAt && expiresAt <= Date.now() + ACCESS_TOKEN_REFRESH_BUFFER_MS) {
-      const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
-      if (!refreshError && refreshed.session?.access_token) {
-        return refreshed.session.access_token;
-      }
-    }
-
-    return session.access_token || token || null;
-  } catch {
-    return token ?? null;
-  }
-};
+const resolveAuthToken = (token?: string | null) => token ?? getCachedAccessToken();
 
 const sendRequest = async (endpoint: string, fetchOptions: RequestInit, token?: string | null) => {
   const headers: Record<string, string> = {
@@ -626,19 +593,8 @@ const sendRequest = async (endpoint: string, fetchOptions: RequestInit, token?: 
 async function apiFetch<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
   const { token, ...fetchOptions } = options;
 
-  const resolvedToken = await resolveAuthToken(token);
+  const resolvedToken = resolveAuthToken(token);
   let response = await sendRequest(endpoint, fetchOptions, resolvedToken);
-
-  if (response.status === 401 && supabase) {
-    try {
-      const { data, error } = await supabase.auth.refreshSession();
-      if (!error && data.session?.access_token) {
-        response = await sendRequest(endpoint, fetchOptions, data.session.access_token);
-      }
-    } catch {
-      // Let the original 401 handling below surface the failure.
-    }
-  }
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'Request failed' }));
@@ -662,7 +618,7 @@ export async function openScannerPanelsStream(
     signal?: AbortSignal;
   },
 ) {
-  const resolvedToken = await resolveAuthToken(token);
+  const resolvedToken = resolveAuthToken(token);
   const response = await fetch(`${API_URL}/scanner/stream`, {
     method: 'GET',
     headers: resolvedToken ? { Authorization: `Bearer ${resolvedToken}` } : {},
@@ -730,7 +686,7 @@ export async function openGoldxPulseStream(
     signal?: AbortSignal;
   },
 ) {
-  const resolvedToken = await resolveAuthToken(token);
+  const resolvedToken = resolveAuthToken(token);
   const response = await fetch(`${API_URL}/goldx-pulse/stream`, {
     method: 'GET',
     headers: resolvedToken ? { Authorization: `Bearer ${resolvedToken}` } : {},
