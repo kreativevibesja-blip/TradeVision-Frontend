@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { api, type SupportTicket, type TicketCategory, type TicketPriority } from '@/lib/api';
 import { formatJamaicaDateTime } from '@/lib/jamaica-time';
-import { AlertCircle, CheckCircle2, Loader2, Mail, MessageCircle, ShieldCheck, Ticket } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Loader2, Mail, ShieldCheck, Ticket } from 'lucide-react';
 
 const categories: Array<{ value: TicketCategory; label: string }> = [
   { value: 'ACCOUNT', label: 'Account' },
@@ -35,10 +35,9 @@ const statusVariant = (status: SupportTicket['status']) => {
 
 interface TicketFormProps {
   open: boolean;
-  whatsappUrl: string;
 }
 
-export function TicketForm({ open, whatsappUrl }: TicketFormProps) {
+export function TicketForm({ open }: TicketFormProps) {
   const { user, token, loading } = useAuth();
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [ticketsLoading, setTicketsLoading] = useState(false);
@@ -145,19 +144,7 @@ export function TicketForm({ open, whatsappUrl }: TicketFormProps) {
             </div>
           </div>
           <div className="grid gap-3 md:grid-cols-2">
-            <a
-              href={whatsappUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-4 text-sm text-emerald-100 transition-colors hover:bg-emerald-500/15"
-            >
-              <div className="mb-2 flex items-center gap-2 font-semibold">
-                <MessageCircle className="h-4 w-4" />
-                WhatsApp support
-              </div>
-              <p className="text-emerald-50/80">Use WhatsApp right now if you need immediate help before signing in.</p>
-            </a>
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-muted-foreground">
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-muted-foreground md:col-span-2">
               <div className="mb-2 flex items-center gap-2 font-semibold text-foreground">
                 <Mail className="h-4 w-4 text-cyan-200" />
                 Ticket history unlocks after login
@@ -253,16 +240,7 @@ export function TicketForm({ open, whatsappUrl }: TicketFormProps) {
           </div>
 
           <div className="sticky bottom-0 -mx-4 border-t border-white/10 bg-slate-950/95 px-4 pb-1 pt-3 backdrop-blur-xl sm:-mx-5 sm:px-5">
-            <div className="grid gap-2 sm:grid-cols-2">
-              <a
-                href={whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-sm font-medium text-emerald-100 transition-colors hover:bg-emerald-500/15"
-              >
-                <MessageCircle className="h-4 w-4" />
-                Open WhatsApp
-              </a>
+            <div className="grid gap-2 sm:grid-cols-1">
               <Button
                 onClick={handleSubmit}
                 disabled={submitting || subject.trim().length < 5 || message.trim().length < 20}

@@ -4,44 +4,16 @@ import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 import { TicketForm } from '@/components/TicketForm';
-import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ChevronUp, LifeBuoy, MessageCircle, PlusCircle, X } from 'lucide-react';
-
-const DEFAULT_SUPPORT_WHATSAPP_NUMBER = '18762797956';
-const DEFAULT_SUPPORT_WHATSAPP_MESSAGE = 'Hi TradeVision AI, I need support.';
-
-const normalizeWhatsAppNumber = (value: string) => value.replace(/[^\d]/g, '');
-
-const buildWhatsAppUrl = (number: string, message: string) => {
-  const normalizedNumber = normalizeWhatsAppNumber(number) || DEFAULT_SUPPORT_WHATSAPP_NUMBER;
-  const normalizedMessage = message.trim() || DEFAULT_SUPPORT_WHATSAPP_MESSAGE;
-  return `https://wa.me/${normalizedNumber}?text=${encodeURIComponent(normalizedMessage)}`;
-};
+import { ChevronUp, LifeBuoy, PlusCircle, X } from 'lucide-react';
 
 export function WhatsAppSupportButton() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
-  const [whatsappUrl, setWhatsappUrl] = useState(() => buildWhatsAppUrl(DEFAULT_SUPPORT_WHATSAPP_NUMBER, DEFAULT_SUPPORT_WHATSAPP_MESSAGE));
   const menuRef = useRef<HTMLDivElement | null>(null);
   const isLiveWorkspace = pathname === '/dashboard/tradingview' || pathname === '/dashboard/deriv';
-
-  useEffect(() => {
-    let active = true;
-
-    api.getPublicSupportSettings()
-      .then((settings) => {
-        if (!active) return;
-        setWhatsappUrl(buildWhatsAppUrl(settings.whatsappNumber, settings.whatsappMessage));
-      })
-      .catch(() => {});
-
-    return () => {
-      active = false;
-    };
-  }, []);
 
   useEffect(() => {
     if (!menuOpen && !modalOpen) {
@@ -112,7 +84,7 @@ export function WhatsAppSupportButton() {
                       </div>
                       <h2 className="text-xl font-semibold text-white sm:text-2xl">How can we help?</h2>
                       <p className="mt-1 max-w-xl text-sm text-slate-300">
-                        Create a tracked ticket for account, billing, chart analysis, or bug issues. If it is urgent, jump straight to WhatsApp.
+                        Create a tracked ticket for account, billing, chart analysis, or bug issues.
                       </p>
                     </div>
                     <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setModalOpen(false)} aria-label="Close support">
@@ -121,7 +93,7 @@ export function WhatsAppSupportButton() {
                   </div>
 
                   <div className="max-h-[calc(100dvh-9rem)] overflow-y-auto overscroll-contain p-3 [scrollbar-gutter:stable] sm:max-h-[calc(94vh-88px)] sm:p-4">
-                    <TicketForm open={modalOpen} whatsappUrl={whatsappUrl} />
+                    <TicketForm open={modalOpen} />
                   </div>
                 </CardContent>
               </Card>
@@ -140,22 +112,6 @@ export function WhatsAppSupportButton() {
               transition={{ duration: 0.16 }}
               className="mb-3 w-56 rounded-3xl border border-[rgba(255,223,112,0.12)] bg-slate-950/95 p-2 shadow-[0_24px_80px_rgba(2,6,23,0.55)] backdrop-blur-xl"
             >
-              <a
-                href={whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => setMenuOpen(false)}
-                className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm text-white transition-colors hover:bg-[rgba(255,223,112,0.08)]"
-              >
-                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[rgba(255,223,112,0.12)] text-[var(--gold-light)]">
-                  <MessageCircle className="h-5 w-5" />
-                </span>
-                <span>
-                  <span className="block font-semibold">WhatsApp</span>
-                  <span className="block text-xs text-slate-400">Chat with support now</span>
-                </span>
-              </a>
-
               <button
                 type="button"
                 onClick={openTicketModal}
