@@ -655,78 +655,41 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
   }
 
   return (
-    <div className="relative overflow-hidden rounded-[2rem] border border-white/8 bg-[radial-gradient(circle_at_top,rgba(34,197,94,0.14),transparent_28%),radial-gradient(circle_at_right,rgba(56,189,248,0.14),transparent_32%),linear-gradient(180deg,#020617_0%,#020817_44%,#020617_100%)] p-4 text-slate-100 shadow-[0_24px_90px_rgba(2,6,23,0.45)] sm:p-6">
-      <motion.div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-white/[0.03] to-transparent" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.45 }} />
-      <div className="pointer-events-none absolute -left-20 top-20 h-56 w-56 rounded-full bg-emerald-400/10 blur-3xl" />
-      <div className="pointer-events-none absolute right-0 top-10 h-72 w-72 rounded-full bg-sky-400/10 blur-3xl" />
+    <div className="space-y-4 text-slate-100">
+      <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.24 }}>
+        <Card className="border-white/10 bg-slate-950/85 backdrop-blur-sm">
+          <CardContent className="space-y-5 p-5 sm:p-6">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-slate-400">
+                  <Sparkles className="h-3.5 w-3.5 text-emerald-300" />
+                  {pageLabel}
+                </div>
+                <h1 className="mt-2 text-2xl font-semibold text-slate-50">Signals Dashboard</h1>
+                <p className="mt-2 max-w-3xl text-sm text-slate-300">
+                  Same scanner-style workspace, but the live feed column is now an active signals column. The chart stays live while the right side tracks the best current setups and the bottom section keeps past signals.
+                </p>
+                <p className="mt-2 text-xs uppercase tracking-[0.18em] text-slate-500">{providerLabel} · {providerDescription}</p>
+              </div>
 
-      <div className="relative space-y-6">
-        <motion.section initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.32 }} className="grid gap-4 xl:grid-cols-[1.35fr_0.85fr]">
-          <Card className="overflow-hidden border-white/10 bg-white/[0.03] backdrop-blur-sm">
-            <CardContent className="p-5 sm:p-6">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div className="max-w-2xl">
-                  <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-slate-300">
-                    <Sparkles className="h-3.5 w-3.5 text-emerald-300" />
-                    {pageLabel}
+              <div className="rounded-xl border border-white/10 bg-slate-900/80 px-3 py-2">
+                <Badge variant="outline" className={statusTone.className}>
+                  <StatusIcon className={`mr-2 h-3.5 w-3.5 ${liveStatus.loadingHistory ? 'animate-spin' : ''}`} />
+                  {statusTone.label}
+                </Badge>
+              </div>
+            </div>
+
+            <div className="grid gap-3 lg:grid-cols-[1.2fr_1fr]">
+              <div className="space-y-4 rounded-2xl border border-white/10 bg-slate-900/55 p-4">
+                <div>
+                  <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
+                    <Waves className="h-4 w-4 text-cyan-300" />
+                    Controls
                   </div>
-                  <h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">Scanner is now Signals.</h1>
-                  <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300 sm:text-[15px]">
-                    This desk reads the live chart, waits for a clean EMA50 and EMA200 reclaim, and serves one neat execution-ready setup per Asian, London, and New York session when the market actually qualifies.
-                  </p>
-                  <p className="mt-3 text-xs uppercase tracking-[0.18em] text-slate-400">{providerLabel} · {providerDescription}</p>
+                  <p className="mt-2 text-sm text-slate-400">Choose the market and timeframe the signals engine should track.</p>
                 </div>
 
-                <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-3">
-                  <Badge variant="outline" className={statusTone.className}>
-                    <StatusIcon className={`mr-2 h-3.5 w-3.5 ${liveStatus.loadingHistory ? 'animate-spin' : ''}`} />
-                    {statusTone.label}
-                  </Badge>
-                  <div className="mt-3 space-y-2 text-xs text-slate-300">
-                    <div className="flex items-center justify-between gap-6">
-                      <span>Index / pair</span>
-                      <span className="font-medium text-slate-100">{selectedSymbol.label}</span>
-                    </div>
-                    <div className="flex items-center justify-between gap-6">
-                      <span>Timeframe</span>
-                      <span className="font-medium text-slate-100">{selectedTimeframe.label}</span>
-                    </div>
-                    <div className="flex items-center justify-between gap-6">
-                      <span>Loaded candles</span>
-                      <span className="font-medium text-slate-100">{liveStatus.candleCount}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-6 grid gap-3 sm:grid-cols-4">
-                {[
-                  { icon: Radar, label: 'Session slots', value: `${signalCount}/3`, detail: 'Only the strongest valid setup is surfaced per session.' },
-                  { icon: Target, label: 'Risk model', value: '1 : 2', detail: 'Stops stay beyond the zone. Targets project a fixed 2R.' },
-                  { icon: CandlestickChart, label: 'Live read', value: currentPrice == null ? '-' : formatPrice(currentPrice), detail: 'Streaming from the active market-data feed.' },
-                  { icon: BellRing, label: 'Alerts', value: 'Server-driven', detail: 'This watchlist is mirrored to the backend so fresh session signals can still push after you close the tab.' },
-                ].map((item) => (
-                  <div key={item.label} className="rounded-2xl border border-white/8 bg-slate-950/55 p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-xs uppercase tracking-[0.18em] text-slate-400">{item.label}</span>
-                      <item.icon className="h-4 w-4 text-slate-300" />
-                    </div>
-                    <div className="mt-3 text-2xl font-semibold text-slate-50">{item.value}</div>
-                    <p className="mt-2 text-xs leading-5 text-slate-400">{item.detail}</p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="overflow-hidden border-white/10 bg-white/[0.03] backdrop-blur-sm">
-            <CardContent className="p-5 sm:p-6">
-              <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
-                <Waves className="h-4 w-4 text-cyan-300" />
-                Signal Controls
-              </div>
-
-              <div className="mt-4 space-y-4">
                 <div>
                   <label className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Quick symbols</label>
                   <div className="flex flex-wrap gap-2">
@@ -738,7 +701,7 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
                           key={value}
                           type="button"
                           onClick={() => setSymbol(value)}
-                          className={`rounded-full border px-3 py-2 text-xs transition ${active ? 'border-emerald-300/40 bg-emerald-400/15 text-emerald-100' : 'border-white/10 bg-slate-950/55 text-slate-300 hover:border-white/20 hover:text-slate-100'}`}
+                          className={`rounded-full border px-3 py-1.5 text-xs transition ${active ? 'border-emerald-300/40 bg-emerald-400/15 text-emerald-100' : 'border-white/10 bg-slate-950/55 text-slate-300 hover:border-white/20 hover:text-slate-100'}`}
                         >
                           {option.label}
                         </button>
@@ -747,10 +710,10 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
                   </div>
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid gap-3 md:grid-cols-2">
                   <label className="block text-sm text-slate-300">
                     <span className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Index / pair</span>
-                    <select value={symbol} onChange={(event) => setSymbol(event.target.value)} className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-cyan-300/40">
+                    <select value={symbol} onChange={(event) => setSymbol(event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-cyan-300/40">
                       {symbolOptions.map((option) => (
                         <option key={option.value} value={option.value}>{option.label}</option>
                       ))}
@@ -759,38 +722,52 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
 
                   <label className="block text-sm text-slate-300">
                     <span className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Signal timeframe</span>
-                    <select value={timeframe} onChange={(event) => setTimeframe(event.target.value)} className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-cyan-300/40">
+                    <select value={timeframe} onChange={(event) => setTimeframe(event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-cyan-300/40">
                       {timeframeOptions.map((option) => (
                         <option key={option.value} value={option.value}>{option.label}</option>
                       ))}
                     </select>
                   </label>
                 </div>
-
-                <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/8 p-4 text-sm text-slate-300">
-                  <div className="flex items-center gap-2 font-medium text-emerald-100">
-                    <ShieldCheck className="h-4 w-4" />
-                    Entry logic
-                  </div>
-                  <div className="mt-3 space-y-2 text-xs leading-5 text-slate-300">
-                    <p>Buy only when price closes back above EMA50 and EMA200 with the stack already pointing up. Sell only when the same reclaim fails to the downside.</p>
-                    <p>Stops sit beyond the reclaim zone. Target locks to a clean 2R so the ticket is ready to execute without extra math.</p>
-                  </div>
-                </div>
               </div>
-            </CardContent>
-          </Card>
-        </motion.section>
 
-        <motion.section initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.36, delay: 0.05 }} className="grid gap-6 2xl:grid-cols-[1.45fr_0.95fr]">
-          <Card className="overflow-hidden border-white/10 bg-white/[0.03] backdrop-blur-sm">
-            <CardContent className="p-4 sm:p-5">
-              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Live Signals Map</p>
-                  <h2 className="mt-1 text-lg font-semibold text-slate-50">EMA50 / EMA200 execution chart</h2>
-                </div>
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                {[
+                  { icon: Radar, label: 'Active Signals', value: `${signalCount}/3`, detail: 'Best valid setup per session.' },
+                  { icon: CandlestickChart, label: 'Current Price', value: currentPrice == null ? '-' : formatPrice(currentPrice), detail: 'Streaming from the active chart.' },
+                  { icon: Target, label: 'Risk Model', value: '1 : 2', detail: 'All tickets use a fixed 2R target.' },
+                  { icon: BellRing, label: 'Alerts', value: 'On', detail: 'Server keeps the active watchlist synced.' },
+                ].map((item) => (
+                  <div key={item.label} className="rounded-2xl border border-white/10 bg-slate-900/55 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-[11px] uppercase tracking-[0.18em] text-slate-400">{item.label}</span>
+                      <item.icon className="h-4 w-4 text-slate-300" />
+                    </div>
+                    <div className="mt-3 text-2xl font-semibold text-slate-50">{item.value}</div>
+                    <p className="mt-2 text-xs leading-5 text-slate-400">{item.detail}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.section>
 
+      <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.28, delay: 0.03 }} className="grid gap-4 xl:grid-cols-[1.5fr_0.9fr]">
+        <Card className="overflow-hidden border-white/10 bg-slate-950/85 backdrop-blur-sm">
+          <CardContent className="p-4 sm:p-5">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Chart</p>
+                <h2 className="mt-1 text-lg font-semibold text-slate-50">EMA50 / EMA200 signal map</h2>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+                <span>{selectedSymbol.label}</span>
+                <span>·</span>
+                <span>{selectedTimeframe.label}</span>
+                <span>·</span>
+                <span>{liveStatus.candleCount} candles</span>
                 {chartError ? (
                   <Badge variant="outline" className="border-red-400/30 bg-red-500/10 text-red-100">
                     <AlertTriangle className="mr-2 h-3.5 w-3.5" />
@@ -798,289 +775,250 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
                   </Badge>
                 ) : null}
               </div>
+            </div>
 
-              <div className="h-[28rem] overflow-hidden rounded-[1.5rem] border border-white/8 bg-slate-950/70 sm:h-[34rem]">
-                {isDeriv ? (
-                  <LiveChart
-                    symbol={symbol}
-                    granularity={selectedDerivTimeframe?.granularity ?? getDerivTimeframe(timeframe).granularity}
-                    token={token}
-                    overlay={chartOverlay}
-                    onCandlesChange={setCandles}
-                    onError={setChartError}
-                    onStatusChange={setLiveStatus}
-                    className="h-full"
-                  />
-                ) : (
-                  <TradingViewLiveChart
-                    symbol={symbol}
-                    timeframe={timeframe}
-                    token={token}
-                    overlay={chartOverlay}
-                    onCandlesChange={setCandles}
-                    onError={setChartError}
-                    onStatusChange={setLiveStatus}
-                    className="h-full"
-                  />
-                )}
-              </div>
-            </CardContent>
-          </Card>
+            <div className="h-[28rem] overflow-hidden rounded-[1.25rem] border border-white/8 bg-slate-950/70 sm:h-[34rem]">
+              {isDeriv ? (
+                <LiveChart
+                  symbol={symbol}
+                  granularity={selectedDerivTimeframe?.granularity ?? getDerivTimeframe(timeframe).granularity}
+                  token={token}
+                  overlay={chartOverlay}
+                  onCandlesChange={setCandles}
+                  onError={setChartError}
+                  onStatusChange={setLiveStatus}
+                  className="h-full"
+                />
+              ) : (
+                <TradingViewLiveChart
+                  symbol={symbol}
+                  timeframe={timeframe}
+                  token={token}
+                  overlay={chartOverlay}
+                  onCandlesChange={setCandles}
+                  onError={setChartError}
+                  onStatusChange={setLiveStatus}
+                  className="h-full"
+                />
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
-          <div className="space-y-6">
-            <Card className="overflow-hidden border-white/10 bg-white/[0.03] backdrop-blur-sm">
-              <CardContent className="p-5 sm:p-6">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Signal Ticket</p>
-                    <h2 className="mt-1 text-lg font-semibold text-slate-50">Ready-to-trade layout</h2>
-                  </div>
-                  {activeSignal ? (
-                    <Badge variant="outline" className={activeSignal.direction === 'buy' ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-100' : 'border-rose-400/30 bg-rose-500/10 text-rose-100'}>
-                      {activeSignal.direction.toUpperCase()}
-                    </Badge>
-                  ) : null}
-                </div>
-
-                {activeSignal ? (
-                  <div className="mt-5 space-y-4">
-                    <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.24 }} className={`relative overflow-hidden rounded-[1.5rem] border ${activeSignal.direction === 'buy' ? 'border-emerald-400/25 bg-[linear-gradient(135deg,rgba(16,185,129,0.15),rgba(2,6,23,0.9)_58%)]' : 'border-rose-400/25 bg-[linear-gradient(135deg,rgba(244,63,94,0.16),rgba(2,6,23,0.9)_58%)]'} p-5`}>
-                      <div className={`pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-r ${SESSION_META[activeSignal.session].accent}`} />
-                      <div className="relative space-y-4">
-                        <div className="flex items-start justify-between gap-4">
-                          <div>
-                            <div className="text-[11px] uppercase tracking-[0.22em] text-slate-300">{SESSION_META[activeSignal.session].label}</div>
-                            <div className="mt-2 text-2xl font-semibold text-white">{activeSignal.setupLabel}</div>
-                            <p className="mt-2 text-sm leading-6 text-slate-200">{activeSignal.reason}</p>
-                          </div>
-                          <div className="rounded-2xl border border-white/10 bg-slate-950/45 px-3 py-2 text-right text-xs text-slate-300">
-                            <div>Confidence</div>
-                            <div className="mt-1 text-lg font-semibold text-white">{activeSignal.confidence}%</div>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                          {[
-                            { label: 'Trade type', value: activeSignal.direction.toUpperCase(), tone: activeSignal.direction === 'buy' ? 'text-emerald-200' : 'text-rose-200' },
-                            { label: 'Index / pair', value: selectedSymbol.label, tone: 'text-white' },
-                            { label: 'Session', value: SESSION_META[activeSignal.session].shortLabel, tone: 'text-white' },
-                            { label: 'Timeframe', value: selectedTimeframe.label, tone: 'text-white' },
-                            { label: 'Entry', value: formatPrice(activeSignal.entry), tone: 'text-cyan-200' },
-                            { label: 'SL', value: formatPrice(activeSignal.stopLoss), tone: 'text-rose-200' },
-                            { label: 'TP', value: formatPrice(activeSignal.takeProfit), tone: 'text-emerald-200' },
-                            { label: 'Risk / reward', value: '1 : 2', tone: 'text-white' },
-                          ].map((item) => (
-                            <div key={item.label} className="rounded-2xl border border-white/8 bg-slate-950/45 p-3">
-                              <div className="text-[10px] uppercase tracking-[0.18em] text-slate-400">{item.label}</div>
-                              <div className={`mt-2 text-sm font-semibold ${item.tone}`}>{item.value}</div>
-                            </div>
-                          ))}
-                        </div>
-
-                        <div className="grid gap-3 sm:grid-cols-2">
-                          <div className="rounded-2xl border border-white/8 bg-slate-950/45 p-4 text-sm text-slate-300">
-                            <div className="flex items-center gap-2 text-slate-100">
-                              <Clock3 className="h-4 w-4 text-cyan-300" />
-                              Triggered {formatSignalTime(activeSignal.candleTime)}
-                            </div>
-                            <p className="mt-3 text-xs leading-5 text-slate-400">{activeSignal.executionNote}</p>
-                          </div>
-                          <div className="rounded-2xl border border-white/8 bg-slate-950/45 p-4 text-sm text-slate-300">
-                            <div className="flex items-center gap-2 text-slate-100">
-                              <ArrowUpRight className="h-4 w-4 text-emerald-300" />
-                              Market distance
-                            </div>
-                            <p className="mt-3 text-xs leading-5 text-slate-400">
-                              {distanceToEntry == null ? 'Waiting for enough live candles to measure distance from entry.' : `${distanceToEntry.toFixed(2)}% away from the active entry price.`}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
-                  </div>
-                ) : (
-                  <div className="mt-5 rounded-[1.5rem] border border-dashed border-white/12 bg-slate-950/55 p-6 text-sm text-slate-300">
-                    Signals will populate after the chart logs a qualifying EMA50 and EMA200 reclaim. If there is no clean setup in a session, the desk stays intentionally empty.
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="overflow-hidden border-white/10 bg-white/[0.03] backdrop-blur-sm">
-              <CardContent className="p-5 sm:p-6">
-                <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
-                  <ShieldCheck className="h-4 w-4 text-emerald-300" />
-                  Recommended Filters
-                </div>
-                <div className="mt-4 space-y-3 text-sm leading-6 text-slate-300">
-                  <p>Use 15m or 30m when you want the cleanest crossover structure. Lower timeframes will fire more often but will naturally include more noise.</p>
-                  <p>If price is already stretched far from the EMAs, wait for a retest. The desk is strongest when the reclaim happens close to the stack and the stop still sits cleanly beyond the zone.</p>
-                  <p>Treat the ticket as execution support, not a guarantee. If the reclaim fails before entry, skip it.</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </motion.section>
-
-        <motion.section initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.08 }} className="grid gap-4 xl:grid-cols-3">
-          {SESSION_ORDER.map((session, index) => {
-            const signal = signalMap.get(session) ?? null;
-            const active = selectedSession === session;
-            const meta = SESSION_META[session];
-
-            return (
-              <motion.button key={session} type="button" onClick={() => setSelectedSession(session)} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.08 + index * 0.06 }} className={`relative overflow-hidden rounded-[1.65rem] border p-0 text-left transition ${active ? 'border-white/20 bg-white/[0.06]' : 'border-white/8 bg-white/[0.03] hover:border-white/16 hover:bg-white/[0.05]'}`}>
-                <div className={`pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-r ${meta.accent}`} />
-                <div className="relative p-5 sm:p-6">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <div className="text-[11px] uppercase tracking-[0.22em] text-slate-400">{meta.label}</div>
-                      <div className="mt-2 text-lg font-semibold text-white">{signal ? signal.setupLabel : 'Standby'}</div>
-                    </div>
-                    <Badge variant="outline" className={meta.chip}>
-                      {isSessionActiveNow(session) ? 'Live window' : 'Queued'}
-                    </Badge>
-                  </div>
-
-                  <p className="mt-3 text-sm leading-6 text-slate-300">{signal ? signal.reason : meta.description}</p>
-
-                  <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
-                    <div className="rounded-2xl border border-white/8 bg-slate-950/45 p-3">
-                      <div className="text-[10px] uppercase tracking-[0.18em] text-slate-400">Window</div>
-                      <div className="mt-2 font-medium text-slate-100">{meta.hours}</div>
-                    </div>
-                    <div className="rounded-2xl border border-white/8 bg-slate-950/45 p-3">
-                      <div className="text-[10px] uppercase tracking-[0.18em] text-slate-400">Setup state</div>
-                      <div className="mt-2 font-medium text-slate-100">{signal ? signal.direction.toUpperCase() : 'No valid cross'}</div>
-                    </div>
-                    <div className="rounded-2xl border border-white/8 bg-slate-950/45 p-3">
-                      <div className="text-[10px] uppercase tracking-[0.18em] text-slate-400">Entry</div>
-                      <div className="mt-2 font-medium text-cyan-200">{signal ? formatPrice(signal.entry) : '-'}</div>
-                    </div>
-                    <div className="rounded-2xl border border-white/8 bg-slate-950/45 p-3">
-                      <div className="text-[10px] uppercase tracking-[0.18em] text-slate-400">Time</div>
-                      <div className="mt-2 font-medium text-slate-100">{signal ? formatSignalTime(signal.candleTime) : 'Waiting'}</div>
-                    </div>
-                  </div>
-                </div>
-              </motion.button>
-            );
-          })}
-        </motion.section>
-
-        <motion.section initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.42, delay: 0.12 }} className="grid gap-4 xl:grid-cols-[1.3fr_0.9fr_0.8fr]">
-          <Card className="border-white/10 bg-white/[0.03] backdrop-blur-sm">
+        <div className="space-y-4">
+          <Card className="border-white/10 bg-slate-950/85 backdrop-blur-sm">
             <CardContent className="p-5 sm:p-6">
               <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
-                <Target className="h-4 w-4 text-amber-300" />
-                Signal Formula
-              </div>
-              <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                {[
-                  { title: '1. Trend stack first', body: 'EMA50 must already be on the correct side of EMA200 before the signal qualifies. That prevents random mid-range crosses from being promoted.' },
-                  { title: '2. Price reclaim second', body: 'The trigger candle has to close back through both averages with a decisive body. Weak closes and overextended candles are filtered out.' },
-                  { title: '3. Zone-backed risk', body: 'The stop is hidden beyond the reclaim pocket. Target projects to 2R immediately so every ticket is uniform and readable.' },
-                ].map((item) => (
-                  <div key={item.title} className="rounded-2xl border border-white/8 bg-slate-950/45 p-4">
-                    <div className="font-medium text-slate-100">{item.title}</div>
-                    <p className="mt-2 text-sm leading-6 text-slate-400">{item.body}</p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-white/10 bg-white/[0.03] backdrop-blur-sm">
-            <CardContent className="p-5 sm:p-6">
-              <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
-                <Sparkles className="h-4 w-4 text-cyan-300" />
-                Desk Pulse
-              </div>
-              <div className="mt-4 space-y-4">
-                <div className="rounded-2xl border border-white/8 bg-slate-950/45 p-4"><div className="flex items-center justify-between gap-3"><span className="text-sm text-slate-300">Bias</span><span className="font-medium text-slate-100">{activeSignal ? (activeSignal.direction === 'buy' ? 'Bullish continuation' : 'Bearish continuation') : 'Neutral'}</span></div></div>
-                <div className="rounded-2xl border border-white/8 bg-slate-950/45 p-4"><div className="flex items-center justify-between gap-3"><span className="text-sm text-slate-300">EMA stack</span><span className="font-medium text-slate-100">{activeSignal ? `${formatPrice(activeSignal.ema50)} / ${formatPrice(activeSignal.ema200)}` : '-'}</span></div></div>
-                <div className="rounded-2xl border border-white/8 bg-slate-950/45 p-4"><div className="flex items-center justify-between gap-3"><span className="text-sm text-slate-300">Risk in points</span><span className="font-medium text-slate-100">{activeSignal ? formatPrice(activeSignal.risk) : '-'}</span></div></div>
-                <div className="rounded-2xl border border-white/8 bg-slate-950/45 p-4"><div className="flex items-center justify-between gap-3"><span className="text-sm text-slate-300">Current session</span><span className="font-medium text-slate-100">{SESSION_META[activeSession].label}</span></div></div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-white/10 bg-white/[0.03] backdrop-blur-sm">
-            <CardContent className="p-5 sm:p-6">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
-                    <History className="h-4 w-4 text-emerald-300" />
-                    Signal History
-                  </div>
-                  <p className="mt-2 text-sm text-slate-400">Filter the archive by asset class and compare which sessions are producing the cleanest flow.</p>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  {assetFilterOptions.map((option) => (
-                    <button
-                      key={option}
-                      type="button"
-                      onClick={() => setAssetFilter(option)}
-                      className={`rounded-full border px-3 py-1.5 text-xs transition ${assetFilter === option ? 'border-emerald-300/40 bg-emerald-400/15 text-emerald-100' : 'border-white/10 bg-slate-950/55 text-slate-300 hover:border-white/20 hover:text-slate-100'}`}
-                    >
-                      {option === 'all' ? 'All assets' : option}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-4 grid gap-3">
-                {sessionStats.map((item) => (
-                  <div key={item.session} className="rounded-2xl border border-white/8 bg-slate-950/45 p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <div className="text-sm font-medium text-slate-100">{SESSION_META[item.session].label}</div>
-                        <div className="mt-1 text-xs text-slate-400">{item.total} archived signal{item.total === 1 ? '' : 's'} in this filter.</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-xs uppercase tracking-[0.18em] text-slate-500">Avg confidence</div>
-                        <div className="mt-1 text-lg font-semibold text-white">{item.total > 0 ? `${item.avgConfidence}%` : '-'}</div>
-                      </div>
-                    </div>
-                    <div className="mt-3 grid grid-cols-3 gap-2 text-xs text-slate-300">
-                      <div className="rounded-xl border border-white/8 bg-slate-950/55 px-3 py-2">Total {item.total}</div>
-                      <div className="rounded-xl border border-white/8 bg-slate-950/55 px-3 py-2">Buys {item.buyCount}</div>
-                      <div className="rounded-xl border border-white/8 bg-slate-950/55 px-3 py-2">Sells {item.sellCount}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-5 flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
-                <History className="h-4 w-4 text-emerald-300" />
-                Recent Signals
+                <Activity className="h-4 w-4 text-emerald-300" />
+                Active Signals
               </div>
               <div className="mt-4 space-y-3">
-                {filteredHistory.length > 0 ? filteredHistory.slice(0, 6).map((item) => (
-                  <div key={item.key} className="rounded-2xl border border-white/8 bg-slate-950/45 p-3 text-sm">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className={`font-medium ${item.direction === 'buy' ? 'text-emerald-200' : 'text-rose-200'}`}>{item.direction.toUpperCase()}</span>
-                      <span className="text-xs text-slate-400">{SESSION_META[item.session].shortLabel}</span>
-                    </div>
-                    <div className="mt-2 text-slate-100">{item.symbolLabel}</div>
-                    <div className="mt-1 text-xs text-slate-400">{item.assetClass} · {item.timeframe} · {formatSignalTime(item.candleTime)}</div>
-                    <div className="mt-2 grid grid-cols-3 gap-2 text-[11px] text-slate-300">
-                      <span>E {formatPrice(item.entry)}</span>
-                      <span>SL {formatPrice(item.stopLoss)}</span>
-                      <span>TP {formatPrice(item.takeProfit)}</span>
-                    </div>
-                  </div>
-                )) : (
-                  <div className="rounded-2xl border border-dashed border-white/10 bg-slate-950/45 p-4 text-sm text-slate-400">
-                    {history.length > 0 ? 'No archived signals match the selected asset class yet.' : 'Fresh signals will be archived here as they appear.'}
-                  </div>
-                )}
+                {SESSION_ORDER.map((session) => {
+                  const signal = signalMap.get(session) ?? null;
+                  const active = selectedSession === session;
+                  return (
+                    <button
+                      key={session}
+                      type="button"
+                      onClick={() => setSelectedSession(session)}
+                      className={`w-full rounded-2xl border p-4 text-left transition ${active ? 'border-cyan-300/35 bg-slate-900/90' : 'border-white/8 bg-slate-900/55 hover:border-white/16'}`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <div className="text-[11px] uppercase tracking-[0.18em] text-slate-400">{SESSION_META[session].label}</div>
+                          <div className="mt-1 text-sm font-medium text-slate-100">{signal ? selectedSymbol.label : 'No active signal'}</div>
+                        </div>
+                        <Badge variant="outline" className={signal ? (signal.direction === 'buy' ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-100' : 'border-rose-400/30 bg-rose-500/10 text-rose-100') : 'border-white/10 bg-transparent text-slate-400'}>
+                          {signal ? signal.direction.toUpperCase() : 'Standby'}
+                        </Badge>
+                      </div>
+
+                      <div className="mt-3 grid grid-cols-2 gap-3 text-xs text-slate-300">
+                        <div>
+                          <div className="text-slate-500">Entry</div>
+                          <div className="mt-1 font-medium text-slate-100">{signal ? formatPrice(signal.entry) : '-'}</div>
+                        </div>
+                        <div>
+                          <div className="text-slate-500">Time</div>
+                          <div className="mt-1 font-medium text-slate-100">{signal ? formatSignalTime(signal.candleTime) : 'Waiting'}</div>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
-        </motion.section>
-      </div>
+
+          <Card className="border-white/10 bg-slate-950/85 backdrop-blur-sm">
+            <CardContent className="p-5 sm:p-6">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Selected Signal</p>
+                  <h2 className="mt-1 text-lg font-semibold text-slate-50">Active ticket</h2>
+                </div>
+                {activeSignal ? (
+                  <Badge variant="outline" className={activeSignal.direction === 'buy' ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-100' : 'border-rose-400/30 bg-rose-500/10 text-rose-100'}>
+                    {activeSignal.direction.toUpperCase()}
+                  </Badge>
+                ) : null}
+              </div>
+
+              {activeSignal ? (
+                <div className="mt-4 space-y-4">
+                  <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <div className="text-[11px] uppercase tracking-[0.18em] text-slate-400">{SESSION_META[activeSignal.session].label}</div>
+                        <div className="mt-1 text-lg font-semibold text-slate-50">{activeSignal.setupLabel}</div>
+                        <p className="mt-2 text-sm text-slate-300">{activeSignal.reason}</p>
+                      </div>
+                      <div className="text-right text-xs text-slate-400">
+                        <div>Confidence</div>
+                        <div className="mt-1 text-lg font-semibold text-slate-50">{activeSignal.confidence}%</div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+                      {[
+                        ['Trade type', activeSignal.direction.toUpperCase()],
+                        ['Index / pair', selectedSymbol.label],
+                        ['Session', SESSION_META[activeSignal.session].shortLabel],
+                        ['Timeframe', selectedTimeframe.label],
+                        ['Entry', formatPrice(activeSignal.entry)],
+                        ['SL', formatPrice(activeSignal.stopLoss)],
+                        ['TP', formatPrice(activeSignal.takeProfit)],
+                        ['Risk / reward', '1 : 2'],
+                      ].map(([label, value]) => (
+                        <div key={label} className="rounded-xl border border-white/8 bg-slate-950/60 p-3">
+                          <div className="text-[10px] uppercase tracking-[0.16em] text-slate-500">{label}</div>
+                          <div className="mt-1 font-medium text-slate-100">{value}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-2xl border border-white/8 bg-slate-900/55 p-4 text-sm text-slate-300">
+                      <div className="flex items-center gap-2 text-slate-100">
+                        <Clock3 className="h-4 w-4 text-cyan-300" />
+                        Triggered {formatSignalTime(activeSignal.candleTime)}
+                      </div>
+                      <p className="mt-3 text-xs leading-5 text-slate-400">{activeSignal.executionNote}</p>
+                    </div>
+                    <div className="rounded-2xl border border-white/8 bg-slate-900/55 p-4 text-sm text-slate-300">
+                      <div className="flex items-center gap-2 text-slate-100">
+                        <ArrowUpRight className="h-4 w-4 text-emerald-300" />
+                        Market distance
+                      </div>
+                      <p className="mt-3 text-xs leading-5 text-slate-400">
+                        {distanceToEntry == null ? 'Waiting for enough live candles to measure distance from entry.' : `${distanceToEntry.toFixed(2)}% away from the active entry price.`}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-4 rounded-2xl border border-dashed border-white/12 bg-slate-900/50 p-5 text-sm text-slate-300">
+                  No active signal yet. The chart is still live; this panel fills as soon as a session logs a valid EMA reclaim.
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </motion.section>
+
+      <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.06 }} className="grid gap-4 xl:grid-cols-[1.25fr_0.75fr]">
+        <Card className="border-white/10 bg-slate-950/85 backdrop-blur-sm">
+          <CardContent className="p-5 sm:p-6">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
+                  <History className="h-4 w-4 text-emerald-300" />
+                  Past Signals
+                </div>
+                <p className="mt-2 text-sm text-slate-400">Archived signals for the current feed. Filter by asset class to narrow the list.</p>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {assetFilterOptions.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => setAssetFilter(option)}
+                    className={`rounded-full border px-3 py-1.5 text-xs transition ${assetFilter === option ? 'border-emerald-300/40 bg-emerald-400/15 text-emerald-100' : 'border-white/10 bg-slate-950/55 text-slate-300 hover:border-white/20 hover:text-slate-100'}`}
+                  >
+                    {option === 'all' ? 'All assets' : option}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {filteredHistory.length > 0 ? filteredHistory.slice(0, 8).map((item) => (
+                <div key={item.key} className="rounded-2xl border border-white/8 bg-slate-900/55 p-4 text-sm">
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <div className="font-medium text-slate-100">{item.symbolLabel}</div>
+                      <div className="mt-1 text-xs text-slate-500">{item.assetClass} · {SESSION_META[item.session].shortLabel}</div>
+                    </div>
+                    <Badge variant="outline" className={item.direction === 'buy' ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-100' : 'border-rose-400/30 bg-rose-500/10 text-rose-100'}>
+                      {item.direction.toUpperCase()}
+                    </Badge>
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-3 gap-2 text-[11px] text-slate-300">
+                    <div className="rounded-xl border border-white/8 bg-slate-950/60 p-2">E {formatPrice(item.entry)}</div>
+                    <div className="rounded-xl border border-white/8 bg-slate-950/60 p-2">SL {formatPrice(item.stopLoss)}</div>
+                    <div className="rounded-xl border border-white/8 bg-slate-950/60 p-2">TP {formatPrice(item.takeProfit)}</div>
+                  </div>
+
+                  <div className="mt-3 flex items-center justify-between text-xs text-slate-400">
+                    <span>{item.timeframe}</span>
+                    <span>{formatSignalTime(item.candleTime)}</span>
+                  </div>
+                </div>
+              )) : (
+                <div className="md:col-span-2 rounded-2xl border border-dashed border-white/10 bg-slate-900/45 p-5 text-sm text-slate-400">
+                  {history.length > 0 ? 'No archived signals match the selected asset class yet.' : 'Past signals will appear here as new session signals are generated.'}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-white/10 bg-slate-950/85 backdrop-blur-sm">
+          <CardContent className="space-y-4 p-5 sm:p-6">
+            <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
+              <ShieldCheck className="h-4 w-4 text-emerald-300" />
+              Session Performance
+            </div>
+
+            {sessionStats.map((item) => (
+              <div key={item.session} className="rounded-2xl border border-white/8 bg-slate-900/55 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-medium text-slate-100">{SESSION_META[item.session].label}</div>
+                    <div className="mt-1 text-xs text-slate-500">{item.total} archived signals in the current filter</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Avg confidence</div>
+                    <div className="mt-1 text-lg font-semibold text-slate-50">{item.total > 0 ? `${item.avgConfidence}%` : '-'}</div>
+                  </div>
+                </div>
+                <div className="mt-3 grid grid-cols-3 gap-2 text-xs text-slate-300">
+                  <div className="rounded-xl border border-white/8 bg-slate-950/60 px-3 py-2">Total {item.total}</div>
+                  <div className="rounded-xl border border-white/8 bg-slate-950/60 px-3 py-2">Buys {item.buyCount}</div>
+                  <div className="rounded-xl border border-white/8 bg-slate-950/60 px-3 py-2">Sells {item.sellCount}</div>
+                </div>
+              </div>
+            ))}
+
+            <div className="rounded-2xl border border-white/8 bg-slate-900/55 p-4 text-sm leading-6 text-slate-300">
+              Keep the chart on 15m or 30m for cleaner structure. Lower timeframes can still work, but they naturally produce noisier session signals.
+            </div>
+          </CardContent>
+        </Card>
+      </motion.section>
     </div>
   );
 }
