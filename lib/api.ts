@@ -839,6 +839,46 @@ export const api = {
     ),
 
   notifications: {
+    getSignalWatchlist: (source: 'deriv' | 'tradingview', token: string) =>
+      apiFetch<{
+        watchlist: {
+          source: 'deriv' | 'tradingview';
+          symbol: string;
+          timeframe: string;
+          symbolLabel?: string;
+          assetClass?: string;
+          enabled?: boolean;
+          syncedAt?: string;
+        } | null;
+      }>(`/notifications/signals/watchlist?source=${encodeURIComponent(source)}`, { token }),
+
+    saveSignalWatchlist: (
+      payload: {
+        source: 'deriv' | 'tradingview';
+        symbol: string;
+        timeframe: string;
+        symbolLabel: string;
+        assetClass?: string;
+        enabled?: boolean;
+      },
+      token: string,
+    ) =>
+      apiFetch<{
+        watchlist: {
+          source: 'deriv' | 'tradingview';
+          symbol: string;
+          timeframe: string;
+          symbolLabel?: string;
+          assetClass?: string;
+          enabled?: boolean;
+          syncedAt?: string;
+        };
+      }>('/notifications/signals/watchlist', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        token,
+      }),
+
     sendSignalAlert: (
       payload: {
         source: 'deriv' | 'tradingview';

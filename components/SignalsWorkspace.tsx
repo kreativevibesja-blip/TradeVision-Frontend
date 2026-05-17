@@ -75,6 +75,7 @@ interface SessionSignal {
 interface PersistedSignalRecord {
   key: string;
   source: SignalSource;
+  assetClass: string;
   session: SignalSession;
   direction: SignalDirection;
   symbol: string;
@@ -90,6 +91,19 @@ interface PersistedSignalRecord {
 
 const SESSION_ORDER: SignalSession[] = ['asian', 'london', 'newyork'];
 const SIGNAL_HISTORY_LIMIT = 18;
+
+const ASSET_CLASS_LABELS: Record<string, string> = {
+  volatility: 'Volatility',
+  'volatility-1s': 'Volatility 1s',
+  jump: 'Jump',
+  step: 'Step',
+  'boom-crash': 'Boom / Crash',
+  'forex-major': 'Forex Majors',
+  'forex-minor': 'Forex Crosses',
+  commodities: 'Commodities',
+  indices: 'Indices',
+  crypto: 'Crypto',
+};
 
 const SESSION_META: Record<SignalSession, {
   label: string;
@@ -373,6 +387,14 @@ const writeHistory = (source: SignalSource, history: PersistedSignalRecord[]) =>
 const getSignalKey = (source: SignalSource, symbol: string, timeframe: string, signal: SessionSignal) =>
   `${source}:${symbol}:${timeframe}:${signal.session}:${signal.direction}:${signal.candleTime}`;
 
+const formatAssetClass = (value: string | null | undefined) => {
+  if (!value) {
+    return 'Unclassified';
+  }
+
+  return ASSET_CLASS_LABELS[value] ?? value.replace(/-/g, ' ');
+};
+
 const getTimeframeSeconds = (source: SignalSource, timeframe: string) => {
   if (source === 'deriv') {
     return getDerivTimeframe(timeframe).granularity;
@@ -399,11 +421,15 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
   const [liveStatus, setLiveStatus] = useState<LiveChartStatus>({ connectionState: 'connecting', loadingHistory: true, candleCount: 0 });
   const [selectedSession, setSelectedSession] = useState<SignalSession>('london');
   const [history, setHistory] = useState<PersistedSignalRecord[]>([]);
+  const [assetFilter, setAssetFilter] = useState<string>('all');
+  const [watchlistHydrated, setWatchlistHydrated] = useState(false);
 
   useEffect(() => {
     setSymbol(isDeriv ? 'R_10' : 'EURUSD');
     setTimeframe(isDeriv ? '15m' : 'M15');
     setHistory(readHistory(source));
+    setAssetFilter('all');
+    setWatchlistHydrated(false);
   }, [isDeriv, source]);
 
   const selectedSymbol = useMemo(
@@ -422,10 +448,68 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
     () => selectedDerivTimeframe ?? selectedTradingViewTimeframe!,
     [selectedDerivTimeframe, selectedTradingViewTimeframe],
   );
+  const selectedAssetClass = useMemo(() => formatAssetClass(selectedSymbol.category), [selectedSymbol.category]);
   const signals = useMemo(() => buildSignalsFromCandles(candles), [candles]);
   const signalMap = useMemo(() => new Map(signals.map((signal) => [signal.session, signal])), [signals]);
   const activeSession = getSessionForTime(Math.floor(Date.now() / 1000));
   const timeframeSeconds = getTimeframeSeconds(source, timeframe);
+  const assetFilterOptions = useMemo(
+    () => ['all', ...Array.from(new Set(history.map((item) => item.assetClass))).filter(Boolean)],
+    [history],
+  );
+  const filteredHistory = useMemo(
+    () => history.filter((item) => assetFilter === 'all' || item.assetClass === assetFilter),
+    [assetFilter, history],
+  );
+  const sessionStats = useMemo(
+    () => SESSION_ORDER.map((session) => {
+      const sessionHistory = filteredHistory.filter((item) => item.session === session);
+      const buyCount = sessionHistory.filter((item) => item.direction === 'buy').length;
+
+      return {
+        session,
+        total: sessionHistory.length,
+        buyCount,
+        sellCount: sessionHistory.length - buyCount,
+        avgConfidence: sessionHistory.length > 0 ? Math.round(sessionHistory.reduce((sum, item) => sum + item.confidence, 0) / sessionHistory.length) : 0,
+      };
+    }),
+    [filteredHistory],
+  );
+
+  useEffect(() => {
+    if (!token) {
+      return;
+    }
+
+    let cancelled = false;
+    setWatchlistHydrated(false);
+
+    void api.notifications.getSignalWatchlist(source, token)
+      .then(({ watchlist }) => {
+        if (cancelled) {
+          return;
+        }
+
+        if (watchlist?.symbol) {
+          setSymbol(watchlist.symbol);
+        }
+
+        if (watchlist?.timeframe) {
+          setTimeframe(watchlist.timeframe);
+        }
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (!cancelled) {
+          setWatchlistHydrated(true);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [source, token]);
 
   useEffect(() => {
     if (signalMap.has(activeSession)) {
@@ -450,6 +534,7 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
       .map((signal) => ({
         key: getSignalKey(source, symbol, timeframe, signal),
         source,
+        assetClass: selectedAssetClass,
         session: signal.session,
         direction: signal.direction,
         symbol,
@@ -471,57 +556,22 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
     const nextHistory = [...additions, ...existing].slice(0, SIGNAL_HISTORY_LIMIT);
     writeHistory(source, nextHistory);
     setHistory(nextHistory);
-  }, [selectedSymbol.label, selectedTimeframe.label, signals, source, symbol, timeframe]);
+  }, [selectedAssetClass, selectedSymbol.label, selectedTimeframe.label, signals, source, symbol, timeframe]);
 
   useEffect(() => {
-    if (typeof window === 'undefined' || !token || signals.length === 0 || !('Notification' in window)) {
+    if (!token || !watchlistHydrated) {
       return;
     }
 
-    if (window.Notification.permission !== 'granted') {
-      return;
-    }
-
-    const nowSeconds = Math.floor(Date.now() / 1000);
-    const freshnessWindow = Math.max(timeframeSeconds * 2, 12 * 60);
-
-    for (const signal of signals) {
-      const key = getSignalKey(source, symbol, timeframe, signal);
-      const alertKey = `signals_alerted:${key}`;
-
-      if (window.localStorage.getItem(alertKey) === 'sent') {
-        continue;
-      }
-
-      if (nowSeconds - signal.candleTime > freshnessWindow) {
-        continue;
-      }
-
-      const title = `${selectedSymbol.label} ${signal.direction.toUpperCase()} signal`;
-      const body = `${SESSION_META[signal.session].shortLabel} · ${selectedTimeframe.label} · Entry ${formatPrice(signal.entry)} · SL ${formatPrice(signal.stopLoss)} · TP ${formatPrice(signal.takeProfit)}`;
-
-      const notification = new window.Notification(title, {
-        body,
-        tag: key,
-      });
-      notification.onclick = () => {
-        window.focus();
-      };
-
-      void api.notifications.sendSignalAlert({
-        source,
-        session: signal.session,
-        direction: signal.direction,
-        symbol: selectedSymbol.label,
-        timeframe: selectedTimeframe.label,
-        entry: signal.entry,
-        stopLoss: signal.stopLoss,
-        takeProfit: signal.takeProfit,
-      }, token).catch(() => undefined);
-
-      window.localStorage.setItem(alertKey, 'sent');
-    }
-  }, [selectedSymbol.label, selectedTimeframe.label, signals, source, symbol, timeframe, timeframeSeconds, token]);
+    void api.notifications.saveSignalWatchlist({
+      source,
+      symbol,
+      timeframe,
+      symbolLabel: selectedSymbol.label,
+      assetClass: selectedAssetClass,
+      enabled: true,
+    }, token).catch(() => undefined);
+  }, [selectedAssetClass, selectedSymbol.label, source, symbol, timeframe, token, watchlistHydrated]);
 
   const activeSignal = signalMap.get(selectedSession) ?? signals[0] ?? null;
   const chartOverlay = useMemo(() => toOverlay(activeSignal, candles), [activeSignal, candles]);
@@ -654,7 +704,7 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
                   { icon: Radar, label: 'Session slots', value: `${signalCount}/3`, detail: 'Only the strongest valid setup is surfaced per session.' },
                   { icon: Target, label: 'Risk model', value: '1 : 2', detail: 'Stops stay beyond the zone. Targets project a fixed 2R.' },
                   { icon: CandlestickChart, label: 'Live read', value: currentPrice == null ? '-' : formatPrice(currentPrice), detail: 'Streaming from the active market-data feed.' },
-                  { icon: BellRing, label: 'Alerts', value: 'Ready', detail: 'Fresh signals are stored locally and can fan out to saved push subscriptions.' },
+                  { icon: BellRing, label: 'Alerts', value: 'Server-driven', detail: 'This watchlist is mirrored to the backend so fresh session signals can still push after you close the tab.' },
                 ].map((item) => (
                   <div key={item.label} className="rounded-2xl border border-white/8 bg-slate-950/55 p-4">
                     <div className="flex items-center justify-between gap-3">
@@ -957,19 +1007,64 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
 
           <Card className="border-white/10 bg-white/[0.03] backdrop-blur-sm">
             <CardContent className="p-5 sm:p-6">
-              <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
+                    <History className="h-4 w-4 text-emerald-300" />
+                    Signal History
+                  </div>
+                  <p className="mt-2 text-sm text-slate-400">Filter the archive by asset class and compare which sessions are producing the cleanest flow.</p>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {assetFilterOptions.map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() => setAssetFilter(option)}
+                      className={`rounded-full border px-3 py-1.5 text-xs transition ${assetFilter === option ? 'border-emerald-300/40 bg-emerald-400/15 text-emerald-100' : 'border-white/10 bg-slate-950/55 text-slate-300 hover:border-white/20 hover:text-slate-100'}`}
+                    >
+                      {option === 'all' ? 'All assets' : option}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-3">
+                {sessionStats.map((item) => (
+                  <div key={item.session} className="rounded-2xl border border-white/8 bg-slate-950/45 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <div className="text-sm font-medium text-slate-100">{SESSION_META[item.session].label}</div>
+                        <div className="mt-1 text-xs text-slate-400">{item.total} archived signal{item.total === 1 ? '' : 's'} in this filter.</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-xs uppercase tracking-[0.18em] text-slate-500">Avg confidence</div>
+                        <div className="mt-1 text-lg font-semibold text-white">{item.total > 0 ? `${item.avgConfidence}%` : '-'}</div>
+                      </div>
+                    </div>
+                    <div className="mt-3 grid grid-cols-3 gap-2 text-xs text-slate-300">
+                      <div className="rounded-xl border border-white/8 bg-slate-950/55 px-3 py-2">Total {item.total}</div>
+                      <div className="rounded-xl border border-white/8 bg-slate-950/55 px-3 py-2">Buys {item.buyCount}</div>
+                      <div className="rounded-xl border border-white/8 bg-slate-950/55 px-3 py-2">Sells {item.sellCount}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-5 flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-slate-400">
                 <History className="h-4 w-4 text-emerald-300" />
-                Signal History
+                Recent Signals
               </div>
               <div className="mt-4 space-y-3">
-                {history.length > 0 ? history.slice(0, 6).map((item) => (
+                {filteredHistory.length > 0 ? filteredHistory.slice(0, 6).map((item) => (
                   <div key={item.key} className="rounded-2xl border border-white/8 bg-slate-950/45 p-3 text-sm">
                     <div className="flex items-center justify-between gap-2">
                       <span className={`font-medium ${item.direction === 'buy' ? 'text-emerald-200' : 'text-rose-200'}`}>{item.direction.toUpperCase()}</span>
                       <span className="text-xs text-slate-400">{SESSION_META[item.session].shortLabel}</span>
                     </div>
                     <div className="mt-2 text-slate-100">{item.symbolLabel}</div>
-                    <div className="mt-1 text-xs text-slate-400">{item.timeframe} · {formatSignalTime(item.candleTime)}</div>
+                    <div className="mt-1 text-xs text-slate-400">{item.assetClass} · {item.timeframe} · {formatSignalTime(item.candleTime)}</div>
                     <div className="mt-2 grid grid-cols-3 gap-2 text-[11px] text-slate-300">
                       <span>E {formatPrice(item.entry)}</span>
                       <span>SL {formatPrice(item.stopLoss)}</span>
@@ -978,7 +1073,7 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
                   </div>
                 )) : (
                   <div className="rounded-2xl border border-dashed border-white/10 bg-slate-950/45 p-4 text-sm text-slate-400">
-                    Fresh signals will be archived here as they appear.
+                    {history.length > 0 ? 'No archived signals match the selected asset class yet.' : 'Fresh signals will be archived here as they appear.'}
                   </div>
                 )}
               </div>
