@@ -6,7 +6,7 @@ import { BrandLogo } from '@/components/BrandLogo';
 
 export function Footer() {
   const pathname = usePathname();
-  const isLiveWorkspace = pathname === '/dashboard/tradingview' || pathname === '/dashboard/deriv';
+  const isLiveWorkspace = pathname === '/dashboard/tradingview' || pathname === '/dashboard/deriv' || pathname === '/dashboard/signals';
 
   if (isLiveWorkspace) {
     return null;

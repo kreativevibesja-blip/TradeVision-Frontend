@@ -17,7 +17,7 @@ self.addEventListener('push', function (event) {
     tag: data.tag || 'tradevision-alert',
     renotify: true,
     data: {
-      url: data.url || '/dashboard/scanner',
+      url: data.url || '/dashboard/signals',
     },
   };
 
@@ -27,7 +27,7 @@ self.addEventListener('push', function (event) {
 self.addEventListener('notificationclick', function (event) {
   event.notification.close();
 
-  const targetUrl = (event.notification.data && event.notification.data.url) || '/dashboard/scanner';
+  const targetUrl = (event.notification.data && event.notification.data.url) || '/dashboard/signals';
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (clientList) {

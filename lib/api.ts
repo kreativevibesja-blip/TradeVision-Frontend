@@ -838,6 +838,27 @@ export const api = {
       { token }
     ),
 
+  notifications: {
+    sendSignalAlert: (
+      payload: {
+        source: 'deriv' | 'tradingview';
+        session: 'asian' | 'london' | 'newyork';
+        direction: 'buy' | 'sell';
+        symbol: string;
+        timeframe: string;
+        entry: number;
+        stopLoss: number;
+        takeProfit: number;
+      },
+      token: string,
+    ) =>
+      apiFetch<{ success: boolean; sent: number }>('/notifications/signals', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        token,
+      }),
+  },
+
   getAnalyses: (token: string, page = 1) =>
     apiFetch<{ analyses: AnalysisResult[]; total: number; page: number; pages: number }>(
       `/analyses?page=${page}`,

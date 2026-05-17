@@ -29,7 +29,7 @@ export function GlobalBackButton() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const isLiveWorkspace = pathname === '/dashboard/tradingview' || pathname === '/dashboard/deriv';
+  const isLiveWorkspace = pathname === '/dashboard/tradingview' || pathname === '/dashboard/deriv' || pathname === '/dashboard/signals';
   const analysisId = searchParams.get('analysisId');
   const returnTo = searchParams.get('returnTo');
 
