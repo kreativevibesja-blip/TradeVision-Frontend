@@ -6,7 +6,8 @@ import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api';
-import { supabase } from '@/lib/supabase';
+import { usePageActivity } from '@/hooks/usePageActivity';
+import { trackPollingMetric } from '@/lib/egressMetrics';
 import { Card, CardContent } from '@/components/ui/card';
 import { BrandLogo } from '@/components/BrandLogo';
 import {
@@ -48,66 +49,49 @@ const adminNav = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, token, loading } = useAuth();
+  const { isActive } = usePageActivity();
   const pathname = usePathname();
   const [openTicketCount, setOpenTicketCount] = useState(0);
   const [feedbackCount, setFeedbackCount] = useState(0);
   const [pendingBankTransferCount, setPendingBankTransferCount] = useState(0);
 
   useEffect(() => {
-    if (!token) return;
+    if (!token || !isActive) return;
+
     let active = true;
-    const loadFeedbackCount = async () => {
-      if (!supabase) return 0;
-
-      try {
-        const result = await supabase
-          .from('feedback')
-          .select('id', { count: 'exact', head: true })
-          .eq('admin_seen', false);
-        return result.count ?? 0;
-      } catch {
-        return 0;
-      }
-    };
-
-    const loadPendingBankTransferCount = async () => {
-      if (!supabase) return 0;
-
-      try {
-        const result = await supabase
-          .from('Payment')
-          .select('id', { count: 'exact', head: true })
-          .eq('status', 'PENDING')
-          .eq('paymentMethod', 'BANK_TRANSFER');
-        return result.count ?? 0;
-      } catch {
-        return 0;
-      }
-    };
+    const stopMetric = trackPollingMetric('admin-layout-badges');
 
     const load = async () => {
-      const [ticketResult, feedbackResult, paymentResult] = await Promise.all([
+      const [ticketResult, workspaceBadges] = await Promise.all([
         api.admin.getOpenTicketCount(token).catch(() => null),
-        loadFeedbackCount(),
-        loadPendingBankTransferCount(),
+        api.admin.getWorkspaceBadges(token).catch(() => null),
       ]);
 
       if (!active) return;
+
       setOpenTicketCount(ticketResult?.count ?? 0);
-      setFeedbackCount(feedbackResult ?? 0);
-      setPendingBankTransferCount(paymentResult ?? 0);
+      setFeedbackCount(workspaceBadges?.feedbackUnreadCount ?? 0);
+      setPendingBankTransferCount(workspaceBadges?.pendingBankTransferCount ?? 0);
     };
 
-    load();
-    const handleFeedbackSeen = () => { void load(); };
+    void load();
+
+    const handleFeedbackSeen = () => {
+      void load();
+    };
+
     window.addEventListener('admin-feedback-seen', handleFeedbackSeen);
-    const interval = setInterval(load, 60_000);
+    const interval = setInterval(() => {
+      void load();
+    }, 60_000);
+
     return () => {
       active = false;
+      stopMetric();
       window.removeEventListener('admin-feedback-seen', handleFeedbackSeen);
       clearInterval(interval);
     };
-  }, [token]);
+  }, [isActive, token]);
 
   if (loading) {
     return (

@@ -7,6 +7,8 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api';
+import { usePageActivity } from '@/hooks/usePageActivity';
+import { trackPollingMetric } from '@/lib/egressMetrics';
 import {
   Zap,
   Clock,
@@ -38,6 +40,7 @@ function QueuePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, token } = useAuth();
+  const { isActive } = usePageActivity();
 
   const jobId = searchParams.get('jobId');
   const analysisId = searchParams.get('analysisId');
@@ -140,14 +143,17 @@ function QueuePageContent() {
   }, [jobId, token, cancelling, router, returnTo]);
 
   useEffect(() => {
-    if (!jobId || !token) return;
+    if (!jobId || !token || !isActive) return;
+
+    const stopMetric = trackPollingMetric(`analysis-queue:${jobId}`);
 
     poll(); // Initial poll
     pollRef.current = setInterval(poll, POLL_INTERVAL_MS);
     return () => {
+      stopMetric();
       if (pollRef.current) clearInterval(pollRef.current);
     };
-  }, [jobId, token, poll]);
+  }, [isActive, jobId, token, poll]);
 
   if (!jobId) {
     return (

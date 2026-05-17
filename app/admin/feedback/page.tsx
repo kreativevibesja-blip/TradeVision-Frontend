@@ -6,18 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/lib/supabase';
+import { api, type AdminFeedbackRow } from '@/lib/api';
 import { MessageSquare, Trash2, Download, Loader2, Star, RefreshCw } from 'lucide-react';
-
-interface FeedbackRow {
-  id: string;
-  user_id: string;
-  rating: number;
-  reason: string;
-  message: string | null;
-  created_at: string;
-  admin_seen: boolean;
-}
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', {
@@ -40,7 +30,7 @@ function ratingBadge(rating: number) {
   return colors[rating] ?? 'bg-zinc-500/15 text-zinc-400 border-zinc-500/30';
 }
 
-function exportToCSV(data: FeedbackRow[]) {
+function exportToCSV(data: AdminFeedbackRow[]) {
   const escape = (v: string | null) => {
     if (v == null) return '';
     const s = String(v).replace(/"/g, '""');
@@ -63,59 +53,44 @@ function exportToCSV(data: FeedbackRow[]) {
 }
 
 export default function AdminFeedbackPage() {
-  const { user } = useAuth();
-  const [feedback, setFeedback] = useState<FeedbackRow[]>([]);
+  const { user, token } = useAuth();
+  const [feedback, setFeedback] = useState<AdminFeedbackRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    if (!supabase) return;
+    if (!token) return;
     setLoading(true);
     setError(null);
     try {
-      const { data, error: queryError } = await supabase
-        .from('feedback')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(500);
-      if (queryError) {
-        console.error('Feedback fetch error:', queryError);
-        setError(queryError.message);
-        setFeedback([]);
-      } else {
-        const rows = (data as FeedbackRow[]) ?? [];
-        setFeedback(rows);
+      const response = await api.admin.getFeedback(token);
+      const rows = response.rows ?? [];
+      setFeedback(rows);
 
-        const unseenIds = rows.filter((row) => !row.admin_seen).map((row) => row.id);
-        if (unseenIds.length > 0) {
-          const { error: updateError } = await supabase
-            .from('feedback')
-            .update({ admin_seen: true })
-            .in('id', unseenIds);
-
-          if (updateError) {
-            console.error('Feedback seen-state update error:', updateError);
-          } else {
-            setFeedback((prev) => prev.map((row) => ({ ...row, admin_seen: true })));
-            window.dispatchEvent(new Event('admin-feedback-seen'));
-          }
-        }
+      const unseenIds = rows.filter((row) => !row.admin_seen).map((row) => row.id);
+      if (unseenIds.length > 0) {
+        await api.admin.markFeedbackSeen(unseenIds, token);
+        setFeedback((prev) => prev.map((row) => ({ ...row, admin_seen: true })));
+        window.dispatchEvent(new Event('admin-feedback-seen'));
       }
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : 'Failed to load feedback');
+      setFeedback([]);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [token]);
 
   useEffect(() => {
     load();
   }, [load]);
 
   const handleDelete = async (id: string) => {
-    if (!supabase) return;
+    if (!token) return;
     setDeleting(id);
     try {
-      await supabase.from('feedback').delete().eq('id', id);
+      await api.admin.deleteFeedback(id, token);
       setFeedback((prev) => prev.filter((f) => f.id !== id));
     } finally {
       setDeleting(null);

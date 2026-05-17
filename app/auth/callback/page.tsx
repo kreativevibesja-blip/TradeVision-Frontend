@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { missingSupabaseEnvMessage, supabase } from '@/lib/supabase';
+import { missingSupabaseEnvMessage, supabase } from '@/lib/supabase/client';
 import { getReferralCode, clearReferralCode } from '@/components/ReferralCapture';
 import { api } from '@/lib/api';
 

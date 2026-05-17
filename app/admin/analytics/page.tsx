@@ -7,7 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
-import { type AdminAnalyticsResponse } from '@/lib/api';
+import { api, type AdminAnalyticsResponse } from '@/lib/api';
+import { usePageActivity } from '@/hooks/usePageActivity';
+import { trackPollingMetric } from '@/lib/egressMetrics';
 import { addDaysToDateInputValue, formatJamaicaDate, getJamaicaDateInputValue } from '@/lib/jamaica-time';
 import { BarChart3, Users, CalendarRange, DollarSign, RadioTower, PlayCircle } from 'lucide-react';
 import {
@@ -55,27 +57,6 @@ const chartOptions = {
   },
 };
 
-const DEFAULT_API_URL = 'http://localhost:4000/api';
-
-const normalizeApiUrl = (value?: string) => {
-  const rawValue = value?.trim();
-  if (!rawValue) {
-    return DEFAULT_API_URL;
-  }
-
-  try {
-    const parsedUrl = new URL(rawValue);
-    const normalizedPath = parsedUrl.pathname === '/' ? '/api' : parsedUrl.pathname.replace(/\/$/, '');
-    parsedUrl.pathname = normalizedPath.endsWith('/api') ? normalizedPath : `${normalizedPath}/api`;
-    return parsedUrl.toString().replace(/\/$/, '');
-  } catch {
-    return rawValue.replace(/\/$/, '').endsWith('/api')
-      ? rawValue.replace(/\/$/, '')
-      : `${rawValue.replace(/\/$/, '')}/api`;
-  }
-};
-
-const API_URL = normalizeApiUrl(process.env.NEXT_PUBLIC_API_URL);
 const REFRESH_INTERVAL_MS = 30_000;
 
 type RangePreset = 'today' | 'yesterday' | '7d' | '30d' | 'custom';
@@ -101,6 +82,7 @@ const getPresetRange = (preset: Exclude<RangePreset, 'custom'>) => {
 
 export default function AdminAnalyticsPage() {
   const { token } = useAuth();
+  const { isActive } = usePageActivity();
   const [analytics, setAnalytics] = useState<AdminAnalyticsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [preset, setPreset] = useState<RangePreset>('30d');
@@ -109,38 +91,29 @@ export default function AdminAnalyticsPage() {
   const [toDate, setToDate] = useState(initialRange.to);
 
   useEffect(() => {
-    if (!token) {
+    if (!token || !isActive) {
       return;
     }
+
+    const stopMetric = trackPollingMetric('admin-analytics');
 
     void loadAnalytics();
     const intervalId = window.setInterval(() => {
       void loadAnalytics(false);
     }, REFRESH_INTERVAL_MS);
 
-    return () => window.clearInterval(intervalId);
-  }, [token, fromDate, toDate]);
+    return () => {
+      stopMetric();
+      window.clearInterval(intervalId);
+    };
+  }, [fromDate, isActive, toDate, token]);
 
   const loadAnalytics = async (showLoader = true) => {
     try {
       if (showLoader) {
         setLoading(true);
       }
-      const params = new URLSearchParams();
-      if (fromDate) params.set('from', fromDate);
-      if (toDate) params.set('to', toDate);
-
-      const response = await fetch(`${API_URL}/admin/analytics?${params.toString()}`, {
-        headers: {
-          Authorization: `Bearer ${token!}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to load analytics');
-      }
-
-      const data = await response.json();
+      const data = await api.admin.getAnalytics(token!, { from: fromDate, to: toDate });
       setAnalytics(data);
     } catch {
     } finally {

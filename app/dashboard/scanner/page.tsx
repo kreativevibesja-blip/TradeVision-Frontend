@@ -9,6 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import WhyThisTradePanel, { hasScanResultConfirmation } from '@/components/WhyThisTradePanel';
 import { TradeChartModal } from '@/components/TradeChartModal';
 import { useAuth } from '@/hooks/useAuth';
+import { usePageActivity } from '@/hooks/usePageActivity';
 import { api, openScannerPanelsStream } from '@/lib/api';
 import type {
   ScanResult,
@@ -18,7 +19,8 @@ import type {
   ScannerSessionType,
   ScannerSessionSummary,
 } from '@/lib/api';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase/client';
+import { trackChannelMetric, trackPollingMetric } from '@/lib/egressMetrics';
 import {
   Radar,
   TrendingUp,
@@ -333,6 +335,7 @@ function getEntryInstruction(result: ScanResult) {
 const BACKGROUND_REFRESH_MS = 45_000;
 export default function ScannerPage() {
   const { user, token, loading: authLoading } = useAuth();
+  const { isActive } = usePageActivity();
 
   // Scanner state
   const [sessions, setSessions] = useState<ScannerSession[]>([]);
@@ -463,7 +466,7 @@ export default function ScannerPage() {
 
   // ── Realtime alerts via Supabase ──
   useEffect(() => {
-    if (!supabase || !user) return;
+    if (!supabase || !user || !isActive) return;
 
     const alertsChannel = supabase
       .channel('scanner-alerts')
@@ -481,6 +484,7 @@ export default function ScannerPage() {
         },
       )
       .subscribe();
+    const stopAlertsMetric = trackChannelMetric(`scanner-alerts:${user.id}`);
 
     const resultsChannel = supabase
       .channel('scanner-results')
@@ -501,12 +505,15 @@ export default function ScannerPage() {
         },
       )
       .subscribe();
+    const stopResultsMetric = trackChannelMetric(`scanner-results:${user.id}`);
 
     return () => {
+      stopAlertsMetric();
+      stopResultsMetric();
       void supabase?.removeChannel(alertsChannel);
       void supabase?.removeChannel(resultsChannel);
     };
-  }, [user, token, loadHistoryResults, loadSummary]);
+  }, [isActive, user, token, loadHistoryResults, loadSummary]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !('Notification' in window) || notificationPermission !== 'granted') {
@@ -546,12 +553,13 @@ export default function ScannerPage() {
 
   // ── Push-driven live feed and potentials ──
   useEffect(() => {
-    if (!token || !user || (user.subscription !== 'TOP_TIER' && user.subscription !== 'VIP_AUTO_TRADER')) {
+    if (!token || !user || !isActive || (user.subscription !== 'TOP_TIER' && user.subscription !== 'VIP_AUTO_TRADER')) {
       return;
     }
 
     const abortController = new AbortController();
     let retryTimer: ReturnType<typeof setTimeout> | null = null;
+    const stopStreamMetric = trackChannelMetric(`scanner-panels-stream:${user.id}`);
 
     const connect = async () => {
       try {
@@ -582,26 +590,35 @@ export default function ScannerPage() {
     void connect();
 
     return () => {
+      stopStreamMetric();
       abortController.abort();
       if (retryTimer) {
         clearTimeout(retryTimer);
       }
     };
-  }, [token, user]);
+  }, [isActive, token, user]);
 
   // ── Re-evaluate session windows every minute (client-side) ──
   useEffect(() => {
+    if (!isActive) {
+      return;
+    }
+
+    const stopMetric = trackPollingMetric('scanner-session-window');
     const tick = () => {
       setLondonWindowActive(isSessionWindowOpen('london'));
       setNewyorkWindowActive(isSessionWindowOpen('newyork'));
     };
     const id = setInterval(tick, 60_000);
-    return () => clearInterval(id);
-  }, []);
+    return () => {
+      stopMetric();
+      clearInterval(id);
+    };
+  }, [isActive]);
 
   // ── Passive refresh interval ──
   useEffect(() => {
-    if (!token) {
+    if (!token || !isActive) {
       if (backgroundIntervalRef.current) {
         clearInterval(backgroundIntervalRef.current);
         backgroundIntervalRef.current = null;
@@ -624,15 +641,17 @@ export default function ScannerPage() {
     };
 
     backgroundIntervalRef.current = setInterval(refreshScannerData, BACKGROUND_REFRESH_MS);
+    const stopMetric = trackPollingMetric('scanner-background-refresh');
 
     return () => {
+      stopMetric();
       if (backgroundIntervalRef.current) {
         clearInterval(backgroundIntervalRef.current);
         backgroundIntervalRef.current = null;
       }
     };
 
-  }, [token, loadAlerts, loadHistoryResults, loadStatus, loadSummary]);
+  }, [isActive, token, loadAlerts, loadHistoryResults, loadStatus, loadSummary]);
 
   // ── Toggle session ──
   const handleToggleSession = async (type: ScannerSessionType) => {

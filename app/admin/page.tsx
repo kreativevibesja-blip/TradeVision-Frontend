@@ -5,27 +5,35 @@ import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
 import { api, type AdminDashboardStats } from '@/lib/api';
+import { usePageActivity } from '@/hooks/usePageActivity';
+import { trackPollingMetric } from '@/lib/egressMetrics';
 import { Users, Crown, FileText, DollarSign, TrendingUp, Activity, RadioTower, PlayCircle } from 'lucide-react';
 
 const REFRESH_INTERVAL_MS = 30_000;
 
 export default function AdminDashboardPage() {
   const { token } = useAuth();
+  const { isActive } = usePageActivity();
   const [stats, setStats] = useState<AdminDashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!token) {
+    if (!token || !isActive) {
       return;
     }
+
+    const stopMetric = trackPollingMetric('admin-dashboard');
 
     void loadStats();
     const intervalId = window.setInterval(() => {
       void loadStats(false);
     }, REFRESH_INTERVAL_MS);
 
-    return () => window.clearInterval(intervalId);
-  }, [token]);
+    return () => {
+      stopMetric();
+      window.clearInterval(intervalId);
+    };
+  }, [isActive, token]);
 
   const loadStats = async (showLoader = true) => {
     try {
