@@ -7,16 +7,14 @@ import {
   AlertTriangle,
   ArrowUpRight,
   BellRing,
-  CandlestickChart,
+  ChevronDown,
   Clock3,
   Crown,
   History,
   Loader2,
   Radar,
   ShieldCheck,
-  Sparkles,
   Target,
-  Waves,
   Wifi,
   WifiOff,
 } from 'lucide-react';
@@ -716,171 +714,142 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
         </Card>
       </motion.section>
 
-      <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.28, delay: 0.03 }} className="grid gap-4 xl:grid-cols-[1fr_1fr]">
+      <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.28, delay: 0.03 }}>
         <Card className="mobile-card border-white/10">
-          <CardContent className="p-5 sm:p-6">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-white/45">
-                <Activity className="h-4 w-4 text-emerald-300" />
-                Active Signals
-              </div>
-              <span className="text-xs text-white/40">{signalCount} live</span>
-            </div>
-
-            <div className="mt-4 space-y-3">
-              {SESSION_ORDER.map((session) => {
-                const signal = signalMap.get(session) ?? null;
-                const active = selectedSession === session;
-                return (
-                  <button
-                    key={session}
-                    type="button"
-                    onClick={() => setSelectedSession(session)}
-                    className={`w-full rounded-2xl border p-4 text-left transition ${active ? 'border-[rgba(255,223,112,0.3)] bg-white/10' : 'border-white/8 bg-white/5 hover:border-white/16'}`}
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <div className="text-[11px] uppercase tracking-[0.18em] text-white/45">{SESSION_META[session].label}</div>
-                        <div className="mt-1 text-sm font-medium text-slate-100">{signal ? selectedSymbol.label : 'No active signal'}</div>
-                      </div>
-                      <Badge variant="outline" className={signal ? (signal.direction === 'buy' ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-100' : 'border-rose-400/30 bg-rose-500/10 text-rose-100') : 'border-white/10 bg-transparent text-slate-400'}>
-                        {signal ? signal.direction.toUpperCase() : 'Standby'}
-                      </Badge>
-                    </div>
-
-                    <div className="mt-3 grid grid-cols-2 gap-3 text-xs text-slate-300 sm:grid-cols-4">
-                      <div>
-                        <div className="text-white/40">Entry</div>
-                        <div className="mt-1 font-medium text-slate-100">{signal ? formatPrice(signal.entry) : '-'}</div>
-                      </div>
-                      <div>
-                        <div className="text-white/40">SL</div>
-                        <div className="mt-1 font-medium text-slate-100">{signal ? formatPrice(signal.stopLoss) : '-'}</div>
-                      </div>
-                      <div>
-                        <div className="text-white/40">TP</div>
-                        <div className="mt-1 font-medium text-slate-100">{signal ? formatPrice(signal.takeProfit) : '-'}</div>
-                      </div>
-                      <div>
-                        <div className="text-white/40">Time</div>
-                        <div className="mt-1 font-medium text-slate-100">{signal ? formatSignalTime(signal.candleTime) : 'Waiting'}</div>
-                      </div>
-                    </div>
-
-                    {signal ? (
-                      <div className="mt-3 grid grid-cols-2 gap-3 text-xs text-slate-300">
-                        <div>
-                          <div className="text-white/40">Confidence</div>
-                          <div className="mt-1 font-medium text-slate-100">{signal.confidence}%</div>
+          <CardContent className="p-3 sm:p-4">
+            <div className="space-y-3">
+              <details open className="group rounded-2xl border border-white/8 bg-white/5">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 text-left">
+                  <div className="flex items-center gap-2 text-sm font-medium text-white">
+                    <Activity className="h-4 w-4 text-emerald-300" />
+                    Active Signals
+                    <span className="text-xs font-normal text-white/40">{signalCount} live</span>
+                  </div>
+                  <ChevronDown className="h-4 w-4 text-white/45 transition-transform group-open:rotate-180" />
+                </summary>
+                <div className="space-y-3 border-t border-white/8 px-4 py-4">
+                  {SESSION_ORDER.map((session) => {
+                    const signal = signalMap.get(session) ?? null;
+                    const active = selectedSession === session;
+                    return (
+                      <button
+                        key={session}
+                        type="button"
+                        onClick={() => setSelectedSession(session)}
+                        className={`w-full rounded-2xl border p-4 text-left transition ${active ? 'border-[rgba(255,223,112,0.3)] bg-white/10' : 'border-white/8 bg-white/5 hover:border-white/16'}`}
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <div className="text-[11px] uppercase tracking-[0.18em] text-white/45">{SESSION_META[session].label}</div>
+                            <div className="mt-1 text-sm font-medium text-slate-100">{signal ? selectedSymbol.label : 'No active signal'}</div>
+                          </div>
+                          <Badge variant="outline" className={signal ? (signal.direction === 'buy' ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-100' : 'border-rose-400/30 bg-rose-500/10 text-rose-100') : 'border-white/10 bg-transparent text-slate-400'}>
+                            {signal ? signal.direction.toUpperCase() : 'Standby'}
+                          </Badge>
                         </div>
-                        <div>
-                          <div className="text-white/40">Session</div>
-                          <div className="mt-1 font-medium text-slate-100">{SESSION_META[signal.session].shortLabel}</div>
+
+                        <div className="mt-3 grid grid-cols-2 gap-3 text-xs text-slate-300 sm:grid-cols-4">
+                          <div><div className="text-white/40">Entry</div><div className="mt-1 font-medium text-slate-100">{signal ? formatPrice(signal.entry) : '-'}</div></div>
+                          <div><div className="text-white/40">SL</div><div className="mt-1 font-medium text-slate-100">{signal ? formatPrice(signal.stopLoss) : '-'}</div></div>
+                          <div><div className="text-white/40">TP</div><div className="mt-1 font-medium text-slate-100">{signal ? formatPrice(signal.takeProfit) : '-'}</div></div>
+                          <div><div className="text-white/40">Time</div><div className="mt-1 font-medium text-slate-100">{signal ? formatSignalTime(signal.candleTime) : 'Waiting'}</div></div>
                         </div>
+
+                        {signal ? <p className="mt-3 text-xs leading-5 text-white/45">{signal.executionNote}</p> : null}
+                      </button>
+                    );
+                  })}
+                </div>
+              </details>
+
+              <details className="group rounded-2xl border border-white/8 bg-white/5">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 text-left">
+                  <div className="flex items-center gap-2 text-sm font-medium text-white">
+                    <History className="h-4 w-4 text-emerald-300" />
+                    Past Signals
+                    <span className="text-xs font-normal text-white/40">{filteredHistory.length} shown</span>
+                  </div>
+                  <ChevronDown className="h-4 w-4 text-white/45 transition-transform group-open:rotate-180" />
+                </summary>
+                <div className="space-y-3 border-t border-white/8 px-4 py-4">
+                  <div className="flex flex-wrap gap-2">
+                    {assetFilterOptions.map((option) => (
+                      <button
+                        key={option}
+                        type="button"
+                        onClick={() => setAssetFilter(option)}
+                        className={`rounded-full border px-3 py-1.5 text-xs transition ${assetFilter === option ? 'border-emerald-300/40 bg-emerald-400/15 text-emerald-100' : 'border-white/10 bg-slate-950/55 text-slate-300 hover:border-white/20 hover:text-slate-100'}`}
+                      >
+                        {option === 'all' ? 'All assets' : option}
+                      </button>
+                    ))}
+                  </div>
+
+                  {filteredHistory.length > 0 ? filteredHistory.slice(0, 6).map((item) => (
+                    <div key={item.key} className="rounded-2xl border border-white/8 bg-white/5 p-4 text-sm">
+                      <div className="flex items-center justify-between gap-2">
+                        <div>
+                          <div className="font-medium text-slate-100">{item.symbolLabel}</div>
+                          <div className="mt-1 text-xs text-white/40">{item.assetClass} · {SESSION_META[item.session].shortLabel} · {item.timeframe}</div>
+                        </div>
+                        <Badge variant="outline" className={item.direction === 'buy' ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-100' : 'border-rose-400/30 bg-rose-500/10 text-rose-100'}>
+                          {item.direction.toUpperCase()}
+                        </Badge>
                       </div>
-                    ) : null}
-
-                    {signal ? (
-                      <p className="mt-3 text-xs leading-5 text-white/45">{signal.executionNote}</p>
-                    ) : null}
-                  </button>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="mobile-card border-white/10">
-          <CardContent className="p-5 sm:p-6">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-white/45">
-                  <History className="h-4 w-4 text-emerald-300" />
-                  Past Signals
-                </div>
-                <p className="mt-2 text-sm text-white/55">Archived signals for the current feed. Filter by asset class to narrow the list.</p>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                {assetFilterOptions.map((option) => (
-                  <button
-                    key={option}
-                    type="button"
-                    onClick={() => setAssetFilter(option)}
-                    className={`rounded-full border px-3 py-1.5 text-xs transition ${assetFilter === option ? 'border-emerald-300/40 bg-emerald-400/15 text-emerald-100' : 'border-white/10 bg-slate-950/55 text-slate-300 hover:border-white/20 hover:text-slate-100'}`}
-                  >
-                    {option === 'all' ? 'All assets' : option}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-4 space-y-3">
-              {filteredHistory.length > 0 ? filteredHistory.slice(0, 6).map((item) => (
-                <div key={item.key} className="rounded-2xl border border-white/8 bg-white/5 p-4 text-sm">
-                  <div className="flex items-center justify-between gap-2">
-                    <div>
-                      <div className="font-medium text-slate-100">{item.symbolLabel}</div>
-                      <div className="mt-1 text-xs text-white/40">{item.assetClass} · {SESSION_META[item.session].shortLabel} · {item.timeframe}</div>
+                      <div className="mt-3 grid grid-cols-3 gap-2 text-[11px] text-slate-300">
+                        <div className="rounded-xl border border-white/8 bg-white/5 p-2">E {formatPrice(item.entry)}</div>
+                        <div className="rounded-xl border border-white/8 bg-white/5 p-2">SL {formatPrice(item.stopLoss)}</div>
+                        <div className="rounded-xl border border-white/8 bg-white/5 p-2">TP {formatPrice(item.takeProfit)}</div>
+                      </div>
+                      <div className="mt-3 flex items-center justify-between text-xs text-white/45">
+                        <span>{formatSignalTime(item.candleTime)}</span>
+                        <span>{item.confidence}% confidence</span>
+                      </div>
                     </div>
-                    <Badge variant="outline" className={item.direction === 'buy' ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-100' : 'border-rose-400/30 bg-rose-500/10 text-rose-100'}>
-                      {item.direction.toUpperCase()}
-                    </Badge>
-                  </div>
-
-                  <div className="mt-3 grid grid-cols-3 gap-2 text-[11px] text-slate-300">
-                    <div className="rounded-xl border border-white/8 bg-white/5 p-2">E {formatPrice(item.entry)}</div>
-                    <div className="rounded-xl border border-white/8 bg-white/5 p-2">SL {formatPrice(item.stopLoss)}</div>
-                    <div className="rounded-xl border border-white/8 bg-white/5 p-2">TP {formatPrice(item.takeProfit)}</div>
-                  </div>
-
-                  <div className="mt-3 flex items-center justify-between text-xs text-white/45">
-                    <span>{formatSignalTime(item.candleTime)}</span>
-                    <span>{item.confidence}% confidence</span>
-                  </div>
+                  )) : (
+                    <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 p-5 text-sm text-white/45">
+                      {history.length > 0 ? 'No archived signals match the selected asset class yet.' : 'Past signals will appear here as new session signals are generated.'}
+                    </div>
+                  )}
                 </div>
-              )) : (
-                <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 p-5 text-sm text-white/45">
-                  {history.length > 0 ? 'No archived signals match the selected asset class yet.' : 'Past signals will appear here as new session signals are generated.'}
+              </details>
+
+              <details className="group rounded-2xl border border-white/8 bg-white/5">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-4 text-left">
+                  <div className="flex items-center gap-2 text-sm font-medium text-white">
+                    <ShieldCheck className="h-4 w-4 text-emerald-300" />
+                    Selected Signal
+                  </div>
+                  <ChevronDown className="h-4 w-4 text-white/45 transition-transform group-open:rotate-180" />
+                </summary>
+                <div className="border-t border-white/8 px-4 py-4">
+                  {activeSignal ? (
+                    <div className="rounded-2xl border border-white/8 bg-white/5 p-4 text-sm text-slate-300">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <div className="text-sm font-medium text-slate-100">{selectedSymbol.label}</div>
+                          <div className="mt-1 text-xs text-white/40">{SESSION_META[activeSignal.session].label} · {selectedTimeframe.label}</div>
+                        </div>
+                        <Badge variant="outline" className={activeSignal.direction === 'buy' ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-100' : 'border-rose-400/30 bg-rose-500/10 text-rose-100'}>
+                          {activeSignal.direction.toUpperCase()}
+                        </Badge>
+                      </div>
+                      <div className="mt-3 grid grid-cols-2 gap-3 text-[11px] text-slate-300 sm:grid-cols-4">
+                        <div className="rounded-xl border border-white/8 bg-white/5 p-2">Entry {formatPrice(activeSignal.entry)}</div>
+                        <div className="rounded-xl border border-white/8 bg-white/5 p-2">SL {formatPrice(activeSignal.stopLoss)}</div>
+                        <div className="rounded-xl border border-white/8 bg-white/5 p-2">TP {formatPrice(activeSignal.takeProfit)}</div>
+                        <div className="rounded-xl border border-white/8 bg-white/5 p-2">Confidence {activeSignal.confidence}%</div>
+                      </div>
+                      <p className="mt-3 text-xs leading-5 text-white/45">{activeSignal.reason}</p>
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 p-5 text-sm text-white/45">
+                      No active signal selected yet.
+                    </div>
+                  )}
                 </div>
-              )}
+              </details>
             </div>
-          </CardContent>
-        </Card>
-      </motion.section>
-
-      <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.06 }} className="grid gap-4 xl:grid-cols-[1.25fr_0.75fr]">
-        <Card className="mobile-card border-white/10">
-            <CardContent className="p-5 sm:p-6">
-            <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-white/45">
-              <ShieldCheck className="h-4 w-4 text-emerald-300" />
-              Selected Signal
-            </div>
-
-            {activeSignal ? (
-              <div className="mt-4 rounded-2xl border border-white/8 bg-white/5 p-4 text-sm text-slate-300">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <div className="text-sm font-medium text-slate-100">{selectedSymbol.label}</div>
-                    <div className="mt-1 text-xs text-white/40">{SESSION_META[activeSignal.session].label} · {selectedTimeframe.label}</div>
-                  </div>
-                  <Badge variant="outline" className={activeSignal.direction === 'buy' ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-100' : 'border-rose-400/30 bg-rose-500/10 text-rose-100'}>
-                    {activeSignal.direction.toUpperCase()}
-                  </Badge>
-                </div>
-                <div className="mt-3 grid grid-cols-2 gap-3 text-[11px] text-slate-300 sm:grid-cols-4">
-                  <div className="rounded-xl border border-white/8 bg-white/5 p-2">Entry {formatPrice(activeSignal.entry)}</div>
-                  <div className="rounded-xl border border-white/8 bg-white/5 p-2">SL {formatPrice(activeSignal.stopLoss)}</div>
-                  <div className="rounded-xl border border-white/8 bg-white/5 p-2">TP {formatPrice(activeSignal.takeProfit)}</div>
-                  <div className="rounded-xl border border-white/8 bg-white/5 p-2">Confidence {activeSignal.confidence}%</div>
-                </div>
-                <p className="mt-3 text-xs leading-5 text-white/45">{activeSignal.reason}</p>
-              </div>
-            ) : (
-              <div className="mt-4 rounded-2xl border border-dashed border-white/10 bg-white/5 p-5 text-sm text-white/45">
-                No active signal selected yet.
-              </div>
-            )}
           </CardContent>
         </Card>
       </motion.section>
