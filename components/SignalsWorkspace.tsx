@@ -4,11 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Activity,
-  AlertTriangle,
-  ArrowUpRight,
   BellRing,
   ChevronDown,
-  Clock3,
   Crown,
   History,
   Loader2,
@@ -21,25 +18,16 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { LiveChart, type LiveChartStatus } from '@/components/LiveChart';
-import { TradingViewLiveChart } from '@/components/TradingViewLiveChart';
 import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api';
-import { calculateEmaSeries } from '@/lib/ema';
 import {
   DERIV_SYMBOLS,
-  DERIV_TIMEFRAMES,
-  getDerivSymbol,
   getDerivTimeframe,
-  type DerivCandle,
 } from '@/lib/deriv-live';
 import {
   LIVE_CHART_SYMBOLS,
-  LIVE_CHART_TIMEFRAMES,
-  getLiveChartSymbol,
   getLiveChartTimeframe,
 } from '@/lib/live-chart';
-import type { ChartOverlaySet } from '@/lib/live-chart-drawings';
 
 type SignalSession = 'asian' | 'london' | 'newyork';
 type SignalDirection = 'buy' | 'sell';
@@ -47,27 +35,6 @@ type SignalSource = 'deriv' | 'tradingview';
 
 interface SignalsWorkspaceProps {
   source?: SignalSource;
-}
-
-interface SessionSignal {
-  id: string;
-  session: SignalSession;
-  direction: SignalDirection;
-  entry: number;
-  stopLoss: number;
-  takeProfit: number;
-  risk: number;
-  confidence: number;
-  candleTime: number;
-  zoneLow: number;
-  zoneHigh: number;
-  zoneStartTime: number;
-  zoneEndTime: number;
-  ema50: number;
-  ema200: number;
-  reason: string;
-  setupLabel: string;
-  executionNote: string;
 }
 
 interface PersistedSignalRecord {
@@ -85,6 +52,18 @@ interface PersistedSignalRecord {
   confidence: number;
   candleTime: number;
   savedAt: number;
+}
+
+interface ActiveSignalRecord extends PersistedSignalRecord {
+  reason: string;
+  executionNote: string;
+  setupLabel: string;
+}
+
+interface MarketScanTarget {
+  value: string;
+  label: string;
+  category: string;
 }
 
 const SESSION_ORDER: SignalSession[] = ['asian', 'london', 'newyork'];
@@ -189,178 +168,6 @@ const getSessionForTime = (unixSeconds: number): SignalSession => {
   return 'newyork';
 };
 
-const isSessionActiveNow = (session: SignalSession) => session === getSessionForTime(Math.floor(Date.now() / 1000));
-
-const average = (values: number[]) => {
-  if (values.length === 0) {
-    return 0;
-  }
-
-  return values.reduce((sum, value) => sum + value, 0) / values.length;
-};
-
-const buildSignalsFromCandles = (candles: DerivCandle[]) => {
-  if (candles.length < 220) {
-    return [] as SessionSignal[];
-  }
-
-  const ema50ByTime = new Map(calculateEmaSeries(candles, 50).map((point) => [point.time, point.value]));
-  const ema200ByTime = new Map(calculateEmaSeries(candles, 200).map((point) => [point.time, point.value]));
-  const latestTime = candles[candles.length - 1]?.time ?? 0;
-  const candidates: SessionSignal[] = [];
-
-  for (let index = 200; index < candles.length; index += 1) {
-    const candle = candles[index];
-    const previous = candles[index - 1];
-    const ema50 = ema50ByTime.get(candle.time);
-    const ema200 = ema200ByTime.get(candle.time);
-    const prevEma50 = ema50ByTime.get(previous.time);
-    const prevEma200 = ema200ByTime.get(previous.time);
-
-    if (ema50 == null || ema200 == null || prevEma50 == null || prevEma200 == null) {
-      continue;
-    }
-
-    if (latestTime - candle.time > 36 * 60 * 60) {
-      continue;
-    }
-
-    const rangeWindow = candles.slice(Math.max(0, index - 14), index + 1);
-    const zoneWindow = candles.slice(Math.max(0, index - 8), index + 1);
-    const avgRange = average(rangeWindow.map((item) => Math.max(item.high - item.low, Number.EPSILON)));
-    const range = Math.max(candle.high - candle.low, Number.EPSILON);
-    const bodySize = Math.abs(candle.close - candle.open);
-    const bodyRatio = bodySize / range;
-    const topEma = Math.max(ema50, ema200);
-    const bottomEma = Math.min(ema50, ema200);
-    const crossDistance = Math.abs(ema50 - ema200);
-    const emaSlopeStrength = ((ema50 - prevEma50) + (ema200 - prevEma200)) / Math.max(avgRange, Number.EPSILON);
-    const bearishSlopeStrength = ((prevEma50 - ema50) + (prevEma200 - ema200)) / Math.max(avgRange, Number.EPSILON);
-
-    const bullishCross =
-      ema50 > ema200 &&
-      candle.close > topEma &&
-      previous.close <= Math.max(prevEma50, prevEma200) &&
-      candle.low <= topEma + avgRange * 0.18 &&
-      candle.close > candle.open &&
-      bodyRatio >= 0.48 &&
-      candle.close - topEma <= avgRange * 1.3;
-
-    const bearishCross =
-      ema50 < ema200 &&
-      candle.close < bottomEma &&
-      previous.close >= Math.min(prevEma50, prevEma200) &&
-      candle.high >= bottomEma - avgRange * 0.18 &&
-      candle.close < candle.open &&
-      bodyRatio >= 0.48 &&
-      bottomEma - candle.close <= avgRange * 1.3;
-
-    if (!bullishCross && !bearishCross) {
-      continue;
-    }
-
-    const direction: SignalDirection = bullishCross ? 'buy' : 'sell';
-    const stopBuffer = avgRange * 0.22;
-    const entry = candle.close;
-    const stopLoss = bullishCross
-      ? Math.min(...zoneWindow.map((item) => item.low), bottomEma) - stopBuffer
-      : Math.max(...zoneWindow.map((item) => item.high), topEma) + stopBuffer;
-    const risk = bullishCross ? entry - stopLoss : stopLoss - entry;
-
-    if (!Number.isFinite(risk) || risk <= avgRange * 0.35 || risk >= avgRange * 6) {
-      continue;
-    }
-
-    const takeProfit = bullishCross ? entry + risk * 2 : entry - risk * 2;
-    const session = getSessionForTime(candle.time);
-    const confidence = Math.round(
-      clamp(
-        58 +
-          bodyRatio * 18 +
-          clamp((crossDistance / Math.max(avgRange, Number.EPSILON)) * 5, 0, 10) +
-          clamp((bullishCross ? emaSlopeStrength : bearishSlopeStrength) * 9, 0, 10),
-        55,
-        96,
-      ),
-    );
-
-    candidates.push({
-      id: `${session}-${direction}-${candle.time}`,
-      session,
-      direction,
-      entry,
-      stopLoss,
-      takeProfit,
-      risk,
-      confidence,
-      candleTime: candle.time,
-      zoneLow: bullishCross ? Math.min(...zoneWindow.map((item) => item.low), bottomEma) : Math.min(bottomEma, candle.close),
-      zoneHigh: bullishCross ? Math.max(topEma, candle.close) : Math.max(...zoneWindow.map((item) => item.high), topEma),
-      zoneStartTime: zoneWindow[0]?.time ?? candle.time,
-      zoneEndTime: zoneWindow[zoneWindow.length - 1]?.time ?? candle.time,
-      ema50,
-      ema200,
-      reason: bullishCross
-        ? 'Price reclaimed both EMAs, closed strong above the stack, and left risk tucked under the demand pocket.'
-        : 'Price reclaimed both EMAs to the downside, closed strong below the stack, and left risk tucked above the supply pocket.',
-      setupLabel: bullishCross ? 'EMA reclaim continuation' : 'EMA rejection continuation',
-      executionNote: bullishCross
-        ? 'Buy the close or the first shallow retest into the EMA stack.'
-        : 'Sell the close or the first shallow retest into the EMA stack.',
-    });
-  }
-
-  const freshCandidates = candidates.filter((signal) => latestTime - signal.candleTime <= 24 * 60 * 60);
-
-  return SESSION_ORDER.flatMap((session) => {
-    const topSignal = freshCandidates
-      .filter((signal) => signal.session === session)
-      .sort((left, right) => {
-        if (left.confidence !== right.confidence) {
-          return right.confidence - left.confidence;
-        }
-
-        return right.candleTime - left.candleTime;
-      })[0];
-
-    return topSignal ? [topSignal] : [];
-  });
-};
-
-const toOverlay = (signal: SessionSignal | null, candles: DerivCandle[]): ChartOverlaySet | null => {
-  if (!signal || candles.length === 0) {
-    return null;
-  }
-
-  return {
-    zones: [
-      {
-        key: `${signal.id}-zone`,
-        kind: signal.direction === 'buy' ? 'demand' : 'supply',
-        start: signal.zoneLow,
-        end: signal.zoneHigh,
-        fromTime: signal.zoneStartTime,
-        toTime: candles[candles.length - 1]?.time ?? signal.zoneEndTime,
-        label: signal.direction === 'buy' ? 'Entry Zone' : 'Supply Zone',
-        color: signal.direction === 'buy' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(248, 113, 113, 0.12)',
-        borderColor: signal.direction === 'buy' ? '#34d399' : '#fb7185',
-      },
-    ],
-    levels: [
-      { key: `${signal.id}-entry`, label: 'Entry', price: signal.entry, color: '#60a5fa' },
-      { key: `${signal.id}-stop`, label: 'Stop', price: signal.stopLoss, color: '#fb7185' },
-      { key: `${signal.id}-target`, label: 'TP 2R', price: signal.takeProfit, color: '#4ade80' },
-      { key: `${signal.id}-ema50`, label: 'EMA 50 anchor', price: signal.ema50, color: '#38bdf8', style: 'dashed' },
-      { key: `${signal.id}-ema200`, label: 'EMA 200 anchor', price: signal.ema200, color: '#f59e0b', style: 'dashed' },
-    ],
-    legendItems: [
-      { key: `${signal.id}-zone-legend`, label: 'Signal Zone', color: signal.direction === 'buy' ? '#34d399' : '#fb7185' },
-      { key: `${signal.id}-entry-legend`, label: 'Entry', color: '#60a5fa' },
-      { key: `${signal.id}-target-legend`, label: 'TP 2R', color: '#4ade80' },
-    ],
-  };
-};
-
 const readHistory = (source: SignalSource): PersistedSignalRecord[] => {
   if (typeof window === 'undefined') {
     return [];
@@ -382,9 +189,6 @@ const writeHistory = (source: SignalSource, history: PersistedSignalRecord[]) =>
   window.localStorage.setItem(`signals_history:${source}`, JSON.stringify(history.slice(0, SIGNAL_HISTORY_LIMIT)));
 };
 
-const getSignalKey = (source: SignalSource, symbol: string, timeframe: string, signal: SessionSignal) =>
-  `${source}:${symbol}:${timeframe}:${signal.session}:${signal.direction}:${signal.candleTime}`;
-
 const formatAssetClass = (value: string | null | undefined) => {
   if (!value) {
     return 'Unclassified';
@@ -393,47 +197,29 @@ const formatAssetClass = (value: string | null | undefined) => {
   return ASSET_CLASS_LABELS[value] ?? value.replace(/-/g, ' ');
 };
 
-const getTimeframeSeconds = (source: SignalSource, timeframe: string) => {
-  if (source === 'deriv') {
-    return getDerivTimeframe(timeframe).granularity;
-  }
-
-  return {
-    M1: 60,
-    M5: 300,
-    M15: 900,
-    M30: 1800,
-    H1: 3600,
-    H4: 14400,
-    D1: 86400,
-  }[timeframe] ?? 900;
-};
-
 export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
   const { user, token, loading: authLoading } = useAuth();
   const isDeriv = source === 'deriv';
-  const [symbol, setSymbol] = useState(isDeriv ? 'R_10' : 'EURUSD');
   const [timeframe, setTimeframe] = useState(isDeriv ? '15m' : 'M15');
-  const [candles, setCandles] = useState<DerivCandle[]>([]);
-  const [chartError, setChartError] = useState('');
-  const [liveStatus, setLiveStatus] = useState<LiveChartStatus>({ connectionState: 'connecting', loadingHistory: true, candleCount: 0 });
-  const [selectedSession, setSelectedSession] = useState<SignalSession>('london');
   const [history, setHistory] = useState<PersistedSignalRecord[]>([]);
   const [assetFilter, setAssetFilter] = useState<string>('all');
-  const [watchlistHydrated, setWatchlistHydrated] = useState(false);
+  const [activeSignals, setActiveSignals] = useState<ActiveSignalRecord[]>([]);
+  const [selectedSignalKey, setSelectedSignalKey] = useState<string | null>(null);
+  const [scanState, setScanState] = useState<{ loading: boolean; error: string; lastUpdated: number | null }>({
+    loading: true,
+    error: '',
+    lastUpdated: null,
+  });
 
   useEffect(() => {
-    setSymbol(isDeriv ? 'R_10' : 'EURUSD');
     setTimeframe(isDeriv ? '15m' : 'M15');
     setHistory(readHistory(source));
     setAssetFilter('all');
-    setWatchlistHydrated(false);
+    setActiveSignals([]);
+    setSelectedSignalKey(null);
+    setScanState({ loading: true, error: '', lastUpdated: null });
   }, [isDeriv, source]);
 
-  const selectedSymbol = useMemo(
-    () => (isDeriv ? getDerivSymbol(symbol) : getLiveChartSymbol(symbol)),
-    [isDeriv, symbol],
-  );
   const selectedDerivTimeframe = useMemo(
     () => (isDeriv ? getDerivTimeframe(timeframe) : null),
     [isDeriv, timeframe],
@@ -446,33 +232,38 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
     () => selectedDerivTimeframe ?? selectedTradingViewTimeframe!,
     [selectedDerivTimeframe, selectedTradingViewTimeframe],
   );
-  const selectedAssetClass = useMemo(() => formatAssetClass(selectedSymbol.category), [selectedSymbol.category]);
-  const signals = useMemo(() => buildSignalsFromCandles(candles), [candles]);
-  const signalMap = useMemo(() => new Map(signals.map((signal) => [signal.session, signal])), [signals]);
-  const activeSession = getSessionForTime(Math.floor(Date.now() / 1000));
-  const timeframeSeconds = getTimeframeSeconds(source, timeframe);
+  const marketUniverse = useMemo<MarketScanTarget[]>(() => {
+    if (isDeriv) {
+      return DERIV_SYMBOLS.map((item) => ({
+        value: item.value,
+        label: item.label,
+        category: item.category,
+      }));
+    }
+
+    return LIVE_CHART_SYMBOLS
+      .filter((item) => item.category !== 'crypto')
+      .map((item) => ({
+        value: item.value,
+        label: item.label,
+        category: item.category,
+      }));
+  }, [isDeriv]);
   const assetFilterOptions = useMemo(
-    () => ['all', ...Array.from(new Set(history.map((item) => item.assetClass))).filter(Boolean)],
-    [history],
+    () => ['all', ...Array.from(new Set([...activeSignals, ...history].map((item) => item.assetClass))).filter(Boolean)],
+    [activeSignals, history],
+  );
+  const filteredActiveSignals = useMemo(
+    () => activeSignals.filter((item) => assetFilter === 'all' || item.assetClass === assetFilter),
+    [activeSignals, assetFilter],
   );
   const filteredHistory = useMemo(
     () => history.filter((item) => assetFilter === 'all' || item.assetClass === assetFilter),
     [assetFilter, history],
   );
-  const sessionStats = useMemo(
-    () => SESSION_ORDER.map((session) => {
-      const sessionHistory = filteredHistory.filter((item) => item.session === session);
-      const buyCount = sessionHistory.filter((item) => item.direction === 'buy').length;
-
-      return {
-        session,
-        total: sessionHistory.length,
-        buyCount,
-        sellCount: sessionHistory.length - buyCount,
-        avgConfidence: sessionHistory.length > 0 ? Math.round(sessionHistory.reduce((sum, item) => sum + item.confidence, 0) / sessionHistory.length) : 0,
-      };
-    }),
-    [filteredHistory],
+  const activeSignal = useMemo(
+    () => filteredActiveSignals.find((item) => item.key === selectedSignalKey) ?? filteredActiveSignals[0] ?? null,
+    [filteredActiveSignals, selectedSignalKey],
   );
 
   useEffect(() => {
@@ -481,69 +272,85 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
     }
 
     let cancelled = false;
-    setWatchlistHydrated(false);
 
-    void api.notifications.getSignalWatchlist(source, token)
-      .then(({ watchlist }) => {
+    const scanUniverse = async () => {
+      try {
+        setScanState((current) => ({ ...current, loading: true, error: '' }));
+        const { signals, generatedAt } = await api.scanSignalsMarket({
+          source,
+          timeframe,
+          targets: marketUniverse.map((target) => ({
+            symbol: target.value,
+            symbolLabel: target.label,
+            assetClass: formatAssetClass(target.category),
+          })),
+        }, token);
+
         if (cancelled) {
           return;
         }
 
-        if (watchlist?.symbol) {
-          setSymbol(watchlist.symbol);
+        setActiveSignals(signals.map((signal) => ({ ...signal, timeframe: selectedTimeframe.label, savedAt: Date.now() })));
+        setScanState({ loading: false, error: '', lastUpdated: new Date(generatedAt).getTime() || Date.now() });
+      } catch (error) {
+        if (cancelled) {
+          return;
         }
 
-        if (watchlist?.timeframe) {
-          setTimeframe(watchlist.timeframe);
-        }
-      })
-      .catch(() => undefined)
-      .finally(() => {
-        if (!cancelled) {
-          setWatchlistHydrated(true);
-        }
-      });
+        setActiveSignals([]);
+        setScanState({
+          loading: false,
+          error: error instanceof Error ? error.message : 'Unable to scan the market right now.',
+          lastUpdated: null,
+        });
+      }
+    };
+
+    void scanUniverse();
+    const interval = window.setInterval(() => {
+      void scanUniverse();
+    }, 180000);
 
     return () => {
       cancelled = true;
+      window.clearInterval(interval);
     };
-  }, [source, token]);
+  }, [marketUniverse, selectedTimeframe.label, source, timeframe, token]);
 
   useEffect(() => {
-    if (signalMap.has(activeSession)) {
-      setSelectedSession(activeSession);
+    if (!activeSignal) {
+      setSelectedSignalKey(null);
       return;
     }
 
-    const nextAvailable = SESSION_ORDER.find((session) => signalMap.has(session));
-    if (nextAvailable) {
-      setSelectedSession(nextAvailable);
+    if (!selectedSignalKey || !filteredActiveSignals.some((item) => item.key === selectedSignalKey)) {
+      setSelectedSignalKey(activeSignal.key);
     }
-  }, [activeSession, signalMap]);
+  }, [activeSignal, filteredActiveSignals, selectedSignalKey]);
 
   useEffect(() => {
-    if (typeof window === 'undefined' || signals.length === 0) {
+    if (typeof window === 'undefined' || activeSignals.length === 0) {
       return;
     }
 
     const existing = readHistory(source);
     const existingKeys = new Set(existing.map((item) => item.key));
-    const additions = signals
+    const additions = activeSignals
       .map((signal) => ({
-        key: getSignalKey(source, symbol, timeframe, signal),
-        source,
-        assetClass: selectedAssetClass,
+        key: signal.key,
+        source: signal.source,
+        assetClass: signal.assetClass,
         session: signal.session,
         direction: signal.direction,
-        symbol,
-        symbolLabel: selectedSymbol.label,
-        timeframe: selectedTimeframe.label,
+        symbol: signal.symbol,
+        symbolLabel: signal.symbolLabel,
+        timeframe: signal.timeframe,
         entry: signal.entry,
         stopLoss: signal.stopLoss,
         takeProfit: signal.takeProfit,
         confidence: signal.confidence,
         candleTime: signal.candleTime,
-        savedAt: Date.now(),
+        savedAt: signal.savedAt,
       }))
       .filter((item) => !existingKeys.has(item.key));
 
@@ -554,40 +361,18 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
     const nextHistory = [...additions, ...existing].slice(0, SIGNAL_HISTORY_LIMIT);
     writeHistory(source, nextHistory);
     setHistory(nextHistory);
-  }, [selectedAssetClass, selectedSymbol.label, selectedTimeframe.label, signals, source, symbol, timeframe]);
+  }, [activeSignals, source]);
 
-  useEffect(() => {
-    if (!token || !watchlistHydrated) {
-      return;
-    }
-
-    void api.notifications.saveSignalWatchlist({
-      source,
-      symbol,
-      timeframe,
-      symbolLabel: selectedSymbol.label,
-      assetClass: selectedAssetClass,
-      enabled: true,
-    }, token).catch(() => undefined);
-  }, [selectedAssetClass, selectedSymbol.label, source, symbol, timeframe, token, watchlistHydrated]);
-
-  const activeSignal = signalMap.get(selectedSession) ?? signals[0] ?? null;
-  const chartOverlay = useMemo(() => toOverlay(activeSignal, candles), [activeSignal, candles]);
-  const currentPrice = candles[candles.length - 1]?.close ?? null;
-  const statusTone = chartError
+  const statusTone = scanState.error
     ? { label: 'Feed issue', icon: WifiOff, className: 'border-red-500/30 bg-red-500/10 text-red-100' }
-    : liveStatus.loadingHistory
+    : scanState.loading && !scanState.lastUpdated
       ? { label: 'Hydrating', icon: Loader2, className: 'border-amber-400/30 bg-amber-500/10 text-amber-100' }
-      : liveStatus.connectionState === 'connected'
+      : scanState.lastUpdated
         ? { label: 'Live', icon: Wifi, className: 'border-emerald-400/30 bg-emerald-500/10 text-emerald-100' }
         : { label: 'Reconnecting', icon: Activity, className: 'border-sky-400/30 bg-sky-500/10 text-sky-100' };
   const StatusIcon = statusTone.icon;
-  const signalCount = signals.length;
-  const distanceToEntry = activeSignal && currentPrice != null
-    ? Math.abs(((currentPrice - activeSignal.entry) / activeSignal.entry) * 100)
-    : null;
-
-  const providerLabel = isDeriv ? 'Deriv live feed' : 'TradingView market feed';
+  const signalCount = activeSignals.length;
+  const providerLabel = isDeriv ? 'Deriv market universe' : 'Pairs and indices universe';
 
   if (authLoading) {
     return (
@@ -645,32 +430,6 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
 
   return (
     <div className="space-y-6 text-slate-100">
-      <div className="pointer-events-none absolute left-[-9999px] top-0 h-[360px] w-[720px] overflow-hidden opacity-0" aria-hidden="true">
-        {isDeriv ? (
-          <LiveChart
-            symbol={symbol}
-            granularity={selectedDerivTimeframe?.granularity ?? getDerivTimeframe(timeframe).granularity}
-            token={token}
-            overlay={chartOverlay}
-            onCandlesChange={setCandles}
-            onError={setChartError}
-            onStatusChange={setLiveStatus}
-            className="h-full"
-          />
-        ) : (
-          <TradingViewLiveChart
-            symbol={symbol}
-            timeframe={timeframe}
-            token={token}
-            overlay={chartOverlay}
-            onCandlesChange={setCandles}
-            onError={setChartError}
-            onStatusChange={setLiveStatus}
-            className="h-full"
-          />
-        )}
-      </div>
-
       <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.24 }}>
         <Card className="mobile-card border-white/10">
           <CardContent className="p-5 sm:p-6">
@@ -683,7 +442,7 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
               </div>
 
               <Badge variant="outline" className={statusTone.className}>
-                <StatusIcon className={`mr-2 h-3.5 w-3.5 ${liveStatus.loadingHistory ? 'animate-spin' : ''}`} />
+                <StatusIcon className={`mr-2 h-3.5 w-3.5 ${scanState.loading ? 'animate-spin' : ''}`} />
                 {statusTone.label}
               </Badge>
             </div>
@@ -691,7 +450,7 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
             <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               {[
                 { icon: Radar, label: 'Active Signals', value: `${signalCount}/3` },
-                { icon: Target, label: 'Symbol', value: selectedSymbol.label },
+                { icon: Target, label: 'Markets', value: `${marketUniverse.length} scanned` },
                 { icon: BellRing, label: 'Timeframe', value: selectedTimeframe.label },
                 { icon: Activity, label: 'Feed', value: providerLabel },
               ].map((item) => (
@@ -705,9 +464,9 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
               ))}
             </div>
 
-            {chartError ? (
+            {scanState.error ? (
               <div className="mt-4 rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">
-                {chartError}
+                {scanState.error}
               </div>
             ) : null}
           </CardContent>
@@ -729,36 +488,44 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
                 </summary>
                 <div className="space-y-3 border-t border-white/8 px-4 py-4">
                   {SESSION_ORDER.map((session) => {
-                    const signal = signalMap.get(session) ?? null;
-                    const active = selectedSession === session;
+                    return null;
+                  })}
+                  {filteredActiveSignals.length > 0 ? filteredActiveSignals.map((signal) => {
+                    const active = selectedSignalKey === signal.key;
+
                     return (
                       <button
-                        key={session}
+                        key={signal.key}
                         type="button"
-                        onClick={() => setSelectedSession(session)}
+                        onClick={() => setSelectedSignalKey(signal.key)}
                         className={`w-full rounded-2xl border p-4 text-left transition ${active ? 'border-[rgba(255,223,112,0.3)] bg-white/10' : 'border-white/8 bg-white/5 hover:border-white/16'}`}
                       >
                         <div className="flex items-center justify-between gap-3">
                           <div>
-                            <div className="text-[11px] uppercase tracking-[0.18em] text-white/45">{SESSION_META[session].label}</div>
-                            <div className="mt-1 text-sm font-medium text-slate-100">{signal ? selectedSymbol.label : 'No active signal'}</div>
+                            <div className="text-[11px] uppercase tracking-[0.18em] text-white/45">{SESSION_META[signal.session].label}</div>
+                            <div className="mt-1 text-sm font-medium text-slate-100">{signal.symbolLabel}</div>
+                            <div className="mt-1 text-xs text-white/40">{signal.assetClass}</div>
                           </div>
-                          <Badge variant="outline" className={signal ? (signal.direction === 'buy' ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-100' : 'border-rose-400/30 bg-rose-500/10 text-rose-100') : 'border-white/10 bg-transparent text-slate-400'}>
-                            {signal ? signal.direction.toUpperCase() : 'Standby'}
+                          <Badge variant="outline" className={signal.direction === 'buy' ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-100' : 'border-rose-400/30 bg-rose-500/10 text-rose-100'}>
+                            {signal.direction.toUpperCase()}
                           </Badge>
                         </div>
 
                         <div className="mt-3 grid grid-cols-2 gap-3 text-xs text-slate-300 sm:grid-cols-4">
-                          <div><div className="text-white/40">Entry</div><div className="mt-1 font-medium text-slate-100">{signal ? formatPrice(signal.entry) : '-'}</div></div>
-                          <div><div className="text-white/40">SL</div><div className="mt-1 font-medium text-slate-100">{signal ? formatPrice(signal.stopLoss) : '-'}</div></div>
-                          <div><div className="text-white/40">TP</div><div className="mt-1 font-medium text-slate-100">{signal ? formatPrice(signal.takeProfit) : '-'}</div></div>
-                          <div><div className="text-white/40">Time</div><div className="mt-1 font-medium text-slate-100">{signal ? formatSignalTime(signal.candleTime) : 'Waiting'}</div></div>
+                          <div><div className="text-white/40">Entry</div><div className="mt-1 font-medium text-slate-100">{formatPrice(signal.entry)}</div></div>
+                          <div><div className="text-white/40">SL</div><div className="mt-1 font-medium text-slate-100">{formatPrice(signal.stopLoss)}</div></div>
+                          <div><div className="text-white/40">TP</div><div className="mt-1 font-medium text-slate-100">{formatPrice(signal.takeProfit)}</div></div>
+                          <div><div className="text-white/40">Time</div><div className="mt-1 font-medium text-slate-100">{formatSignalTime(signal.candleTime)}</div></div>
                         </div>
 
-                        {signal ? <p className="mt-3 text-xs leading-5 text-white/45">{signal.executionNote}</p> : null}
+                        <p className="mt-3 text-xs leading-5 text-white/45">{signal.executionNote}</p>
                       </button>
                     );
-                  })}
+                  }) : (
+                    <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 p-5 text-sm text-white/45">
+                      No live signals right now.
+                    </div>
+                  )}
                 </div>
               </details>
 
@@ -827,8 +594,8 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
                     <div className="rounded-2xl border border-white/8 bg-white/5 p-4 text-sm text-slate-300">
                       <div className="flex items-center justify-between gap-3">
                         <div>
-                          <div className="text-sm font-medium text-slate-100">{selectedSymbol.label}</div>
-                          <div className="mt-1 text-xs text-white/40">{SESSION_META[activeSignal.session].label} · {selectedTimeframe.label}</div>
+                          <div className="text-sm font-medium text-slate-100">{activeSignal.symbolLabel}</div>
+                          <div className="mt-1 text-xs text-white/40">{SESSION_META[activeSignal.session].label} · {activeSignal.timeframe}</div>
                         </div>
                         <Badge variant="outline" className={activeSignal.direction === 'buy' ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-100' : 'border-rose-400/30 bg-rose-500/10 text-rose-100'}>
                           {activeSignal.direction.toUpperCase()}
