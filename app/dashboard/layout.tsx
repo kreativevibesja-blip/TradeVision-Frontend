@@ -11,7 +11,7 @@ import { CandlestickChart, CreditCard, LayoutDashboard, RadioTower, Users, Radar
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, token } = useAuth();
-  const isLiveWorkspace = pathname === '/dashboard/tradingview' || pathname === '/dashboard/deriv' || pathname === '/dashboard/signals';
+  const isLiveWorkspace = pathname === '/dashboard/tradingview' || pathname === '/dashboard/deriv';
   const isGoldxPulseWorkspace = pathname === '/dashboard/goldx-pulse';
   const showPushPrompt = user?.subscription !== 'FREE' && Boolean(token);
   const dashboardNav = [

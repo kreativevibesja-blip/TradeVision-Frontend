@@ -1,5 +1,5 @@
 import { SignalsWorkspace } from '@/components/SignalsWorkspace';
 
 export default function SignalsPage() {
-  return <SignalsWorkspace />;
+  return <SignalsWorkspace source="tradingview" />;
 }
