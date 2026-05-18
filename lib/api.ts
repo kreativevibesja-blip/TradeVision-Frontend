@@ -285,6 +285,25 @@ export interface DerivLiveChartMarketData {
   source: 'deriv-backend';
 }
 
+export interface ScannedSignal {
+  key: string;
+  source: 'deriv' | 'tradingview';
+  assetClass: string;
+  session: 'asian' | 'london' | 'newyork';
+  direction: 'buy' | 'sell';
+  symbol: string;
+  symbolLabel: string;
+  timeframe: string;
+  entry: number;
+  stopLoss: number;
+  takeProfit: number;
+  confidence: number;
+  candleTime: number;
+  reason: string;
+  executionNote: string;
+  setupLabel: string;
+}
+
 export interface AdminAnalysisLog {
   id: string;
   pair: string;
@@ -837,6 +856,24 @@ export const api = {
       `/deriv-live-chart-market-data?symbol=${encodeURIComponent(symbol)}&granularity=${encodeURIComponent(String(granularity))}&limit=${encodeURIComponent(String(limit))}`,
       { token }
     ),
+
+  scanSignalsMarket: (
+    payload: {
+      source: 'deriv' | 'tradingview';
+      timeframe: string;
+      targets: Array<{
+        symbol: string;
+        symbolLabel: string;
+        assetClass: string;
+      }>;
+    },
+    token: string,
+  ) =>
+    apiFetch<{ signals: ScannedSignal[]; generatedAt: string }>('/signals-market-scan', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      token,
+    }),
 
   notifications: {
     getSignalWatchlist: (source: 'deriv' | 'tradingview', token: string) =>
