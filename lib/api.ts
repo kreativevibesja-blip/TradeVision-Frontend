@@ -302,6 +302,41 @@ export interface ScannedSignal {
   reason: string;
   executionNote: string;
   setupLabel: string;
+  currentPrice: number;
+  rrRatio: number;
+  grade: 'A+' | 'A' | 'B+';
+  status: 'active' | 'running_profit' | 'tp_hit' | 'sl_hit' | 'expired';
+  confluences: string[];
+  quality: {
+    structure: number;
+    liquidity: number;
+    fvg: number;
+    session: number;
+    trend: number;
+    volatility: number;
+    rr: number;
+  };
+  snapshot: {
+    candles: Array<{
+      time: number;
+      open: number;
+      high: number;
+      low: number;
+      close: number;
+    }>;
+    annotations: Array<{
+      label: string;
+      candleTime: number;
+      price: number;
+      tone: 'bullish' | 'bearish' | 'neutral';
+    }>;
+    zones: Array<{
+      label: string;
+      top: number;
+      bottom: number;
+      tone: 'entry' | 'risk' | 'target' | 'demand' | 'supply' | 'value';
+    }>;
+  };
 }
 
 export interface AdminAnalysisLog {
