@@ -725,8 +725,8 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
       <div className="absolute inset-x-0 top-0 -z-10 h-[520px] bg-[radial-gradient(circle_at_top,rgba(250,204,21,0.16),transparent_42%),radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.08),transparent_24%),linear-gradient(180deg,#05070c_0%,#070b13_48%,#05070c_100%)]" />
 
       <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="overflow-hidden rounded-[34px] border border-white/10 bg-[linear-gradient(135deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] p-5 shadow-[0_34px_120px_rgba(0,0,0,0.42)] backdrop-blur-xl sm:p-7">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-          <div className="max-w-3xl">
+        <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
+          <div className="min-w-0 max-w-3xl flex-1">
             <div className="inline-flex items-center gap-2 rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-1 text-[10px] uppercase tracking-[0.32em] text-amber-100">
               <Sparkles className="h-3.5 w-3.5" />
               TradeVision AI Signals
@@ -757,7 +757,7 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
             </div>
           </div>
 
-          <div className="w-full max-w-sm rounded-[30px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))] p-5 backdrop-blur-xl">
+          <div className="w-full xl:max-w-sm xl:flex-none rounded-[30px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))] p-5 backdrop-blur-xl">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <div className="text-[11px] uppercase tracking-[0.22em] text-white/45">Terminal Status</div>
