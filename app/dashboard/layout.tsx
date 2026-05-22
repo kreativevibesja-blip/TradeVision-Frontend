@@ -20,7 +20,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { href: '/dashboard/deriv', label: 'Deriv Live', icon: RadioTower },
     { href: '/dashboard/goldx-pulse', label: 'GoldX Pulse', icon: Sparkles },
     { href: '/dashboard/command-center', label: 'Command Center', icon: Target },
-    { href: '/dashboard/signals', label: 'Signals', icon: Radar },
+    { href: '/dashboard/signals', label: 'Find My Trade', icon: Radar },
     { href: '/dashboard/radar', label: 'Trade Radar', icon: Crosshair },
     { href: '/dashboard/goldx', label: 'GoldX', icon: TrendingUp },
     { href: '/dashboard/billing', label: 'Billing', icon: CreditCard },

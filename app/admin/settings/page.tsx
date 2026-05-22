@@ -22,6 +22,8 @@ type ScannerStrategyToggleKey =
   | 'zoneTap'
   | 'sessionFlip';
 
+type FindTradeCategoryToggleKey = 'forex' | 'indices' | 'commodities' | 'crypto' | 'deriv' | 'volatility';
+
 const DEFAULT_SCANNER_STRATEGIES: Record<ScannerStrategyToggleKey, boolean> = {
   trendPullback: false,
   countertrendReversal: false,
@@ -46,6 +48,24 @@ const SCANNER_STRATEGY_LABELS: Array<{ key: ScannerStrategyToggleKey; title: str
   { key: 'sessionFlip', title: 'Session Flip', detail: 'London and New York continuation flip engine.' },
 ];
 
+const FIND_TRADE_CATEGORY_SETTINGS: Array<{ key: FindTradeCategoryToggleKey; title: string; detail: string; settingKey: string }> = [
+  { key: 'forex', title: 'Forex', detail: 'Major and cross FX pairs for manual on-demand scans.', settingKey: 'find_trade_category_forex_enabled' },
+  { key: 'indices', title: 'Indices', detail: 'US and global equity indices for session-led momentum scans.', settingKey: 'find_trade_category_indices_enabled' },
+  { key: 'commodities', title: 'Commodities', detail: 'Gold, silver, and energy contracts.', settingKey: 'find_trade_category_commodities_enabled' },
+  { key: 'crypto', title: 'Crypto', detail: 'High-liquidity crypto pairs for discretionary scan windows.', settingKey: 'find_trade_category_crypto_enabled' },
+  { key: 'deriv', title: 'Deriv Synthetics', detail: 'Jump, step, and boom/crash synthetic markets.', settingKey: 'find_trade_category_deriv_enabled' },
+  { key: 'volatility', title: 'Volatility Indices', detail: 'Deriv volatility and 1-second volatility feeds.', settingKey: 'find_trade_category_volatility_enabled' },
+];
+
+const DEFAULT_FIND_TRADE_CATEGORIES: Record<FindTradeCategoryToggleKey, boolean> = {
+  forex: true,
+  indices: true,
+  commodities: true,
+  crypto: true,
+  deriv: true,
+  volatility: true,
+};
+
 export default function AdminSettingsPage() {
   const { token } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -65,6 +85,7 @@ export default function AdminSettingsPage() {
   const [scannerSlowEma, setScannerSlowEma] = useState('50');
   const [scannerPullbackTolerance, setScannerPullbackTolerance] = useState('0.12');
   const [scannerStrategies, setScannerStrategies] = useState<Record<ScannerStrategyToggleKey, boolean>>(DEFAULT_SCANNER_STRATEGIES);
+  const [findTradeCategories, setFindTradeCategories] = useState<Record<FindTradeCategoryToggleKey, boolean>>(DEFAULT_FIND_TRADE_CATEGORIES);
   const [announcementPopupsEnabled, setAnnouncementPopupsEnabled] = useState(true);
   const [announcementPopupRepeatHours, setAnnouncementPopupRepeatHours] = useState('24');
   const [platformTheme, setPlatformTheme] = useState<PlatformTheme>('goldx-premium');
@@ -92,6 +113,7 @@ export default function AdminSettingsPage() {
       const scannerSlow = data.settings.find((s: any) => s.key === 'scanner_execution_slow_ema_period');
       const scannerTolerance = data.settings.find((s: any) => s.key === 'scanner_execution_pullback_tolerance_pct');
       const scannerEnabledStrategies = data.settings.find((s: any) => s.key === 'scanner_enabled_strategies');
+      const nextFindTradeCategories = { ...DEFAULT_FIND_TRADE_CATEGORIES };
       const announcementPopups = data.settings.find((s: any) => s.key === 'announcement_popups_enabled');
       const announcementPopupRepeat = data.settings.find((s: any) => s.key === 'announcement_popup_repeat_hours');
       const activeTheme = data.settings.find((s: any) => s.key === PLATFORM_THEME_SETTING_KEY);
@@ -118,6 +140,13 @@ export default function AdminSettingsPage() {
       setScannerSlowEma(nextScannerSlowEma);
       setScannerPullbackTolerance(nextScannerTolerance);
       setScannerStrategies(nextScannerStrategies);
+      FIND_TRADE_CATEGORY_SETTINGS.forEach((item) => {
+        const setting = data.settings.find((s: any) => s.key === item.settingKey);
+        if (setting) {
+          nextFindTradeCategories[item.key] = Boolean(setting.value);
+        }
+      });
+      setFindTradeCategories(nextFindTradeCategories);
       if (announcementPopups) setAnnouncementPopupsEnabled(Boolean(announcementPopups.value));
       if (announcementPopupRepeat?.value != null) setAnnouncementPopupRepeatHours(String(announcementPopupRepeat.value));
       if (activeTheme?.value === 'legacy' || activeTheme?.value === 'goldx-premium') setPlatformTheme(activeTheme.value);
@@ -354,6 +383,49 @@ export default function AdminSettingsPage() {
             >
               {saving ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Save className="h-3 w-3 mr-1" />}
               Save Scanner Settings
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="premium-panel premium-noise border-[rgba(255,223,112,0.12)] bg-transparent">
+          <CardHeader>
+            <CardTitle className="text-lg">Find My Trade Market Scope</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="premium-panel-muted p-4 text-sm text-muted-foreground">
+              Find My Trade stays on-demand, but these toggles decide which market groups are eligible when a user clicks the scan button from the dashboard.
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {FIND_TRADE_CATEGORY_SETTINGS.map((item) => (
+                <div key={item.key} className="premium-panel-muted space-y-3 p-4">
+                  <div>
+                    <label className="text-sm text-muted-foreground">{item.title}</label>
+                    <p className="mt-1 text-xs text-muted-foreground">{item.detail}</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant={findTradeCategories[item.key] ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setFindTradeCategories((current) => ({ ...current, [item.key]: !current[item.key] }))}
+                  >
+                    {findTradeCategories[item.key] ? 'Enabled' : 'Disabled'}
+                  </Button>
+                </div>
+              ))}
+            </div>
+
+            <Button
+              size="sm"
+              onClick={async () => {
+                for (const item of FIND_TRADE_CATEGORY_SETTINGS) {
+                  await saveSetting(item.settingKey, findTradeCategories[item.key]);
+                }
+              }}
+              disabled={saving}
+            >
+              {saving ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Save className="h-3 w-3 mr-1" />}
+              Save Find My Trade Scope
             </Button>
           </CardContent>
         </Card>
