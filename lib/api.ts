@@ -339,6 +339,153 @@ export interface ScannedSignal {
   };
 }
 
+export interface FindTradeOpportunity {
+  id: string;
+  section: 'best_active' | 'developing' | 'no_trade';
+  state: 'available' | 'watchlist' | 'ignored' | 'entered' | 'archived';
+  source: 'deriv' | 'tradingview' | null;
+  category: 'forex' | 'indices' | 'commodities' | 'crypto' | 'deriv' | 'volatility' | null;
+  symbol: string | null;
+  symbolLabel: string | null;
+  assetClass: string | null;
+  timeframe: string | null;
+  sessionType: 'asian' | 'london' | 'newyork' | null;
+  direction: 'buy' | 'sell' | null;
+  confidenceScore: number | null;
+  weightedScore: number | null;
+  qualityGrade: 'A+' | 'A' | 'B+' | 'B' | 'C' | null;
+  rrRatio: number | null;
+  entryPrice: number | null;
+  stopLoss: number | null;
+  takeProfit: number | null;
+  currentPrice: number | null;
+  setupLabel: string | null;
+  reasoning: string | null;
+  executionNote: string | null;
+  developingNote: string | null;
+  emptyStateMessage: string | null;
+  confluences: string[];
+  qualityBreakdown: Record<string, unknown>;
+  snapshot: Record<string, unknown>;
+  ranking: number;
+  publishedAt: string;
+}
+
+export interface FindTradeTrackingStatus {
+  id: string;
+  opportunityId: string;
+  source: 'deriv' | 'tradingview';
+  symbol: string;
+  symbolLabel: string;
+  assetClass: string;
+  timeframe: string;
+  sessionType: 'asian' | 'london' | 'newyork';
+  direction: 'buy' | 'sell';
+  status: 'monitoring' | 'running_profit' | 'tp_hit' | 'sl_hit' | 'expired' | 'manual_close' | 'cancelled';
+  confidenceScore: number;
+  qualityGrade: 'A+' | 'A' | 'B+' | 'B' | 'C';
+  rrRatio: number;
+  entryPrice: number;
+  stopLoss: number;
+  takeProfit: number;
+  currentPrice: number | null;
+  progressPercent: number;
+  enteredAt: string;
+  lastCheckedAt: string | null;
+  nextCheckAt: string | null;
+  resolvedAt: string | null;
+  latestUpdate: {
+    id: string;
+    title: string;
+    message: string;
+    createdAt: string;
+  } | null;
+}
+
+export interface FindTradeJournalEntry {
+  id: string;
+  trackingId: string;
+  source: 'deriv' | 'tradingview';
+  symbol: string;
+  symbolLabel: string;
+  assetClass: string;
+  timeframe: string;
+  sessionType: 'asian' | 'london' | 'newyork';
+  direction: 'buy' | 'sell';
+  confidenceScore: number;
+  qualityGrade: 'A+' | 'A' | 'B+' | 'B' | 'C';
+  rrRatio: number;
+  entryPrice: number;
+  stopLoss: number;
+  takeProfit: number;
+  outcome: 'open' | 'win' | 'loss' | 'breakeven' | 'expired' | 'manual_close';
+  durationMinutes: number | null;
+  setupReasoning: string;
+  aiReflection: string | null;
+  emotionalNotes: string | null;
+  createdAt: string;
+  closedAt: string | null;
+}
+
+export interface FindTradeInsight {
+  id: string;
+  insightType: string;
+  headline: string;
+  detail: string;
+  metricValue: number | null;
+  asOfDate: string;
+}
+
+export interface FindTradeStatusPayload {
+  scan: {
+    id: string;
+    status: 'active' | 'archived' | 'reset';
+    mode: 'on_demand' | 'manual_refresh' | 'manual_reset' | 'daily_auto_clear';
+    generatedAt: string;
+    expiresAt: string;
+    summary: Record<string, unknown>;
+    enabledCategories: Array<'forex' | 'indices' | 'commodities' | 'crypto' | 'deriv' | 'volatility'>;
+  } | null;
+  bestOpportunity: FindTradeOpportunity | null;
+  developingOpportunities: FindTradeOpportunity[];
+  noTradeState: FindTradeOpportunity | null;
+  activeTracking: FindTradeTrackingStatus[];
+  journalPreview: FindTradeJournalEntry[];
+  insights: FindTradeInsight[];
+  watchlist: Array<{
+    id: string;
+    source: 'deriv' | 'tradingview';
+    symbol: string;
+    symbolLabel: string;
+    assetClass: string;
+    timeframe: string;
+    direction: 'buy' | 'sell' | null;
+    setupLabel: string | null;
+    addedAt: string;
+  }>;
+  notificationSummary: {
+    activeTrades: number;
+    recentNotifications: number;
+    pollingIntervalMinutes: number;
+  };
+  onboarding: {
+    setupGuideUrl: string;
+  };
+}
+
+export interface FindTradeHistoryResponse {
+  scans: Array<{
+    id: string;
+    status: 'active' | 'archived' | 'reset';
+    mode: 'on_demand' | 'manual_refresh' | 'manual_reset' | 'daily_auto_clear';
+    generatedAt: string;
+    expiresAt: string;
+    summary: Record<string, unknown>;
+    enabledCategories: Array<'forex' | 'indices' | 'commodities' | 'crypto' | 'deriv' | 'volatility'>;
+  }>;
+  watchlist: FindTradeStatusPayload['watchlist'];
+}
+
 export interface AdminAnalysisLog {
   id: string;
   pair: string;
@@ -1552,6 +1699,52 @@ export const api = {
       apiFetch<{ success: boolean }>('/scanner/expire', {
         method: 'POST',
         body: JSON.stringify({ sessionType }),
+        token,
+      }),
+  },
+
+  findTrade: {
+    scan: (token: string, mode: 'on_demand' | 'manual_refresh' = 'on_demand') =>
+      apiFetch<FindTradeStatusPayload>('/find-trade/scan', {
+        method: 'POST',
+        body: JSON.stringify({ mode }),
+        token,
+      }),
+
+    reset: (token: string) =>
+      apiFetch<FindTradeStatusPayload>('/find-trade/reset', {
+        method: 'POST',
+        token,
+      }),
+
+    decide: (
+      payload: { opportunityId: string; action: 'entered' | 'watchlist' | 'ignore' | 'not_yet' },
+      token: string,
+    ) =>
+      apiFetch<FindTradeStatusPayload>('/find-trade/entered', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        token,
+      }),
+
+    getStatus: (id: string, token: string) =>
+      apiFetch<FindTradeStatusPayload>(`/find-trade/status/${encodeURIComponent(id)}`, { token }),
+
+    getHistory: (token: string) =>
+      apiFetch<FindTradeHistoryResponse>('/find-trade/history', { token }),
+  },
+
+  journal: {
+    get: (token: string) =>
+      apiFetch<{ journal: FindTradeJournalEntry[] }>('/journal', { token }),
+
+    getInsights: (token: string) =>
+      apiFetch<{ insights: FindTradeInsight[] }>('/journal/insights', { token }),
+
+    addNote: (payload: { journalId?: string; trackingId?: string; note: string }, token: string) =>
+      apiFetch<{ journal: FindTradeJournalEntry[] }>('/journal/note', {
+        method: 'POST',
+        body: JSON.stringify(payload),
         token,
       }),
   },
