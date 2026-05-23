@@ -217,6 +217,47 @@ const formatLabel = (value: string | null | undefined, fallback: string) => {
     .join(' ');
 };
 
+const getExecutionLabel = (analysis: AnalysisResult | null) => {
+  const entryType = analysis?.entryPlan?.entryType ?? 'none';
+  const bias = analysis?.entryPlan?.bias ?? 'none';
+
+  if (!analysis || entryType === 'none' || bias === 'none') {
+    return 'Wait';
+  }
+
+  if (entryType === 'instant') {
+    return `${formatLabel(bias, 'Trade')} now`;
+  }
+
+  if (entryType === 'limit') {
+    return `${formatLabel(bias, 'Trade')} limit`;
+  }
+
+  return `Wait for ${formatLabel(bias, 'trade')} confirmation`;
+};
+
+const getExecutionHint = (analysis: AnalysisResult | null, pair: string) => {
+  if (!analysis) {
+    return 'No execution plan available.';
+  }
+
+  const entryType = analysis.entryPlan?.entryType ?? 'none';
+
+  if (entryType === 'instant') {
+    return `Current price is actionable around ${formatPrice(analysis.currentPrice, pair)}.`;
+  }
+
+  if (entryType === 'limit') {
+    return `Set the order at ${formatStructuredZone(analysis.entryZone, pair)} and wait for price to retrace.`;
+  }
+
+  if (entryType === 'confirmation') {
+    return `Let price reach ${formatStructuredZone(analysis.entryZone, pair)} and print the required trigger first.`;
+  }
+
+  return 'No execution plan available.';
+};
+
 const getTrendAccent = (trend: 'bullish' | 'bearish' | 'ranging') => {
   if (trend === 'bullish') {
     return {
@@ -915,6 +956,8 @@ function AnalyzePageContent() {
   const entryBias = analysis?.entryPlan?.bias && analysis.entryPlan.bias !== 'none'
     ? analysis.entryPlan.bias
     : null;
+  const executionLabel = getExecutionLabel(analysis);
+  const executionHint = getExecutionHint(analysis, pair);
   const trendAccent = getTrendAccent(trend);
   const resultTabs: Array<{ key: ResultTabKey; label: string; icon: typeof Sparkles }> = isPro
     ? [
@@ -1360,8 +1403,8 @@ function AnalyzePageContent() {
                 </div>
                 <div className="grid gap-3 sm:grid-cols-3">
                   <div className="mobile-card rounded-[22px] p-4">
-                    <div className="metric-label">Signal</div>
-                    <div className="mt-2 text-sm font-semibold text-white capitalize">{signalType}</div>
+                    <div className="metric-label">Execution</div>
+                    <div className="mt-2 text-sm font-semibold text-white capitalize">{executionLabel}</div>
                   </div>
                   <div className="mobile-card rounded-[22px] p-4">
                     <div className="metric-label">Trend</div>
@@ -1572,10 +1615,9 @@ function AnalyzePageContent() {
                             <p className="mt-2 text-sm font-semibold text-white">{formatStructuredZone(analysis.entryZone, pair)}</p>
                           </div>
                           <div className="premium-panel-muted p-4">
-                            <div className="metric-label">Wait For</div>
-                            <p className="mt-2 text-sm font-semibold text-white capitalize">
-                              {analysis.confirmation === 'none' ? 'No confirmation yet' : `${analysis.confirmation} confirmation`}
-                            </p>
+                            <div className="metric-label">Execution Plan</div>
+                            <p className="mt-2 text-sm font-semibold text-white capitalize">{executionLabel}</p>
+                            <p className="mt-1 text-xs text-muted-foreground">{executionHint}</p>
                           </div>
                           <div className="premium-panel-muted p-4">
                             <div className="metric-label">Invalidation</div>
@@ -1644,8 +1686,8 @@ function AnalyzePageContent() {
                           <p className="font-semibold capitalize">{analysis.marketCondition || 'Not identified'}</p>
                         </div>
                         <div className="premium-panel-muted p-4">
-                          <p className="metric-label mb-2">Signal Type</p>
-                          <p className="font-semibold capitalize">{signalType}</p>
+                          <p className="metric-label mb-2">Execution</p>
+                          <p className="font-semibold capitalize">{executionLabel}</p>
                         </div>
                         <div className="premium-panel-muted p-4">
                           <p className="metric-label mb-2">{isPro ? 'Entry Bias' : 'Structure State'}</p>
@@ -1697,9 +1739,10 @@ function AnalyzePageContent() {
                           <div className="premium-panel-muted p-4">
                             <div className="flex items-center gap-2 mb-2">
                               <Zap className="h-4 w-4 text-purple-400" />
-                              <span className="text-sm font-medium">Signal Type</span>
+                              <span className="text-sm font-medium">Execution</span>
                             </div>
-                            <p className="text-sm text-purple-400 font-semibold capitalize">{signalType}</p>
+                            <p className="text-sm text-purple-400 font-semibold capitalize">{executionLabel}</p>
+                            <p className="mt-1 text-xs text-muted-foreground">{executionHint}</p>
                           </div>
                           <div className="premium-panel-muted p-4">
                             <div className="flex items-center gap-2 mb-2">
