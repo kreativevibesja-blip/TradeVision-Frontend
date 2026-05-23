@@ -131,7 +131,7 @@ export interface AnalysisResult {
   currentPricePosition: 'premium' | 'discount' | 'equilibrium';
   entryPlan?: {
     bias: 'buy' | 'sell' | 'none';
-    entryType: 'instant' | 'confirmation' | 'none';
+    entryType: 'instant' | 'limit' | 'confirmation' | 'none';
     entryZone: {
       min: number | null;
       max: number | null;
@@ -142,7 +142,7 @@ export interface AnalysisResult {
   counterTrendPlan?: {
     action: 'enter' | 'wait' | 'avoid';
     bias: 'buy' | 'sell' | 'none';
-    entryType: 'instant' | 'confirmation' | 'none';
+    entryType: 'instant' | 'limit' | 'confirmation' | 'none';
     entryZone: {
       min: number | null;
       max: number | null;
@@ -161,7 +161,7 @@ export interface AnalysisResult {
   leftSidePlan?: {
     action: 'enter' | 'wait' | 'avoid';
     bias: 'buy' | 'sell' | 'none';
-    entryType: 'instant' | 'confirmation' | 'none';
+    entryType: 'instant' | 'limit' | 'confirmation' | 'none';
     entryZone: {
       min: number | null;
       max: number | null;
