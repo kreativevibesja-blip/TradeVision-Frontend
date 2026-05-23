@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   Activity,
+  Aperture,
   Bell,
   BookmarkPlus,
   BrainCircuit,
@@ -37,6 +38,14 @@ const SCAN_MESSAGES = [
   'Evaluating institutional flows...',
   'Filtering low-quality setups...',
   'Ranking sniper-grade opportunities...',
+];
+
+const SCAN_QUOTES = [
+  'Discipline finds what noise misses.',
+  'Patience is part of precision.',
+  'The clean trade is worth the wait.',
+  'Clarity compounds better than speed.',
+  'Let the market reveal the easy move.',
 ];
 
 const GRADE_STYLES: Record<string, string> = {
@@ -359,12 +368,114 @@ function InsightCard({ insight }: { insight: FindTradeInsight }) {
   );
 }
 
+function ScanProgressModal({
+  open,
+  headline,
+  quote,
+  modeLabel,
+}: {
+  open: boolean;
+  headline: string;
+  quote: string;
+  modeLabel: string;
+}) {
+  return (
+    <AnimatePresence>
+      {open ? (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[90] flex items-center justify-center bg-[rgba(5,8,12,0.78)] px-4 backdrop-blur-md"
+        >
+          <motion.div
+            initial={{ opacity: 0, y: 18, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 12, scale: 0.97 }}
+            transition={{ duration: 0.28 }}
+            className="relative w-full max-w-2xl overflow-hidden rounded-[38px] border border-[rgba(255,223,112,0.18)] bg-[radial-gradient(circle_at_top_left,rgba(255,223,112,0.18),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(45,212,191,0.14),transparent_24%),linear-gradient(155deg,rgba(10,14,20,0.98),rgba(12,17,26,0.94))] p-6 text-white shadow-[0_40px_140px_rgba(0,0,0,0.5)] sm:p-8"
+          >
+            <div className="absolute left-[-10%] top-[-15%] h-52 w-52 rounded-full bg-[rgba(255,223,112,0.12)] blur-3xl" />
+            <div className="absolute bottom-[-18%] right-[-10%] h-56 w-56 rounded-full bg-[rgba(45,212,191,0.12)] blur-3xl" />
+
+            <div className="relative flex flex-col items-center text-center">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-[0.68rem] uppercase tracking-[0.28em] text-[var(--gold-light)]">
+                <Aperture className="h-3.5 w-3.5" />
+                {modeLabel}
+              </div>
+
+              <div className="relative mt-8 flex h-64 w-64 items-center justify-center sm:h-72 sm:w-72">
+                <motion.div
+                  className="absolute inset-0 rounded-full border border-[rgba(255,223,112,0.24)]"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 18, repeat: Infinity, ease: 'linear' }}
+                />
+                <motion.div
+                  className="absolute inset-3 rounded-full border border-dashed border-cyan-300/20"
+                  animate={{ rotate: -360 }}
+                  transition={{ duration: 14, repeat: Infinity, ease: 'linear' }}
+                />
+                <motion.div
+                  className="absolute inset-8 rounded-full border border-white/10"
+                  animate={{ scale: [1, 1.03, 1] }}
+                  transition={{ duration: 2.8, repeat: Infinity, ease: 'easeInOut' }}
+                />
+                <motion.div
+                  className="absolute h-full w-full rounded-full bg-[radial-gradient(circle,rgba(255,223,112,0.12),transparent_60%)]"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 9, repeat: Infinity, ease: 'linear' }}
+                />
+
+                <div className="relative mx-8 rounded-[32px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] px-6 py-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
+                  <div className="flex items-center justify-center gap-2 text-[0.68rem] uppercase tracking-[0.24em] text-white/45">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Live workflow
+                  </div>
+                  <AnimatePresence mode="wait">
+                    <motion.p
+                      key={headline}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.24 }}
+                      className="mt-4 text-lg font-semibold leading-7 text-white sm:text-xl"
+                    >
+                      {headline}
+                    </motion.p>
+                  </AnimatePresence>
+                </div>
+              </div>
+
+              <div className="mt-4 max-w-xl rounded-[24px] border border-white/10 bg-white/[0.04] px-5 py-4">
+                <div className="text-[0.68rem] uppercase tracking-[0.24em] text-white/35">While you wait</div>
+                <AnimatePresence mode="wait">
+                  <motion.p
+                    key={quote}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.24 }}
+                    className="mt-3 text-sm leading-7 text-white/78 sm:text-base"
+                  >
+                    {quote}
+                  </motion.p>
+                </AnimatePresence>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
+  );
+}
+
 export function FindMyTradeWorkspace() {
   const { token, loading: authLoading } = useAuth();
   const [status, setStatus] = useState<FindTradeStatusPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const [scanMessageIndex, setScanMessageIndex] = useState(0);
+  const [scanQuoteIndex, setScanQuoteIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -405,17 +516,23 @@ export function FindMyTradeWorkspace() {
       return;
     }
 
-    const timer = window.setInterval(() => {
+    const messageTimer = window.setInterval(() => {
       setScanMessageIndex((current) => (current + 1) % SCAN_MESSAGES.length);
     }, 1500);
 
+    const quoteTimer = window.setInterval(() => {
+      setScanQuoteIndex((current) => (current + 1) % SCAN_QUOTES.length);
+    }, 2600);
+
     return () => {
-      window.clearInterval(timer);
+      window.clearInterval(messageTimer);
+      window.clearInterval(quoteTimer);
     };
   }, [busyAction]);
 
   const isScanning = busyAction === 'scan' || busyAction === 'refresh';
   const scanHeadline = useMemo(() => SCAN_MESSAGES[scanMessageIndex], [scanMessageIndex]);
+  const scanQuote = useMemo(() => SCAN_QUOTES[scanQuoteIndex], [scanQuoteIndex]);
 
   const refreshStatus = async () => {
     if (!token) return;
@@ -435,6 +552,7 @@ export function FindMyTradeWorkspace() {
     } finally {
       setBusyAction(null);
       setScanMessageIndex(0);
+      setScanQuoteIndex(0);
     }
   };
 
@@ -488,6 +606,13 @@ export function FindMyTradeWorkspace() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+      <ScanProgressModal
+        open={isScanning}
+        headline={scanHeadline}
+        quote={scanQuote}
+        modeLabel={busyAction === 'refresh' ? 'Refreshing scan' : 'Finding your trade'}
+      />
+
       <section className="relative overflow-hidden rounded-[34px] border border-[rgba(255,223,112,0.18)] bg-[radial-gradient(circle_at_top_left,rgba(255,223,112,0.18),transparent_26%),radial-gradient(circle_at_bottom_right,rgba(45,212,191,0.12),transparent_28%),linear-gradient(160deg,rgba(10,14,20,0.98),rgba(7,10,15,0.9))] p-6 sm:p-8">
         <div className="absolute inset-y-0 right-0 hidden w-1/3 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),transparent)] blur-3xl md:block" />
         <div className="relative grid gap-8 xl:grid-cols-[1.2fr_0.8fr] xl:items-end">
