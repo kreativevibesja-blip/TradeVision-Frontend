@@ -6,7 +6,7 @@ import { BrandLogo } from '@/components/BrandLogo';
 
 export function Footer() {
   const pathname = usePathname();
-  const isLiveWorkspace = pathname === '/dashboard/tradingview' || pathname === '/dashboard/deriv' || pathname === '/dashboard/signals';
+  const isLiveWorkspace = pathname === '/dashboard/tradingview' || pathname === '/dashboard/deriv';
 
   if (isLiveWorkspace) {
     return null;
@@ -23,15 +23,15 @@ export function Footer() {
       </div>
 
       <div className="page-shell py-10 sm:py-12">
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-6 sm:gap-8 lg:grid-cols-4">
             <div className="space-y-4">
               <BrandLogo href="/" />
               <p className="text-sm text-muted-foreground">
-                Black-and-gold trading intelligence built to feel like a terminal, convert like a premium SaaS, and stay mobile-first.
+                Institutional trading intelligence built for chart analysis, execution planning, and mobile-first access.
               </p>
             </div>
 
-            <div>
+            <div className="min-w-0">
               <h4 className="mb-4 font-semibold">Product</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><Link href="/analyze" className="transition-colors hover:text-foreground">Chart Analysis</Link></li>
@@ -41,7 +41,7 @@ export function Footer() {
               </ul>
             </div>
 
-            <div>
+            <div className="min-w-0">
               <h4 className="mb-4 font-semibold">Supported</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>TradingView</li>
@@ -49,7 +49,7 @@ export function Footer() {
               </ul>
             </div>
 
-            <div>
+            <div className="min-w-0">
               <h4 className="mb-4 font-semibold">Legal</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><Link href="/privacy-policy" className="transition-colors hover:text-foreground">Privacy Policy</Link></li>
@@ -59,7 +59,7 @@ export function Footer() {
             </div>
           </div>
 
-          <div className="mt-10 flex flex-col items-start gap-3 border-t border-[rgba(255,223,112,0.08)] pt-6 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
+          <div className="mt-8 flex flex-col gap-2 border-t border-[rgba(255,223,112,0.08)] pt-5 text-sm text-muted-foreground sm:mt-10 sm:gap-3 md:flex-row md:items-center md:justify-between">
             <p>&copy; {new Date().getFullYear()} TradeVision AI. All rights reserved.</p>
             <p>Trading involves risk. AI analysis is not financial advice.</p>
           </div>

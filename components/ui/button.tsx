@@ -8,14 +8,14 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'border-[rgba(255,223,112,0.28)] bg-[linear-gradient(145deg,rgba(245,217,123,0.94),rgba(212,175,55,0.9)_45%,rgba(138,101,17,0.95))] text-[#120f04] hover:-translate-y-px hover:brightness-105 hover:shadow-luxe-strong',
+        default: 'border-[rgba(96,165,250,0.3)] bg-[linear-gradient(145deg,rgba(186,230,253,0.95),rgba(96,165,250,0.92)_42%,rgba(30,64,175,0.96))] text-[#031225] hover:-translate-y-px hover:brightness-105 hover:shadow-luxe-strong',
         destructive: 'border-red-500/30 bg-[linear-gradient(145deg,rgba(255,117,117,0.18),rgba(255,77,77,0.34))] text-destructive-foreground hover:bg-destructive/90',
-        outline: 'border-[rgba(255,223,112,0.18)] bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))] text-foreground hover:border-[rgba(255,223,112,0.42)] hover:bg-white/[0.08] hover:-translate-y-px',
+        outline: 'border-[rgba(96,165,250,0.2)] bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))] text-foreground hover:border-[rgba(147,197,253,0.46)] hover:bg-white/[0.08] hover:-translate-y-px',
         secondary: 'border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.07),rgba(255,255,255,0.02))] text-secondary-foreground hover:bg-white/[0.08] hover:-translate-y-px',
         ghost: 'border-transparent bg-transparent text-muted-foreground shadow-none hover:border-white/10 hover:bg-white/[0.04] hover:text-foreground',
         link: 'border-transparent bg-transparent px-0 py-0 text-primary shadow-none underline-offset-4 hover:underline',
-        gradient: 'border-[rgba(255,223,112,0.36)] bg-[linear-gradient(135deg,#fff2b8_0%,#f5d97b_20%,#d4af37_52%,#8c6714_100%)] text-[#120f04] hover:-translate-y-px hover:brightness-105 hover:shadow-luxe-strong',
-        glow: 'border-[rgba(255,223,112,0.28)] bg-[linear-gradient(145deg,rgba(255,223,112,0.18),rgba(212,175,55,0.18)_45%,rgba(255,255,255,0.04))] text-white hover:-translate-y-px hover:shadow-luxe',
+        gradient: 'border-[rgba(96,165,250,0.38)] bg-[linear-gradient(135deg,#e0f2fe_0%,#7dd3fc_18%,#60a5fa_52%,#1d4ed8_100%)] text-[#031225] hover:-translate-y-px hover:brightness-105 hover:shadow-luxe-strong',
+        glow: 'border-[rgba(96,165,250,0.28)] bg-[linear-gradient(145deg,rgba(59,130,246,0.18),rgba(14,165,233,0.18)_45%,rgba(255,255,255,0.04))] text-white hover:-translate-y-px hover:shadow-luxe',
       },
       size: {
         default: 'h-12 px-5 py-3',

@@ -38,6 +38,20 @@ export const resolveAssetUrl = (value?: string | null) => {
 export type SubscriptionTier = 'FREE' | 'PRO' | 'TOP_TIER' | 'VIP_AUTO_TRADER';
 export type AnalysisFeatureName = 'reactionChallenge' | 'confidenceThermometer' | 'tradeReplay';
 
+export interface OnboardingResponses {
+  traderLevel: 'beginner' | 'intermediate' | 'experienced' | null;
+  markets: string[];
+  biggestChallenge: string | null;
+  primaryGoal: string | null;
+  assistanceModes: string[];
+}
+
+export interface UserOnboardingState {
+  completed: boolean;
+  summary: string | null;
+  responses: OnboardingResponses | null;
+}
+
 export interface FeatureAccessSummary {
   feature: AnalysisFeatureName;
   allowed: boolean;
@@ -994,6 +1008,13 @@ export const api = {
 
   getProfile: (token: string) =>
     apiFetch<{ user: any }>('/auth/profile', { token }),
+
+  saveOnboardingProfile: (payload: Omit<OnboardingResponses, 'traderLevel'> & { traderLevel: 'beginner' | 'intermediate' | 'experienced' }, token: string) =>
+    apiFetch<{ onboarding: UserOnboardingState }>('/auth/onboarding', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      token,
+    }),
 
   getActiveAnnouncements: () =>
     apiFetch<{ announcements: Announcement[]; popupSettings: AnnouncementPopupSettings }>('/admin/public-announcements'),

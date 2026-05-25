@@ -75,7 +75,7 @@ export default function PushNotificationPrompt({ token }: Props) {
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium">Enable push notifications</p>
         <p className="text-xs text-muted-foreground">
-          Get real-time alerts when Signals finds fresh session setups — even when this tab is closed.
+          Get real-time alerts for active platform workflows and account updates, even when this tab is closed.
         </p>
       </div>
       <Button

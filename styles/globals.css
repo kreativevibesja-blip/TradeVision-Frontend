@@ -25,9 +25,9 @@
     --input: 217.2 32.6% 17.5%;
     --ring: 224.3 76.3% 48%;
     --radius: 1.25rem;
-    --gold-primary: #7fb2ff;
-    --gold-light: #bcd6ff;
-    --gold-glow: #95bfff;
+    --gold-primary: #4ea3ff;
+    --gold-light: #9fd0ff;
+    --gold-glow: #68b7ff;
     --surface-shadow: 10, 25, 47;
     --surface-line: rgba(148, 163, 184, 0.14);
     --surface-line-strong: rgba(148, 163, 184, 0.2);
@@ -36,10 +36,10 @@
     --surface-reflection: linear-gradient(180deg, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.01) 22%, rgba(255,255,255,0) 100%);
     --surface-depth-shadow: 0 28px 80px rgba(0, 0, 0, 0.42);
     --surface-depth-shadow-strong: 0 36px 120px rgba(0, 0, 0, 0.58);
-    --ambient-glow: rgba(127, 178, 255, 0.18);
-    --ambient-glow-strong: rgba(127, 178, 255, 0.28);
-    --hero-radial-a: rgba(127, 178, 255, 0.16);
-    --hero-radial-b: rgba(188, 214, 255, 0.1);
+    --ambient-glow: rgba(78, 163, 255, 0.2);
+    --ambient-glow-strong: rgba(78, 163, 255, 0.3);
+    --hero-radial-a: rgba(78, 163, 255, 0.18);
+    --hero-radial-b: rgba(159, 208, 255, 0.12);
     --success: #00ff95;
     --danger: #ff4444;
     --warning: #ffc107;
@@ -53,35 +53,35 @@
     --card-foreground: 0 0% 100%;
     --panel: 0 0% 8%;
     --panel-elevated: 0 0% 11%;
-    --primary: 45 64% 52%;
-    --primary-foreground: 0 0% 6%;
+    --primary: 208 100% 61%;
+    --primary-foreground: 213 78% 10%;
     --secondary: 0 0% 12%;
     --secondary-foreground: 0 0% 100%;
     --muted: 0 0% 12%;
     --muted-foreground: 0 0% 63%;
-    --accent: 44 30% 16%;
-    --accent-foreground: 45 92% 74%;
+    --accent: 214 42% 16%;
+    --accent-foreground: 206 100% 78%;
     --destructive: 0 92% 62%;
     --destructive-foreground: 0 0% 100%;
-    --border: 44 32% 22%;
-    --input: 44 18% 16%;
-    --ring: 47 100% 67%;
+    --border: 214 44% 22%;
+    --input: 214 24% 16%;
+    --ring: 208 100% 67%;
     --radius: 1.5rem;
-    --gold-primary: #d4af37;
-    --gold-light: #ffd700;
-    --gold-glow: #f5d97b;
+    --gold-primary: #3b82f6;
+    --gold-light: #8fd0ff;
+    --gold-glow: #38bdf8;
     --surface-shadow: 0, 0, 0;
-    --surface-line: rgba(255, 223, 112, 0.16);
-    --surface-line-strong: rgba(255, 223, 112, 0.3);
+    --surface-line: rgba(96, 165, 250, 0.18);
+    --surface-line-strong: rgba(147, 197, 253, 0.34);
     --surface-tint: rgba(255, 255, 255, 0.05);
     --surface-glass: rgba(18, 18, 18, 0.7);
     --surface-reflection: linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 18%, rgba(255,255,255,0) 38%);
     --surface-depth-shadow: 0 26px 80px rgba(0, 0, 0, 0.55);
     --surface-depth-shadow-strong: 0 38px 140px rgba(0, 0, 0, 0.72);
-    --ambient-glow: rgba(212, 175, 55, 0.18);
-    --ambient-glow-strong: rgba(245, 217, 123, 0.28);
-    --hero-radial-a: rgba(212, 175, 55, 0.18);
-    --hero-radial-b: rgba(245, 217, 123, 0.1);
+    --ambient-glow: rgba(59, 130, 246, 0.18);
+    --ambient-glow-strong: rgba(56, 189, 248, 0.28);
+    --hero-radial-a: rgba(37, 99, 235, 0.2);
+    --hero-radial-b: rgba(56, 189, 248, 0.12);
   }
 }
 
@@ -110,7 +110,7 @@
     position: fixed;
     inset: 0;
     pointer-events: none;
-    background-image: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    background-image: linear-gradient(rgba(96, 165, 250, 0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(96, 165, 250, 0.04) 1px, transparent 1px);
     background-size: 72px 72px;
     mask-image: radial-gradient(circle at center, black 38%, transparent 90%);
     opacity: 0.42;
@@ -134,7 +134,7 @@
     letter-spacing: -0.04em;
   }
   ::selection {
-    background: rgba(255, 223, 112, 0.22);
+    background: rgba(96, 165, 250, 0.22);
     color: white;
   }
 }
@@ -157,7 +157,7 @@
     box-shadow: var(--surface-depth-shadow);
   }
   .text-gradient {
-    background-image: linear-gradient(120deg, var(--gold-light), #fff0b2 42%, var(--gold-primary) 78%);
+    background-image: linear-gradient(120deg, #e0f2fe, var(--gold-light) 38%, var(--gold-primary) 78%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -166,7 +166,7 @@
     @apply mobile-card;
   }
   .glow-blue {
-    box-shadow: 0 0 30px rgba(255, 223, 112, 0.22);
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.24);
   }
   .glow-green {
     box-shadow: 0 0 30px rgba(34, 197, 94, 0.3);
@@ -204,7 +204,7 @@
   .premium-kicker {
     @apply inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.32em];
     border-color: rgba(255, 223, 112, 0.24);
-    background: rgba(255, 223, 112, 0.08);
+    background: rgba(59, 130, 246, 0.12);
     color: var(--gold-light);
   }
   .premium-heading {
@@ -223,7 +223,7 @@
     border-color: rgba(255, 223, 112, 0.22);
   }
   .hero-grid {
-    background-image: linear-gradient(rgba(255, 223, 112, 0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 223, 112, 0.06) 1px, transparent 1px);
+    background-image: linear-gradient(rgba(96, 165, 250, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(96, 165, 250, 0.08) 1px, transparent 1px);
     background-size: 36px 36px;
   }
   .premium-button-shell {
@@ -272,7 +272,7 @@
     box-shadow:
       inset 0 2px 18px rgba(0,0,0,0.48),
       inset 0 1px 0 rgba(255,255,255,0.06),
-      0 0 0 3px rgba(255, 223, 112, 0.08);
+      0 0 0 3px rgba(59, 130, 246, 0.12);
   }
   .terminal-table {
     @apply overflow-hidden rounded-[28px] border;
@@ -326,8 +326,8 @@
   }
   .data-strip {
     @apply overflow-hidden rounded-[24px] border;
-    border-color: rgba(255, 223, 112, 0.14);
-    background: linear-gradient(90deg, rgba(255, 223, 112, 0.09), rgba(255, 255, 255, 0.03), rgba(255, 223, 112, 0.04));
+    border-color: rgba(96, 165, 250, 0.16);
+    background: linear-gradient(90deg, rgba(59, 130, 246, 0.12), rgba(255, 255, 255, 0.03), rgba(14, 165, 233, 0.08));
   }
   .table-premium {
     @apply overflow-hidden rounded-[24px] border;

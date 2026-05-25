@@ -11,6 +11,7 @@ import {
   Filter,
   Flame,
   Layers3,
+  Radar,
   Loader2,
   Shield,
   ShieldCheck,
@@ -426,6 +427,9 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
   const [sessionFilter, setSessionFilter] = useState<SignalSession | 'all'>('all');
   const [alertsEnabled, setAlertsEnabled] = useState(true);
   const [watchlistSaving, setWatchlistSaving] = useState(false);
+  const [trackingSignalKey, setTrackingSignalKey] = useState<string | null>(null);
+  const [trackedSignalKey, setTrackedSignalKey] = useState<string | null>(null);
+  const [trackRadarError, setTrackRadarError] = useState<string | null>(null);
   const [scanState, setScanState] = useState<{ loading: boolean; error: string; lastUpdated: number | null }>({
     loading: true,
     error: '',
@@ -665,6 +669,57 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
       setAlertsEnabled(enabled);
     } finally {
       setWatchlistSaving(false);
+    }
+  };
+
+  const trackSelectedSignalOnRadar = async (signal: ActiveSignalRecord | null) => {
+    if (!token || !signal || isDeriv) {
+      return;
+    }
+
+    setTrackingSignalKey(signal.key);
+    setTrackRadarError(null);
+
+    try {
+      const response = await api.analyzeLiveChart({
+        source: 'tradingview-live',
+        symbol: signal.symbol,
+        timeframe: signal.timeframe,
+      }, token);
+
+      let analysisId = response.analysis?.id ?? response.analysisId ?? null;
+
+      if (response.queued && response.jobId) {
+        const startedAt = Date.now();
+
+        while (Date.now() - startedAt < 180000) {
+          const status = await api.getQueueStatus(response.jobId, token);
+          analysisId = status.result?.id ?? status.analysisId ?? analysisId;
+
+          if (status.status === 'completed' && analysisId) {
+            break;
+          }
+
+          if (status.status === 'failed' || status.status === 'cancelled') {
+            throw new Error(status.error || 'Live analysis did not complete.');
+          }
+
+          await new Promise<void>((resolve) => {
+            window.setTimeout(resolve, 2500);
+          });
+        }
+      }
+
+      if (!analysisId) {
+        throw new Error('Live analysis is still processing. Try again in a moment.');
+      }
+
+      await api.radar.add(analysisId, token);
+      setTrackedSignalKey(signal.key);
+    } catch (error) {
+      setTrackRadarError(error instanceof Error ? error.message : 'Unable to track this live setup right now.');
+    } finally {
+      setTrackingSignalKey(null);
     }
   };
 
@@ -971,6 +1026,26 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
                     <div className="rounded-2xl border border-white/8 bg-white/[0.04] p-2">SL {formatPrice(selectedSignal.stopLoss)}</div>
                     <div className="rounded-2xl border border-white/8 bg-white/[0.04] p-2">TP {formatPrice(selectedSignal.takeProfit)}</div>
                   </div>
+                  {!isDeriv ? (
+                    <div className="mt-4 space-y-3">
+                      <Button
+                        onClick={() => void trackSelectedSignalOnRadar(selectedSignal)}
+                        disabled={trackingSignalKey === selectedSignal.key}
+                        className={`w-full gap-2 ${trackedSignalKey === selectedSignal.key ? 'border border-green-500/30 bg-green-600/20 text-green-300 hover:bg-green-600/25' : 'border border-violet-500/30 bg-violet-600/20 text-violet-100 hover:bg-violet-600/30'}`}
+                      >
+                        {trackingSignalKey === selectedSignal.key ? <Loader2 className="h-4 w-4 animate-spin" /> : <Radar className="h-4 w-4" />}
+                        {trackingSignalKey === selectedSignal.key
+                          ? 'Preparing live analysis for Radar...'
+                          : trackedSignalKey === selectedSignal.key
+                            ? 'Tracked on Radar'
+                            : 'Analyze & Track on Radar'}
+                      </Button>
+                      <p className="text-xs leading-5 text-white/48">
+                        Trade Radar needs a real live-chart analysis ID, so this promotes the selected TradingView setup into analysis first and then starts live tracking.
+                      </p>
+                      {trackRadarError ? <p className="text-xs text-red-300">{trackRadarError}</p> : null}
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
             </div>

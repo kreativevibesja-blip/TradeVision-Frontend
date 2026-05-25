@@ -32,22 +32,22 @@ export function Navbar() {
       <motion.nav
         initial={false}
         animate={{ y: 0 }}
-        className="fixed top-0 left-0 right-0 z-50 border-b border-[rgba(255,223,112,0.12)] bg-[rgba(5,5,5,0.72)] backdrop-blur-2xl"
+        className="fixed top-0 left-0 right-0 z-50 border-b border-[rgba(96,165,250,0.16)] bg-[rgba(3,7,18,0.76)] backdrop-blur-2xl"
       >
         <div className="page-shell flex h-20 items-center justify-between gap-4">
           <BrandLogo />
 
           {/* Desktop Nav */}
           <div className="hidden items-center gap-3 md:flex lg:gap-5">
-            <div className="hidden items-center gap-1 rounded-full border border-[rgba(255,223,112,0.12)] bg-white/[0.03] p-1 lg:flex">
+            <div className="hidden items-center gap-1 rounded-full border border-[rgba(96,165,250,0.14)] bg-white/[0.03] p-1 lg:flex">
               <Link href="/analyze" className="rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:bg-white/[0.04] hover:text-foreground">
-                Analyze
+                AI Analysis
               </Link>
               <Link href="/platform" className="rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:bg-white/[0.04] hover:text-foreground">
-                Platform
+                Intelligence
               </Link>
               <Link href="/trade-examples" className="rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:bg-white/[0.04] hover:text-foreground">
-                Education
+                Mentorship
               </Link>
               <Link href="/pricing" className="rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:bg-white/[0.04] hover:text-foreground">
                 Pricing
@@ -70,7 +70,7 @@ export function Navbar() {
                 <Link href="/dashboard">
                   <Button variant="outline" size="sm" className="min-h-11 gap-2">
                     <LayoutDashboard className="h-4 w-4 mr-2" />
-                    Dashboard
+                    Workspace
                   </Button>
                 </Link>
                 {user.role === 'ADMIN' && (
@@ -81,7 +81,7 @@ export function Navbar() {
                     </Button>
                   </Link>
                 )}
-                <div className="flex items-center gap-2 rounded-full border border-[rgba(255,223,112,0.14)] bg-white/[0.03] px-2.5 py-1.5">
+                <div className="flex items-center gap-2 rounded-full border border-[rgba(96,165,250,0.16)] bg-white/[0.03] px-2.5 py-1.5">
                   <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/18 text-primary">
                     <User className="h-4 w-4 text-primary" />
                   </div>
@@ -107,7 +107,7 @@ export function Navbar() {
           </div>
 
           {/* Mobile Toggle */}
-          <button className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[rgba(255,223,112,0.18)] bg-white/[0.04] md:hidden" onClick={() => setMobileOpen(!mobileOpen)}>
+          <button className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[rgba(96,165,250,0.18)] bg-white/[0.04] md:hidden" onClick={() => setMobileOpen(!mobileOpen)}>
             {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
@@ -118,15 +118,15 @@ export function Navbar() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="border-t border-[rgba(255,223,112,0.12)] bg-[rgba(5,5,5,0.94)] backdrop-blur-2xl md:hidden"
+            className="border-t border-[rgba(96,165,250,0.12)] bg-[rgba(3,7,18,0.96)] backdrop-blur-2xl md:hidden"
           >
             <div className="page-shell flex flex-col gap-2 py-4">
               <div className="mb-3 premium-panel-muted p-4">
-                <div className="premium-kicker mb-3">Command Surface</div>
-                <p className="text-sm text-muted-foreground">Switch between analysis, pricing, education, and your workspace from one premium mobile menu.</p>
+                <div className="premium-kicker mb-3">Institutional Interface</div>
+                <p className="text-sm text-muted-foreground">Move between AI analysis, market intelligence, mentorship, and your workspace from one premium mobile command bar.</p>
               </div>
               <Link href="/analyze" className="flex min-h-12 items-center rounded-2xl border border-transparent px-4 text-sm hover:border-[rgba(255,223,112,0.14)] hover:bg-white/[0.04]" onClick={() => setMobileOpen(false)}>
-                Analyze
+                AI Analysis
               </Link>
               <Link href="/" className="flex min-h-12 items-center rounded-2xl border border-transparent px-4 text-sm hover:border-[rgba(255,223,112,0.14)] hover:bg-white/[0.04]" onClick={() => setMobileOpen(false)}>
                 Home
@@ -135,15 +135,15 @@ export function Navbar() {
                 Pricing
               </Link>
               <Link href="/platform" className="flex min-h-12 items-center rounded-2xl border border-transparent px-4 text-sm hover:border-[rgba(255,223,112,0.14)] hover:bg-white/[0.04]" onClick={() => setMobileOpen(false)}>
-                Platform
+                Intelligence
               </Link>
               <Link href="/trade-examples" className="flex min-h-12 items-center rounded-2xl border border-transparent px-4 text-sm hover:border-[rgba(255,223,112,0.14)] hover:bg-white/[0.04]" onClick={() => setMobileOpen(false)}>
-                Education
+                Mentorship
               </Link>
               {user ? (
                 <>
                   <Link href="/dashboard" className="flex min-h-12 items-center rounded-2xl border border-transparent px-4 text-sm hover:border-[rgba(255,223,112,0.14)] hover:bg-white/[0.04]" onClick={() => setMobileOpen(false)}>
-                    Dashboard
+                    Workspace
                   </Link>
                   {user.role === 'ADMIN' && (
                     <Link href="/admin" className="flex min-h-12 items-center rounded-2xl border border-transparent px-4 text-sm hover:border-[rgba(255,223,112,0.14)] hover:bg-white/[0.04]" onClick={() => setMobileOpen(false)}>

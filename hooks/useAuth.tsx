@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
-import { api } from '@/lib/api';
+import { api, type UserOnboardingState } from '@/lib/api';
 import { hasSupabaseEnv, missingSupabaseEnvMessage, recordTokenRefresh, setCachedSession, supabase } from '@/lib/supabase/client';
 import { recordAuthRefreshMetric, recordSessionFetchMetric, setListenerCountMetric, setMetricsUser } from '@/lib/egressMetrics';
 import { getReferralCode, clearReferralCode } from '@/components/ReferralCapture';
@@ -16,6 +16,7 @@ interface User {
   createdAt?: string;
   themePreference?: 'legacy' | 'goldx-premium';
   dailyUsage?: number;
+  onboarding?: UserOnboardingState | null;
 }
 
 interface AuthContextType {
