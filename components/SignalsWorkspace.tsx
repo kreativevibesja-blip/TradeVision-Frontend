@@ -35,6 +35,7 @@ import {
   LIVE_CHART_SYMBOLS,
   getLiveChartTimeframe,
 } from '@/lib/live-chart';
+import { buildOrionLiveSignalContext, emitOrionContext } from '@/lib/orion-context';
 
 type SignalSession = 'asian' | 'london' | 'newyork';
 type SignalDirection = 'buy' | 'sell';
@@ -649,6 +650,14 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
     session,
     count: activeSignals.filter((item) => item.session === session && item.status !== 'expired').length,
   }));
+
+  useEffect(() => {
+    emitOrionContext(selectedSignal ? buildOrionLiveSignalContext(selectedSignal) : null);
+
+    return () => {
+      emitOrionContext(null);
+    };
+  }, [selectedSignal]);
 
   const saveWatchlist = async (signal: ActiveSignalRecord | null, enabled: boolean) => {
     if (!token || !signal) {
