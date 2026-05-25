@@ -53,7 +53,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <main className="flex-1 pt-20">{children}</main>
               <SupportButton />
               <FeedbackTrigger />
-              <OrionMentorAssistant />
+              <Suspense fallback={null}>
+                <OrionMentorAssistant />
+              </Suspense>
               <OrionOnboardingExperience />
             </div>
             <Footer />

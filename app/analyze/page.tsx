@@ -27,6 +27,7 @@ import TradeCommandCenterModal from '@/components/TradeCommandCenterModal';
 import { TradeReplayModal } from '@/components/TradeReplayModal';
 import TrackSetupButton from '@/components/TrackSetupButton';
 import { useAnalysisFeatureAccess } from '@/hooks/useAnalysisFeatureAccess';
+import { buildOrionAnalysisContext, emitOrionContext } from '@/lib/orion-context';
 import {
   Upload,
   Image as ImageIcon,
@@ -756,6 +757,14 @@ function AnalyzePageContent() {
       cancelled = true;
     };
   }, [analysis?.id, token]);
+
+  useEffect(() => {
+    emitOrionContext(analysis ? buildOrionAnalysisContext(analysis) : null);
+
+    return () => {
+      emitOrionContext(null);
+    };
+  }, [analysis]);
 
   useEffect(() => {
     if (!analysis?.id) {
