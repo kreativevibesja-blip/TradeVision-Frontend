@@ -49,26 +49,26 @@ const reveal = {
 };
 
 const marketMetrics = [
-  { label: 'AI models online', value: '14', tone: 'text-white' },
-  { label: 'Confidence engine', value: '98.2%', tone: 'text-[var(--gold-light)]' },
-  { label: 'Live scanner latency', value: '132ms', tone: 'text-emerald-300' },
-  { label: 'GoldX executions', value: '28,491', tone: 'text-white' },
+  { label: 'ORION models online', value: '14', tone: 'text-white' },
+  { label: 'Mentor confidence', value: '98.2%', tone: 'text-[var(--gold-light)]' },
+  { label: 'Worker latency', value: '132ms', tone: 'text-cyan-300' },
+  { label: 'Charts analyzed', value: '28,491', tone: 'text-white' },
 ];
 
 const featureColumns = [
   {
-    title: 'Chart analysis with structure',
-    description: 'Upload a chart and get BOS, CHOCH, FVG, liquidity sweeps, supply and demand zones, and directional context in a format that helps you decide faster.',
+    title: 'Institutional AI chart analysis',
+    description: 'Upload a chart and get BOS, CHOCH, FVG, liquidity sweeps, supply and demand zones, premium and discount context, and directional bias built for disciplined decision-making.',
     icon: BrainCircuit,
   },
   {
-    title: 'Built for fast trading decisions',
-    description: 'Use the same workflow on desktop or mobile when you need a quick second opinion before entry, a clearer invalidation level, or more disciplined execution.',
+    title: 'Trade intelligence and market understanding',
+    description: 'Use the same workflow on desktop or mobile when you need clearer session context, stronger invalidation logic, and better execution planning.',
     icon: Radar,
   },
   {
-    title: 'GoldX automation and execution tools',
-    description: 'Run GoldX for XAUUSD with mode control, execution tracking, licensing, and workspace telemetry when you want automation alongside your discretionary process.',
+    title: 'Mentorship, tracking, and development',
+    description: 'Move from analysis into execution planning and review loops that help you become more consistent over time.',
     icon: Crown,
   },
 ];
@@ -76,22 +76,22 @@ const featureColumns = [
 const platformSurfaces = [
   {
     title: 'AI Analysis',
-    subtitle: 'Upload charts, get trade context, and review confidence, replay, and reaction training in one flow.',
+    subtitle: 'Upload charts, read structure, and review directional bias, volatility, and execution context in one flow.',
     icon: Eye,
   },
   {
-    title: 'Dashboard',
-    subtitle: 'Track your activity, active tools, scanner signals, and workspace access from one home base.',
+    title: 'Institutional Dashboard',
+    subtitle: 'Track market pulse, active tools, opportunity quality, and workspace intelligence from one platform.',
     icon: Layers3,
   },
   {
-    title: 'Live Charts',
-    subtitle: 'Follow live chart structure with key zones, liquidity behavior, and execution context.',
+    title: 'Live Analysis',
+    subtitle: 'Follow live chart structure with key zones, liquidity behavior, and execution timing context.',
     icon: CandlestickChart,
   },
   {
-    title: 'Admin Command',
-    subtitle: 'Manage subscriptions, payments, support, licensing, settings, and platform operations.',
+    title: 'Trader Operating System',
+    subtitle: 'Move between command center, journaling, support, and operational controls without clutter.',
     icon: ShieldCheck,
   },
 ];
@@ -155,8 +155,8 @@ function CommandDeck() {
         <CardContent className="space-y-5 p-5 sm:p-6">
           <div className="flex items-center justify-between">
             <div>
-              <div className="metric-label">TradeVision premium stack</div>
-              <div className="mt-2 text-2xl font-semibold tracking-[-0.06em] text-white">Institutional AI cockpit</div>
+              <div className="metric-label">TradeVision AI - Institutional Trading Intelligence</div>
+              <div className="mt-2 text-2xl font-semibold tracking-[-0.06em] text-white">ORION AI command cockpit</div>
             </div>
             <div className="rounded-2xl border border-[rgba(255,223,112,0.18)] bg-[rgba(255,223,112,0.08)] px-3 py-2 font-mono text-xs text-[var(--gold-light)]">
               LIVE
@@ -261,7 +261,7 @@ export default function HomePage() {
                   and execute with more clarity.
                 </h1>
                 <p className="mt-5 max-w-2xl text-sm leading-7 text-white/72 sm:text-base sm:leading-8 lg:text-lg">
-                  TradeVision helps traders turn screenshots and market structure into actionable trade plans. Use AI analysis to read trend, liquidity, entries, invalidation, and targets, then move into GoldX, scanners, dashboards, and replay tools when you want more execution support.
+                  TradeVision AI turns screenshots and market structure into institutional trading intelligence. Use ORION AI to understand trend, liquidity, opportunity quality, execution planning, and trader development without turning the platform into a signal feed.
                 </p>
               </motion.div>
 
@@ -274,7 +274,7 @@ export default function HomePage() {
                 </Link>
                 <Link href="/pricing" className="w-full sm:w-auto">
                   <Button variant="outline" size="xl" className="w-full gap-2 sm:w-auto">
-                    View Pricing
+                    Explore Platform
                     <ChevronRight className="h-5 w-5" />
                   </Button>
                 </Link>
@@ -300,7 +300,7 @@ export default function HomePage() {
           <div className="marquee-track flex min-w-max items-center gap-8 whitespace-nowrap text-xs uppercase tracking-[0.28em] text-white/56 sm:text-sm">
             {[0, 1].map((copy) => (
               <div key={copy} className="flex items-center gap-8 pr-8">
-                {['AI chart analysis', 'GoldX automation', 'Confidence engine', 'Live session scanner', 'Trade replay', 'Admin controls'].map((item) => (
+                {['AI chart analysis', 'ORION mentor guidance', 'Execution planning', 'Command center intelligence', 'Trade journaling', 'Session analysis'].map((item) => (
                   <span key={`${copy}-${item}`} className="inline-flex items-center gap-3">
                     <span>{item}</span>
                     <span className="text-[var(--gold-light)]">•</span>
@@ -315,9 +315,9 @@ export default function HomePage() {
       <section className="page-shell page-stack">
         <Reveal className="mb-10 text-center sm:mb-14">
           <Badge variant="outline">What You Get</Badge>
-          <h2 className="premium-heading mt-4">One platform for analysis, execution support, and automation</h2>
+          <h2 className="premium-heading mt-4">One platform for analysis, execution planning, and trader development</h2>
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-white/68 sm:text-base">
-            TradeVision is built to help you understand the setup, avoid impulsive entries, and work from clearer trade plans whether you trade manually or use GoldX automation.
+            TradeVision AI is built to help you understand the setup, avoid impulsive entries, and operate with clearer structure whether you are analyzing charts, planning execution, or refining your process.
           </p>
         </Reveal>
 

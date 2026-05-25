@@ -9,9 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { LiveChart, type LiveChartStatus } from '@/components/LiveChart';
+import TrackSetupButton from '@/components/TrackSetupButton';
 import { useAuth } from '@/hooks/useAuth';
 import { api, type AnalysisResult } from '@/lib/api';
-import TrackSetupButton from '@/components/TrackSetupButton';
 import { DERIV_ANALYSIS_CANDLE_COUNT, DERIV_SYMBOLS, DERIV_TIMEFRAMES, mapPersistedAnalysisToDerivResult, type DerivAnalysisResult, type DerivCandle, getDerivSymbol, getDerivTimeframe } from '@/lib/deriv-live';
 import { mapAnalysisResultToChartOverlay, mapDerivAnalysisToChartOverlay, toChartCandles } from '@/lib/live-chart-drawings';
 

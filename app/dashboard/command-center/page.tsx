@@ -75,7 +75,7 @@ export default function CommandCenterPage() {
           <div>
             <h1 className="text-xl font-bold text-white">Command Center</h1>
             <p className="text-xs text-gray-500">
-              Select any past analysis to launch real-time execution guidance
+              Select any saved analysis to open execution planning and live trade context
             </p>
           </div>
         </div>
@@ -120,7 +120,7 @@ export default function CommandCenterPage() {
               <p className="text-xs text-gray-600">
                 {search
                   ? 'Try a different pair name'
-                  : 'Upload a chart on the Analyze page to get started'}
+                  : 'Upload a chart on the analysis page to start building execution plans'}
               </p>
             </div>
           ) : (

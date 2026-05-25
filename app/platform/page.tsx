@@ -44,7 +44,7 @@ const coreFlow = [
   {
     step: 'Step 4',
     title: 'Refine, Monitor, And Execute',
-    detail: 'Use command-center style workflows, Trade Radar, scanners, live chart spaces, and GoldX when you want tighter execution support or automation.',
+    detail: 'Use command-center workflows, live chart spaces, journaling, and GoldX when you want tighter execution support or automation.',
     icon: TrendingUp,
   },
 ];
@@ -75,15 +75,15 @@ const featureGuide = [
     ],
   },
   {
-    title: 'Trade Radar',
-    icon: Radar,
+    title: 'Trade Journal And Review',
+    icon: Layers3,
     tone: 'from-fuchsia-500/20 to-violet-500/5',
-    audience: 'Built for traders who want monitoring after analysis',
-    description: 'Radar helps you keep watch on setups that are not ready yet so you do not have to re-analyze the same idea manually every few minutes.',
+    audience: 'Built for traders who want better review habits after analysis',
+    description: 'Journal and review tools help you understand what made a setup valid, what broke down, and how execution quality changes over time.',
     steps: [
-      'Add a promising setup to Trade Radar.',
-      'Monitor its state as price approaches the entry zone or loses validity.',
-      'Open the trade again from Radar when conditions improve or trigger.',
+      'Capture the setup context after analysis or execution.',
+      'Review structure, invalidation, and outcome quality after the trade closes.',
+      'Use the journal insights to refine future execution decisions.',
     ],
   },
   {
@@ -146,7 +146,7 @@ const paidPlans = [
     features: [
       '500 analyses per month',
       'Smart Session Scanner',
-      'Instant trade setups',
+      'Advanced execution planning',
       'Advanced entry precision',
       'Faster response time',
     ],
@@ -169,9 +169,9 @@ const paidPlans = [
 const quickStart = [
   'Create an account or sign in.',
   'Start with Analyze to understand how the platform reads a chart.',
-  'Move winning or watchlist ideas into Trade Radar or the Command Center.',
+  'Move strong analyses into the Command Center and journal important outcomes.',
   'Upgrade to PRO if you want higher usage and stronger core AI analysis.',
-  'Upgrade to PRO+ if you want scanner workflows and faster premium execution support.',
+  'Upgrade to PRO+ if you want higher analysis capacity, scanner workflows, and faster execution support.',
   'Choose GoldX separately if you want the dedicated Gold trading system and EA flow.',
 ];
 
@@ -197,7 +197,7 @@ export default function PlatformPage() {
               A Clear Walkthrough Of <span className="text-gradient">How TradeVision Works</span>
             </h1>
             <p className="max-w-3xl text-base leading-8 text-slate-200 sm:text-lg">
-              TradeVision is built to help traders move from raw chart screenshots to structured decisions, live monitoring, and premium workflows without guessing what to do next. This page shows what the platform does, how each feature fits into a trading routine, and which paid tools unlock the deeper workflow.
+              TradeVision is built to help traders move from raw chart screenshots to structured decisions, execution planning, and review workflows without guessing what to do next. This page shows what the platform does, how each feature fits into a trading routine, and which paid tools unlock the deeper workflow.
             </p>
             <div className="flex flex-col gap-3 sm:flex-row">
               <Link href="/analyze" className="w-full sm:w-auto">
@@ -224,12 +224,12 @@ export default function PlatformPage() {
             },
             {
               title: 'Built Around Workflow',
-              description: 'TradeVision is not only for chart uploads. It is built to support monitoring, scanning, trade review, and platform-guided execution decisions.',
+              description: 'TradeVision is not only for chart uploads. It is built to support live analysis, trade review, and platform-guided execution decisions.',
               icon: Compass,
             },
             {
               title: 'Scales With Your Style',
-              description: 'Stay on the core analysis flow, step into scanner and premium workflows, or move into GoldX when you want a dedicated execution product.',
+              description: 'Stay on the core analysis flow, step into live or scanner workflows, or move into GoldX when you want a dedicated execution product.',
               icon: Shield,
             },
           ].map((item) => (
@@ -337,7 +337,7 @@ export default function PlatformPage() {
           <Card className="border-white/10 bg-[radial-gradient(circle_at_bottom_right,_rgba(245,158,11,0.12),_transparent_35%),linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.02))]">
             <CardContent className="p-6 sm:p-8">
               <Badge variant="outline">What Paid Plans Unlock</Badge>
-              <h2 className="mt-4 text-2xl font-bold">Premium Features And Checkout Paths</h2>
+              <h2 className="mt-4 text-2xl font-bold">Plan Features And Checkout Paths</h2>
               <p className="mt-3 text-sm leading-7 text-muted-foreground">
                 Each plan expands the platform in a different way. Choose based on the workflow you want to operate, not only the price point.
               </p>
@@ -380,7 +380,7 @@ export default function PlatformPage() {
             <Badge variant="outline" className="border-white/15 bg-white/5">Ready To Use The Platform Properly?</Badge>
             <h2 className="mt-4 text-2xl font-bold sm:text-4xl">Start With The Right Workflow, Then Upgrade When The Workflow Demands It</h2>
             <p className="mt-4 text-sm leading-8 text-slate-200 sm:text-base">
-              The strongest results usually come from understanding the free and core analysis flow first, then adding premium tools only when you want more speed, more structure, or more automation.
+              The strongest results usually come from understanding the free and core analysis flow first, then adding paid tools only when you want more speed, more structure, or more automation.
             </p>
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
               <Link href="/analyze" className="w-full sm:w-auto">

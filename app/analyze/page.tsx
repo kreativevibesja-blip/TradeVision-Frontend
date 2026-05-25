@@ -70,7 +70,7 @@ const ANALYSIS_STEPS = [
   'Analyzing SMC structure...',
   'Interpreting liquidity and zones...',
   'Validating entry conditions...',
-  'Preparing final SMC signal...',
+  'Preparing final trade analysis...',
 ];
 
 const QUEUE_TRANSITION_MESSAGES = [
@@ -993,10 +993,10 @@ function AnalyzePageContent() {
                   Analysis workspace
                 </Badge>
                 <h1 className="text-3xl font-bold tracking-[-0.08em] text-white sm:text-4xl lg:text-5xl">
-                  <span className="text-gradient">SMC Signal Engine</span>
+                  <span className="text-gradient">AI Chart Analysis Engine</span>
                 </h1>
                 <p className="mt-4 max-w-2xl text-sm leading-7 text-white/66 sm:text-base">
-                  TradeVision analyzes charts through Smart Money Concepts, prioritizing market structure, liquidity, and confirmation over forced entries. The intake, staging, and result surfaces now follow the same premium system as the rest of the platform.
+                  TradeVision analyzes charts through Smart Money Concepts, prioritizing market structure, liquidity, and confirmation over forced entries. Upload charts, review execution zones, and move into command or review workflows when the setup is strong enough.
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -1010,7 +1010,7 @@ function AnalyzePageContent() {
                 </div>
                 <div className="mobile-card rounded-[24px] p-4">
                   <div className="metric-label">Outputs</div>
-                  <div className="mt-2 text-sm font-semibold text-white">Entry, zones, replay, command</div>
+                  <div className="mt-2 text-sm font-semibold text-white">Bias, zones, execution, review</div>
                 </div>
                 <div className="mobile-card rounded-[24px] p-4">
                   <div className="metric-label">Mobile</div>
@@ -1447,7 +1447,7 @@ function AnalyzePageContent() {
                     <Target className="h-4 w-4" />
                     Open Command Center
                   </Button>
-                  {analysis?.id && <TrackSetupButton analysisId={analysis.id} />}
+                  {analysis?.id ? <TrackSetupButton analysisId={analysis.id} /> : null}
                 </div>
               </div>
               </div>

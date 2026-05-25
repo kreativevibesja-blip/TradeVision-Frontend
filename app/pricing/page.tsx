@@ -22,9 +22,9 @@ type DisplayPlan = PricingPlan & {
 
 const proPlusFeatures = [
   '500 analyses per month',
-  'Instant trade setups',
+  'Advanced execution planning',
   'Advanced entry precision',
-  'Priority signal generation',
+  'Higher-priority AI processing',
   'Faster response time',
   'Smart Session Scanner',
 ];
@@ -42,7 +42,7 @@ const fallbackPlanDetails: Record<'FREE' | 'PRO' | 'TOP_TIER', Omit<DisplayPlan,
   },
   PRO: {
     period: '/month',
-    description: 'For serious traders who want premium AI analysis',
+    description: 'For serious traders who want deeper AI chart analysis',
     icon: Crown,
     color: 'from-amber-300 to-yellow-600',
     cta: 'Subscribe Now',
@@ -52,7 +52,7 @@ const fallbackPlanDetails: Record<'FREE' | 'PRO' | 'TOP_TIER', Omit<DisplayPlan,
   },
   TOP_TIER: {
     period: '/month',
-    description: 'Instant trade setups with Smart Session Scanner, advanced entry precision, and faster response time.',
+    description: 'Advanced execution planning with Smart Session Scanner, stronger entry precision, and faster response time.',
     icon: Crown,
     color: 'from-[#ffe38a] via-[#d4af37] to-[#8a6712]',
     cta: 'Upgrade to PRO+',
@@ -110,7 +110,7 @@ const goldxFallbackPlan = {
     'XAUUSD Night Scalping EA',
     'Fast / Prop / Hybrid modes',
     'Server-side strategy engine',
-    'Real-time signal delivery',
+    'Realtime execution logic',
     'License-based MT5 access',
   ],
 };
@@ -195,13 +195,13 @@ export default function PricingPage() {
             <div>
               <Badge className="mb-4" variant="default">
                 <Sparkles className="mr-2 h-3.5 w-3.5" />
-                Premium pricing architecture
+                Platform plans
               </Badge>
               <h1 className="text-3xl font-bold tracking-[-0.08em] text-white sm:text-5xl lg:text-6xl">
-                Pricing that feels like the product.
+                Pricing built around how you trade.
               </h1>
               <p className="mt-5 max-w-2xl text-sm leading-7 text-white/68 sm:text-base">
-                The new pricing stack separates discretionary AI traders, scanner-heavy operators, and GoldX automation users with stronger hierarchy, higher trust, and faster decision paths.
+                Choose the plan that fits your workflow, whether you need core chart analysis, deeper execution planning, or the dedicated GoldX execution stack.
               </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
@@ -352,7 +352,7 @@ export default function PricingPage() {
                     <span className="ml-1 text-lg font-normal text-muted-foreground">/{goldxPlan.billingCycle}</span>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Best for traders who want a creative, always-on volatility execution product instead of a chart-only workflow.
+                    Best for traders who want a dedicated Gold execution product instead of a chart-only workflow.
                   </p>
                 </div>
 
@@ -398,7 +398,7 @@ export default function PricingPage() {
                 <div className="mt-6 grid gap-3 sm:grid-cols-3">
                   {[
                     ['Workspace', 'Dedicated Pulse dashboard'],
-                    ['Signal style', 'Digits and assisted execution'],
+                    ['Execution style', 'Digits and assisted execution'],
                     ['Best fit', 'Deriv-focused options traders'],
                   ].map(([label, value]) => (
                     <div key={label} className="mobile-card rounded-[22px] p-4">
@@ -476,7 +476,7 @@ export default function PricingPage() {
                     { feature: 'Smart Money Concepts', free: false, pro: true, top: true },
                     { feature: 'Priority Processing', free: false, pro: true, top: true },
                     { feature: 'Smart Session Scanner', free: false, pro: false, top: true },
-                    { feature: 'Instant Trade Setups', free: false, pro: false, top: true },
+                    { feature: 'Advanced Execution Planning', free: false, pro: false, top: true },
                     { feature: 'Advanced Entry Precision', free: false, pro: false, top: true },
                     { feature: 'Faster Response Time', free: false, pro: false, top: true },
                   ].map((row) => (

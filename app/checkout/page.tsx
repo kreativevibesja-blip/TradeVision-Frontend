@@ -114,10 +114,10 @@ const planCatalog: Record<PlanKey, {
     name: 'PRO+',
     price: 39.95,
     period: '/month',
-    description: '500 analyses per month plus instant trade setups and Smart Session Scanner access.',
+    description: '500 analyses per month plus advanced execution planning and Smart Session Scanner access.',
     icon: Crown,
     color: 'from-fuchsia-500 via-violet-500 to-cyan-500',
-    features: ['500 analyses per month', 'Instant trade setups', 'Priority signal generation', 'Advanced entry precision', 'Smart Session Scanner'],
+    features: ['500 analyses per month', 'Advanced execution planning', 'Higher-priority AI processing', 'Advanced entry precision', 'Smart Session Scanner'],
   },
   GOLDX: {
     name: 'GoldX',
@@ -126,7 +126,7 @@ const planCatalog: Record<PlanKey, {
     description: 'XAUUSD night scalping EA with a server-side strategy engine and license-based MT5 access.',
     icon: TrendingUp,
     color: 'from-amber-500 to-orange-500',
-    features: ['XAUUSD Night Scalping EA', 'Fast / Prop / Hybrid Modes', 'Server-Side Strategy Engine', 'Real-Time Signals', 'License-Based MT5 Access'],
+    features: ['XAUUSD Night Scalping EA', 'Fast / Prop / Hybrid Modes', 'Server-Side Strategy Engine', 'Realtime Execution Logic', 'License-Based MT5 Access'],
   },
   GOLDX_PULSE: {
     name: 'GoldX Pulse',

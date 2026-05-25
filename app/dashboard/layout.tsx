@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import PushNotificationPrompt from '@/components/PushNotificationPrompt';
 import { useAuth } from '@/hooks/useAuth';
 import { BrandLogo } from '@/components/BrandLogo';
-import { CandlestickChart, CreditCard, LayoutDashboard, RadioTower, Users, Radar, Crosshair, Target, TrendingUp, Sparkles } from 'lucide-react';
+import { CandlestickChart, CreditCard, LayoutDashboard, RadioTower, Users, Target, TrendingUp, Sparkles, Radar } from 'lucide-react';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -15,13 +15,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const isGoldxPulseWorkspace = pathname === '/dashboard/goldx-pulse';
   const showPushPrompt = user?.subscription !== 'FREE' && Boolean(token);
   const dashboardNav = [
-    { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
-    { href: '/dashboard/tradingview', label: 'Live Chart', icon: CandlestickChart },
-    { href: '/dashboard/deriv', label: 'Deriv Live', icon: RadioTower },
+    { href: '/dashboard', label: 'Intelligence', icon: LayoutDashboard },
+    { href: '/dashboard/tradingview', label: 'Live Analysis', icon: CandlestickChart },
+    { href: '/dashboard/deriv', label: 'Deriv Flow', icon: RadioTower },
     { href: '/dashboard/goldx-pulse', label: 'GoldX Pulse', icon: Sparkles },
     { href: '/dashboard/command-center', label: 'Command Center', icon: Target },
-    { href: '/dashboard/signals', label: 'Find My Trade', icon: Radar },
-    { href: '/dashboard/radar', label: 'Trade Radar', icon: Crosshair },
+    { href: '/dashboard/radar', label: 'Trade Radar', icon: Radar },
     { href: '/dashboard/goldx', label: 'GoldX', icon: TrendingUp },
     { href: '/dashboard/billing', label: 'Billing', icon: CreditCard },
     { href: '/dashboard/referrals', label: 'Referrals', icon: Users },
@@ -40,7 +39,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <CardContent className="p-3 sm:p-4">
                 <div className="mb-4 hidden lg:block">
                   <BrandLogo compact showTagline={false} className="justify-center" />
-                  <div className="mt-3 text-center text-[10px] uppercase tracking-[0.28em] text-muted-foreground">Trading Floor</div>
+                  <div className="mt-3 text-center text-[10px] uppercase tracking-[0.28em] text-muted-foreground">Institutional Trading Intelligence</div>
                 </div>
                 <nav className="-mx-0.5 flex gap-1 overflow-x-auto scrollbar-none sm:gap-1.5 lg:flex-col lg:items-start">
                   {dashboardNav.map((item) => {

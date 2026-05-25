@@ -12,6 +12,8 @@ import { VisitorHeartbeat } from '@/components/VisitorHeartbeat';
 import { SupportButton } from '@/components/SupportButton';
 import { ReferralCapture } from '@/components/ReferralCapture';
 import { FeedbackTrigger } from '@/components/FeedbackTrigger';
+import { OrionOnboardingExperience } from '@/components/OrionOnboardingExperience';
+import { OrionMentorAssistant } from '@/components/OrionMentorAssistant';
 
 const bodyFont = Manrope({ subsets: ['latin'], variable: '--font-body' });
 const displayFont = Sora({ subsets: ['latin'], variable: '--font-display' });
@@ -51,6 +53,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <main className="flex-1 pt-20">{children}</main>
               <SupportButton />
               <FeedbackTrigger />
+              <OrionMentorAssistant />
+              <OrionOnboardingExperience />
             </div>
             <Footer />
           </ThemeProvider>

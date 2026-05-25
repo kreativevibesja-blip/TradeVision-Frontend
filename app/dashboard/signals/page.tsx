@@ -1,5 +1,5 @@
-import { FindMyTradeWorkspace } from '@/components/FindMyTradeWorkspace';
+import { redirect } from 'next/navigation';
 
 export default function SignalsPage() {
-  return <FindMyTradeWorkspace />;
+  redirect('/dashboard/command-center');
 }

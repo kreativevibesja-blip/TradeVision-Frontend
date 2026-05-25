@@ -1,1 +1,5 @@
-export { default } from '../signals/page';
+import { redirect } from 'next/navigation';
+
+export default function ScannerPage() {
+	redirect('/dashboard/command-center');
+}

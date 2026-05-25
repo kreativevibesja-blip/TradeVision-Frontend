@@ -389,11 +389,11 @@ export default function AdminSettingsPage() {
 
         <Card className="premium-panel premium-noise border-[rgba(255,223,112,0.12)] bg-transparent">
           <CardHeader>
-            <CardTitle className="text-lg">Find My Trade Market Scope</CardTitle>
+            <CardTitle className="text-lg">On-Demand Market Scope</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="premium-panel-muted p-4 text-sm text-muted-foreground">
-              Find My Trade stays on-demand, but these toggles decide which market groups are eligible when a user clicks the scan button from the dashboard.
+              These toggles decide which market groups are eligible for the on-demand market scan configuration.
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -425,7 +425,7 @@ export default function AdminSettingsPage() {
               disabled={saving}
             >
               {saving ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Save className="h-3 w-3 mr-1" />}
-              Save Find My Trade Scope
+              Save Market Scope
             </Button>
           </CardContent>
         </Card>
