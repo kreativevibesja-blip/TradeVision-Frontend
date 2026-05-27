@@ -71,7 +71,7 @@ export function OrionChatWindow({
           dragElastic={0.04}
           dragConstraints={{ top: 0, bottom: 0 }}
           onDragEnd={handleDragEnd}
-          className="pointer-events-auto absolute bottom-16 right-0 z-[80] flex h-[min(68vh,610px)] w-[min(21rem,calc(100vw-1.5rem))] origin-bottom-right flex-col overflow-hidden rounded-[26px] border border-white/14 bg-[linear-gradient(180deg,rgba(148,43,214,0.96),rgba(126,34,206,0.96)_28%,rgba(107,33,168,0.98)_62%,rgba(88,28,135,0.98))] shadow-[0_34px_100px_rgba(88,28,135,0.38)] sm:bottom-[4.5rem] max-sm:bottom-14 max-sm:h-[min(54vh,460px)] max-sm:w-[min(18.5rem,calc(100vw-1rem))] max-sm:rounded-[22px]"
+          className="pointer-events-auto absolute bottom-full right-0 mb-4 z-[80] flex h-[min(68vh,610px)] w-[min(21rem,calc(100vw-1.5rem))] origin-bottom-right flex-col overflow-hidden rounded-[26px] border border-white/14 bg-[linear-gradient(180deg,rgba(148,43,214,0.96),rgba(126,34,206,0.96)_28%,rgba(107,33,168,0.98)_62%,rgba(88,28,135,0.98))] shadow-[0_34px_100px_rgba(88,28,135,0.38)] max-sm:mb-3 max-sm:h-[min(54vh,460px)] max-sm:w-[min(18.5rem,calc(100vw-1rem))] max-sm:rounded-[22px]"
         >
           <div className="border-b border-white/12 bg-[linear-gradient(180deg,rgba(255,255,255,0.16),rgba(255,255,255,0.04))] px-4 py-3.5 sm:px-4 sm:py-4">
             <div className="flex items-start justify-between gap-3">
