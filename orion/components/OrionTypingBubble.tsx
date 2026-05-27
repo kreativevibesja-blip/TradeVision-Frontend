@@ -8,7 +8,7 @@ export function OrionTypingBubble() {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 10 }}
-      className="max-w-[84%] rounded-[18px] rounded-tl-[8px] border border-[#ede9fe] bg-[#f5f3ff] px-3.5 py-3 text-[#4b5563] shadow-[0_4px_14px_rgba(15,23,42,0.06)]"
+      className="max-w-[84%] rounded-[18px] rounded-tl-[8px] border border-violet-100 bg-violet-50 px-3.5 py-3 text-slate-700 shadow-[0_4px_14px_rgba(15,23,42,0.06)]"
     >
       <div className="flex items-center gap-1.5">
         {[0, 1, 2].map((index) => (
@@ -19,7 +19,7 @@ export function OrionTypingBubble() {
             className="h-2.5 w-2.5 rounded-full bg-fuchsia-500/80"
           />
         ))}
-        <span className="ml-2 text-[11px] uppercase tracking-[0.22em] text-[#6d28d9]/60">Orion is thinking</span>
+        <span className="ml-2 text-[11px] uppercase tracking-[0.22em] text-violet-600/70">Orion is thinking</span>
       </div>
     </motion.div>
   );
