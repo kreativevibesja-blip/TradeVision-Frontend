@@ -70,7 +70,7 @@ export function OrionChatWindow({
           dragElastic={0.04}
           dragConstraints={{ top: 0, bottom: 0 }}
           onDragEnd={handleDragEnd}
-          className="pointer-events-auto relative z-[80] flex h-[min(30rem,calc(100vh-7rem))] w-[min(21rem,calc(100vw-1.5rem))] origin-bottom-right flex-col overflow-hidden rounded-[18px] border border-slate-200 bg-white text-slate-900 shadow-[0_18px_50px_rgba(15,23,42,0.18)] max-sm:h-[min(26rem,calc(100vh-8.5rem))] max-sm:w-[min(19.5rem,calc(100vw-1.25rem))]"
+          className="pointer-events-auto relative z-[80] flex h-[min(30rem,calc(100vh-7rem))] w-[min(21rem,calc(100vw-1.5rem))] origin-bottom-right flex-col overflow-hidden rounded-[18px] border border-slate-200 bg-white text-slate-900 shadow-[0_18px_50px_rgba(15,23,42,0.18)] max-sm:h-[min(22.5rem,calc(100vh-10rem))] max-sm:w-[min(17.25rem,calc(100vw-2rem))]"
           style={{ backgroundColor: '#ffffff', color: '#0f172a', borderColor: '#e2e8f0' }}
         >
           <div
@@ -95,7 +95,7 @@ export function OrionChatWindow({
             </div>
           </div>
 
-          <div ref={scrollRef} className="flex-1 space-y-3 overflow-x-hidden overflow-y-auto bg-white px-3 py-3.5 text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>
+          <div ref={scrollRef} className="flex-1 space-y-3 overflow-x-hidden overflow-y-auto bg-white px-3 py-3 text-slate-900 max-sm:space-y-2.5 max-sm:px-2.5 max-sm:py-2.5" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>
             <div className="rounded-[16px] border border-sky-100 bg-sky-50 px-3 py-2.5 text-xs leading-5 text-blue-700" style={{ backgroundColor: '#eff6ff', color: '#1d4ed8', borderColor: '#dbeafe' }}>
               <span className="font-semibold text-blue-900" style={{ color: '#1e3a8a' }}>{pageLabel}</span>
               <span className="text-blue-700" style={{ color: '#2563eb' }}> · {pageSummary}</span>
@@ -109,8 +109,8 @@ export function OrionChatWindow({
             <OrionQuickActions actions={quickActions} onAction={onQuickAction} />
           </div>
 
-          <div className="border-t border-sky-100 bg-white px-3 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]" style={{ backgroundColor: '#ffffff', borderColor: '#dbeafe' }}>
-            <div className="flex items-end gap-3">
+          <div className="border-t border-sky-100 bg-white px-3 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] max-sm:px-2.5 max-sm:py-2.5" style={{ backgroundColor: '#ffffff', borderColor: '#dbeafe' }}>
+            <div className="flex items-end gap-3 max-sm:gap-2">
               <textarea
                 value={input}
                 onChange={(event) => onInputChange(event.target.value)}
@@ -122,13 +122,13 @@ export function OrionChatWindow({
                 }}
                 rows={1}
                 placeholder="Type your message..."
-                className="min-h-10 min-w-0 flex-1 resize-none rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm leading-5 text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-blue-500"
+                className="min-h-10 min-w-0 flex-1 resize-none rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm leading-5 text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-blue-500 max-sm:min-h-9 max-sm:px-3.5 max-sm:py-2"
                 style={{ backgroundColor: '#ffffff', color: '#334155', borderColor: '#cbd5e1' }}
               />
               <button
                 type="button"
                 onClick={onSubmit}
-                className="flex h-10 w-10 items-center justify-center rounded-full text-white shadow-sm transition hover:opacity-95"
+                className="flex h-10 w-10 items-center justify-center rounded-full text-white shadow-sm transition hover:opacity-95 max-sm:h-9 max-sm:w-9"
                 style={{ background: 'linear-gradient(90deg, #2563eb 0%, #0ea5e9 100%)', color: '#ffffff' }}
               >
                 <Send className="h-4 w-4" />
