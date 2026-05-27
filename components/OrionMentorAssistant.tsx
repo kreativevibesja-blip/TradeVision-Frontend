@@ -211,7 +211,7 @@ function OrionMentorAssistantShell() {
           void handleChoice(choice);
         }}
       />
-      <OrionFloatingButton open={open} preview={greeting} onClick={() => setOpen((current) => !current)} />
+      <OrionFloatingButton open={open} onClick={() => setOpen((current) => !current)} />
     </div>
   );
 }

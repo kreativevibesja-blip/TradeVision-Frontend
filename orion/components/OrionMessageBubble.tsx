@@ -53,12 +53,12 @@ export function OrionMessageBubble({
       <div className={`max-w-[84%] min-w-0 ${isAssistant ? '' : 'items-end'} flex flex-col gap-2`}>
         <div
           className={isAssistant
-            ? 'rounded-[22px] rounded-bl-md border border-[#e9d5ff] bg-white px-4 py-3 text-[#4b5563] shadow-[0_10px_24px_rgba(17,24,39,0.12)]'
-            : 'rounded-[22px] rounded-br-md border border-[#d8b4fe] bg-[linear-gradient(135deg,#7e22ce,#9333ea,#c084fc)] px-4 py-3 text-white shadow-[0_14px_30px_rgba(88,28,135,0.22)]'}
+            ? 'rounded-[18px] rounded-tl-[8px] border border-[#ede9fe] bg-[#f5f3ff] px-3.5 py-3 text-[#4b5563] shadow-[0_4px_14px_rgba(15,23,42,0.06)]'
+            : 'rounded-[18px] rounded-tr-[8px] border border-[#c4b5fd] bg-[linear-gradient(135deg,#8b5cf6,#6366f1)] px-3.5 py-3 text-white shadow-[0_8px_20px_rgba(99,102,241,0.16)]'}
         >
-          <div className="whitespace-pre-wrap break-words text-sm leading-7">{renderedText}</div>
+          <div className="whitespace-pre-wrap break-words text-sm leading-6">{renderedText}</div>
         </div>
-        <div className={`px-1 text-[10px] uppercase tracking-[0.22em] text-white/50 ${isAssistant ? '' : 'text-right'}`}>
+        <div className={`px-1 text-[10px] uppercase tracking-[0.18em] text-[#9ca3af] ${isAssistant ? '' : 'text-right'}`}>
           {isAssistant ? 'Orion' : 'You'} · {formatTime(message.createdAt)}
         </div>
         {message.choices?.length ? (
@@ -68,7 +68,7 @@ export function OrionMessageBubble({
                 key={choice.id}
                 type="button"
                 onClick={() => onChoice(choice)}
-                className="rounded-full border border-[#d8b4fe] bg-[#6d28d9] px-3 py-2 text-xs font-medium text-white transition hover:bg-[#7e22ce]"
+                className="rounded-full border border-[#ddd6fe] bg-white px-3 py-2 text-xs font-medium text-[#6d28d9] transition hover:bg-[#f5f3ff]"
               >
                 {choice.label}
               </button>

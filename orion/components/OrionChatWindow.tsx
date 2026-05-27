@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { AnimatePresence, motion, PanInfo } from 'framer-motion';
-import { ChevronDown, Send, Sparkles } from 'lucide-react';
+import { MessageCircle, Send, X } from 'lucide-react';
 import { OrionMessageBubble } from '@/orion/components/OrionMessageBubble';
 import { OrionQuickActions } from '@/orion/components/OrionQuickActions';
 import { OrionTypingBubble } from '@/orion/components/OrionTypingBubble';
@@ -71,44 +71,42 @@ export function OrionChatWindow({
           dragElastic={0.04}
           dragConstraints={{ top: 0, bottom: 0 }}
           onDragEnd={handleDragEnd}
-          className="pointer-events-auto relative z-[80] flex h-[min(58vh,500px)] w-[min(18rem,calc(100vw-1.5rem))] origin-bottom-right flex-col overflow-hidden rounded-[24px] border border-[#8b5cf6] bg-[linear-gradient(180deg,#7e22ce,#6b21a8_30%,#581c87_64%,#3b0764)] shadow-[0_30px_80px_rgba(46,16,101,0.42)] max-sm:h-[min(50vh,400px)] max-sm:w-[min(17rem,calc(100vw-1rem))] max-sm:rounded-[20px]"
+          className="pointer-events-auto relative z-[80] flex h-[min(30rem,calc(100vh-7rem))] w-[min(21rem,calc(100vw-1.5rem))] origin-bottom-right flex-col overflow-hidden rounded-[18px] border border-[#e5e7eb] bg-white shadow-[0_18px_50px_rgba(15,23,42,0.18)] max-sm:h-[min(28rem,calc(100vh-6rem))] max-sm:w-[min(20rem,calc(100vw-1rem))]"
         >
-          <div className="border-b border-[#a78bfa] bg-[linear-gradient(180deg,#7c3aed,#6d28d9)] px-3.5 py-3 sm:px-4 sm:py-3.5">
+          <div className="border-b border-[#8b5cf6] bg-[linear-gradient(135deg,#8b5cf6,#6366f1)] px-4 py-3 text-white">
             <div className="flex items-start justify-between gap-3">
-              <div>
-                <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.28em] text-white/72">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  Orion AI
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 text-sm font-semibold">
+                  <MessageCircle className="h-4 w-4" />
+                  <span>Chat Window</span>
                 </div>
-                <div className="mt-2 text-[15px] font-semibold tracking-[-0.04em] text-white sm:text-base">Institutional trading mentor</div>
-                <div className="mt-1.5 max-w-[15rem] text-sm leading-5 text-white/80">{greeting}</div>
+                <div className="mt-1 truncate text-xs text-white/80">Orion AI</div>
               </div>
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-full border border-[#c4b5fd] bg-[#5b21b6] p-2 text-white/80 transition hover:bg-[#6d28d9] hover:text-white"
+                className="rounded-full p-1.5 text-white/85 transition hover:bg-white/15 hover:text-white"
               >
-                <ChevronDown className="h-4 w-4" />
+                <X className="h-4 w-4" />
               </button>
-            </div>
-            <div className="mt-2.5 rounded-[16px] border border-[#c4b5fd] bg-[#5b21b6] px-3 py-2 max-sm:hidden">
-              <div className="text-[10px] uppercase tracking-[0.24em] text-white/68">Detected page</div>
-              <div className="mt-1.5 text-sm font-semibold text-white">{pageLabel}</div>
-              <div className="mt-1 text-[13px] leading-5 text-white/72">{pageSummary}</div>
             </div>
           </div>
 
-          <div ref={scrollRef} className="flex-1 space-y-3 overflow-x-hidden overflow-y-auto bg-[#4c1d95] px-3.5 py-3 sm:px-4 sm:py-3.5">
-            <OrionQuickActions actions={quickActions} onAction={onQuickAction} />
+          <div ref={scrollRef} className="flex-1 space-y-3 overflow-x-hidden overflow-y-auto bg-white px-3 py-3.5">
+            <div className="rounded-[16px] border border-[#ede9fe] bg-[#f5f3ff] px-3 py-2.5 text-xs leading-5 text-[#5b21b6]">
+              <span className="font-semibold text-[#4c1d95]">{pageLabel}</span>
+              <span className="text-[#6d28d9]"> · {pageSummary}</span>
+            </div>
             <div className="space-y-3">
               {messages.map((message) => (
                 <OrionMessageBubble key={message.id} message={message} onChoice={onChoice} />
               ))}
               {isTyping ? <OrionTypingBubble /> : null}
             </div>
+            <OrionQuickActions actions={quickActions} onAction={onQuickAction} />
           </div>
 
-          <div className="border-t border-[#a78bfa] bg-[#5b21b6] px-3.5 py-2.5 sm:px-4 sm:py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+          <div className="border-t border-[#ede9fe] bg-white px-3 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
             <div className="flex items-end gap-3">
               <textarea
                 value={input}
@@ -120,10 +118,10 @@ export function OrionChatWindow({
                   }
                 }}
                 rows={1}
-                placeholder="Ask Orion about analysis, Trade Radar, subscriptions, support, BOS, CHOCH, or workflow guidance..."
-                className="min-h-10 min-w-0 flex-1 resize-none rounded-[16px] border border-[#ddd6fe] bg-white px-3.5 py-2 text-sm leading-5 text-[#4c1d95] outline-none transition placeholder:text-[#7c3aed]/45 focus:border-[#c4b5fd] focus:bg-white"
+                placeholder="Type your message..."
+                className="min-h-10 min-w-0 flex-1 resize-none rounded-full border border-[#d1d5db] bg-white px-4 py-2.5 text-sm leading-5 text-[#374151] outline-none transition placeholder:text-[#9ca3af] focus:border-[#8b5cf6]"
               />
-              <Button variant="gradient" size="icon" onClick={onSubmit} className="h-10 w-10 rounded-full">
+              <Button variant="gradient" size="icon" onClick={onSubmit} className="h-10 w-10 rounded-full bg-[linear-gradient(135deg,#8b5cf6,#6366f1)] shadow-none hover:opacity-95">
                 <Send className="h-4 w-4" />
               </Button>
             </div>
