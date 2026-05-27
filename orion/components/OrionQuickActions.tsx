@@ -49,11 +49,11 @@ export function OrionQuickActions({
             transition={{ delay: index * 0.04 }}
             whileHover={{ y: -2, scale: 1.01 }}
             onClick={() => onAction(action.id)}
-            className="rounded-[16px] border border-slate-200 bg-violet-50 p-3 text-left text-slate-900 transition hover:border-violet-300 hover:bg-violet-100"
-            style={{ backgroundColor: '#faf5ff', color: '#0f172a', borderColor: '#e2e8f0' }}
+            className="rounded-[16px] border border-slate-200 bg-sky-50 p-3 text-left text-slate-900 transition hover:border-blue-300 hover:bg-sky-100"
+            style={{ backgroundColor: '#f8fbff', color: '#0f172a', borderColor: '#dbeafe' }}
           >
             <div className="flex items-start gap-3">
-              <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-xl border border-violet-200 bg-white text-violet-600" style={{ backgroundColor: '#ffffff', color: '#7c3aed', borderColor: '#ddd6fe' }}>
+              <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-xl border border-blue-200 bg-white text-blue-600" style={{ backgroundColor: '#ffffff', color: '#2563eb', borderColor: '#bfdbfe' }}>
                 <Icon className="h-4.5 w-4.5" />
               </div>
               <div className="min-w-0">

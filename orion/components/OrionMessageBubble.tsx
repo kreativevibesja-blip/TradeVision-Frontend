@@ -53,11 +53,11 @@ export function OrionMessageBubble({
       <div className={`max-w-[84%] min-w-0 ${isAssistant ? '' : 'items-end'} flex flex-col gap-2`}>
         <div
           className={isAssistant
-            ? 'rounded-[18px] rounded-tl-[8px] border border-violet-100 bg-violet-50 px-3.5 py-3 text-slate-700 shadow-[0_4px_14px_rgba(15,23,42,0.06)]'
-            : 'rounded-[18px] rounded-tr-[8px] border border-violet-300 bg-gradient-to-r from-violet-500 to-indigo-500 px-3.5 py-3 text-white shadow-[0_8px_20px_rgba(99,102,241,0.16)]'}
+            ? 'rounded-[18px] rounded-tl-[8px] border border-sky-100 bg-sky-50 px-3.5 py-3 text-slate-700 shadow-[0_4px_14px_rgba(15,23,42,0.06)]'
+            : 'rounded-[18px] rounded-tr-[8px] border border-blue-300 bg-gradient-to-r from-blue-600 to-sky-500 px-3.5 py-3 text-white shadow-[0_8px_20px_rgba(37,99,235,0.18)]'}
           style={isAssistant
-            ? { backgroundColor: '#f5f3ff', color: '#334155', borderColor: '#ede9fe' }
-            : { background: 'linear-gradient(90deg, #8b5cf6 0%, #6366f1 100%)', color: '#ffffff', borderColor: '#c4b5fd' }}
+            ? { backgroundColor: '#eff6ff', color: '#334155', borderColor: '#dbeafe' }
+            : { background: 'linear-gradient(90deg, #2563eb 0%, #0ea5e9 100%)', color: '#ffffff', borderColor: '#93c5fd' }}
         >
           <div className="whitespace-pre-wrap break-words text-sm leading-6">{renderedText}</div>
         </div>
@@ -71,8 +71,8 @@ export function OrionMessageBubble({
                 key={choice.id}
                 type="button"
                 onClick={() => onChoice(choice)}
-                className="rounded-full border border-violet-200 bg-white px-3 py-2 text-xs font-medium text-violet-700 transition hover:bg-violet-50"
-                style={{ backgroundColor: '#ffffff', color: '#6d28d9', borderColor: '#ddd6fe' }}
+                className="rounded-full border border-blue-200 bg-white px-3 py-2 text-xs font-medium text-blue-700 transition hover:bg-sky-50"
+                style={{ backgroundColor: '#ffffff', color: '#1d4ed8', borderColor: '#bfdbfe' }}
               >
                 {choice.label}
               </button>
