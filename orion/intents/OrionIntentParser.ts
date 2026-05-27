@@ -1,6 +1,13 @@
 import type { OrionIntentId, OrionQuickActionId } from '@/orion/types';
 
 const intentMatchers: Array<{ intent: OrionIntentId; tests: RegExp[] }> = [
+  { intent: 'TRADEVISION_EXPLAIN', tests: [/what is tradevision/i, /what is tradevision ai/i, /tell me about tradevision/i, /what does tradevision do/i] },
+  { intent: 'TRADE_RADAR_EXPLAIN', tests: [/what is trade radar/i, /tell me about trade radar/i, /how does trade radar work/i] },
+  { intent: 'COMMAND_CENTER_EXPLAIN', tests: [/what is command center/i, /tell me about command center/i, /how does command center work/i] },
+  { intent: 'PLAN_COMPARISON_EXPLAIN', tests: [/pro\+ vs pro/i, /pro plus vs pro/i, /difference between pro and pro\+/i, /difference between pro and top tier/i, /which plan is better/i, /what makes pro\+ different/i] },
+  { intent: 'GOLDX_EXPLAIN', tests: [/what is goldx/i, /tell me about goldx/i, /how does goldx work/i] },
+  { intent: 'JOURNAL_INTELLIGENCE_EXPLAIN', tests: [/what is journal intelligence/i, /tell me about journal intelligence/i, /how does journal intelligence work/i, /what does the journal do/i] },
+  { intent: 'BEGINNER_WORKFLOW_EXPLAIN', tests: [/how should a beginner use tradevision/i, /how do i start with tradevision/i, /beginner.*tradevision/i, /step by step.*tradevision/i] },
   { intent: 'CREATE_AI_ANALYSIS', tests: [/analy[sz]e my chart/i, /upload.*chart/i, /create.*analysis/i, /start.*analysis/i] },
   { intent: 'OPEN_TRADE_RADAR', tests: [/trade radar/i, /radar/i, /monitored opportunit/i, /tracked setup/i] },
   { intent: 'REVIEW_JOURNAL', tests: [/journal/i, /weekly review/i, /review trades/i, /performance insight/i] },
@@ -9,7 +16,10 @@ const intentMatchers: Array<{ intent: OrionIntentId; tests: RegExp[] }> = [
   { intent: 'CREATE_SUPPORT_TICKET', tests: [/support ticket/i, /open.*ticket/i, /contact support/i] },
   { intent: 'SUPPORT_PROBLEM', tests: [/analysis failed/i, /bug/i, /issue/i, /problem/i, /not working/i, /failed/i] },
   { intent: 'PLATFORM_TOUR', tests: [/platform tour/i, /show me around/i, /how does this work/i, /what does this page do/i] },
+  { intent: 'RISK_MANAGEMENT_EXPLAIN', tests: [/what is risk management/i, /explain risk management/i] },
+  { intent: 'RISK_MANAGEMENT_IMPROVE', tests: [/good risk management/i, /how can i have good risk management/i, /how do i improve risk management/i, /better risk management/i] },
   { intent: 'RISK_GUIDANCE', tests: [/risk/i, /stop loss/i, /invalidation/i, /protect capital/i] },
+  { intent: 'TRADING_ADVICE', tests: [/trading advice/i, /should i take this trade/i, /what trade should i take/i, /what should i trade/i, /give me a trade/i] },
   { intent: 'STRATEGY_HELP', tests: [/strategy/i, /smart money/i, /smc/i, /setup help/i] },
   { intent: 'ACCOUNT_ASSISTANCE', tests: [/account/i, /profile/i, /onboarding/i, /access/i] },
   { intent: 'TRADING_GLOSSARY_BOS', tests: [/bos/i, /break of structure/i] },
