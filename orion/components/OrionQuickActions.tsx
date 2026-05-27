@@ -49,15 +49,15 @@ export function OrionQuickActions({
             transition={{ delay: index * 0.04 }}
             whileHover={{ y: -2, scale: 1.01 }}
             onClick={() => onAction(action.id)}
-            className="rounded-[22px] border border-blue-300/14 bg-[linear-gradient(145deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))] p-3 text-left transition hover:border-blue-300/28 hover:bg-blue-400/8"
+            className="rounded-[18px] border border-white/14 bg-white/8 p-3 text-left transition hover:bg-white/12"
           >
             <div className="flex items-start gap-3">
-              <div className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-2xl border border-blue-300/16 bg-blue-400/10 text-blue-100">
+              <div className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-2xl border border-white/18 bg-white/12 text-white">
                 <Icon className="h-4.5 w-4.5" />
               </div>
               <div className="min-w-0">
                 <div className="text-sm font-semibold text-white">{action.label}</div>
-                <div className="mt-1 text-xs leading-5 text-white/52">{action.description}</div>
+                <div className="mt-1 text-xs leading-5 text-white/72">{action.description}</div>
               </div>
             </div>
           </motion.button>

@@ -53,12 +53,12 @@ export function OrionMessageBubble({
       <div className={`max-w-[84%] ${isAssistant ? '' : 'items-end'} flex flex-col gap-2`}>
         <div
           className={isAssistant
-            ? 'rounded-[24px] rounded-bl-md border border-[rgba(96,165,250,0.22)] bg-[linear-gradient(180deg,rgba(10,18,35,0.88),rgba(3,7,18,0.94))] px-4 py-3 text-white shadow-[0_20px_45px_rgba(2,6,23,0.35)]'
-            : 'rounded-[24px] rounded-br-md border border-cyan-300/20 bg-[linear-gradient(135deg,rgba(59,130,246,0.2),rgba(14,165,233,0.14),rgba(255,255,255,0.05))] px-4 py-3 text-white shadow-[0_18px_38px_rgba(2,6,23,0.32)]'}
+            ? 'rounded-[22px] rounded-bl-md border border-white/24 bg-[rgba(255,255,255,0.94)] px-4 py-3 text-[#4b5563] shadow-[0_10px_24px_rgba(17,24,39,0.12)]'
+            : 'rounded-[22px] rounded-br-md border border-white/18 bg-[linear-gradient(135deg,rgba(126,34,206,0.95),rgba(168,85,247,0.92),rgba(192,132,252,0.9))] px-4 py-3 text-white shadow-[0_14px_30px_rgba(88,28,135,0.22)]'}
         >
           <div className="whitespace-pre-wrap text-sm leading-7">{renderedText}</div>
         </div>
-        <div className={`px-1 text-[10px] uppercase tracking-[0.22em] text-white/34 ${isAssistant ? '' : 'text-right'}`}>
+        <div className={`px-1 text-[10px] uppercase tracking-[0.22em] text-white/50 ${isAssistant ? '' : 'text-right'}`}>
           {isAssistant ? 'Orion' : 'You'} · {formatTime(message.createdAt)}
         </div>
         {message.choices?.length ? (
@@ -68,7 +68,7 @@ export function OrionMessageBubble({
                 key={choice.id}
                 type="button"
                 onClick={() => onChoice(choice)}
-                className="rounded-full border border-blue-300/16 bg-white/[0.04] px-3 py-2 text-xs font-medium text-white/78 transition hover:border-blue-300/36 hover:bg-blue-400/10 hover:text-white"
+                className="rounded-full border border-white/18 bg-white/12 px-3 py-2 text-xs font-medium text-white transition hover:bg-white/18"
               >
                 {choice.label}
               </button>
