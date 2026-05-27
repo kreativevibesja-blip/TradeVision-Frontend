@@ -186,33 +186,37 @@ function OrionMentorAssistantShell() {
   };
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-3 z-[80] flex flex-col items-center gap-3 px-3 sm:inset-x-auto sm:bottom-6 sm:right-6 sm:items-end sm:px-0">
-      <OrionChatWindow
-        open={open}
-        greeting={greeting}
-        pageLabel={pageContext.knowledge.label}
-        pageSummary={pageContext.knowledge.summary}
-        messages={messages}
-        quickActions={pageContext.quickActions}
-        input={input}
-        isTyping={isTyping}
-        onClose={() => setOpen(false)}
-        onInputChange={setInput}
-        onSubmit={() => {
-          void submitPrompt(input);
-        }}
-        onQuickAction={(actionId) => {
-          void submitPrompt(
-            QUICK_ACTION_PROMPTS[actionId],
-            pageContext.quickActions.find((action) => action.id === actionId)?.label ?? QUICK_ACTION_PROMPTS[actionId],
-          );
-        }}
-        onChoice={(choice) => {
-          void handleChoice(choice);
-        }}
-      />
-      <OrionFloatingButton open={open} onClick={() => setOpen((current) => !current)} />
-    </div>
+    <>
+      <div className="pointer-events-none fixed inset-x-0 bottom-16 z-[80] flex justify-center px-3 sm:inset-x-auto sm:bottom-24 sm:right-6 sm:block sm:px-0">
+        <OrionChatWindow
+          open={open}
+          greeting={greeting}
+          pageLabel={pageContext.knowledge.label}
+          pageSummary={pageContext.knowledge.summary}
+          messages={messages}
+          quickActions={pageContext.quickActions}
+          input={input}
+          isTyping={isTyping}
+          onClose={() => setOpen(false)}
+          onInputChange={setInput}
+          onSubmit={() => {
+            void submitPrompt(input);
+          }}
+          onQuickAction={(actionId) => {
+            void submitPrompt(
+              QUICK_ACTION_PROMPTS[actionId],
+              pageContext.quickActions.find((action) => action.id === actionId)?.label ?? QUICK_ACTION_PROMPTS[actionId],
+            );
+          }}
+          onChoice={(choice) => {
+            void handleChoice(choice);
+          }}
+        />
+      </div>
+      <div className="pointer-events-none fixed bottom-3 right-3 z-[80] sm:bottom-6 sm:right-6">
+        <OrionFloatingButton open={open} onClick={() => setOpen((current) => !current)} />
+      </div>
+    </>
   );
 }
 
