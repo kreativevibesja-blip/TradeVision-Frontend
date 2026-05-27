@@ -38,6 +38,7 @@ export function OrionChatWindow({
   onChoice: (choice: OrionChatChoice) => void;
 }) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const hasUserMessages = messages.some((message) => message.role === 'user');
 
   useEffect(() => {
     if (!open) {
@@ -106,7 +107,7 @@ export function OrionChatWindow({
               ))}
               {isTyping ? <OrionTypingBubble /> : null}
             </div>
-            <OrionQuickActions actions={quickActions} onAction={onQuickAction} />
+            {!hasUserMessages ? <OrionQuickActions actions={quickActions} onAction={onQuickAction} /> : null}
           </div>
 
           <div className="border-t border-sky-100 bg-white px-3 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] max-sm:px-2.5 max-sm:py-2.5" style={{ backgroundColor: '#ffffff', borderColor: '#dbeafe' }}>
