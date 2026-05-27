@@ -186,7 +186,7 @@ function OrionMentorAssistantShell() {
   };
 
   return (
-    <div className="pointer-events-none fixed bottom-4 right-4 z-[80] sm:bottom-6 sm:right-6">
+    <div className="pointer-events-none fixed bottom-4 right-4 z-[80] flex flex-col items-end gap-4 sm:bottom-6 sm:right-6">
       <OrionChatWindow
         open={open}
         greeting={greeting}
