@@ -13,12 +13,12 @@ export function OrionFloatingButton({
   onClick: () => void;
 }) {
   return (
-    <div className="pointer-events-auto flex items-end gap-3">
+    <div className="pointer-events-auto flex flex-col items-end gap-3">
       {!open ? (
         <motion.div
-          initial={{ opacity: 0, x: 18 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="hidden max-w-[17rem] rounded-[20px] border border-white/18 bg-[linear-gradient(135deg,rgba(139,33,201,0.94),rgba(168,85,247,0.92),rgba(217,70,239,0.9))] px-4 py-3 text-sm leading-6 text-white/92 shadow-[0_18px_40px_rgba(126,34,206,0.34)] md:block"
+          initial={{ opacity: 0, y: 12, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          className="hidden max-w-[16rem] rounded-[20px] border border-white/18 bg-[linear-gradient(135deg,rgba(139,33,201,0.94),rgba(168,85,247,0.92),rgba(217,70,239,0.9))] px-4 py-3 text-sm leading-6 text-white/92 shadow-[0_18px_40px_rgba(126,34,206,0.34)] md:block"
         >
           {preview}
         </motion.div>
