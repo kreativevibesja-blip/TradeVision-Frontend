@@ -18,9 +18,12 @@ export function OrionFloatingButton({
         <motion.div
           initial={{ opacity: 0, y: 12, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          className="hidden absolute bottom-full right-0 mb-3 max-w-[16rem] rounded-[20px] border border-white/18 bg-[linear-gradient(135deg,rgba(139,33,201,0.94),rgba(168,85,247,0.92),rgba(217,70,239,0.9))] px-4 py-3 text-sm leading-6 text-white/92 shadow-[0_18px_40px_rgba(126,34,206,0.34)] md:block"
+          className="hidden absolute bottom-full right-0 mb-3 w-max max-w-[28rem] rounded-[999px] border border-white/18 bg-[linear-gradient(135deg,rgba(139,33,201,0.94),rgba(168,85,247,0.92),rgba(217,70,239,0.9))] px-4 py-2.5 text-sm leading-5 text-white/92 shadow-[0_18px_40px_rgba(126,34,206,0.34)] md:block"
         >
-          {preview}
+          <div className="flex items-center gap-2 whitespace-nowrap">
+            <span className="text-[10px] uppercase tracking-[0.22em] text-white/72">Orion AI</span>
+            <span className="truncate">{preview}</span>
+          </div>
         </motion.div>
       ) : null}
       <button
