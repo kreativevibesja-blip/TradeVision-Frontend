@@ -155,6 +155,39 @@ function buildBeginnerWorkflowExplanation(): OrionPlannedMessage[] {
   }];
 }
 
+function buildOrionExplanation(): OrionPlannedMessage[] {
+  return [{
+    text: 'Orion is TradeVision AI’s internal mentor-style assistant. It is built to guide users through the platform, explain trading concepts, help interpret workflows, and route traders toward stronger decisions using structured knowledge, context awareness, and platform logic rather than generic chatbot behavior.',
+    choices: [
+      { id: 'orion-role', label: 'What can Orion help with?', followUpMessage: 'Orion can explain trading concepts, guide platform usage, help with risk and workflow questions, route you into analysis or Trade Radar, and support onboarding with context-aware responses.' },
+      { id: 'orion-difference', label: 'What makes Orion different?', followUpMessage: 'Orion is designed around the TradeVision platform itself. It is not just answering random questions. It understands pages, workflows, trading concepts, and how the system is meant to be used.' },
+      { id: 'orion-start', label: 'How should I use Orion?', followUpMessage: 'Use Orion when you want clarity. Ask about the platform, trading concepts, risk, setup quality, or the next step in your workflow.' },
+    ],
+  }];
+}
+
+function buildAiAnalysisExplanation(): OrionPlannedMessage[] {
+  return [{
+    text: 'AI chart analysis in TradeVision starts with your uploaded chart. Orion then helps interpret structure, liquidity, invalidation, imbalance, and directional context so the output becomes a usable workflow rather than vague commentary. The goal is not to replace judgment, but to make market reading more structured and consistent.',
+    choices: [
+      { id: 'ai-analysis-needs', label: 'What does it need from me?', followUpMessage: 'The cleaner the chart and the clearer the context, the stronger the analysis. Good inputs lead to better structural reads and more useful execution guidance.' },
+      { id: 'ai-analysis-output', label: 'What does it give me?', followUpMessage: 'It can help identify structure, liquidity, imbalance, invalidation, bias, and whether the setup deserves to be promoted into tracking or execution review.' },
+      { id: 'ai-analysis-start', label: 'Upload a chart', trigger: { type: 'open-analysis-upload' } },
+    ],
+  }];
+}
+
+function buildPostAnalysisGuidance(): OrionPlannedMessage[] {
+  return [{
+    text: 'After your first analysis, do not rush straight into a trade. First review whether the setup is actually clean. Then confirm invalidation and risk. If the idea still deserves attention, move it into Command Center or Trade Radar. If the structure is weak, let it go and protect capital.',
+    choices: [
+      { id: 'post-analysis-radar', label: 'When should I use Trade Radar?', followUpMessage: 'Use Trade Radar when the setup is worth monitoring over time and you want the thesis tracked until confirmation or invalidation.' },
+      { id: 'post-analysis-command', label: 'When should I use Command Center?', followUpMessage: 'Use Command Center when the setup is mature enough to pressure the execution plan: timing, invalidation, readiness, and capital exposure.' },
+      { id: 'post-analysis-risk', label: 'What should I check first?', followUpMessage: 'Check invalidation first. If the trade thesis is not clearly wrong at a defined level, the setup is not ready for serious execution planning.' },
+    ],
+  }];
+}
+
 function buildRiskManagementExplanation(): OrionPlannedMessage[] {
   return [{
     text: 'Risk management is the process of controlling downside before you think about upside. In practice that means defining invalidation before entry, risking only a small and repeatable amount per trade, protecting capital during weak conditions, and refusing trades that do not justify the risk.',
@@ -300,6 +333,24 @@ export function resolveOrionReply({ input, pageContext, workflow, activity, user
         messages: buildBeginnerWorkflowExplanation(),
         nextWorkflow: { type: 'idle' },
         memoryAction: 'platform-tour',
+      };
+    case 'ORION_EXPLAIN':
+      return {
+        messages: buildOrionExplanation(),
+        nextWorkflow: { type: 'idle' },
+        memoryAction: 'platform-tour',
+      };
+    case 'AI_ANALYSIS_EXPLAIN':
+      return {
+        messages: buildAiAnalysisExplanation(),
+        nextWorkflow: { type: 'idle' },
+        memoryAction: 'analysis-upload-opened',
+      };
+    case 'POST_ANALYSIS_GUIDANCE':
+      return {
+        messages: buildPostAnalysisGuidance(),
+        nextWorkflow: { type: 'idle' },
+        memoryAction: 'market-overview',
       };
     case 'CREATE_AI_ANALYSIS':
       return {
