@@ -35,9 +35,15 @@ const statusVariant = (status: SupportTicket['status']) => {
 
 interface TicketFormProps {
   open: boolean;
+  draft?: {
+    subject?: string;
+    message?: string;
+    category?: TicketCategory;
+    priority?: TicketPriority;
+  } | null;
 }
 
-export function TicketForm({ open }: TicketFormProps) {
+export function TicketForm({ open, draft = null }: TicketFormProps) {
   const { user, token, loading } = useAuth();
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [ticketsLoading, setTicketsLoading] = useState(false);
@@ -81,6 +87,19 @@ export function TicketForm({ open }: TicketFormProps) {
       void loadTickets();
     }
   }, [open, token]);
+
+  useEffect(() => {
+    if (!open || !draft) {
+      return;
+    }
+
+    setSubject(draft.subject ?? '');
+    setMessage(draft.message ?? '');
+    setCategory(draft.category ?? 'GENERAL');
+    setPriority(draft.priority ?? 'MEDIUM');
+    setError(null);
+    setSuccess(null);
+  }, [draft, open]);
 
   const handleSubmit = async () => {
     if (!token) {

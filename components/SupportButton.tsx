@@ -6,12 +6,19 @@ import { usePathname } from 'next/navigation';
 import { TicketForm } from '@/components/TicketForm';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { ORION_WORKFLOW_EVENT } from '@/orion/services/orionWorkflowEvents';
 import { ChevronUp, LifeBuoy, PlusCircle, X } from 'lucide-react';
 
 export function SupportButton() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [orionDraft, setOrionDraft] = useState<{
+    subject?: string;
+    message?: string;
+    category?: 'ACCOUNT' | 'BILLING' | 'ANALYSIS' | 'BUG' | 'FEATURE' | 'GENERAL';
+    priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+  } | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const isLiveWorkspace = pathname === '/dashboard/tradingview' || pathname === '/dashboard/deriv';
 
@@ -46,14 +53,36 @@ export function SupportButton() {
     return () => window.removeEventListener('mousedown', handlePointerDown);
   }, [menuOpen]);
 
+  useEffect(() => {
+    const handleOrionWorkflow = (event: Event) => {
+      const customEvent = event as CustomEvent<{
+        type: string;
+        draft?: {
+          subject?: string;
+          message?: string;
+          category?: 'ACCOUNT' | 'BILLING' | 'ANALYSIS' | 'BUG' | 'FEATURE' | 'GENERAL';
+          priority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+        };
+      }>;
+
+      if (customEvent.detail?.type !== 'open-support-ticket') {
+        return;
+      }
+
+      setOrionDraft(customEvent.detail.draft ?? null);
+      setMenuOpen(false);
+      setModalOpen(true);
+    };
+
+    window.addEventListener(ORION_WORKFLOW_EVENT, handleOrionWorkflow as EventListener);
+    return () => window.removeEventListener(ORION_WORKFLOW_EVENT, handleOrionWorkflow as EventListener);
+  }, []);
+
   const openTicketModal = () => {
     setMenuOpen(false);
+    setOrionDraft(null);
     setModalOpen(true);
   };
-
-  if (isLiveWorkspace) {
-    return null;
-  }
 
   return (
     <>
@@ -93,7 +122,7 @@ export function SupportButton() {
                   </div>
 
                   <div className="max-h-[calc(100dvh-9rem)] overflow-y-auto overscroll-contain p-3 [scrollbar-gutter:stable] sm:max-h-[calc(94vh-88px)] sm:p-4">
-                    <TicketForm open={modalOpen} />
+                    <TicketForm open={modalOpen} draft={orionDraft} />
                   </div>
                 </CardContent>
               </Card>
@@ -102,7 +131,8 @@ export function SupportButton() {
         ) : null}
       </AnimatePresence>
 
-      <div ref={menuRef} className="fixed bottom-4 right-4 z-40 md:bottom-6 md:right-6">
+      {isLiveWorkspace ? null : (
+        <div ref={menuRef} className="fixed bottom-4 right-4 z-40 md:bottom-6 md:right-6">
         <AnimatePresence>
           {menuOpen ? (
             <motion.div
@@ -142,7 +172,8 @@ export function SupportButton() {
           <span className="hidden text-sm font-semibold md:inline">👋 Help me</span>
           <ChevronUp className={`h-4 w-4 transition-transform ${menuOpen ? 'rotate-0' : 'rotate-180'}`} />
         </button>
-      </div>
+        </div>
+      )}
     </>
   );
 }
