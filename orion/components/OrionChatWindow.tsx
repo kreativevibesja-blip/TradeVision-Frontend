@@ -71,9 +71,9 @@ export function OrionChatWindow({
           dragElastic={0.04}
           dragConstraints={{ top: 0, bottom: 0 }}
           onDragEnd={handleDragEnd}
-          className="pointer-events-auto relative z-[80] flex h-[min(58vh,500px)] w-[min(18rem,calc(100vw-1.5rem))] origin-bottom-right flex-col overflow-hidden rounded-[24px] border border-white/14 bg-[linear-gradient(180deg,rgba(148,43,214,0.96),rgba(126,34,206,0.96)_28%,rgba(107,33,168,0.98)_62%,rgba(88,28,135,0.98))] shadow-[0_30px_80px_rgba(88,28,135,0.34)] max-sm:h-[min(50vh,400px)] max-sm:w-[min(17rem,calc(100vw-1rem))] max-sm:rounded-[20px]"
+          className="pointer-events-auto relative z-[80] flex h-[min(58vh,500px)] w-[min(18rem,calc(100vw-1.5rem))] origin-bottom-right flex-col overflow-hidden rounded-[24px] border border-[#8b5cf6] bg-[linear-gradient(180deg,#7e22ce,#6b21a8_30%,#581c87_64%,#3b0764)] shadow-[0_30px_80px_rgba(46,16,101,0.42)] max-sm:h-[min(50vh,400px)] max-sm:w-[min(17rem,calc(100vw-1rem))] max-sm:rounded-[20px]"
         >
-          <div className="border-b border-white/12 bg-[linear-gradient(180deg,rgba(255,255,255,0.16),rgba(255,255,255,0.04))] px-3.5 py-3 sm:px-4 sm:py-3.5">
+          <div className="border-b border-[#a78bfa] bg-[linear-gradient(180deg,#7c3aed,#6d28d9)] px-3.5 py-3 sm:px-4 sm:py-3.5">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.28em] text-white/72">
@@ -86,19 +86,19 @@ export function OrionChatWindow({
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-full border border-white/14 bg-white/10 p-2 text-white/80 transition hover:bg-white/16 hover:text-white"
+                className="rounded-full border border-[#c4b5fd] bg-[#5b21b6] p-2 text-white/80 transition hover:bg-[#6d28d9] hover:text-white"
               >
                 <ChevronDown className="h-4 w-4" />
               </button>
             </div>
-            <div className="mt-2.5 rounded-[16px] border border-white/12 bg-white/10 px-3 py-2 max-sm:hidden">
+            <div className="mt-2.5 rounded-[16px] border border-[#c4b5fd] bg-[#5b21b6] px-3 py-2 max-sm:hidden">
               <div className="text-[10px] uppercase tracking-[0.24em] text-white/68">Detected page</div>
               <div className="mt-1.5 text-sm font-semibold text-white">{pageLabel}</div>
               <div className="mt-1 text-[13px] leading-5 text-white/72">{pageSummary}</div>
             </div>
           </div>
 
-          <div ref={scrollRef} className="flex-1 space-y-3 overflow-x-hidden overflow-y-auto bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))] px-3.5 py-3 sm:px-4 sm:py-3.5">
+          <div ref={scrollRef} className="flex-1 space-y-3 overflow-x-hidden overflow-y-auto bg-[#4c1d95] px-3.5 py-3 sm:px-4 sm:py-3.5">
             <OrionQuickActions actions={quickActions} onAction={onQuickAction} />
             <div className="space-y-3">
               {messages.map((message) => (
@@ -108,7 +108,7 @@ export function OrionChatWindow({
             </div>
           </div>
 
-          <div className="border-t border-white/12 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))] px-3.5 py-2.5 sm:px-4 sm:py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+          <div className="border-t border-[#a78bfa] bg-[#5b21b6] px-3.5 py-2.5 sm:px-4 sm:py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
             <div className="flex items-end gap-3">
               <textarea
                 value={input}
@@ -121,7 +121,7 @@ export function OrionChatWindow({
                 }}
                 rows={1}
                 placeholder="Ask Orion about analysis, Trade Radar, subscriptions, support, BOS, CHOCH, or workflow guidance..."
-                className="min-h-10 min-w-0 flex-1 resize-none rounded-[16px] border border-white/16 bg-[rgba(255,255,255,0.94)] px-3.5 py-2 text-sm leading-5 text-[#4c1d95] outline-none transition placeholder:text-[#7c3aed]/45 focus:border-white/30 focus:bg-white"
+                className="min-h-10 min-w-0 flex-1 resize-none rounded-[16px] border border-[#ddd6fe] bg-white px-3.5 py-2 text-sm leading-5 text-[#4c1d95] outline-none transition placeholder:text-[#7c3aed]/45 focus:border-[#c4b5fd] focus:bg-white"
               />
               <Button variant="gradient" size="icon" onClick={onSubmit} className="h-10 w-10 rounded-full">
                 <Send className="h-4 w-4" />

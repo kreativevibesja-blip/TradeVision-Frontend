@@ -53,8 +53,8 @@ export function OrionMessageBubble({
       <div className={`max-w-[84%] min-w-0 ${isAssistant ? '' : 'items-end'} flex flex-col gap-2`}>
         <div
           className={isAssistant
-            ? 'rounded-[22px] rounded-bl-md border border-white/24 bg-[rgba(255,255,255,0.94)] px-4 py-3 text-[#4b5563] shadow-[0_10px_24px_rgba(17,24,39,0.12)]'
-            : 'rounded-[22px] rounded-br-md border border-white/18 bg-[linear-gradient(135deg,rgba(126,34,206,0.95),rgba(168,85,247,0.92),rgba(192,132,252,0.9))] px-4 py-3 text-white shadow-[0_14px_30px_rgba(88,28,135,0.22)]'}
+            ? 'rounded-[22px] rounded-bl-md border border-[#e9d5ff] bg-white px-4 py-3 text-[#4b5563] shadow-[0_10px_24px_rgba(17,24,39,0.12)]'
+            : 'rounded-[22px] rounded-br-md border border-[#d8b4fe] bg-[linear-gradient(135deg,#7e22ce,#9333ea,#c084fc)] px-4 py-3 text-white shadow-[0_14px_30px_rgba(88,28,135,0.22)]'}
         >
           <div className="whitespace-pre-wrap break-words text-sm leading-7">{renderedText}</div>
         </div>
@@ -68,7 +68,7 @@ export function OrionMessageBubble({
                 key={choice.id}
                 type="button"
                 onClick={() => onChoice(choice)}
-                className="rounded-full border border-white/18 bg-white/12 px-3 py-2 text-xs font-medium text-white transition hover:bg-white/18"
+                className="rounded-full border border-[#d8b4fe] bg-[#6d28d9] px-3 py-2 text-xs font-medium text-white transition hover:bg-[#7e22ce]"
               >
                 {choice.label}
               </button>
