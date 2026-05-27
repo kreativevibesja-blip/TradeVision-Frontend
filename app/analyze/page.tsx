@@ -28,6 +28,7 @@ import { TradeReplayModal } from '@/components/TradeReplayModal';
 import TrackSetupButton from '@/components/TrackSetupButton';
 import { useAnalysisFeatureAccess } from '@/hooks/useAnalysisFeatureAccess';
 import { buildOrionAnalysisContext, emitOrionContext } from '@/lib/orion-context';
+import { consumePendingOrionWorkflow, ORION_WORKFLOW_EVENT } from '@/orion/services/orionWorkflowEvents';
 import {
   Upload,
   Image as ImageIcon,
@@ -586,7 +587,7 @@ function AnalyzePageContent() {
     void handlePreparedFile(nextFile, 'secondary');
   }, [handlePreparedFile]);
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive, open: openPrimaryUpload } = useDropzone({
     onDrop,
     onDropRejected: (rejections) => { void handleDropRejected('primary', rejections); },
     accept: { 'image/png': ['.png'], 'image/jpeg': ['.jpg', '.jpeg'], 'image/webp': ['.webp'] },
@@ -603,6 +604,28 @@ function AnalyzePageContent() {
   });
 
   const isDualChart = Boolean(file2);
+
+  useEffect(() => {
+    const maybeOpenFromOrion = (detail: { type?: string } | null | undefined) => {
+      if (detail?.type !== 'open-analysis-upload') {
+        return;
+      }
+
+      window.setTimeout(() => {
+        openPrimaryUpload();
+      }, 120);
+    };
+
+    const handleOrionWorkflow = (event: Event) => {
+      const customEvent = event as CustomEvent<{ type?: string }>;
+      maybeOpenFromOrion(customEvent.detail);
+    };
+
+    window.addEventListener(ORION_WORKFLOW_EVENT, handleOrionWorkflow as EventListener);
+    maybeOpenFromOrion(consumePendingOrionWorkflow() as { type?: string } | null);
+
+    return () => window.removeEventListener(ORION_WORKFLOW_EVENT, handleOrionWorkflow as EventListener);
+  }, [openPrimaryUpload]);
 
   useEffect(() => {
     if (!retryMode || file || analysis) {
