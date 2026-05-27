@@ -98,7 +98,7 @@ export function OrionChatWindow({
             </div>
           </div>
 
-          <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))] px-3.5 py-3 sm:px-4 sm:py-3.5">
+          <div ref={scrollRef} className="flex-1 space-y-3 overflow-x-hidden overflow-y-auto bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))] px-3.5 py-3 sm:px-4 sm:py-3.5">
             <OrionQuickActions actions={quickActions} onAction={onQuickAction} />
             <div className="space-y-3">
               {messages.map((message) => (
@@ -121,7 +121,7 @@ export function OrionChatWindow({
                 }}
                 rows={1}
                 placeholder="Ask Orion about analysis, Trade Radar, subscriptions, support, BOS, CHOCH, or workflow guidance..."
-                className="min-h-10 flex-1 resize-none rounded-[16px] border border-white/16 bg-[rgba(255,255,255,0.94)] px-3.5 py-2 text-sm leading-5 text-[#4c1d95] outline-none transition placeholder:text-[#7c3aed]/45 focus:border-white/30 focus:bg-white"
+                className="min-h-10 min-w-0 flex-1 resize-none rounded-[16px] border border-white/16 bg-[rgba(255,255,255,0.94)] px-3.5 py-2 text-sm leading-5 text-[#4c1d95] outline-none transition placeholder:text-[#7c3aed]/45 focus:border-white/30 focus:bg-white"
               />
               <Button variant="gradient" size="icon" onClick={onSubmit} className="h-10 w-10 rounded-full">
                 <Send className="h-4 w-4" />

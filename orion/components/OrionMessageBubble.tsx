@@ -50,13 +50,13 @@ export function OrionMessageBubble({
       animate={{ opacity: 1, y: 0, scale: 1 }}
       className={`flex ${isAssistant ? 'justify-start' : 'justify-end'}`}
     >
-      <div className={`max-w-[84%] ${isAssistant ? '' : 'items-end'} flex flex-col gap-2`}>
+      <div className={`max-w-[84%] min-w-0 ${isAssistant ? '' : 'items-end'} flex flex-col gap-2`}>
         <div
           className={isAssistant
             ? 'rounded-[22px] rounded-bl-md border border-white/24 bg-[rgba(255,255,255,0.94)] px-4 py-3 text-[#4b5563] shadow-[0_10px_24px_rgba(17,24,39,0.12)]'
             : 'rounded-[22px] rounded-br-md border border-white/18 bg-[linear-gradient(135deg,rgba(126,34,206,0.95),rgba(168,85,247,0.92),rgba(192,132,252,0.9))] px-4 py-3 text-white shadow-[0_14px_30px_rgba(88,28,135,0.22)]'}
         >
-          <div className="whitespace-pre-wrap text-sm leading-7">{renderedText}</div>
+          <div className="whitespace-pre-wrap break-words text-sm leading-7">{renderedText}</div>
         </div>
         <div className={`px-1 text-[10px] uppercase tracking-[0.22em] text-white/50 ${isAssistant ? '' : 'text-right'}`}>
           {isAssistant ? 'Orion' : 'You'} · {formatTime(message.createdAt)}
