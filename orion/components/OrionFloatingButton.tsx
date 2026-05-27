@@ -18,7 +18,7 @@ export function OrionFloatingButton({
         <motion.div
           initial={{ opacity: 0, x: 18 }}
           animate={{ opacity: 1, x: 0 }}
-          className="hidden max-w-[18rem] rounded-[22px] border border-blue-300/16 bg-[linear-gradient(145deg,rgba(10,18,35,0.94),rgba(3,7,18,0.98))] px-4 py-3 text-sm leading-6 text-white/78 shadow-[0_20px_40px_rgba(2,6,23,0.44)] md:block"
+          className="hidden max-w-[18rem] rounded-[22px] border border-blue-300/16 bg-[rgba(2,6,23,0.985)] px-4 py-3 text-sm leading-6 text-white/78 shadow-[0_20px_40px_rgba(2,6,23,0.58)] md:block"
         >
           {preview}
         </motion.div>
@@ -35,7 +35,7 @@ export function OrionFloatingButton({
       <button
         type="button"
         onClick={onClick}
-        className="flex min-h-12 max-w-[calc(100vw-2rem)] items-center gap-3 rounded-full border border-[rgba(92,163,255,0.32)] bg-[linear-gradient(135deg,rgba(30,41,59,0.94),rgba(15,23,42,0.96))] px-4 py-3 text-left shadow-[0_18px_45px_rgba(2,6,23,0.55)] sm:hidden"
+        className="flex min-h-12 max-w-[calc(100vw-2rem)] items-center gap-3 rounded-full border border-[rgba(92,163,255,0.32)] bg-[rgba(2,6,23,0.985)] px-4 py-3 text-left shadow-[0_18px_45px_rgba(2,6,23,0.62)] sm:hidden"
       >
         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-500/18 text-blue-100">
           <BrainCircuit className="h-4 w-4" />
