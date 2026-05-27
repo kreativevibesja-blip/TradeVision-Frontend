@@ -9,7 +9,6 @@ import { Footer } from '@/components/Footer';
 import { GlobalBackButton } from '@/components/GlobalBackButton';
 import { GlobalUpdatesModal } from '@/components/GlobalUpdatesModal';
 import { VisitorHeartbeat } from '@/components/VisitorHeartbeat';
-import { SupportButton } from '@/components/SupportButton';
 import { ReferralCapture } from '@/components/ReferralCapture';
 import { FeedbackTrigger } from '@/components/FeedbackTrigger';
 import { OrionOnboardingExperience } from '@/components/OrionOnboardingExperience';
@@ -51,7 +50,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </Suspense>
               <VisitorHeartbeat />
               <main className="flex-1 pt-20">{children}</main>
-              <SupportButton />
               <FeedbackTrigger />
               <Suspense fallback={null}>
                 <OrionMentorAssistant />
