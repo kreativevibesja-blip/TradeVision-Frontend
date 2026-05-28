@@ -117,6 +117,47 @@ function buildFullAnalysisMessages(analysis: AnalysisResult): OrionPlannedMessag
   ];
 }
 
+function splitPlannedMessage(message: OrionPlannedMessage): OrionPlannedMessage[] {
+  const normalizedText = message.text.replace(/\s+/g, ' ').trim();
+  if (normalizedText.length <= 140) {
+    return [{ ...message, text: normalizedText }];
+  }
+
+  const sentences = normalizedText.match(/[^.!?]+[.!?]+|[^.!?]+$/g)?.map((sentence) => sentence.trim()).filter(Boolean) ?? [normalizedText];
+  if (sentences.length <= 1) {
+    return [{ ...message, text: normalizedText }];
+  }
+
+  const chunks: string[] = [];
+  let currentChunk = '';
+
+  for (const sentence of sentences) {
+    const nextChunk = currentChunk ? `${currentChunk} ${sentence}` : sentence;
+    if (currentChunk && nextChunk.length > 150) {
+      chunks.push(currentChunk);
+      currentChunk = sentence;
+      continue;
+    }
+
+    currentChunk = nextChunk;
+  }
+
+  if (currentChunk) {
+    chunks.push(currentChunk);
+  }
+
+  if (chunks.length <= 1) {
+    return [{ ...message, text: normalizedText }];
+  }
+
+  return chunks.map((chunk, index) => ({
+    ...message,
+    text: chunk,
+    choices: index === chunks.length - 1 ? message.choices : undefined,
+    trigger: index === chunks.length - 1 ? message.trigger : undefined,
+  }));
+}
+
 function OrionMentorAssistantShell() {
   const pathname = usePathname();
   const router = useRouter();
@@ -156,8 +197,9 @@ function OrionMentorAssistantShell() {
 
   const queueAssistantMessages = async (plannedMessages: OrionPlannedMessage[]) => {
     const queueId = ++queueIdRef.current;
+    const expandedMessages = plannedMessages.flatMap(splitPlannedMessage);
 
-    for (const plannedMessage of plannedMessages) {
+    for (const plannedMessage of expandedMessages) {
       setIsTyping(true);
       const typingDelay = Math.min(950, Math.max(260, plannedMessage.text.length * 9));
       await new Promise((resolve) => window.setTimeout(resolve, typingDelay));
