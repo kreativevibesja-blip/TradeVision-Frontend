@@ -104,7 +104,7 @@ export function OrionChatWindow({
           </div>
 
           <div ref={scrollRef} className="flex-1 space-y-3 overflow-x-hidden overflow-y-auto bg-white px-3 py-3 text-slate-900 max-sm:space-y-2.5 max-sm:px-2.5 max-sm:py-2.5" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>
-            <div className="rounded-[16px] border border-sky-100 bg-sky-50 px-3 py-2.5 text-xs leading-5 text-blue-700" style={{ backgroundColor: '#eff6ff', color: '#1d4ed8', borderColor: '#dbeafe' }}>
+            <div className="max-w-full rounded-[16px] border border-sky-100 bg-sky-50 px-3 py-2.5 text-xs leading-5 text-blue-700 [overflow-wrap:anywhere]" style={{ backgroundColor: '#eff6ff', color: '#1d4ed8', borderColor: '#dbeafe' }}>
               <span className="font-semibold text-blue-900" style={{ color: '#1e3a8a' }}>{pageLabel}</span>
               <span className="text-blue-700" style={{ color: '#2563eb' }}> · {pageSummary}</span>
             </div>
