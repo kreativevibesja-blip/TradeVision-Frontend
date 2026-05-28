@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { AnimatePresence, motion, PanInfo } from 'framer-motion';
-import { MessageCircle, Send, X } from 'lucide-react';
+import { MessageCircle, Paperclip, Send, X } from 'lucide-react';
 import { OrionMessageBubble } from '@/orion/components/OrionMessageBubble';
 import { OrionQuickActions } from '@/orion/components/OrionQuickActions';
 import { OrionTypingBubble } from '@/orion/components/OrionTypingBubble';
@@ -17,9 +17,12 @@ export function OrionChatWindow({
   quickActions,
   input,
   isTyping,
+  attachedFileLabel,
+  attachDisabled,
   onClose,
   onInputChange,
   onSubmit,
+  onAttachFile,
   onQuickAction,
   onChoice,
 }: {
@@ -31,13 +34,17 @@ export function OrionChatWindow({
   quickActions: OrionQuickAction[];
   input: string;
   isTyping: boolean;
+  attachedFileLabel?: string | null;
+  attachDisabled?: boolean;
   onClose: () => void;
   onInputChange: (value: string) => void;
   onSubmit: () => void;
+  onAttachFile: (file: File) => void | Promise<void>;
   onQuickAction: (actionId: OrionQuickActionId) => void;
   onChoice: (choice: OrionChatChoice) => void;
 }) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const hasUserMessages = messages.some((message) => message.role === 'user');
 
   useEffect(() => {
@@ -111,7 +118,36 @@ export function OrionChatWindow({
           </div>
 
           <div className="border-t border-sky-100 bg-white px-3 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] max-sm:px-2.5 max-sm:py-2.5" style={{ backgroundColor: '#ffffff', borderColor: '#dbeafe' }}>
+            {attachedFileLabel ? (
+              <div className="mb-2 flex items-center gap-2 rounded-full border border-blue-100 bg-sky-50 px-3 py-1.5 text-xs text-blue-700" style={{ backgroundColor: '#eff6ff', color: '#1d4ed8', borderColor: '#dbeafe' }}>
+                <Paperclip className="h-3.5 w-3.5" />
+                <span className="truncate">{attachedFileLabel}</span>
+              </div>
+            ) : null}
             <div className="flex items-end gap-3 max-sm:gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                className="hidden"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) {
+                    void onAttachFile(file);
+                  }
+
+                  event.currentTarget.value = '';
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={attachDisabled}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-blue-200 bg-white text-blue-600 transition hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-50 max-sm:h-9 max-sm:w-9"
+                style={{ backgroundColor: '#ffffff', color: '#2563eb', borderColor: '#bfdbfe' }}
+              >
+                <Paperclip className="h-4 w-4" />
+              </button>
               <textarea
                 value={input}
                 onChange={(event) => onInputChange(event.target.value)}

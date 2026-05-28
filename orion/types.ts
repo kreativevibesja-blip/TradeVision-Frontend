@@ -85,6 +85,32 @@ export type OrionConversationWorkflow =
   | { type: 'idle' }
   | { type: 'awaiting-support-issue' }
   | {
+      type: 'awaiting-chat-analysis-market';
+      chartFile: File;
+      chartFileName: string;
+    }
+  | {
+      type: 'awaiting-chat-analysis-timeframe';
+      chartFile: File;
+      chartFileName: string;
+      pair: string;
+    }
+  | {
+      type: 'awaiting-chat-analysis-price';
+      chartFile: File;
+      chartFileName: string;
+      pair: string;
+      timeframe: string;
+    }
+  | {
+      type: 'awaiting-chat-analysis-mode';
+      chartFile: File;
+      chartFileName: string;
+      pair: string;
+      timeframe: string;
+      currentPrice: string;
+    }
+  | {
       type: 'confirm-support-ticket';
       issue: string;
       draft: {
