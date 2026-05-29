@@ -7,6 +7,7 @@ import Script from 'next/script';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import {
   ArrowRight,
+  Activity,
   BarChart3,
   Bot,
   BrainCircuit,
@@ -23,7 +24,6 @@ import {
   Waves,
   Zap,
 } from 'lucide-react';
-import { BrandLogo } from '@/components/BrandLogo';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -134,6 +134,16 @@ const pricing = [
   },
 ];
 
+const heroCandles = [
+  { left: '8%', bottom: '16%', height: 56, body: 18, bullish: true, delay: 0 },
+  { left: '18%', bottom: '24%', height: 88, body: 28, bullish: false, delay: 0.18 },
+  { left: '31%', bottom: '18%', height: 68, body: 22, bullish: true, delay: 0.32 },
+  { left: '46%', bottom: '28%', height: 112, body: 34, bullish: true, delay: 0.08 },
+  { left: '61%', bottom: '18%', height: 78, body: 24, bullish: false, delay: 0.26 },
+  { left: '74%', bottom: '26%', height: 96, body: 30, bullish: true, delay: 0.14 },
+  { left: '87%', bottom: '14%', height: 62, body: 20, bullish: false, delay: 0.38 },
+];
+
 function Reveal({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
   return (
     <motion.div {...reveal} transition={{ ...reveal.transition, delay }} className={className}>
@@ -142,73 +152,203 @@ function Reveal({ children, className = '', delay = 0 }: { children: React.React
   );
 }
 
-function CommandDeck() {
+function BullSilhouette() {
+  return (
+    <svg viewBox="0 0 220 120" className="h-full w-full" aria-hidden="true">
+      <defs>
+        <linearGradient id="bull-fill" x1="0" x2="1" y1="0" y2="1">
+          <stop offset="0%" stopColor="rgba(74,222,128,0.95)" />
+          <stop offset="100%" stopColor="rgba(16,185,129,0.38)" />
+        </linearGradient>
+      </defs>
+      <path
+        d="M19 72 C29 56, 47 49, 63 48 C75 33, 94 28, 116 30 C128 24, 142 22, 158 26 C166 19, 177 14, 194 12 C186 22, 184 31, 188 39 C197 46, 201 58, 197 71 C189 66, 183 66, 177 69 C170 74, 162 78, 149 79 C145 91, 138 102, 126 108 L118 108 C122 97, 122 88, 118 79 L96 79 C93 92, 87 102, 77 109 L68 109 C71 97, 71 87, 68 79 C51 78, 38 78, 27 84 C23 82, 20 77, 19 72 Z"
+        fill="url(#bull-fill)"
+        stroke="rgba(187,247,208,0.42)"
+        strokeWidth="2"
+      />
+      <path d="M176 27 C184 22, 191 21, 198 24" fill="none" stroke="rgba(220,252,231,0.85)" strokeWidth="3" strokeLinecap="round" />
+      <path d="M176 28 C181 15, 191 10, 205 8" fill="none" stroke="rgba(220,252,231,0.85)" strokeWidth="3" strokeLinecap="round" />
+      <circle cx="162" cy="40" r="3.5" fill="rgba(236,253,245,0.95)" />
+    </svg>
+  );
+}
+
+function BearSilhouette() {
+  return (
+    <svg viewBox="0 0 220 120" className="h-full w-full" aria-hidden="true">
+      <defs>
+        <linearGradient id="bear-fill" x1="0" x2="1" y1="0" y2="1">
+          <stop offset="0%" stopColor="rgba(251,113,133,0.95)" />
+          <stop offset="100%" stopColor="rgba(244,63,94,0.34)" />
+        </linearGradient>
+      </defs>
+      <path
+        d="M202 74 C195 58, 182 49, 166 46 C155 32, 137 27, 116 30 C103 24, 88 24, 76 28 C67 20, 55 16, 41 16 C48 25, 50 34, 47 42 C37 47, 31 57, 30 70 C38 66, 45 67, 52 71 C59 77, 69 80, 83 81 C86 93, 94 102, 107 108 L116 108 C111 95, 111 86, 116 79 L138 79 C141 92, 148 102, 159 109 L169 109 C165 96, 165 86, 168 78 C182 77, 193 78, 202 74 Z"
+        fill="url(#bear-fill)"
+        stroke="rgba(254,205,211,0.4)"
+        strokeWidth="2"
+      />
+      <circle cx="60" cy="30" r="8" fill="rgba(251,191,202,0.28)" stroke="rgba(255,228,230,0.5)" strokeWidth="2" />
+      <circle cx="42" cy="29" r="7" fill="rgba(251,191,202,0.24)" stroke="rgba(255,228,230,0.5)" strokeWidth="2" />
+      <circle cx="73" cy="42" r="3.5" fill="rgba(255,241,242,0.95)" />
+    </svg>
+  );
+}
+
+function MarketPulseScene() {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, delay: 0.18 }}
-      className="relative mx-auto w-full max-w-[28rem] lg:mx-0"
+      className="relative mx-auto w-full max-w-[32rem] lg:mx-0"
     >
-      <div className="ambient-orb left-[12%] top-[12%] h-40 w-40 animate-glow-drift" />
-      <Card className="overflow-hidden rounded-[32px] border-[rgba(255,223,112,0.22)]">
-        <CardContent className="space-y-5 p-5 sm:p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="metric-label">TradeVision AI - Institutional Trading Intelligence</div>
-              <div className="mt-2 text-2xl font-semibold tracking-[-0.06em] text-white">ORION AI command cockpit</div>
-            </div>
-            <div className="rounded-2xl border border-[rgba(255,223,112,0.18)] bg-[rgba(255,223,112,0.08)] px-3 py-2 font-mono text-xs text-[var(--gold-light)]">
-              LIVE
-            </div>
-          </div>
+      <div className="ambient-orb left-[8%] top-[10%] h-36 w-36 animate-glow-drift" />
+      <div className="ambient-orb right-[2%] top-[30%] h-44 w-44 animate-float-slow" />
 
-          <div className="grid grid-cols-2 gap-3">
-            {marketMetrics.map((metric) => (
-              <div key={metric.label} className="mobile-card rounded-[24px] p-4">
-                <div className="metric-label">{metric.label}</div>
-                <div className={`mt-3 font-mono text-2xl font-semibold tracking-[-0.06em] ${metric.tone}`}>{metric.value}</div>
+      <div className="relative overflow-hidden rounded-[34px] border border-[rgba(255,223,112,0.16)] bg-[radial-gradient(circle_at_top,rgba(255,223,112,0.14),transparent_34%),radial-gradient(circle_at_20%_30%,rgba(59,130,246,0.16),transparent_28%),linear-gradient(180deg,rgba(10,16,30,0.96),rgba(8,13,26,0.88))] p-5 shadow-[0_28px_80px_rgba(2,6,23,0.48)] sm:p-6">
+        <div className="hero-grid absolute inset-3 rounded-[28px] border border-white/6 opacity-30" />
+        <div className="absolute inset-x-5 top-5 flex items-center justify-between">
+          <div>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.32em] text-white/42">Market pressure theater</div>
+            <div className="mt-2 text-2xl font-semibold tracking-[-0.06em] text-white">Bull vs Bear tug-of-war</div>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2 text-[11px] uppercase tracking-[0.28em] text-[var(--gold-light)]">
+            Live bias
+          </div>
+        </div>
+
+        <div className="relative mt-24 h-[25rem] overflow-hidden rounded-[28px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01))]">
+          <div className="absolute inset-x-0 top-[28%] border-t border-dashed border-white/10" />
+          <div className="absolute inset-x-0 top-[58%] border-t border-dashed border-white/10" />
+          <div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.18),rgba(255,255,255,0.04))]" />
+
+          <motion.div
+            animate={{ x: [0, 22, 0], y: [0, -6, 0], rotate: [-3, 1, -3], scale: [1.02, 1.08, 1.02] }}
+            transition={{ duration: 5.5, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' }}
+            className="absolute left-[-1.5rem] top-3 h-36 w-56"
+          >
+            <BullSilhouette />
+            <div className="absolute -bottom-2 left-10 rounded-full border border-emerald-300/25 bg-emerald-400/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-emerald-100 backdrop-blur">
+              Bulls 61%
+            </div>
+          </motion.div>
+
+          <motion.div
+            animate={{ x: [0, -22, 0], y: [0, 6, 0], rotate: [3, -1, 3], scale: [1.02, 1.08, 1.02] }}
+            transition={{ duration: 5.5, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut', delay: 0.25 }}
+            className="absolute right-[-1.5rem] top-6 h-36 w-56"
+          >
+            <BearSilhouette />
+            <div className="absolute -bottom-2 right-10 rounded-full border border-rose-300/25 bg-rose-400/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-rose-100 backdrop-blur">
+              Bears 39%
+            </div>
+          </motion.div>
+
+          <motion.div
+            animate={{ x: [0, 10, 0] }}
+            transition={{ duration: 3.2, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' }}
+            className="absolute left-[23%] top-[25.5%] h-[2px] w-[25%]"
+          >
+            <div className="absolute inset-0 rounded-full bg-[linear-gradient(90deg,rgba(74,222,128,0.12),rgba(255,223,112,0.9))] shadow-[0_0_18px_rgba(255,223,112,0.28)]" />
+            <div className="absolute inset-0 bg-[repeating-linear-gradient(90deg,rgba(255,255,255,0.18)_0_10px,transparent_10px_18px)] opacity-60" />
+          </motion.div>
+
+          <motion.div
+            animate={{ x: [0, -10, 0] }}
+            transition={{ duration: 3.2, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' }}
+            className="absolute right-[23%] top-[27%] h-[2px] w-[25%]"
+          >
+            <div className="absolute inset-0 rounded-full bg-[linear-gradient(90deg,rgba(255,223,112,0.9),rgba(251,113,133,0.12))] shadow-[0_0_18px_rgba(255,223,112,0.28)]" />
+            <div className="absolute inset-0 bg-[repeating-linear-gradient(90deg,rgba(255,255,255,0.18)_0_10px,transparent_10px_18px)] opacity-60" />
+          </motion.div>
+
+          <motion.div
+            animate={{ rotate: [-8, 8, -8], scale: [1, 1.08, 1] }}
+            transition={{ duration: 2.6, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' }}
+            className="absolute left-1/2 top-[24.6%] h-5 w-5 -translate-x-1/2 rounded-full border border-[rgba(255,223,112,0.42)] bg-[radial-gradient(circle,rgba(255,223,112,0.95),rgba(255,223,112,0.35))] shadow-[0_0_22px_rgba(255,223,112,0.45)]"
+          />
+
+          <motion.div
+            animate={{ x: ['-4%', '4%', '-4%'] }}
+            transition={{ duration: 6, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' }}
+            className="absolute bottom-8 left-[12%] right-[12%] h-3 rounded-full bg-white/6"
+          >
+            <div className="absolute left-0 top-0 h-full w-[56%] rounded-full bg-[linear-gradient(90deg,rgba(16,185,129,0.75),rgba(255,223,112,0.9),rgba(244,63,94,0.72))]" />
+          </motion.div>
+
+          <motion.div
+            animate={{ y: [0, -10, 0], scaleY: [1, 1.06, 0.96, 1], boxShadow: ['0 0 0 rgba(52,211,153,0.0)', '0 0 30px rgba(52,211,153,0.28)', '0 0 18px rgba(248,113,113,0.24)', '0 0 0 rgba(52,211,153,0.0)'] }}
+            transition={{ duration: 3.4, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' }}
+            className="absolute left-1/2 top-[18%] h-[13.5rem] w-12 -translate-x-1/2"
+          >
+            <div className="absolute left-1/2 top-0 h-full w-[2px] -translate-x-1/2 rounded-full bg-[linear-gradient(180deg,rgba(248,113,113,0.95),rgba(250,204,21,0.95),rgba(52,211,153,0.95))]" />
+            <motion.div
+              animate={{ background: ['linear-gradient(180deg,rgba(52,211,153,0.92),rgba(16,185,129,0.72))', 'linear-gradient(180deg,rgba(248,113,113,0.92),rgba(244,63,94,0.72))', 'linear-gradient(180deg,rgba(52,211,153,0.92),rgba(16,185,129,0.72))'] }}
+              transition={{ duration: 3.4, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' }}
+              className="absolute left-1/2 top-[26%] h-[6.75rem] w-12 -translate-x-1/2 rounded-[18px] border border-white/10"
+            />
+          </motion.div>
+
+          {heroCandles.map((candle) => (
+            <motion.div
+              key={`${candle.left}-${candle.height}`}
+              animate={{ y: [0, candle.bullish ? -16 : 12, 0], rotate: candle.bullish ? [-1, 1, -1] : [1, -1, 1] }}
+              transition={{ duration: candle.bullish ? 4.2 : 4.8, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut', delay: candle.delay }}
+              className="absolute"
+              style={{ left: candle.left, bottom: candle.bottom }}
+            >
+              <div className="relative flex w-6 justify-center" style={{ height: `${candle.height}px` }}>
+                <div className={`absolute left-1/2 top-0 h-full w-px -translate-x-1/2 ${candle.bullish ? 'bg-emerald-300/90' : 'bg-rose-300/90'}`} />
+                <div
+                  className={`absolute left-1/2 top-1/2 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border ${candle.bullish ? 'border-emerald-300/30 bg-[linear-gradient(180deg,rgba(16,185,129,0.88),rgba(74,222,128,0.48))]' : 'border-rose-300/30 bg-[linear-gradient(180deg,rgba(251,113,133,0.88),rgba(244,63,94,0.48))]'}`}
+                  style={{ height: `${candle.body}px` }}
+                />
+              </div>
+            </motion.div>
+          ))}
+
+          <motion.div
+            animate={{ pathLength: [0.25, 0.95, 0.35], opacity: [0.35, 0.9, 0.45] }}
+            transition={{ duration: 4.8, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' }}
+            className="absolute inset-x-8 bottom-20 top-24"
+          >
+            <svg viewBox="0 0 420 220" className="h-full w-full">
+              <defs>
+                <linearGradient id="hero-flow" x1="0" x2="1" y1="0" y2="0">
+                  <stop offset="0%" stopColor="rgba(96,165,250,0.2)" />
+                  <stop offset="45%" stopColor="rgba(255,223,112,0.95)" />
+                  <stop offset="100%" stopColor="rgba(52,211,153,0.25)" />
+                </linearGradient>
+              </defs>
+              <motion.path
+                d="M10 150 C60 170, 110 70, 165 98 S270 188, 320 124 S380 44, 410 72"
+                fill="none"
+                stroke="url(#hero-flow)"
+                strokeWidth="4"
+                strokeLinecap="round"
+              />
+            </svg>
+          </motion.div>
+
+          <div className="absolute bottom-5 left-5 right-5 grid grid-cols-3 gap-3">
+            {[
+              { icon: CandlestickChart, label: 'Structure', value: 'BOS + sweep' },
+              { icon: Activity, label: 'Momentum', value: 'Volatility rising' },
+              { icon: Target, label: 'Bias', value: 'Buyers in control' },
+            ].map((item) => (
+              <div key={item.label} className="rounded-[20px] border border-white/10 bg-black/20 p-3 backdrop-blur">
+                <div className="flex items-center gap-2 text-[var(--gold-light)]">
+                  <item.icon className="h-4 w-4" />
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/48">{item.label}</span>
+                </div>
+                <div className="mt-2 text-sm font-medium text-white/88">{item.value}</div>
               </div>
             ))}
           </div>
-
-          <div className="mobile-card rounded-[24px] p-4">
-            <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.28em] text-muted-foreground">
-              <span>Live execution map</span>
-              <span>GoldX hybrid</span>
-            </div>
-            <div className="mt-4 grid grid-cols-[1fr_auto] gap-4">
-              <div className="space-y-3">
-                {[
-                  ['BOS confirmed', '0.91'],
-                  ['Liquidity sweep', '0.84'],
-                  ['Entry precision', '0.88'],
-                ].map(([label, value]) => (
-                  <div key={label}>
-                    <div className="mb-2 flex items-center justify-between text-xs text-white/72">
-                      <span>{label}</span>
-                      <span className="font-mono">{value}</span>
-                    </div>
-                    <div className="h-2 rounded-full bg-white/6">
-                      <div className="h-full rounded-full bg-[linear-gradient(90deg,#7a5b14,#d4af37,#ffd700)]" style={{ width: `${Number(value) * 100}%` }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="flex w-24 flex-col justify-between rounded-[22px] border border-white/10 bg-black/20 p-3 text-right">
-                <div>
-                  <div className="metric-label">Active bots</div>
-                  <div className="mt-1 font-mono text-2xl text-white">24</div>
-                </div>
-                <div>
-                  <div className="metric-label">Health</div>
-                  <div className="mt-1 text-sm text-emerald-300">Nominal</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </motion.div>
   );
 }
@@ -247,7 +387,6 @@ export default function HomePage() {
           <div className="grid items-center gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
             <div className="space-y-6 pt-6 sm:pt-10 lg:pt-16">
               <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-                <BrandLogo className="mb-6" />
                 <Badge className="px-4 py-2 text-[11px]" variant="default">
                   <Sparkles className="mr-2 h-3.5 w-3.5" />
                   AI analysis, GoldX automation, and live trader tools
@@ -290,7 +429,7 @@ export default function HomePage() {
               </motion.div>
             </div>
 
-            <CommandDeck />
+            <MarketPulseScene />
           </div>
         </div>
       </section>
