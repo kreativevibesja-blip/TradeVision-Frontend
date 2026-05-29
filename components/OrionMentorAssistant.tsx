@@ -117,45 +117,65 @@ function buildFullAnalysisMessages(analysis: AnalysisResult): OrionPlannedMessag
   ];
 }
 
-function splitPlannedMessage(message: OrionPlannedMessage): OrionPlannedMessage[] {
+function wrapTextToLines(text: string, maxLineLength: number) {
+  const words = text.split(' ').filter(Boolean);
+  const lines: string[] = [];
+  let currentLine = '';
+
+  for (const word of words) {
+    const nextLine = currentLine ? `${currentLine} ${word}` : word;
+    if (currentLine && nextLine.length > maxLineLength) {
+      lines.push(currentLine);
+      currentLine = word;
+      continue;
+    }
+
+    currentLine = nextLine;
+  }
+
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+
+  return lines;
+}
+
+function formatPlannedMessage(message: OrionPlannedMessage): OrionPlannedMessage {
   const normalizedText = message.text.replace(/\s+/g, ' ').trim();
   if (normalizedText.length <= 140) {
-    return [{ ...message, text: normalizedText }];
+    return { ...message, text: normalizedText };
   }
 
   const sentences = normalizedText.match(/[^.!?]+[.!?]+|[^.!?]+$/g)?.map((sentence) => sentence.trim()).filter(Boolean) ?? [normalizedText];
   if (sentences.length <= 1) {
-    return [{ ...message, text: normalizedText }];
+    return {
+      ...message,
+      text: wrapTextToLines(normalizedText, 38).join('\n'),
+    };
   }
 
-  const chunks: string[] = [];
-  let currentChunk = '';
+  const lines: string[] = [];
+  let currentBlock = '';
 
   for (const sentence of sentences) {
-    const nextChunk = currentChunk ? `${currentChunk} ${sentence}` : sentence;
-    if (currentChunk && nextChunk.length > 150) {
-      chunks.push(currentChunk);
-      currentChunk = sentence;
+    const nextBlock = currentBlock ? `${currentBlock} ${sentence}` : sentence;
+    if (currentBlock && nextBlock.length > 110) {
+      lines.push(...wrapTextToLines(currentBlock, 38));
+      currentBlock = sentence;
       continue;
     }
 
-    currentChunk = nextChunk;
+    currentBlock = nextBlock;
   }
 
-  if (currentChunk) {
-    chunks.push(currentChunk);
+  if (currentBlock) {
+    lines.push(...wrapTextToLines(currentBlock, 38));
   }
 
-  if (chunks.length <= 1) {
-    return [{ ...message, text: normalizedText }];
-  }
-
-  return chunks.map((chunk, index) => ({
+  return {
     ...message,
-    text: chunk,
-    choices: index === chunks.length - 1 ? message.choices : undefined,
-    trigger: index === chunks.length - 1 ? message.trigger : undefined,
-  }));
+    text: lines.join('\n'),
+  };
 }
 
 function OrionMentorAssistantShell() {
@@ -197,9 +217,9 @@ function OrionMentorAssistantShell() {
 
   const queueAssistantMessages = async (plannedMessages: OrionPlannedMessage[]) => {
     const queueId = ++queueIdRef.current;
-    const expandedMessages = plannedMessages.flatMap(splitPlannedMessage);
+    const formattedMessages = plannedMessages.map(formatPlannedMessage);
 
-    for (const plannedMessage of expandedMessages) {
+    for (const plannedMessage of formattedMessages) {
       setIsTyping(true);
       const typingDelay = Math.min(950, Math.max(260, plannedMessage.text.length * 9));
       await new Promise((resolve) => window.setTimeout(resolve, typingDelay));
