@@ -418,6 +418,15 @@ function OrionMentorAssistantShell() {
   };
 
   const handleChoice = async (choice: OrionChatChoice) => {
+    if (
+      workflow.type === 'confirm-analysis-intent'
+      || workflow.type === 'choose-analysis-surface'
+      || workflow.type === 'choose-live-chart-market'
+    ) {
+      await submitPrompt(choice.label, choice.label);
+      return;
+    }
+
     setMessages((current) => [...current.slice(-19), createMessage('user', choice.label)]);
 
     if (workflow.type === 'awaiting-chat-analysis-mode') {

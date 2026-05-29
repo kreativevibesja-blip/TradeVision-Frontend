@@ -225,6 +225,41 @@ function buildTradingAdviceResponse(pageContext: OrionPageContext): OrionPlanned
   }];
 }
 
+function isAnalysisKeywordPrompt(input: string) {
+  return /\banalysis\b|\banaly[sz]e\b/i.test(input);
+}
+
+function buildAnalysisIntentPrompt(): OrionPlannedMessage[] {
+  return [{
+    text: 'Do you want to analyze a chart?',
+    choices: [
+      { id: 'analysis-intent-yes', label: 'Yes' },
+      { id: 'analysis-intent-no', label: 'No' },
+    ],
+  }];
+}
+
+function buildAnalysisSurfacePrompt(): OrionPlannedMessage[] {
+  return [{
+    text: 'Do you want to upload a chart here, go to live charts, or open the analyze page?',
+    choices: [
+      { id: 'analysis-surface-upload-here', label: 'Upload a chart here' },
+      { id: 'analysis-surface-live', label: 'Go to live charts' },
+      { id: 'analysis-surface-analyze-page', label: 'Open analyze page' },
+    ],
+  }];
+}
+
+function buildLiveChartMarketPrompt(): OrionPlannedMessage[] {
+  return [{
+    text: 'Which live chart flow do you want: forex or deriv?',
+    choices: [
+      { id: 'live-chart-forex', label: 'Forex' },
+      { id: 'live-chart-deriv', label: 'Deriv' },
+    ],
+  }];
+}
+
 export function buildOrionWelcome(input: Omit<WorkflowInput, 'input' | 'workflow'>): OrionPlannedMessage[] {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
@@ -249,6 +284,88 @@ export function buildOrionWelcome(input: Omit<WorkflowInput, 'input' | 'workflow
 
 export function resolveOrionReply({ input, pageContext, workflow, activity, user }: WorkflowInput): OrionWorkflowResult {
   const trimmed = input.trim();
+
+  if (workflow.type === 'confirm-analysis-intent') {
+    if (/^y(es)?$/i.test(trimmed)) {
+      return {
+        messages: buildAnalysisSurfacePrompt(),
+        nextWorkflow: { type: 'choose-analysis-surface' },
+        memoryAction: 'analysis-intent-confirmed',
+      };
+    }
+
+    if (/^n(o)?$/i.test(trimmed)) {
+      return {
+        messages: [{ text: 'No problem. If you want analysis later, just say analyze, analyse, or analysis and I will route you.' }],
+        nextWorkflow: { type: 'idle' },
+        memoryAction: 'analysis-intent-cancelled',
+      };
+    }
+
+    return {
+      messages: [{ text: 'Please choose yes or no so I can route you correctly.' }],
+      nextWorkflow: { type: 'confirm-analysis-intent' },
+    };
+  }
+
+  if (workflow.type === 'choose-analysis-surface') {
+    if (/upload.*here|here.*upload/i.test(trimmed)) {
+      return {
+        messages: [
+          { text: 'Use the plus button in this chat to attach your chart here.' },
+          { text: 'Once it is attached, I will ask for the pair, timeframe, current price, and the result format you want.' },
+        ],
+        nextWorkflow: { type: 'idle' },
+        memoryAction: 'analysis-chat-upload-selected',
+      };
+    }
+
+    if (/live\s*charts?|go to live charts?|live/i.test(trimmed)) {
+      return {
+        messages: buildLiveChartMarketPrompt(),
+        nextWorkflow: { type: 'choose-live-chart-market' },
+        memoryAction: 'analysis-live-selected',
+      };
+    }
+
+    if (/analy[sz]e page|analysis page|open analy[sz]e page/i.test(trimmed)) {
+      return {
+        messages: [
+          { text: 'Opening the analyze page now.' , trigger: { type: 'navigate', href: '/analyze' } },
+        ],
+        nextWorkflow: { type: 'idle' },
+        memoryAction: 'analysis-page-opened',
+      };
+    }
+
+    return {
+      messages: [{ text: 'Choose one of these options: upload a chart here, go to live charts, or open the analyze page.' }],
+      nextWorkflow: { type: 'choose-analysis-surface' },
+    };
+  }
+
+  if (workflow.type === 'choose-live-chart-market') {
+    if (/^forex$/i.test(trimmed)) {
+      return {
+        messages: [{ text: 'Opening the forex live charts now.', trigger: { type: 'navigate', href: '/dashboard/tradingview' } }],
+        nextWorkflow: { type: 'idle' },
+        memoryAction: 'live-chart-forex-opened',
+      };
+    }
+
+    if (/^deriv$/i.test(trimmed)) {
+      return {
+        messages: [{ text: 'Opening the Deriv live charts now.', trigger: { type: 'navigate', href: '/dashboard/deriv' } }],
+        nextWorkflow: { type: 'idle' },
+        memoryAction: 'live-chart-deriv-opened',
+      };
+    }
+
+    return {
+      messages: [{ text: 'Choose forex or deriv so I can open the right live chart flow.' }],
+      nextWorkflow: { type: 'choose-live-chart-market' },
+    };
+  }
 
   if (workflow.type === 'awaiting-support-issue') {
     const draft = buildSupportDraft(trimmed || 'Support assistance requested from Orion chat.');
@@ -281,6 +398,14 @@ export function resolveOrionReply({ input, pageContext, workflow, activity, user
         memoryAction: 'support-ticket-cancelled',
       };
     }
+  }
+
+  if (isAnalysisKeywordPrompt(trimmed) && !/(failed|problem|issue|bug|not working|support)/i.test(trimmed)) {
+    return {
+      messages: buildAnalysisIntentPrompt(),
+      nextWorkflow: { type: 'confirm-analysis-intent' },
+      memoryAction: 'analysis-intent-started',
+    };
   }
 
   const intent = parseOrionIntent(trimmed);

@@ -84,6 +84,9 @@ export type OrionPlannedMessage = {
 export type OrionConversationWorkflow =
   | { type: 'idle' }
   | { type: 'awaiting-support-issue' }
+  | { type: 'confirm-analysis-intent' }
+  | { type: 'choose-analysis-surface' }
+  | { type: 'choose-live-chart-market' }
   | {
       type: 'awaiting-chat-analysis-market';
       chartFile: File;
