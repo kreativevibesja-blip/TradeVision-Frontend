@@ -303,7 +303,6 @@ export default function GoldxPulsePage() {
   const [saving, setSaving] = useState(false);
   const [placingTrade, setPlacingTrade] = useState<string | null>(null);
   const [clearingResults, setClearingResults] = useState(false);
-  const [pulseRenewing, setPulseRenewing] = useState(false);
   const [agreementAccepted, setAgreementAccepted] = useState<boolean | null>(null);
   const [agreementChecked, setAgreementChecked] = useState(false);
   const [agreementBusy, setAgreementBusy] = useState(false);
@@ -365,25 +364,6 @@ export default function GoldxPulsePage() {
 
   const pulseStatus = billing?.goldxPulse;
   const showAgreementGate = access?.active && agreementAccepted === false;
-
-  const handlePulseResume = async () => {
-    if (!token) {
-      return;
-    }
-
-    try {
-      setPulseRenewing(true);
-      setError('');
-      const response = await api.renewGoldxPulseSubscription(token);
-      setBilling(response.billing);
-      const accessResponse = await api.goldxPulse.getAccess(token);
-      setAccess(accessResponse.access);
-    } catch (nextError) {
-      setError(nextError instanceof Error ? nextError.message : 'Unable to resume GoldX Pulse access.');
-    } finally {
-      setPulseRenewing(false);
-    }
-  };
 
   useEffect(() => {
     setStake(String(snapshot.settings.stake));
@@ -774,19 +754,12 @@ export default function GoldxPulsePage() {
                 </div>
                 <div className="mt-1 text-xs opacity-85">
                   Expiry: {formatDateTime(pulseStatus.expiresAt)}
-                  {pulseStatus.canRenew ? ' · You can resume access before this expiry passes.' : ''}
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
-                {pulseStatus.canRenew ? (
-                  <Button variant="outline" onClick={handlePulseResume} disabled={pulseRenewing}>
-                    {pulseRenewing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    Resume Pulse
-                  </Button>
-                ) : null}
                 {pulseStatus.canPurchase ? (
-                  <Link href="/checkout?plan=GOLDX_PULSE">
-                    <Button variant="gradient">Renew Purchase</Button>
+                  <Link href="/dashboard/billing">
+                    <Button variant="gradient">Open Billing</Button>
                   </Link>
                 ) : null}
               </div>

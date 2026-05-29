@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import PushNotificationPrompt from '@/components/PushNotificationPrompt';
 import { useAuth } from '@/hooks/useAuth';
 import { BrandLogo } from '@/components/BrandLogo';
-import { CandlestickChart, CreditCard, LayoutDashboard, RadioTower, Users, Target, TrendingUp, Sparkles, Radar } from 'lucide-react';
+import { CandlestickChart, CreditCard, LayoutDashboard, Users, Target, TrendingUp, Radar } from 'lucide-react';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -17,8 +17,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const dashboardNav = [
     { href: '/dashboard', label: 'Intelligence', icon: LayoutDashboard },
     { href: '/dashboard/tradingview', label: 'Live Analysis', icon: CandlestickChart },
-    { href: '/dashboard/deriv', label: 'Deriv Flow', icon: RadioTower },
-    { href: '/dashboard/goldx-pulse', label: 'GoldX Pulse', icon: Sparkles },
     { href: '/dashboard/command-center', label: 'Command Center', icon: Target },
     { href: '/dashboard/radar', label: 'Trade Radar', icon: Radar },
     { href: '/dashboard/goldx', label: 'GoldX', icon: TrendingUp },

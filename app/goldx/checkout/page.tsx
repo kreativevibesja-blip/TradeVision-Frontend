@@ -35,7 +35,13 @@ export default function GoldxCheckoutPage() {
 
   useEffect(() => {
     api.goldx.getPlan()
-      .then((p) => { setPlan(p); setPlanId(p.id); })
+      .then((p) => {
+        setPlan({
+          ...p,
+          price: 99.95,
+        });
+        setPlanId(p.id);
+      })
       .catch(() => setError('Failed to load plan'))
       .finally(() => setLoading(false));
   }, []);

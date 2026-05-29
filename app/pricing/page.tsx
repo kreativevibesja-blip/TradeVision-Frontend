@@ -41,8 +41,8 @@ const fallbackPlanDetails: Record<'FREE' | 'PRO' | 'TOP_TIER', Omit<DisplayPlan,
     badge: null,
   },
   PRO: {
-    period: '/month',
-    description: 'For serious traders who want deeper AI chart analysis',
+    period: '/week',
+    description: 'For serious traders who want deeper AI chart analysis every week',
     icon: Crown,
     color: 'from-amber-300 to-yellow-600',
     cta: 'Subscribe Now',
@@ -77,10 +77,10 @@ const defaultFallbackPlans: DisplayPlan[] = [
   },
   {
     id: 'fallback-pro',
-    name: 'TradeVision AI Pro',
+    name: 'Weekly Pro',
     tier: 'PRO',
-    price: 19.95,
-    features: ['300 analyses per month', 'Advanced Smart Money Concepts', 'Priority AI processing'],
+    price: 9.95,
+    features: ['100 analyses per week', 'Advanced Smart Money Concepts', 'Priority AI processing'],
     dailyLimit: 999999,
     isActive: true,
     createdAt: '',
@@ -104,7 +104,7 @@ const defaultFallbackPlans: DisplayPlan[] = [
 const goldxFallbackPlan = {
   id: 'goldx-fallback',
   name: 'GoldX',
-  price: 129.95,
+  price: 99.95,
   billingCycle: 'monthly',
   features: [
     'XAUUSD Night Scalping EA',
@@ -112,20 +112,6 @@ const goldxFallbackPlan = {
     'Server-side strategy engine',
     'Realtime execution logic',
     'License-based MT5 access',
-  ],
-};
-
-const goldxPulseFallbackPlan = {
-  id: 'goldx-pulse-fallback',
-  name: 'GoldX Pulse',
-  price: 79.95,
-  billingCycle: 'month',
-  features: [
-    'Live Deriv tick stream',
-    'Digit analytics and streak detection',
-    'Matches / Differs assisted trades',
-    'Over / Under range pressure panel',
-    'Dedicated Pulse access control',
   ],
 };
 
@@ -141,10 +127,18 @@ const toDisplayPlan = (plan: PricingPlan): DisplayPlan | null => {
           name: 'PRO+',
           features: proPlusFeatures,
         }
+      : plan.tier === 'PRO'
+        ? {
+            name: 'Weekly Pro',
+            price: 9.95,
+            features: plan.features.map((feature) =>
+              /unlimited|fair use|300 analyses per month|100 analyses per week/i.test(feature) ? '100 analyses per week' : feature
+            ),
+          }
       : plan.tier !== 'FREE'
         ? {
             features: plan.features.map((feature) =>
-              /unlimited|fair use|300 analyses per month/i.test(feature) ? '300 analyses per month' : feature
+              /unlimited|fair use|300 analyses per month/i.test(feature) ? '100 analyses per week' : feature
             ),
           }
         : {}),
@@ -155,7 +149,6 @@ const toDisplayPlan = (plan: PricingPlan): DisplayPlan | null => {
 export default function PricingPage() {
   const [plans, setPlans] = useState<DisplayPlan[]>(defaultFallbackPlans);
   const [goldxPlan, setGoldxPlan] = useState(goldxFallbackPlan);
-  const [goldxPulsePlan] = useState(goldxPulseFallbackPlan);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -169,7 +162,10 @@ export default function PricingPage() {
           setPlans(data.plans.map(toDisplayPlan).filter((plan): plan is DisplayPlan => plan !== null));
         }
         if (goldx) {
-          setGoldxPlan(goldx);
+          setGoldxPlan({
+            ...goldx,
+            price: 99.95,
+          });
         }
       } catch {
       } finally {
@@ -206,8 +202,8 @@ export default function PricingPage() {
             </div>
             <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
               {[
-                ['Core plans', 'Free, Pro, PRO+'],
-                ['GoldX suite', 'EA + Pulse add-ons'],
+                ['Core plans', 'Free, Weekly Pro, PRO+'],
+                ['GoldX suite', 'EA access'],
                 ['Cancel control', 'Upgrade or downgrade anytime'],
               ].map(([label, value]) => (
                 <div key={label} className="mobile-card rounded-[24px] p-4">
@@ -364,83 +360,6 @@ export default function PricingPage() {
                   </Link>
                   <p className="text-xs text-muted-foreground">
                     After checkout, use the platform to manage your license, setup flow, and MT5 account binding. Execution settings stay inside MT5.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div
-          id="goldx-pulse"
-          initial={false}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="mx-auto mt-10 max-w-6xl sm:mt-12"
-        >
-          <Card className="overflow-hidden border-[rgba(88,235,255,0.18)] bg-[radial-gradient(circle_at_top_left,_rgba(255,223,112,0.15),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(34,197,94,0.12),_transparent_30%)]">
-            <CardContent className="grid gap-8 p-6 sm:p-8 lg:grid-cols-[1.1fr_0.9fr] lg:p-10">
-              <div>
-                <div className="mb-4 flex items-center gap-3">
-                  <div className="rounded-2xl border border-cyan-400/20 bg-cyan-500/10 p-3 text-cyan-300">
-                    <Zap className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <Badge variant="outline" className="mb-2 border-cyan-400/20 text-cyan-300">GoldX Pulse</Badge>
-                    <h2 className="text-2xl font-bold sm:text-3xl">Deriv Options Add-On</h2>
-                  </div>
-                </div>
-
-                <p className="max-w-2xl text-sm text-muted-foreground sm:text-base">
-                  GoldX Pulse is the live Deriv options workspace for digit analytics, assisted execution, and streaming tick intelligence. It runs as a dedicated add-on alongside your main platform plan.
-                </p>
-
-                <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                  {[
-                    ['Workspace', 'Dedicated Pulse dashboard'],
-                    ['Execution style', 'Digits and assisted execution'],
-                    ['Best fit', 'Deriv-focused options traders'],
-                  ].map(([label, value]) => (
-                    <div key={label} className="mobile-card rounded-[22px] p-4">
-                      <div className="metric-label">{label}</div>
-                      <div className="mt-2 text-sm text-white">{value}</div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                  {goldxPulsePlan.features.map((feature) => (
-                    <div key={feature} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                      <CheckCircle2 className="h-4 w-4 text-cyan-400" />
-                      <span className="text-sm">{feature}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex flex-col justify-between rounded-[28px] border border-white/10 bg-black/20 p-6">
-                <div>
-                  <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-300">
-                    <Shield className="h-3.5 w-3.5" />
-                    Subscription-gated dashboard access
-                  </div>
-                  <div className="mb-2 text-5xl font-bold">
-                    ${goldxPulsePlan.price}
-                    <span className="ml-1 text-lg font-normal text-muted-foreground">/{goldxPulsePlan.billingCycle}</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Best for traders who want a dedicated binary and digits workflow with live market-state analytics inside the ChartMind dashboard.
-                  </p>
-                </div>
-
-                <div className="mt-8 space-y-3">
-                  <Link href="/checkout?plan=GOLDX_PULSE" className="block">
-                    <Button size="lg" className="w-full bg-gradient-to-r from-cyan-500 to-fuchsia-600 hover:from-cyan-600 hover:to-fuchsia-700">
-                      Subscribe to GoldX Pulse
-                    </Button>
-                  </Link>
-                  <p className="text-xs text-muted-foreground">
-                    After checkout, use the billing page or Pulse workspace to manage expiry, cancellation, and live Deriv connectivity.
                   </p>
                 </div>
               </div>

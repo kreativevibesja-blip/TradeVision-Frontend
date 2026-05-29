@@ -114,8 +114,8 @@ const pricing = [
     features: ['Daily chart analyses', 'Core structure reading', 'Mobile analysis flow'],
   },
   {
-    name: 'Pro',
-    price: '$19.95',
+    name: 'Weekly Pro',
+    price: '$9.95',
     detail: 'For serious discretionary traders',
     cta: 'Upgrade to Pro',
     href: '/checkout?plan=PRO',
@@ -125,7 +125,7 @@ const pricing = [
   },
   {
     name: 'GoldX',
-    price: '$129.95',
+    price: '$99.95',
     detail: 'For elite XAUUSD automation',
     cta: 'Explore GoldX',
     href: '/pricing#goldx',

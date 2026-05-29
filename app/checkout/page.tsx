@@ -35,7 +35,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
-type PlanKey = 'FREE' | 'PRO' | 'TOP_TIER' | 'GOLDX' | 'GOLDX_PULSE';
+type PlanKey = 'FREE' | 'PRO' | 'TOP_TIER' | 'GOLDX';
 type CheckoutMethod = 'paypal' | 'card' | 'bank-transfer';
 type BankTransferBank = 'SCOTIABANK' | 'NCB';
 type AppliedCoupon = {
@@ -102,13 +102,13 @@ const planCatalog: Record<PlanKey, {
     features: ['2 analyses per day', 'Basic AI detection', 'Standard processing'],
   },
   PRO: {
-    name: 'TradeVision AI Pro',
-    price: 19.95,
-    period: '/month',
-    description: '300 analyses per month with premium structure logic.',
+    name: 'Weekly Pro',
+    price: 9.95,
+    period: '/week',
+    description: '100 analyses per week with premium structure logic.',
     icon: Crown,
     color: 'from-blue-500 to-purple-600',
-    features: ['300 analyses per month', 'Advanced Smart Money Concepts', 'Priority AI processing'],
+    features: ['100 analyses per week', 'Advanced Smart Money Concepts', 'Priority AI processing'],
   },
   TOP_TIER: {
     name: 'PRO+',
@@ -121,21 +121,12 @@ const planCatalog: Record<PlanKey, {
   },
   GOLDX: {
     name: 'GoldX',
-    price: 129.95,
+    price: 99.95,
     period: '/month',
     description: 'XAUUSD night scalping EA with a server-side strategy engine and license-based MT5 access.',
     icon: TrendingUp,
     color: 'from-amber-500 to-orange-500',
     features: ['XAUUSD Night Scalping EA', 'Fast / Prop / Hybrid Modes', 'Server-Side Strategy Engine', 'Realtime Execution Logic', 'License-Based MT5 Access'],
-  },
-  GOLDX_PULSE: {
-    name: 'GoldX Pulse',
-    price: 79.95,
-    period: '/month',
-    description: 'Deriv options workspace with live digit analytics, assisted execution panels, and server-side access control.',
-    icon: Zap,
-    color: 'from-cyan-500 via-sky-500 to-fuchsia-500',
-    features: ['Live Deriv tick stream', 'Digit analytics and streak detection', 'Matches / Differs trade panel', 'Over / Under range pressure panel', 'Dedicated GoldX Pulse access'],
   },
 };
 
@@ -406,7 +397,7 @@ function CheckoutPageContent() {
   const isCanceled = searchParams.get('canceled') === 'true';
   const requestedPlan = searchParams.get('plan')?.toUpperCase();
   const requestedCoupon = searchParams.get('coupon') || '';
-  const planKey: PlanKey = requestedPlan === 'FREE' || requestedPlan === 'TOP_TIER' || requestedPlan === 'PRO' || requestedPlan === 'GOLDX' || requestedPlan === 'GOLDX_PULSE' ? requestedPlan : 'PRO';
+  const planKey: PlanKey = requestedPlan === 'FREE' || requestedPlan === 'TOP_TIER' || requestedPlan === 'PRO' || requestedPlan === 'GOLDX' ? requestedPlan : 'PRO';
   const plan = planCatalog[planKey];
   const activeBillingAddress = sameAsShipping ? shippingAddress : billingAddress;
   const formReady = isAddressComplete(shippingAddress) && isAddressComplete(activeBillingAddress);
@@ -736,15 +727,6 @@ function CheckoutPageContent() {
                     <Button variant="gradient" size="lg">Open GoldX Dashboard</Button>
                   </Link>
                 </>
-              ) : requestedPlan === 'GOLDX_PULSE' ? (
-                <>
-                  <p className="text-muted-foreground mb-6">
-                    Your GoldX Pulse add-on is active. Open the workspace to connect Deriv and start using the live options dashboard.
-                  </p>
-                  <Link href="/dashboard/goldx-pulse">
-                    <Button variant="gradient" size="lg">Open GoldX Pulse</Button>
-                  </Link>
-                </>
               ) : (
                 <>
                   <p className="text-muted-foreground mb-6">
@@ -795,7 +777,7 @@ function CheckoutPageContent() {
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="font-semibold">{plan.name}</p>
-                          {planKey === 'TOP_TIER' ? <Badge variant="default">Includes Smart Session Scanner</Badge> : planKey === 'PRO' ? <Badge variant="outline">Premium</Badge> : planKey === 'GOLDX' ? <Badge variant="outline">EA Subscription</Badge> : planKey === 'GOLDX_PULSE' ? <Badge variant="outline">Add-On</Badge> : <Badge variant="secondary">Starter</Badge>}
+                          {planKey === 'TOP_TIER' ? <Badge variant="default">Includes Smart Session Scanner</Badge> : planKey === 'PRO' ? <Badge variant="outline">Premium</Badge> : planKey === 'GOLDX' ? <Badge variant="outline">EA Subscription</Badge> : <Badge variant="secondary">Starter</Badge>}
                         </div>
                         <p className="text-sm text-muted-foreground">{plan.description}</p>
                       </div>
@@ -826,7 +808,7 @@ function CheckoutPageContent() {
                         Billing Cycle
                       </div>
                       <p className="font-medium">Monthly subscription</p>
-                      <p className="text-sm text-muted-foreground">{planKey === 'GOLDX' ? 'GoldX license management stays available in your dashboard.' : planKey === 'GOLDX_PULSE' ? 'GoldX Pulse access is granted automatically after successful payment capture.' : 'Cancel anytime from your account.'}</p>
+                      <p className="text-sm text-muted-foreground">{planKey === 'GOLDX' ? 'GoldX license management stays available in your dashboard.' : 'Cancel anytime from your account.'}</p>
                     </div>
                   </div>
 

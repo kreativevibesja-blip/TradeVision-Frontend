@@ -126,13 +126,13 @@ const featureGuide = [
 
 const paidPlans = [
   {
-    name: 'PRO',
+    name: 'Weekly Pro',
     href: '/checkout?plan=PRO',
     icon: Crown,
     color: 'from-blue-500 to-purple-600',
     description: 'For traders who want deeper AI chart analysis without staying on the free tier.',
     features: [
-      '300 analyses per month',
+      '100 analyses per week',
       'Advanced Smart Money Concepts',
       'Priority AI processing',
     ],
@@ -170,7 +170,7 @@ const quickStart = [
   'Create an account or sign in.',
   'Start with Analyze to understand how the platform reads a chart.',
   'Move strong analyses into the Command Center and journal important outcomes.',
-  'Upgrade to PRO if you want higher usage and stronger core AI analysis.',
+  'Upgrade to Weekly Pro if you want 100 analyses per week and stronger core AI analysis.',
   'Upgrade to PRO+ if you want higher analysis capacity, scanner workflows, and faster execution support.',
   'Choose GoldX separately if you want the dedicated Gold trading system and EA flow.',
 ];

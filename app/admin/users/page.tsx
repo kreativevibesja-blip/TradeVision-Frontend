@@ -689,13 +689,6 @@ export default function AdminUsersPage() {
                           </p>
                         </div>
                       ) : null}
-                      {selectedUserDetails ? (
-                        <p className="mt-2 text-xs text-muted-foreground">
-                          GoldX Pulse: {selectedUserDetails.goldx.pulseActive
-                            ? `${selectedUserDetails.goldx.pulsePlanName || 'Active'}${selectedUserDetails.goldx.pulseExpiresAt ? ` until ${formatJamaicaDateTime(selectedUserDetails.goldx.pulseExpiresAt)}` : ''}`
-                            : 'Not active'}
-                        </p>
-                      ) : null}
                     </div>
                     {selectedUserDetails ? (
                       <Badge variant={selectedUserDetails.goldx.hasAccess ? 'success' : 'outline'}>

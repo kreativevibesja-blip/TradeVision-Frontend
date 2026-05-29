@@ -98,7 +98,7 @@ export default function AdminUpdatesPage() {
   const [imagePreviewUrl, setImagePreviewUrl] = useState('');
   const [imageUploading, setImageUploading] = useState(false);
   const [imageError, setImageError] = useState('');
-  const [targetPlan, setTargetPlan] = useState<'PRO' | 'TOP_TIER' | 'GOLDX' | 'GOLDX_PULSE' | ''>('');
+  const [targetPlan, setTargetPlan] = useState<'PRO' | 'TOP_TIER' | 'GOLDX' | ''>('');
   const [durationValue, setDurationValue] = useState('');
   const [durationUnit, setDurationUnit] = useState<'hours' | 'days'>('hours');
   const [countdownEnabled, setCountdownEnabled] = useState(false);
@@ -317,14 +317,13 @@ export default function AdminUpdatesPage() {
             <p className="mb-3 text-xs text-muted-foreground">Users will see a &ldquo;Get Plan Now&rdquo; button at the bottom of this update.</p>
             <select
               value={targetPlan}
-              onChange={(e) => setTargetPlan(e.target.value as 'PRO' | 'TOP_TIER' | 'GOLDX' | 'GOLDX_PULSE' | '')}
+              onChange={(e) => setTargetPlan(e.target.value as 'PRO' | 'TOP_TIER' | 'GOLDX' | '')}
               className="w-full rounded-lg border border-input bg-background/60 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="">None — no upgrade button</option>
-              <option value="PRO">PRO — $19.95/mo</option>
+              <option value="PRO">Weekly Pro — $9.95/week</option>
               <option value="TOP_TIER">PRO+ — $39.95/mo</option>
               <option value="GOLDX">GoldX — Gold trading system</option>
-              <option value="GOLDX_PULSE">GoldX Pulse — Deriv options workspace</option>
             </select>
           </div>
 
@@ -399,7 +398,7 @@ export default function AdminUpdatesPage() {
                         <Badge variant="outline">{a.expiresAt ? `Expires ${formatJamaicaDateTime(a.expiresAt)}` : 'No expiry'}</Badge>
                         {a.countdownEnabled ? <Badge className="border border-rose-400/30 bg-rose-400/15 text-rose-200">Live Countdown</Badge> : null}
                         {a.couponCode && <Badge className="border border-pink-400/30 bg-pink-400/15 text-pink-300">Coupon: {a.couponCode}</Badge>}
-                        {a.targetPlan && <Badge variant="outline">{a.targetPlan === 'TOP_TIER' ? 'PRO+' : a.targetPlan === 'GOLDX' ? 'GoldX' : a.targetPlan === 'GOLDX_PULSE' ? 'GoldX Pulse' : a.targetPlan}</Badge>}
+                        {a.targetPlan && <Badge variant="outline">{a.targetPlan === 'TOP_TIER' ? 'PRO+' : a.targetPlan === 'GOLDX' ? 'GoldX' : a.targetPlan === 'PRO' ? 'Weekly Pro' : a.targetPlan}</Badge>}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 self-start">
