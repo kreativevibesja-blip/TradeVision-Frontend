@@ -1,6 +1,19 @@
 import type { OrionIntentId, OrionQuickActionId } from '@/orion/types';
 
 const intentMatchers: Array<{ intent: OrionIntentId; tests: RegExp[] }> = [
+  { intent: 'ASSISTANCE_REQUEST', tests: [/can you assist me/i, /can you help me/i, /help me please/i, /i need help/i, /what can you help with/i, /how can you help me/i] },
+  { intent: 'CONFUSION_HELP', tests: [/i('?| a)?m confused/i, /this is confusing/i, /i don'?t understand/i, /i am lost/i, /i need guidance/i] },
+  { intent: 'NEW_USER_HELP', tests: [/i('?| a)?m new here/i, /i am a beginner/i, /i'm a beginner/i, /i just joined/i, /how do i start here/i] },
+  { intent: 'SETUP_EXPLANATION_HELP', tests: [/i need a setup explained/i, /help me understand this setup/i, /can you explain this setup/i, /explain this chart setup/i] },
+  { intent: 'FAILED_ANALYSIS_HELP', tests: [/my analysis failed/i, /analysis is failing/i, /chart upload failed/i, /my chart analysis is not working/i, /analysis didn'?t work/i] },
+  { intent: 'NEXT_STEP_HELP', tests: [/i('?| a)?m not sure what to do next/i, /what should i do next/i, /what is the next step/i, /where do i go from here/i] },
+  { intent: 'MISSED_TRADE_HELP', tests: [/i missed the trade/i, /i missed my entry/i, /the trade already moved/i, /price left without me/i] },
+  { intent: 'RUSHING_TRADE_HELP', tests: [/i want to rush this trade/i, /i want to enter now/i, /should i rush this/i, /i feel like chasing/i, /i do not want to miss this move/i] },
+  { intent: 'DISCIPLINE_HELP', tests: [/i keep losing discipline/i, /i am losing discipline/i, /i keep breaking my rules/i, /i keep overtrading/i, /how do i stay disciplined/i] },
+  { intent: 'FEATURE_ACCESS_HELP', tests: [/i can('?|no)t access this feature/i, /i can('?|no)t use this feature/i, /why can('?|no)t i access this/i, /why is this unavailable/i] },
+  { intent: 'FEATURE_LOCKED_HELP', tests: [/why is this locked/i, /this is locked/i, /why is this feature locked/i, /why can('?|no)t i open this feature/i] },
+  { intent: 'PLAN_REQUIREMENT_HELP', tests: [/which plan do i need for this/i, /what plan do i need/i, /what subscription do i need/i, /which tier do i need/i] },
+  { intent: 'UPGRADE_NOW_HELP', tests: [/i want to upgrade now/i, /upgrade me/i, /how do i upgrade/i, /take me to upgrade/i] },
   { intent: 'TRADEVISION_EXPLAIN', tests: [/what is tradevision/i, /what is tradevision ai/i, /tell me about tradevision/i, /what does tradevision do/i] },
   { intent: 'TRADE_RADAR_EXPLAIN', tests: [/what is trade radar/i, /tell me about trade radar/i, /how does trade radar work/i] },
   { intent: 'COMMAND_CENTER_EXPLAIN', tests: [/what is command center/i, /tell me about command center/i, /how does command center work/i] },

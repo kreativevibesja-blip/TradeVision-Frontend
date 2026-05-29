@@ -225,6 +225,144 @@ function buildTradingAdviceResponse(pageContext: OrionPageContext): OrionPlanned
   }];
 }
 
+function buildAssistanceResponse(pageContext: OrionPageContext): OrionPlannedMessage[] {
+  return [
+    {
+      text: `Yes. I can help with chart analysis, live chart routing, Trade Radar, risk guidance, strategy terms, subscriptions, and support from ${pageContext.knowledge.label}.`,
+    },
+    {
+      text: 'Try one of these questions: “analyze my chart”, “take me to live charts”, “explain Trade Radar”, “help me with risk management”, “what plan should I choose?”, or “open support”.',
+      choices: [
+        { id: 'assist-analysis', label: 'Analyze my chart', followUpMessage: 'Say analyze, analyse, or analysis and I will route you into the chart flow.' },
+        { id: 'assist-live', label: 'Take me to live charts', followUpMessage: 'Ask for live charts and I will route you to forex or deriv.' },
+        { id: 'assist-risk', label: 'Help with risk', followUpMessage: 'Ask about risk management, stop loss, invalidation, or discipline and I will break it down.' },
+        { id: 'assist-radar', label: 'Explain Trade Radar', followUpMessage: 'Trade Radar tracks setups that are already worth monitoring so you can review confirmation without forcing random trades.' },
+      ],
+    },
+    {
+      text: 'If you want the fastest platform flow, start with analysis, then pressure the setup with Command Center or monitor it in Trade Radar.',
+      choices: [
+        { id: 'assist-platform', label: 'Show platform flow', trigger: { type: 'navigate', href: '/platform' } },
+        { id: 'assist-pricing', label: 'Compare plans', trigger: { type: 'navigate', href: '/pricing' } },
+        { id: 'assist-support', label: 'Open support', trigger: { type: 'open-support-ticket' } },
+      ],
+    },
+  ];
+}
+
+function buildConfusionHelpResponse(pageContext: OrionPageContext): OrionPlannedMessage[] {
+  return [
+    {
+      text: `Let’s simplify it. You are on ${pageContext.knowledge.label}, and the cleanest next step is to choose whether you want analysis, platform guidance, or support.`,
+      choices: [
+        { id: 'confused-analysis', label: 'Start with analysis', followUpMessage: 'Say analyze, analyse, or analysis and I will route you into the chart flow.' },
+        { id: 'confused-platform', label: 'Show me the platform flow', trigger: { type: 'navigate', href: '/platform' } },
+        { id: 'confused-support', label: 'I need support', trigger: { type: 'open-support-ticket' } },
+      ],
+    },
+    {
+      text: 'If you want the shortest path: upload a chart to get structure first, then use Radar or Command Center only after the setup is worth keeping.',
+    },
+  ];
+}
+
+function buildNewUserHelpResponse(): OrionPlannedMessage[] {
+  return [{
+    text: 'If you are new here, start in this order: learn the platform flow, run one clean chart analysis, then use Trade Radar only for setups that still deserve attention.',
+    choices: [
+      { id: 'new-user-platform', label: 'Show platform flow', trigger: { type: 'navigate', href: '/platform' } },
+      { id: 'new-user-analysis', label: 'Start analysis', followUpMessage: 'Say analyze, analyse, or analysis and I will route you into the chart flow.' },
+      { id: 'new-user-risk', label: 'Teach me risk first', followUpMessage: 'Start with invalidation, stop placement, and position size. If those are weak, the setup is not ready.' },
+    ],
+  }];
+}
+
+function buildSetupExplanationHelpResponse(pageContext: OrionPageContext): OrionPlannedMessage[] {
+  if (pageContext.focusContext?.kind === 'analysis') {
+    return [{
+      text: `I can explain the active ${pageContext.focusContext.analysis.pair} ${pageContext.focusContext.analysis.timeframe} analysis on this page. Ask me to explain the setup and I will break down structure, confidence, invalidation, and execution implications.`,
+      choices: [
+        { id: 'setup-explain-active', label: 'Explain this setup', followUpMessage: `This setup is ${pageContext.focusContext.analysis.trend} with ${pageContext.focusContext.analysis.confidence}% confidence and a ${pageContext.focusContext.analysis.signalType} profile. Review invalidation first before deciding whether it deserves execution planning.` },
+        { id: 'setup-check-risk', label: 'Check the risk first', followUpMessage: 'Start with invalidation and the stop location. If the thesis is not clearly wrong at a defined level, the setup is not ready.' },
+      ],
+    }];
+  }
+
+  return [{
+    text: 'Bring me a chart or open an active analysis and I can explain the setup in terms of structure, liquidity, invalidation, and whether it deserves tracking.',
+    choices: [
+      { id: 'setup-open-analysis', label: 'Start analysis', followUpMessage: 'Say analyze, analyse, or analysis and I will route you into the chart flow.' },
+      { id: 'setup-open-live', label: 'Open live charts', followUpMessage: 'Ask for live charts and I will route you to forex or deriv.' },
+    ],
+  }];
+}
+
+function buildFailedAnalysisHelpResponse(): OrionPlannedMessage[] {
+  return [
+    {
+      text: 'If analysis failed, the fastest check is the chart input itself: use a clear screenshot, confirm the market and timeframe, and avoid low-quality or blank images.',
+      choices: [
+        { id: 'failed-analysis-retry', label: 'Retry analysis', followUpMessage: 'Say analyze, analyse, or analysis and I will route you into the chart flow again.' },
+        { id: 'failed-analysis-support', label: 'Open support', trigger: { type: 'open-support-ticket' } },
+        { id: 'failed-analysis-guide', label: 'What does a good chart need?', followUpMessage: 'A good chart should be clear, readable, and focused on the relevant structure. Clean screenshots give Orion the strongest read.' },
+      ],
+    },
+    {
+      text: 'If the problem keeps happening after a retry, open support and include what market you used, what page you were on, and what failed.',
+    },
+  ];
+}
+
+function buildNextStepHelpResponse(pageContext: OrionPageContext): OrionPlannedMessage[] {
+  return [{
+    text: `The next step depends on whether you need clarity, execution review, or monitoring. From ${pageContext.knowledge.label}, the clean path is analysis first, then Command Center or Trade Radar only if the setup still deserves attention.`,
+    choices: [
+      { id: 'next-step-analysis', label: 'Start analysis', followUpMessage: 'Say analyze, analyse, or analysis and I will route you into the chart flow.' },
+      { id: 'next-step-radar', label: 'Open Trade Radar', trigger: { type: 'navigate', href: '/dashboard/radar' } },
+      { id: 'next-step-platform', label: 'Show platform flow', trigger: { type: 'navigate', href: '/platform' } },
+    ],
+  }];
+}
+
+function buildMissedTradeHelpResponse(): OrionPlannedMessage[] {
+  return [
+    {
+      text: 'If you missed the trade, do not turn that into a worse trade by chasing it. Missed entries are cheaper than forced entries taken without structure.',
+      choices: [
+        { id: 'missed-trade-wait', label: 'What should I do instead?', followUpMessage: 'Wait for a new structure confirmation, a cleaner pullback, or a fresh setup. The market will keep offering decisions.' },
+        { id: 'missed-trade-radar', label: 'Track the idea instead', followUpMessage: 'Use Trade Radar only if the thesis is still valid and the setup still deserves monitoring.' },
+        { id: 'missed-trade-analysis', label: 'Re-analyze the chart', followUpMessage: 'Say analyze, analyse, or analysis and I will route you into the chart flow again.' },
+      ],
+    },
+  ];
+}
+
+function buildRushingTradeHelpResponse(): OrionPlannedMessage[] {
+  return [
+    {
+      text: 'Do not reward urgency unless structure supports it. Rushing usually means the market is controlling you instead of you controlling the decision.',
+      choices: [
+        { id: 'rush-checklist', label: 'What should I check first?', followUpMessage: 'Check invalidation, entry quality, and whether the setup still has acceptable downside. If any of those are weak, slow down.' },
+        { id: 'rush-risk', label: 'Give me risk guidance', followUpMessage: 'Reduce size, define invalidation first, and refuse the trade if the stop only exists to justify action.' },
+        { id: 'rush-setup', label: 'Judge the setup first', followUpMessage: 'Bring the chart into analysis before making the entry decision.' },
+      ],
+    },
+  ];
+}
+
+function buildDisciplineHelpResponse(): OrionPlannedMessage[] {
+  return [
+    {
+      text: 'Discipline usually breaks when rules are vague, size is too large, or activity is driven by emotion instead of process. The fix is structure, not motivation.',
+      choices: [
+        { id: 'discipline-rules', label: 'How do I tighten my rules?', followUpMessage: 'Make the rules observable: exact invalidation, exact risk, exact entry condition, and an automatic no-trade if those are missing.' },
+        { id: 'discipline-overtrade', label: 'How do I stop overtrading?', followUpMessage: 'Reduce exposure, reduce screen noise, and only act when the setup meets the standard you would trust in your journal review.' },
+        { id: 'discipline-journal', label: 'Use the journal to improve', followUpMessage: 'Journal every broken rule. Repeated discipline failure should be visible, not hidden.' },
+      ],
+    },
+  ];
+}
+
 function isAnalysisKeywordPrompt(input: string) {
   return /\banalysis\b|\banaly[sz]e\b/i.test(input);
 }
@@ -237,6 +375,72 @@ function buildAnalysisIntentPrompt(): OrionPlannedMessage[] {
       { id: 'analysis-intent-no', label: 'No' },
     ],
   }];
+}
+
+function getReadableSubscription(subscription: string | null) {
+  switch (subscription) {
+    case 'TOP_TIER':
+      return 'PRO+';
+    case 'FREE':
+    case 'PRO':
+    case 'GOLDX':
+      return subscription;
+    default:
+      return subscription ?? 'FREE';
+  }
+}
+
+function buildFeatureAccessHelpResponse(user: WorkflowInput['user']): OrionPlannedMessage[] {
+  const plan = getReadableSubscription(user.subscription);
+  return [{
+    text: `Your current plan is ${plan}. If a feature is unavailable, it is usually either plan-gated or context-specific to a different workspace.`,
+    choices: [
+      { id: 'feature-access-plan', label: 'Which plan do I need?', followUpMessage: 'Ask which plan you need for the feature and Orion will help compare the likely access path.' },
+      { id: 'feature-access-pricing', label: 'Open pricing', trigger: { type: 'navigate', href: '/pricing' } },
+      { id: 'feature-access-support', label: 'Open support', trigger: { type: 'open-support-ticket' } },
+    ],
+  }];
+}
+
+function buildFeatureLockedHelpResponse(user: WorkflowInput['user']): OrionPlannedMessage[] {
+  const plan = getReadableSubscription(user.subscription);
+  return [
+    {
+      text: `Locked features usually mean one of two things: your ${plan} plan does not include that workflow, or the feature only opens from a specific page or analysis state.`,
+      choices: [
+        { id: 'feature-locked-upgrade', label: 'Show upgrade options', trigger: { type: 'navigate', href: '/pricing' } },
+        { id: 'feature-locked-platform', label: 'Show platform flow', trigger: { type: 'navigate', href: '/platform' } },
+        { id: 'feature-locked-support', label: 'Contact support', trigger: { type: 'open-support-ticket' } },
+      ],
+    },
+  ];
+}
+
+function buildPlanRequirementHelpResponse(user: WorkflowInput['user']): OrionPlannedMessage[] {
+  const plan = getReadableSubscription(user.subscription);
+  return [
+    {
+      text: `You are currently on ${plan}. In general, Free is for validating the workflow, Pro is for stronger core analysis, PRO+ is for deeper execution and premium workflows, and GoldX is for the dedicated GoldX stack.`,
+      choices: [
+        { id: 'plan-req-pricing', label: 'Compare plans', trigger: { type: 'navigate', href: '/pricing' } },
+        { id: 'plan-req-pro', label: 'Who should use Pro?', followUpMessage: 'Choose Pro if your main need is stronger core chart analysis without the deepest premium workflow stack.' },
+        { id: 'plan-req-proplus', label: 'Who should use PRO+?', followUpMessage: 'Choose PRO+ if you need deeper execution support, premium workflow depth, and stronger operating-system style guidance.' },
+      ],
+    },
+  ];
+}
+
+function buildUpgradeNowHelpResponse(): OrionPlannedMessage[] {
+  return [
+    {
+      text: 'If you are ready to upgrade, the clean next step is to compare the plans against the workflow you actually need, then move through pricing instead of guessing from a locked feature.',
+      choices: [
+        { id: 'upgrade-now-pricing', label: 'Open pricing', trigger: { type: 'navigate', href: '/pricing' } },
+        { id: 'upgrade-now-plan-help', label: 'Which plan fits me?', followUpMessage: 'If you mainly want stronger analysis, start with Pro. If you want deeper execution and premium workflows, look at PRO+.' },
+        { id: 'upgrade-now-support', label: 'Need billing help', trigger: { type: 'open-support-ticket' } },
+      ],
+    },
+  ];
 }
 
 function buildAnalysisSurfacePrompt(): OrionPlannedMessage[] {
@@ -416,6 +620,84 @@ export function resolveOrionReply({ input, pageContext, workflow, activity, user
       return {
         messages: [{ text: `${transition} ${pageContext.knowledge.summary}` }],
         nextWorkflow: { type: 'idle' },
+      };
+    case 'ASSISTANCE_REQUEST':
+      return {
+        messages: buildAssistanceResponse(pageContext),
+        nextWorkflow: { type: 'idle' },
+        memoryAction: 'platform-tour',
+      };
+    case 'CONFUSION_HELP':
+      return {
+        messages: buildConfusionHelpResponse(pageContext),
+        nextWorkflow: { type: 'idle' },
+        memoryAction: 'platform-tour',
+      };
+    case 'NEW_USER_HELP':
+      return {
+        messages: buildNewUserHelpResponse(),
+        nextWorkflow: { type: 'idle' },
+        memoryAction: 'platform-tour',
+      };
+    case 'SETUP_EXPLANATION_HELP':
+      return {
+        messages: buildSetupExplanationHelpResponse(pageContext),
+        nextWorkflow: { type: 'idle' },
+        memoryAction: 'explain-setup',
+      };
+    case 'FAILED_ANALYSIS_HELP':
+      return {
+        messages: buildFailedAnalysisHelpResponse(),
+        nextWorkflow: { type: 'idle' },
+        memoryAction: 'support-problem-detected',
+      };
+    case 'NEXT_STEP_HELP':
+      return {
+        messages: buildNextStepHelpResponse(pageContext),
+        nextWorkflow: { type: 'idle' },
+        memoryAction: 'platform-tour',
+      };
+    case 'MISSED_TRADE_HELP':
+      return {
+        messages: buildMissedTradeHelpResponse(),
+        nextWorkflow: { type: 'idle' },
+        memoryAction: 'risk-guidance',
+      };
+    case 'RUSHING_TRADE_HELP':
+      return {
+        messages: buildRushingTradeHelpResponse(),
+        nextWorkflow: { type: 'idle' },
+        memoryAction: 'risk-guidance',
+      };
+    case 'DISCIPLINE_HELP':
+      return {
+        messages: buildDisciplineHelpResponse(),
+        nextWorkflow: { type: 'idle' },
+        memoryAction: 'reviewed-journal',
+      };
+    case 'FEATURE_ACCESS_HELP':
+      return {
+        messages: buildFeatureAccessHelpResponse(user),
+        nextWorkflow: { type: 'idle' },
+        memoryAction: 'account-assistance',
+      };
+    case 'FEATURE_LOCKED_HELP':
+      return {
+        messages: buildFeatureLockedHelpResponse(user),
+        nextWorkflow: { type: 'idle' },
+        memoryAction: 'account-assistance',
+      };
+    case 'PLAN_REQUIREMENT_HELP':
+      return {
+        messages: buildPlanRequirementHelpResponse(user),
+        nextWorkflow: { type: 'idle' },
+        memoryAction: 'subscription-help',
+      };
+    case 'UPGRADE_NOW_HELP':
+      return {
+        messages: buildUpgradeNowHelpResponse(),
+        nextWorkflow: { type: 'idle' },
+        memoryAction: 'subscription-help',
       };
     case 'TRADEVISION_EXPLAIN':
       return {
@@ -638,7 +920,15 @@ export function resolveOrionReply({ input, pageContext, workflow, activity, user
     case 'UNKNOWN':
     default:
       return {
-        messages: [{ text: `I can help with analysis, Trade Radar, journal insights, subscriptions, support, glossary terms, and platform workflows. ${pageContext.knowledge.suggestions[0]}` }],
+        messages: [{
+          text: `I can help with analysis, live charts, Trade Radar, journal insights, subscriptions, support, glossary terms, and platform workflows. ${pageContext.knowledge.suggestions[0]}`,
+          choices: [
+            { id: 'unknown-analysis', label: 'Analyze a chart', followUpMessage: 'Say analyze, analyse, or analysis and I will route you into the chart flow.' },
+            { id: 'unknown-live', label: 'Open live charts', followUpMessage: 'Ask for live charts and I will route you to forex or deriv.' },
+            { id: 'unknown-risk', label: 'Risk guidance', followUpMessage: 'Ask about risk management, stop loss, invalidation, or discipline and I will break it down.' },
+            { id: 'unknown-support', label: 'Open support', trigger: { type: 'open-support-ticket' } },
+          ],
+        }],
         nextWorkflow: { type: 'idle' },
       };
   }
