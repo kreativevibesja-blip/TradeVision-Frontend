@@ -162,14 +162,16 @@ function BullSilhouette() {
         </linearGradient>
       </defs>
       <path
-        d="M19 72 C29 56, 47 49, 63 48 C75 33, 94 28, 116 30 C128 24, 142 22, 158 26 C166 19, 177 14, 194 12 C186 22, 184 31, 188 39 C197 46, 201 58, 197 71 C189 66, 183 66, 177 69 C170 74, 162 78, 149 79 C145 91, 138 102, 126 108 L118 108 C122 97, 122 88, 118 79 L96 79 C93 92, 87 102, 77 109 L68 109 C71 97, 71 87, 68 79 C51 78, 38 78, 27 84 C23 82, 20 77, 19 72 Z"
+        d="M30 78 C38 63, 54 53, 76 50 C90 39, 107 32, 127 31 C143 30, 158 33, 171 39 C180 31, 191 30, 201 34 C197 41, 195 48, 197 56 C205 63, 208 72, 205 82 C198 79, 192 79, 186 82 C177 90, 166 95, 147 97 C142 106, 134 112, 122 116 L114 116 C117 107, 117 100, 114 96 L94 96 C92 105, 86 112, 75 117 L66 117 C69 106, 69 99, 66 95 C53 93, 43 90, 35 86 C33 84, 31 81, 30 78 Z"
         fill="url(#bull-fill)"
         stroke="rgba(187,247,208,0.42)"
         strokeWidth="2"
       />
-      <path d="M176 27 C184 22, 191 21, 198 24" fill="none" stroke="rgba(220,252,231,0.85)" strokeWidth="3" strokeLinecap="round" />
-      <path d="M176 28 C181 15, 191 10, 205 8" fill="none" stroke="rgba(220,252,231,0.85)" strokeWidth="3" strokeLinecap="round" />
-      <circle cx="162" cy="40" r="3.5" fill="rgba(236,253,245,0.95)" />
+      <path d="M171 39 C180 28, 192 25, 204 30" fill="none" stroke="rgba(220,252,231,0.85)" strokeWidth="3" strokeLinecap="round" />
+      <path d="M170 40 C178 21, 192 12, 209 12" fill="none" stroke="rgba(220,252,231,0.85)" strokeWidth="3" strokeLinecap="round" />
+      <path d="M186 55 C196 58, 202 66, 202 77" fill="none" stroke="rgba(220,252,231,0.82)" strokeWidth="3" strokeLinecap="round" />
+      <circle cx="154" cy="47" r="3.5" fill="rgba(236,253,245,0.95)" />
+      <path d="M129 62 C135 65, 140 69, 144 75" fill="none" stroke="rgba(236,253,245,0.45)" strokeWidth="2.5" strokeLinecap="round" />
     </svg>
   );
 }
@@ -184,14 +186,15 @@ function BearSilhouette() {
         </linearGradient>
       </defs>
       <path
-        d="M202 74 C195 58, 182 49, 166 46 C155 32, 137 27, 116 30 C103 24, 88 24, 76 28 C67 20, 55 16, 41 16 C48 25, 50 34, 47 42 C37 47, 31 57, 30 70 C38 66, 45 67, 52 71 C59 77, 69 80, 83 81 C86 93, 94 102, 107 108 L116 108 C111 95, 111 86, 116 79 L138 79 C141 92, 148 102, 159 109 L169 109 C165 96, 165 86, 168 78 C182 77, 193 78, 202 74 Z"
+        d="M192 79 C185 62, 173 53, 157 49 C147 39, 135 35, 121 36 C111 30, 99 28, 87 32 C79 26, 69 23, 56 25 C46 29, 38 36, 34 47 C26 51, 21 58, 19 68 C18 76, 20 83, 25 89 C33 91, 42 90, 49 88 C53 97, 60 106, 70 112 L80 112 C76 103, 76 95, 79 89 L105 89 C109 98, 116 107, 126 113 L136 113 C132 104, 132 95, 135 89 C149 88, 162 87, 174 84 C181 83, 187 82, 192 79 Z"
         fill="url(#bear-fill)"
         stroke="rgba(254,205,211,0.4)"
         strokeWidth="2"
       />
-      <circle cx="60" cy="30" r="8" fill="rgba(251,191,202,0.28)" stroke="rgba(255,228,230,0.5)" strokeWidth="2" />
-      <circle cx="42" cy="29" r="7" fill="rgba(251,191,202,0.24)" stroke="rgba(255,228,230,0.5)" strokeWidth="2" />
-      <circle cx="73" cy="42" r="3.5" fill="rgba(255,241,242,0.95)" />
+      <circle cx="48" cy="35" r="9" fill="rgba(251,191,202,0.28)" stroke="rgba(255,228,230,0.5)" strokeWidth="2" />
+      <circle cx="32" cy="39" r="7.5" fill="rgba(251,191,202,0.24)" stroke="rgba(255,228,230,0.5)" strokeWidth="2" />
+      <circle cx="64" cy="50" r="3.5" fill="rgba(255,241,242,0.95)" />
+      <path d="M69 61 C76 61, 81 64, 86 69" fill="none" stroke="rgba(255,241,242,0.45)" strokeWidth="2.5" strokeLinecap="round" />
     </svg>
   );
 }
