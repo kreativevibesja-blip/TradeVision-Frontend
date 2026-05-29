@@ -1234,16 +1234,6 @@ export const api = {
       method: 'POST',
       token,
     }),
-  cancelGoldxPulseSubscription: (token: string) =>
-    apiFetch<{ success: boolean; billing: BillingSummary }>('/goldx-pulse/cancel-subscription', {
-      method: 'POST',
-      token,
-    }),
-  renewGoldxPulseSubscription: (token: string) =>
-    apiFetch<{ success: boolean; billing: BillingSummary }>('/goldx-pulse/renew-subscription', {
-      method: 'POST',
-      token,
-    }),
 
   // Tickets
   createTicket: (
@@ -1441,13 +1431,13 @@ export const api = {
         token,
       });
     },
-    createAnnouncement: (data: { title: string; content: string; durationValue?: number; durationUnit?: 'hours' | 'days'; type?: AnnouncementType; couponCode?: string; imageUrl?: string; countdownEnabled?: boolean; targetPlan?: 'PRO' | 'TOP_TIER' | 'GOLDX' | 'GOLDX_PULSE' }, token: string) =>
+    createAnnouncement: (data: { title: string; content: string; durationValue?: number; durationUnit?: 'hours' | 'days'; type?: AnnouncementType; couponCode?: string; imageUrl?: string; countdownEnabled?: boolean; targetPlan?: 'PRO' | 'TOP_TIER' | 'GOLDX' }, token: string) =>
       apiFetch<{ announcement: Announcement }>('/admin/announcements', {
         method: 'POST',
         body: JSON.stringify(data),
         token,
       }),
-    updateAnnouncement: (id: string, data: { title?: string; content?: string; isActive?: boolean; durationValue?: number; durationUnit?: 'hours' | 'days'; clearExpiry?: boolean; type?: AnnouncementType; couponCode?: string; imageUrl?: string; countdownEnabled?: boolean; targetPlan?: 'PRO' | 'TOP_TIER' | 'GOLDX' | 'GOLDX_PULSE' }, token: string) =>
+    updateAnnouncement: (id: string, data: { title?: string; content?: string; isActive?: boolean; durationValue?: number; durationUnit?: 'hours' | 'days'; clearExpiry?: boolean; type?: AnnouncementType; couponCode?: string; imageUrl?: string; countdownEnabled?: boolean; targetPlan?: 'PRO' | 'TOP_TIER' | 'GOLDX' }, token: string) =>
       apiFetch<{ announcement: Announcement }>(`/admin/announcements/${encodeURIComponent(id)}`, {
         method: 'PATCH',
         body: JSON.stringify(data),
