@@ -17,12 +17,10 @@ import {
 } from 'lucide-react';
 
 const navLinks = [
-  { label: 'Features', href: '/#features' },
-  { label: 'How It Works', href: '/#how-it-works' },
-  { label: 'Pricing', href: '/#pricing' },
-  { label: 'About', href: '/#about' },
-  { label: 'Testimonials', href: '/#testimonials' },
-  { label: 'FAQ', href: '/#faq' },
+  { label: 'AI Analysis', href: '/analyze' },
+  { label: 'Intelligence', href: '/platform' },
+  { label: 'Mentorship', href: '/trade-examples' },
+  { label: 'Pricing', href: '/pricing' },
 ];
 
 export function Navbar() {
