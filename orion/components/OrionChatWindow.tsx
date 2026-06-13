@@ -78,7 +78,7 @@ export function OrionChatWindow({
           dragElastic={0.04}
           dragConstraints={{ top: 0, bottom: 0 }}
           onDragEnd={handleDragEnd}
-          className="pointer-events-auto relative z-[80] flex h-[min(30rem,calc(100vh-7rem))] w-[min(21rem,calc(100vw-1.5rem))] origin-bottom-right flex-col overflow-hidden rounded-[18px] border border-slate-200 bg-white text-slate-900 shadow-[0_18px_50px_rgba(15,23,42,0.18)] max-sm:h-[min(16.75rem,calc(100vh-10rem))] max-sm:w-[min(16.75rem,calc(100vw-2rem))]"
+          className="pointer-events-auto relative z-[80] flex h-[min(40rem,calc(100vh-8rem))] w-[min(23rem,calc(100vw-1.5rem))] max-w-[23rem] origin-bottom-right flex-col overflow-hidden rounded-[18px] border border-slate-200 bg-white text-slate-900 shadow-[0_18px_50px_rgba(15,23,42,0.18)] max-sm:h-[min(34rem,calc(100vh-6rem))] max-sm:w-[min(22rem,calc(100vw-1.5rem))]"
           style={{ backgroundColor: '#ffffff', color: '#0f172a', borderColor: '#e2e8f0' }}
         >
           <div
@@ -104,7 +104,7 @@ export function OrionChatWindow({
           </div>
 
           <div ref={scrollRef} className="flex-1 space-y-3 overflow-x-hidden overflow-y-auto bg-white px-3 py-3 text-slate-900 max-sm:space-y-2.5 max-sm:px-2.5 max-sm:py-2.5" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>
-            <div className="max-w-full rounded-[16px] border border-sky-100 bg-sky-50 px-3 py-2.5 text-xs leading-5 text-blue-700 [overflow-wrap:anywhere]" style={{ backgroundColor: '#eff6ff', color: '#1d4ed8', borderColor: '#dbeafe' }}>
+            <div className="max-w-full whitespace-normal rounded-[16px] border border-sky-100 bg-sky-50 px-3 py-2.5 text-xs leading-5 text-blue-700 [overflow-wrap:anywhere] [word-break:break-word]" style={{ backgroundColor: '#eff6ff', color: '#1d4ed8', borderColor: '#dbeafe' }}>
               <span className="font-semibold text-blue-900" style={{ color: '#1e3a8a' }}>{pageLabel}</span>
               <span className="text-blue-700" style={{ color: '#2563eb' }}> · {pageSummary}</span>
             </div>

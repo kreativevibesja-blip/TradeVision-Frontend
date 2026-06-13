@@ -36,7 +36,7 @@ export function OrionQuickActions({
   onAction: (actionId: OrionQuickActionId) => void;
 }) {
   return (
-    <div className="grid gap-2 sm:grid-cols-2">
+    <div className="grid gap-2">
       {actions.map((action, index) => {
         const Icon = iconMap[action.icon];
 
@@ -58,7 +58,7 @@ export function OrionQuickActions({
               </div>
               <div className="min-w-0">
                 <div className="text-sm font-semibold text-slate-900" style={{ color: '#0f172a' }}>{action.label}</div>
-                <div className="mt-1 text-xs leading-5 text-slate-600" style={{ color: '#475569' }}>{action.description}</div>
+                <div className="mt-1 whitespace-normal text-xs leading-5 text-slate-600 [overflow-wrap:anywhere] [word-break:break-word]" style={{ color: '#475569' }}>{action.description}</div>
               </div>
             </div>
           </motion.button>
