@@ -194,7 +194,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="relative z-20 -mt-12 px-4">
+      <section id="testimonials" className="relative z-20 -mt-12 px-4">
         <div className="mx-auto grid max-w-6xl gap-4 rounded-[14px] border border-[#e5ecfb] bg-white p-5 shadow-[0_18px_55px_rgba(28,61,121,0.16)] sm:grid-cols-2 lg:grid-cols-4 lg:p-6">
           {trustItems.map((item) => (
             <div key={item.title} className="flex gap-4">
@@ -210,7 +210,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="bg-white px-4 pb-14 pt-12">
+      <section id="how-it-works" className="bg-white px-4 pb-14 pt-12">
         <div className="mx-auto max-w-5xl text-center">
           <div className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#176dff]">How it works</div>
           <h2 className="mt-2 text-3xl font-extrabold tracking-[-0.04em] sm:text-4xl">Simple. Fast. Powerful.</h2>
@@ -241,7 +241,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="bg-[#f4f8ff] px-4 py-10">
+      <section id="features" className="bg-[#f4f8ff] px-4 py-10">
         <div className="mx-auto grid max-w-6xl items-center gap-8 lg:grid-cols-[0.42fr_0.58fr]">
           <div>
             <div className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#176dff]">Built for traders</div>
@@ -274,7 +274,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="overflow-hidden bg-[linear-gradient(105deg,#031744_0%,#04246d_48%,#351889_100%)] px-4 text-white">
+      <section id="about" className="overflow-hidden bg-[linear-gradient(105deg,#031744_0%,#04246d_48%,#351889_100%)] px-4 text-white">
         <div className="mx-auto grid max-w-6xl items-center gap-8 py-8 lg:grid-cols-[0.22fr_0.28fr_0.5fr]">
           <Image
             src="/landing/orion-mentor.png"
@@ -303,7 +303,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="bg-white px-4 py-8">
+      <section id="pricing" className="bg-white px-4 py-8">
         <div className="mx-auto max-w-5xl text-center">
           <div className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#176dff]">Pricing</div>
           <h2 className="mt-2 text-2xl font-extrabold tracking-[-0.04em] sm:text-3xl">Simple Pricing. No Hidden Fees.</h2>
@@ -340,7 +340,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="bg-white px-4 pb-8">
+      <section id="faq" className="bg-white px-4 pb-8">
         <div className="mx-auto flex max-w-6xl flex-col gap-6 rounded-[10px] bg-[linear-gradient(100deg,#031744_0%,#05246c_100%)] px-8 py-6 text-white shadow-[0_16px_38px_rgba(4,21,65,0.22)] sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-6">
             <div className="hidden h-16 w-16 items-center justify-center rounded-full border border-[#3293ff]/40 text-[#3293ff] sm:flex">
