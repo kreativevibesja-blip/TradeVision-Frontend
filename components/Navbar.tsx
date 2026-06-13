@@ -1,12 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { AuthModal } from '@/components/AuthModal';
-import { BrandLogo } from '@/components/BrandLogo';
 import {
   Menu,
   X,
@@ -15,6 +15,15 @@ import {
   LayoutDashboard,
   Shield,
 } from 'lucide-react';
+
+const navLinks = [
+  { label: 'Features', href: '/#features' },
+  { label: 'How It Works', href: '/#how-it-works' },
+  { label: 'Pricing', href: '/#pricing' },
+  { label: 'About', href: '/#about' },
+  { label: 'Testimonials', href: '/#testimonials' },
+  { label: 'FAQ', href: '/#faq' },
+];
 
 export function Navbar() {
   const { user, logout } = useAuth();
@@ -32,82 +41,72 @@ export function Navbar() {
       <motion.nav
         initial={false}
         animate={{ y: 0 }}
-        className="fixed top-0 left-0 right-0 z-50 border-b border-[rgba(96,165,250,0.16)] bg-[rgba(3,7,18,0.76)] backdrop-blur-2xl"
+        className="fixed left-0 right-0 top-0 z-50 bg-[#020916]/88 backdrop-blur-xl"
       >
-        <div className="page-shell flex h-20 items-center justify-between gap-4">
-          <BrandLogo />
+        <div className="page-shell flex h-16 items-center justify-between gap-6 lg:h-[68px]">
+          <Link href="/" className="flex shrink-0 items-center">
+            <Image
+              src="/landing/tradevision-logo.png"
+              alt="TradeVision"
+              width={140}
+              height={28}
+              priority
+              className="h-7 w-auto"
+            />
+          </Link>
 
           {/* Desktop Nav */}
-          <div className="hidden items-center gap-3 md:flex lg:gap-5">
-            <div className="hidden items-center gap-1 rounded-full border border-[rgba(96,165,250,0.14)] bg-white/[0.03] p-1 lg:flex">
-              <Link href="/analyze" className="rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:bg-white/[0.04] hover:text-foreground">
-                AI Analysis
-              </Link>
-              <Link href="/platform" className="rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:bg-white/[0.04] hover:text-foreground">
-                Intelligence
-              </Link>
-              <Link href="/trade-examples" className="rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:bg-white/[0.04] hover:text-foreground">
-                Mentorship
-              </Link>
-              <Link href="/pricing" className="rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:bg-white/[0.04] hover:text-foreground">
-                Pricing
-              </Link>
+          <div className="hidden flex-1 items-center justify-between gap-6 md:flex">
+            <div className="flex flex-1 items-center justify-center gap-8 lg:gap-10">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  className="text-[13px] font-semibold text-white transition-colors hover:text-[#60a5ff]"
+                >
+                  {link.label}
+                </Link>
+              ))}
             </div>
-            <Link href="/analyze" className="text-sm text-muted-foreground transition-colors hover:text-foreground lg:hidden">
-              Analyze
-            </Link>
-            <Link href="/platform" className="text-sm text-muted-foreground transition-colors hover:text-foreground lg:hidden">
-              Platform
-            </Link>
-            <Link href="/trade-examples" className="text-sm text-muted-foreground transition-colors hover:text-foreground lg:hidden">
-              Education
-            </Link>
-            <Link href="/pricing" className="text-sm text-muted-foreground transition-colors hover:text-foreground lg:hidden">
-              Pricing
-            </Link>
             {user ? (
-              <div className="flex items-center gap-2">
+              <div className="flex shrink-0 items-center gap-2">
                 <Link href="/dashboard">
-                  <Button variant="outline" size="sm" className="min-h-11 gap-2">
-                    <LayoutDashboard className="h-4 w-4 mr-2" />
+                  <Button variant="ghost" size="sm" className="min-h-10 border-0 bg-transparent px-3 text-white hover:bg-white/10">
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
                     Workspace
                   </Button>
                 </Link>
                 {user.role === 'ADMIN' && (
                   <Link href="/admin">
-                    <Button variant="ghost" size="sm" className="min-h-11 gap-2">
-                      <Shield className="h-4 w-4 mr-2" />
+                    <Button variant="ghost" size="sm" className="min-h-10 border-0 bg-transparent px-3 text-white hover:bg-white/10">
+                      <Shield className="mr-2 h-4 w-4" />
                       Admin
                     </Button>
                   </Link>
                 )}
-                <div className="flex items-center gap-2 rounded-full border border-[rgba(96,165,250,0.16)] bg-white/[0.03] px-2.5 py-1.5">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/18 text-primary">
+                <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-2 py-1">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#176dff]/20 text-[#60a5ff]">
                     <User className="h-4 w-4 text-primary" />
                   </div>
-                  <div className="min-w-0">
-                    <div className="max-w-[10rem] truncate text-sm font-semibold text-white">{user.name || user.email.split('@')[0]}</div>
-                    <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">{user.subscription}</div>
-                  </div>
-                  <Button variant="ghost" size="icon" onClick={logout} className="h-10 w-10">
+                  <Button variant="ghost" size="icon" onClick={logout} className="h-8 w-8 border-0 bg-transparent text-white hover:bg-white/10">
                     <LogOut className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
             ) : (
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" onClick={() => openAuth('login')}>
-                  Sign In
+              <div className="flex shrink-0 items-center gap-5">
+                <Button variant="ghost" size="sm" onClick={() => openAuth('login')} className="h-10 min-h-10 border-0 bg-transparent px-0 text-[13px] font-semibold normal-case tracking-0 text-white shadow-none hover:bg-transparent hover:text-[#60a5ff]">
+                  Log In
                 </Button>
-                <Button variant="gradient" size="sm" onClick={() => openAuth('register')}>
-                  Get Started
+                <Button variant="ghost" size="sm" onClick={() => openAuth('register')} className="h-10 min-h-10 rounded-lg border-0 bg-[#176dff] px-7 text-[13px] font-bold normal-case tracking-0 text-white shadow-[0_10px_24px_rgba(23,109,255,0.28)] hover:bg-[#0e5fe6]">
+                  Start Free
                 </Button>
               </div>
             )}
           </div>
 
           {/* Mobile Toggle */}
-          <button className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[rgba(96,165,250,0.18)] bg-white/[0.04] md:hidden" onClick={() => setMobileOpen(!mobileOpen)}>
+          <button className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/15 bg-white/[0.04] text-white md:hidden" onClick={() => setMobileOpen(!mobileOpen)}>
             {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
@@ -118,49 +117,40 @@ export function Navbar() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="border-t border-[rgba(96,165,250,0.12)] bg-[rgba(3,7,18,0.96)] backdrop-blur-2xl md:hidden"
+            className="border-t border-white/10 bg-[#020916]/98 backdrop-blur-2xl md:hidden"
           >
             <div className="page-shell flex flex-col gap-2 py-4">
-              <div className="mb-3 premium-panel-muted p-4">
-                <div className="premium-kicker mb-3">Institutional Interface</div>
-                <p className="text-sm text-muted-foreground">Move between AI analysis, market intelligence, mentorship, and your workspace from one premium mobile command bar.</p>
-              </div>
-              <Link href="/analyze" className="flex min-h-12 items-center rounded-2xl border border-transparent px-4 text-sm hover:border-[rgba(255,223,112,0.14)] hover:bg-white/[0.04]" onClick={() => setMobileOpen(false)}>
-                AI Analysis
-              </Link>
-              <Link href="/" className="flex min-h-12 items-center rounded-2xl border border-transparent px-4 text-sm hover:border-[rgba(255,223,112,0.14)] hover:bg-white/[0.04]" onClick={() => setMobileOpen(false)}>
-                Home
-              </Link>
-              <Link href="/pricing" className="flex min-h-12 items-center rounded-2xl border border-transparent px-4 text-sm hover:border-[rgba(255,223,112,0.14)] hover:bg-white/[0.04]" onClick={() => setMobileOpen(false)}>
-                Pricing
-              </Link>
-              <Link href="/platform" className="flex min-h-12 items-center rounded-2xl border border-transparent px-4 text-sm hover:border-[rgba(255,223,112,0.14)] hover:bg-white/[0.04]" onClick={() => setMobileOpen(false)}>
-                Intelligence
-              </Link>
-              <Link href="/trade-examples" className="flex min-h-12 items-center rounded-2xl border border-transparent px-4 text-sm hover:border-[rgba(255,223,112,0.14)] hover:bg-white/[0.04]" onClick={() => setMobileOpen(false)}>
-                Mentorship
-              </Link>
+              {navLinks.map((link) => (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  className="flex min-h-12 items-center rounded-xl border border-transparent px-4 text-sm font-semibold text-white hover:border-white/10 hover:bg-white/[0.06]"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  {link.label}
+                </Link>
+              ))}
               {user ? (
                 <>
-                  <Link href="/dashboard" className="flex min-h-12 items-center rounded-2xl border border-transparent px-4 text-sm hover:border-[rgba(255,223,112,0.14)] hover:bg-white/[0.04]" onClick={() => setMobileOpen(false)}>
+                  <Link href="/dashboard" className="flex min-h-12 items-center rounded-xl border border-transparent px-4 text-sm font-semibold text-white hover:border-white/10 hover:bg-white/[0.06]" onClick={() => setMobileOpen(false)}>
                     Workspace
                   </Link>
                   {user.role === 'ADMIN' && (
-                    <Link href="/admin" className="flex min-h-12 items-center rounded-2xl border border-transparent px-4 text-sm hover:border-[rgba(255,223,112,0.14)] hover:bg-white/[0.04]" onClick={() => setMobileOpen(false)}>
+                    <Link href="/admin" className="flex min-h-12 items-center rounded-xl border border-transparent px-4 text-sm font-semibold text-white hover:border-white/10 hover:bg-white/[0.06]" onClick={() => setMobileOpen(false)}>
                       Admin
                     </Link>
                   )}
-                  <button className="flex min-h-12 items-center rounded-2xl border border-transparent px-4 text-left text-sm text-red-400 hover:border-red-500/20 hover:bg-white/[0.04]" onClick={() => { logout(); setMobileOpen(false); }}>
+                  <button className="flex min-h-12 items-center rounded-xl border border-transparent px-4 text-left text-sm font-semibold text-red-300 hover:border-red-500/20 hover:bg-white/[0.06]" onClick={() => { logout(); setMobileOpen(false); }}>
                     Sign Out
                   </button>
                 </>
               ) : (
                 <>
-                  <Button variant="ghost" size="sm" className="w-full" onClick={() => { openAuth('login'); setMobileOpen(false); }}>
-                    Sign In
+                  <Button variant="ghost" size="sm" className="mt-2 w-full border-white/10 bg-transparent text-white" onClick={() => { openAuth('login'); setMobileOpen(false); }}>
+                    Log In
                   </Button>
-                  <Button variant="gradient" size="sm" className="w-full" onClick={() => { openAuth('register'); setMobileOpen(false); }}>
-                    Get Started
+                  <Button variant="ghost" size="sm" className="w-full border-0 bg-[#176dff] text-white hover:bg-[#0e5fe6]" onClick={() => { openAuth('register'); setMobileOpen(false); }}>
+                    Start Free
                   </Button>
                 </>
               )}
