@@ -481,7 +481,7 @@ function OrionMentorAssistantShell() {
 
   return (
     <>
-      <div className="pointer-events-none fixed inset-x-0 top-3 bottom-16 z-[80] flex justify-center overflow-y-auto px-3 pt-2 sm:inset-x-auto sm:top-6 sm:bottom-24 sm:right-6 sm:block sm:max-h-[calc(100vh-7.5rem)] sm:overflow-y-auto sm:px-0 sm:pt-0">
+      <div className="pointer-events-none fixed inset-x-0 bottom-16 z-[80] flex justify-center px-3 sm:inset-x-auto sm:bottom-24 sm:right-6 sm:block sm:w-[23rem] sm:px-0">
         <OrionChatWindow
           open={open}
           greeting={greeting}
