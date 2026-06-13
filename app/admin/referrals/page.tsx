@@ -204,7 +204,7 @@ export default function AdminReferralsPage() {
             key={t.key}
             onClick={() => setTab(t.key)}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm whitespace-nowrap transition-all ${
-              tab === t.key ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
+              tab === t.key ? 'bg-[#176dff] text-white font-medium' : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
             }`}
           >
             <t.icon className="h-4 w-4" />

@@ -123,24 +123,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="min-h-screen overflow-x-hidden">
       <div className="mx-auto flex w-full max-w-7xl flex-col lg:flex-row">
         {/* Sidebar */}
-        <aside className="sticky top-20 hidden min-h-[calc(100vh-5rem)] w-80 shrink-0 border-r border-[rgba(255,223,112,0.1)] bg-[rgba(5,5,5,0.42)] p-5 lg:flex lg:flex-col">
-          <div className="mb-6 premium-panel-muted p-5">
+        <aside className="sticky top-20 hidden min-h-[calc(100vh-5rem)] w-72 shrink-0 border-r border-[#1b3358] bg-[#071426] p-5 lg:flex lg:flex-col">
+          <div className="mb-5 rounded-xl border border-[#1b3358] bg-[#0b1b33] p-5">
             <BrandLogo compact showTagline={false} />
-            <div className="mt-4 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-muted-foreground">
+            <div className="mt-4 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-[#8ea4c2]">
               <Shield className="h-4 w-4 text-primary" />
-              Admin Control Room
+              Admin Workspace
             </div>
-            <p className="mt-3 text-sm text-muted-foreground">Manage pricing, analytics, support, and live appearance changes from one command surface.</p>
-          </div>
-          <div className="mb-4 grid grid-cols-2 gap-3">
-            <div className="mobile-card rounded-[22px] p-4">
-              <div className="metric-label">Scope</div>
-              <div className="mt-2 text-sm font-semibold text-white">Platform-wide</div>
-            </div>
-            <div className="mobile-card rounded-[22px] p-4">
-              <div className="metric-label">Mode</div>
-              <div className="mt-2 text-sm font-semibold text-[var(--gold-light)]">Realtime</div>
-            </div>
+            <p className="mt-3 text-sm leading-6 text-[#8ea4c2]">Manage pricing, analytics, support, and platform settings.</p>
           </div>
           <nav className="space-y-1">
             {adminNav.map((item) => {
@@ -155,10 +145,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               return (
                 <Link key={item.href} href={item.href}>
                   <div
-                    className={`flex items-center gap-3 rounded-2xl px-4 py-3 text-sm transition-all ${
+                    className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-semibold transition-all ${
                       isActive
-                        ? 'bg-[linear-gradient(135deg,rgba(255,223,112,0.18),rgba(212,175,55,0.08))] text-[var(--gold-light)] font-medium shadow-luxe'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-white/[0.04]'
+                        ? 'bg-[#176dff] text-white shadow-[0_10px_22px_rgba(23,109,255,0.22)]'
+                        : 'text-[#8ea4c2] hover:bg-white/[0.06] hover:text-white'
                     }`}
                   >
                     <item.icon className="h-4 w-4" />
@@ -175,7 +165,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </aside>
 
         {/* Mobile Nav */}
-        <div className="w-full overflow-x-auto border-b border-[rgba(255,223,112,0.08)] bg-[rgba(5,5,5,0.72)] px-4 py-3 lg:hidden">
+        <div className="w-full overflow-x-auto border-b border-[#1b3358] bg-[#071426] px-4 py-3 lg:hidden">
           <div className="flex gap-1 min-w-max">
             {adminNav.map((item) => {
               const isActive = pathname === item.href;
@@ -189,8 +179,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               return (
                 <Link key={item.href} href={item.href}>
                   <div
-                    className={`relative flex items-center gap-1.5 rounded-full px-3 py-2 text-xs whitespace-nowrap transition-all ${
-                      isActive ? 'bg-[rgba(255,223,112,0.12)] text-[var(--gold-light)]' : 'text-muted-foreground'
+                    className={`relative flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold whitespace-nowrap transition-all ${
+                      isActive ? 'bg-[#176dff] text-white' : 'text-[#8ea4c2]'
                     }`}
                   >
                     <item.icon className="h-3 w-3" />
@@ -207,21 +197,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         {/* Content */}
         <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:min-h-[calc(100vh-5rem)] lg:px-8 lg:py-10">
-          <div className="mb-6 rounded-[28px] border border-[rgba(255,223,112,0.1)] bg-[linear-gradient(145deg,rgba(255,223,112,0.06),rgba(255,255,255,0.02),rgba(0,0,0,0.2))] p-5 sm:p-6">
+          <div className="mb-6 rounded-xl border border-[#1b3358] bg-[#071426] p-5 sm:p-6">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <div className="premium-kicker mb-3">Admin Workspace</div>
-                <h1 className="font-display text-2xl font-bold uppercase tracking-[-0.05em] text-white sm:text-3xl">Premium Command Center</h1>
-                <p className="mt-2 max-w-2xl text-sm leading-7 text-white/64">Every admin route now sits inside the same black-gold control language: denser metrics, stronger hierarchy, and better mobile navigation continuity.</p>
+                <div className="mb-3 text-xs font-extrabold uppercase tracking-[0.16em] text-[#60a5ff]">Admin Workspace</div>
+                <h1 className="text-2xl font-extrabold tracking-[-0.04em] text-white sm:text-3xl">Platform Control Center</h1>
+                <p className="mt-2 max-w-2xl text-sm leading-7 text-[#8ea4c2]">Manage the operational pages with the same blue TradeVision interface used on the new landing page.</p>
               </div>
               <div className="grid grid-cols-2 gap-3 sm:w-auto sm:grid-cols-2">
-                <div className="mobile-card rounded-[20px] p-4">
+                <div className="rounded-lg border border-[#1b3358] bg-[#0b1b33] p-4">
                   <div className="metric-label">Live badges</div>
                   <div className="mt-2 text-sm font-semibold text-white">Tickets, feedback, payments</div>
                 </div>
-                <div className="mobile-card rounded-[20px] p-4">
+                <div className="rounded-lg border border-[#1b3358] bg-[#0b1b33] p-4">
                   <div className="metric-label">Theme control</div>
-                  <div className="mt-2 text-sm font-semibold text-[var(--gold-light)]">Global + user override</div>
+                  <div className="mt-2 text-sm font-semibold text-[#60a5ff]">Global + user override</div>
                 </div>
               </div>
             </div>

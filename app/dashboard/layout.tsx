@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import PushNotificationPrompt from '@/components/PushNotificationPrompt';
 import { useAuth } from '@/hooks/useAuth';
 import { BrandLogo } from '@/components/BrandLogo';
-import { CandlestickChart, CreditCard, LayoutDashboard, Users, Target, TrendingUp, Radar } from 'lucide-react';
+import { Activity, CandlestickChart, CreditCard, LayoutDashboard, Users, Target, TrendingUp, Radar } from 'lucide-react';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -16,7 +16,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const showPushPrompt = user?.subscription !== 'FREE' && Boolean(token);
   const dashboardNav = [
     { href: '/dashboard', label: 'Intelligence', icon: LayoutDashboard },
-    { href: '/dashboard/tradingview', label: 'Live Analysis', icon: CandlestickChart },
+    { href: '/dashboard/tradingview', label: 'Forex Live Chart', icon: CandlestickChart },
+    { href: '/dashboard/deriv', label: 'Deriv Live Chart', icon: Activity },
     { href: '/dashboard/command-center', label: 'Command Center', icon: Target },
     { href: '/dashboard/radar', label: 'Trade Radar', icon: Radar },
     { href: '/dashboard/goldx', label: 'GoldX', icon: TrendingUp },
@@ -33,11 +34,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className={`page-shell ${isGoldxPulseWorkspace ? 'max-w-[1600px]' : 'max-w-6xl'}`}>
         <div className={`grid gap-6 lg:items-start ${isGoldxPulseWorkspace ? 'lg:grid-cols-[13rem_minmax(0,1fr)]' : 'lg:grid-cols-[max-content_1fr]'}`}>
           <aside className="lg:sticky lg:top-24 lg:self-start">
-            <Card className="mobile-card overflow-hidden lg:w-fit">
+            <Card className="overflow-hidden border-[#1b3358] bg-[#071426] lg:w-[15rem]">
               <CardContent className="p-3 sm:p-4">
                 <div className="mb-4 hidden lg:block">
                   <BrandLogo compact showTagline={false} className="justify-center" />
-                  <div className="mt-3 text-center text-[10px] uppercase tracking-[0.28em] text-muted-foreground">Institutional Trading Intelligence</div>
+                  <div className="mt-3 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-[#8ea4c2]">Trading Intelligence</div>
                 </div>
                 <nav className="-mx-0.5 flex gap-1 overflow-x-auto scrollbar-none sm:gap-1.5 lg:flex-col lg:items-start">
                   {dashboardNav.map((item) => {
@@ -46,8 +47,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       <Link
                         key={item.href}
                         href={item.href}
-                        className={`inline-flex shrink-0 items-center gap-1.5 rounded-2xl px-2.5 py-2 text-xs whitespace-nowrap transition-colors sm:gap-2 sm:px-4 sm:py-3 sm:text-sm lg:min-h-0 lg:w-full lg:px-3.5 lg:py-3 ${
-                          isActive ? 'bg-[linear-gradient(135deg,rgba(255,223,112,0.18),rgba(212,175,55,0.08))] text-[var(--gold-light)]' : 'text-muted-foreground hover:bg-white/[0.04] hover:text-foreground'
+                        className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-2 text-xs font-semibold whitespace-nowrap transition-colors sm:gap-2 sm:px-4 sm:py-3 sm:text-sm lg:min-h-0 lg:w-full lg:px-3.5 lg:py-3 ${
+                          isActive ? 'bg-[#176dff] text-white shadow-[0_10px_22px_rgba(23,109,255,0.22)]' : 'text-[#8ea4c2] hover:bg-white/[0.06] hover:text-white'
                         }`}
                       >
                         <item.icon className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />

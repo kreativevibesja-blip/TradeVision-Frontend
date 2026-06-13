@@ -504,7 +504,7 @@ export default function DerivDashboardPage() {
                             key={option.value}
                             type="button"
                             onClick={() => setTimeframe(option.value)}
-                            className={`shrink-0 rounded-full px-3 py-2 text-sm font-medium transition ${isActive ? 'bg-blue-500 text-white shadow-[0_10px_25px_rgba(59,130,246,0.35)]' : 'bg-slate-700 text-slate-200 hover:bg-slate-600'}`}
+                            className={`shrink-0 rounded-lg px-3 py-2 text-sm font-medium transition ${isActive ? 'bg-blue-500 text-white shadow-[0_10px_25px_rgba(59,130,246,0.35)]' : 'bg-slate-700 text-slate-200 hover:bg-slate-600'}`}
                           >
                             {option.label}
                           </button>

@@ -44,7 +44,7 @@ const fallbackPlanDetails: Record<'FREE' | 'PRO' | 'TOP_TIER', Omit<DisplayPlan,
     period: '/week',
     description: 'For serious traders who want deeper AI chart analysis every week',
     icon: Crown,
-    color: 'from-amber-300 to-yellow-600',
+    color: 'from-[#176dff] to-[#3293ff]',
     cta: 'Subscribe Now',
     ctaLink: '/checkout?plan=PRO',
     popular: false,
@@ -54,7 +54,7 @@ const fallbackPlanDetails: Record<'FREE' | 'PRO' | 'TOP_TIER', Omit<DisplayPlan,
     period: '/month',
     description: 'Advanced execution planning with Smart Session Scanner, stronger entry precision, and faster response time.',
     icon: Crown,
-    color: 'from-[#ffe38a] via-[#d4af37] to-[#8a6712]',
+    color: 'from-[#176dff] via-[#3293ff] to-[#7e58ff]',
     cta: 'Upgrade to PRO+',
     ctaLink: '/checkout?plan=TOP_TIER',
     popular: true,
@@ -183,7 +183,7 @@ export default function PricingPage() {
           initial={false}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.32 }}
-          className="relative mb-12 overflow-hidden rounded-[36px] border border-[rgba(255,223,112,0.14)] bg-[linear-gradient(145deg,rgba(255,223,112,0.08),rgba(255,255,255,0.02),rgba(0,0,0,0.24))] p-6 sm:mb-16 sm:p-8 lg:p-10"
+          className="relative mb-12 overflow-hidden rounded-xl border border-[#1b3358] bg-[#071426] p-6 sm:mb-16 sm:p-8 lg:p-10"
         >
           <div className="ambient-orb left-[8%] top-[12%] h-44 w-44" />
           <div className="ambient-orb right-[5%] top-[0%] h-56 w-56" />
@@ -206,7 +206,7 @@ export default function PricingPage() {
                 ['GoldX suite', 'EA access'],
                 ['Cancel control', 'Upgrade or downgrade anytime'],
               ].map(([label, value]) => (
-                <div key={label} className="mobile-card rounded-[24px] p-4">
+                <div key={label} className="mobile-card p-4">
                   <div className="metric-label">{label}</div>
                   <div className="mt-2 text-sm font-semibold text-white sm:text-base">{value}</div>
                 </div>
@@ -228,13 +228,13 @@ export default function PricingPage() {
               whileHover={{ y: -8, scale: 1.015 }}
               className="h-full"
             >
-              <Card className={`relative h-full min-h-[34rem] overflow-hidden transition-all duration-300 xl:min-h-[36rem] ${plan.popular ? 'border-[rgba(255,223,112,0.34)] shadow-luxe-strong' : 'hover:border-[rgba(255,223,112,0.18)]'}`}>
+              <Card className={`relative h-full min-h-[34rem] overflow-hidden transition-all duration-300 xl:min-h-[36rem] ${plan.popular ? 'border-[#176dff] shadow-[0_18px_46px_rgba(23,109,255,0.2)]' : 'hover:border-[#176dff]/45'}`}>
                 {plan.popular && (
-                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#ffe38a] via-[#d4af37] to-[#8a6712]" />
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-[#176dff]" />
                 )}
                 <CardContent className="flex h-full flex-col p-5 sm:p-6 lg:p-8">
                   <div className="mb-6 flex items-center justify-between gap-3">
-                    <div className={`rounded-2xl bg-gradient-to-br p-3 ${plan.color}`}>
+                    <div className={`rounded-lg bg-gradient-to-br p-3 ${plan.color}`}>
                       <plan.icon className="h-5 w-5 text-white" />
                     </div>
                     {plan.badge ? <Badge variant="default">{plan.badge}</Badge> : <Badge variant="outline">{plan.tier}</Badge>}
@@ -296,15 +296,15 @@ export default function PricingPage() {
           transition={{ delay: 0.22 }}
           className="mx-auto mt-16 max-w-6xl sm:mt-20"
         >
-          <Card className="overflow-hidden border-[rgba(255,223,112,0.24)] bg-[radial-gradient(circle_at_top_left,_rgba(255,223,112,0.18),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(212,175,55,0.14),_transparent_30%)]">
+          <Card className="overflow-hidden border-[#1b3358] bg-[#071426]">
             <CardContent className="grid gap-8 p-6 sm:p-8 lg:grid-cols-[1.1fr_0.9fr] lg:p-10">
               <div>
                 <div className="mb-4 flex items-center gap-3">
-                  <div className="rounded-2xl border border-amber-400/20 bg-amber-500/10 p-3 text-amber-300">
+                  <div className="rounded-lg border border-[#176dff]/25 bg-[#176dff]/10 p-3 text-[#60a5ff]">
                     <TrendingUp className="h-6 w-6" />
                   </div>
                   <div>
-                    <Badge variant="outline" className="mb-2 border-amber-400/20 text-amber-300">GoldX</Badge>
+                    <Badge variant="outline" className="mb-2 border-[#176dff]/25 text-[#60a5ff]">GoldX</Badge>
                     <h2 className="text-2xl font-bold sm:text-3xl">GoldX EA Subscription</h2>
                   </div>
                 </div>
@@ -337,7 +337,7 @@ export default function PricingPage() {
                 </div>
               </div>
 
-              <div className="flex flex-col justify-between rounded-[28px] border border-white/10 bg-black/20 p-6">
+              <div className="flex flex-col justify-between rounded-xl border border-[#1b3358] bg-[#0b1b33] p-6">
                 <div>
                   <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-300">
                     <Shield className="h-3.5 w-3.5" />
@@ -354,7 +354,7 @@ export default function PricingPage() {
 
                 <div className="mt-8 space-y-3">
                   <Link href="/checkout?plan=GOLDX" className="block">
-                    <Button size="lg" className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700">
+                    <Button size="lg" className="w-full">
                       Subscribe to GoldX
                     </Button>
                   </Link>
@@ -453,7 +453,7 @@ export default function PricingPage() {
               <Card key={faq.q}>
                 <CardContent className="p-6">
                   <div className="mb-3 flex items-center gap-3">
-                    <div className="rounded-xl border border-[rgba(255,223,112,0.14)] bg-[rgba(255,223,112,0.08)] p-2 text-[var(--gold-light)]">
+                    <div className="rounded-lg border border-[#176dff]/25 bg-[#176dff]/10 p-2 text-[#60a5ff]">
                       <Radar className="h-4 w-4" />
                     </div>
                     <h4 className="font-semibold text-white">{faq.q}</h4>

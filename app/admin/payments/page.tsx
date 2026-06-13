@@ -182,7 +182,7 @@ export default function AdminPaymentsPage() {
                 <button
                   type="button"
                   onClick={() => { setPage(1); setStatus('ALL'); setActiveView('all-payments'); }}
-                  className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition ${activeView === 'all-payments' ? 'border-[rgba(255,223,112,0.34)] bg-[rgba(255,223,112,0.12)] text-[var(--gold-light)]' : 'border-white/10 bg-white/5 text-muted-foreground hover:bg-white/10'}`}
+                  className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm transition ${activeView === 'all-payments' ? 'border-[#176dff] bg-[#176dff] text-white' : 'border-white/10 bg-white/5 text-muted-foreground hover:bg-white/10'}`}
                 >
                   <Wallet className="h-4 w-4" />
                   All Payments
@@ -190,7 +190,7 @@ export default function AdminPaymentsPage() {
                 <button
                   type="button"
                   onClick={() => { setPage(1); setActiveView('bank-transfers'); }}
-                  className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition ${activeView === 'bank-transfers' ? 'border-[rgba(255,223,112,0.34)] bg-[rgba(255,223,112,0.12)] text-[var(--gold-light)]' : 'border-white/10 bg-white/5 text-muted-foreground hover:bg-white/10'}`}
+                  className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm transition ${activeView === 'bank-transfers' ? 'border-[#176dff] bg-[#176dff] text-white' : 'border-white/10 bg-white/5 text-muted-foreground hover:bg-white/10'}`}
                 >
                   <Landmark className="h-4 w-4" />
                   Bank Transfers
