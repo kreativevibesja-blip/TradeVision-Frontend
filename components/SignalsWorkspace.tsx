@@ -791,7 +791,7 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
       <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="overflow-hidden rounded-[34px] border border-white/10 bg-[linear-gradient(135deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] p-5 shadow-[0_34px_120px_rgba(0,0,0,0.42)] backdrop-blur-xl sm:p-7">
         <div className="flex flex-col gap-6 2xl:flex-row 2xl:items-start 2xl:justify-between">
           <div className="min-w-0 max-w-3xl flex-1">
-            <div className="inline-flex items-center gap-2 rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-1 text-[10px] uppercase tracking-[0.32em] text-amber-100">
+            <div className="inline-flex items-center gap-2 rounded-md border border-blue-300/20 bg-blue-300/10 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-blue-100">
               <Sparkles className="h-3.5 w-3.5" />
               TradeVision AI Signals
             </div>
@@ -866,7 +866,7 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
                   key={session}
                   type="button"
                   onClick={() => setSessionFilter((current) => current === session ? 'all' : session)}
-                  className={`rounded-full border px-3 py-1.5 text-xs transition ${sessionFilter === session ? SESSION_META[session].chip : 'border-white/10 bg-white/[0.04] text-white/60 hover:border-white/20 hover:text-white'}`}
+                  className={`rounded-lg border px-3 py-1.5 text-xs transition ${sessionFilter === session ? 'border-blue-300/30 bg-blue-400/15 text-blue-100' : 'border-white/10 bg-white/[0.04] text-white/60 hover:border-white/20 hover:text-white'}`}
                 >
                   {SESSION_META[session].shortLabel}
                 </button>
@@ -1016,7 +1016,7 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
                   type="button"
                   onClick={() => void saveWatchlist(selectedSignal, !alertsEnabled)}
                   disabled={watchlistSaving}
-                  className={`inline-flex h-11 min-w-24 items-center justify-center rounded-full border px-4 text-xs font-medium transition ${alertsEnabled ? 'border-amber-300/30 bg-amber-300/12 text-amber-100' : 'border-white/10 bg-white/[0.04] text-white/65'} ${watchlistSaving ? 'opacity-60' : ''}`}
+                  className={`inline-flex h-11 min-w-24 items-center justify-center rounded-lg border px-4 text-xs font-medium transition ${alertsEnabled ? 'border-blue-300/30 bg-blue-400/15 text-blue-100' : 'border-white/10 bg-white/[0.04] text-white/65'} ${watchlistSaving ? 'opacity-60' : ''}`}
                 >
                   {watchlistSaving ? 'Saving...' : alertsEnabled ? 'Enabled' : 'Disabled'}
                 </button>
@@ -1094,7 +1094,7 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
       </div>
 
       <div className="fixed inset-x-0 bottom-4 z-30 px-4">
-        <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 rounded-full border border-white/10 bg-[linear-gradient(180deg,rgba(10,14,20,0.92),rgba(6,9,14,0.96))] px-4 py-3 shadow-[0_20px_90px_rgba(0,0,0,0.4)] backdrop-blur-2xl">
+        <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 rounded-xl border border-white/10 bg-[linear-gradient(180deg,rgba(10,14,20,0.92),rgba(6,9,14,0.96))] px-4 py-3 shadow-[0_20px_90px_rgba(0,0,0,0.4)] backdrop-blur-2xl">
           <div className="flex items-center gap-2 text-xs text-white/72">
             <Filter className="h-4 w-4 text-amber-100" />
             Filters
@@ -1105,7 +1105,7 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
                 key={grade}
                 type="button"
                 onClick={() => setQualityFilter((current) => toggleQuality(current, grade))}
-                className={`rounded-full border px-3 py-1.5 text-xs transition ${qualityFilter.includes(grade) ? GRADE_META[grade] : 'border-white/10 bg-white/[0.04] text-white/60'}`}
+                className={`rounded-lg border px-3 py-1.5 text-xs transition ${qualityFilter.includes(grade) ? GRADE_META[grade] : 'border-white/10 bg-white/[0.04] text-white/60'}`}
               >
                 {grade}
               </button>
@@ -1115,7 +1115,7 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
                 key={option}
                 type="button"
                 onClick={() => setAssetFilter(option)}
-                className={`rounded-full border px-3 py-1.5 text-xs transition ${assetFilter === option ? 'border-amber-300/25 bg-amber-300/10 text-amber-100' : 'border-white/10 bg-white/[0.04] text-white/60'}`}
+                className={`rounded-lg border px-3 py-1.5 text-xs transition ${assetFilter === option ? 'border-blue-300/25 bg-blue-300/10 text-blue-100' : 'border-white/10 bg-white/[0.04] text-white/60'}`}
               >
                 {option === 'all' ? 'All' : option}
               </button>
@@ -1125,7 +1125,7 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
             type="button"
             onClick={() => void saveWatchlist(selectedSignal, !alertsEnabled)}
             disabled={watchlistSaving}
-            className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-medium transition ${alertsEnabled ? 'border-amber-300/25 bg-amber-300/10 text-amber-100' : 'border-white/10 bg-white/[0.04] text-white/70'}`}
+            className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-xs font-medium transition ${alertsEnabled ? 'border-blue-300/25 bg-blue-300/10 text-blue-100' : 'border-white/10 bg-white/[0.04] text-white/70'}`}
           >
             <Bell className="h-4 w-4" />
             {alertsEnabled ? 'Alerts On' : 'Alerts Off'}

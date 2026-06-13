@@ -180,7 +180,7 @@ export default function StrategyShowcase() {
             <button
               key={st.name}
               onClick={() => setIdx(i)}
-              className={`min-h-12 rounded-full border px-4 py-2 text-sm font-medium transition-all duration-200 ${
+              className={`min-h-12 rounded-lg border px-4 py-2 text-sm font-medium transition-all duration-200 ${
                 i === idx
                   ? st.type === 'BUY'
                     ? 'bg-green-500/20 border-green-500/60 text-green-400'

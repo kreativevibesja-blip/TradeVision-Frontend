@@ -6,7 +6,7 @@ const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElemen
     <div
       ref={ref}
       className={cn(
-        'premium-panel premium-noise tilt-card',
+        'rounded-xl border border-[#1b3358] bg-[#071426] text-white shadow-[0_14px_34px_rgba(0,0,0,0.24)]',
         className
       )}
       {...props}
@@ -24,11 +24,7 @@ CardHeader.displayName = 'CardHeader';
 
 const CardTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLHeadingElement>>(
   ({ className, ...props }, ref) => (
-    <h3
-      ref={ref}
-      className={cn('font-display text-xl font-bold uppercase tracking-[-0.05em] sm:text-2xl', className)}
-      {...props}
-    />
+    <h3 ref={ref} className={cn('text-xl font-extrabold tracking-[-0.04em] sm:text-2xl', className)} {...props} />
   )
 );
 CardTitle.displayName = 'CardTitle';

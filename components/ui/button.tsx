@@ -4,25 +4,25 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'premium-button-shell inline-flex min-h-12 items-center justify-center whitespace-nowrap rounded-2xl border text-sm font-semibold uppercase tracking-[0.16em] ring-offset-background transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.985] touch-manipulation will-change-transform',
+  'inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-lg border text-sm font-semibold ring-offset-background transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.985] touch-manipulation',
   {
     variants: {
       variant: {
-        default: 'border-[rgba(96,165,250,0.3)] bg-[linear-gradient(145deg,rgba(186,230,253,0.95),rgba(96,165,250,0.92)_42%,rgba(30,64,175,0.96))] text-[#031225] hover:-translate-y-px hover:brightness-105 hover:shadow-luxe-strong',
-        destructive: 'border-red-500/30 bg-[linear-gradient(145deg,rgba(255,117,117,0.18),rgba(255,77,77,0.34))] text-destructive-foreground hover:bg-destructive/90',
-        outline: 'border-[rgba(96,165,250,0.2)] bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))] text-foreground hover:border-[rgba(147,197,253,0.46)] hover:bg-white/[0.08] hover:-translate-y-px',
-        secondary: 'border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.07),rgba(255,255,255,0.02))] text-secondary-foreground hover:bg-white/[0.08] hover:-translate-y-px',
-        ghost: 'border-transparent bg-transparent text-muted-foreground shadow-none hover:border-white/10 hover:bg-white/[0.04] hover:text-foreground',
-        link: 'border-transparent bg-transparent px-0 py-0 text-primary shadow-none underline-offset-4 hover:underline',
-        gradient: 'border-[rgba(96,165,250,0.38)] bg-[linear-gradient(135deg,#e0f2fe_0%,#7dd3fc_18%,#60a5fa_52%,#1d4ed8_100%)] text-[#031225] hover:-translate-y-px hover:brightness-105 hover:shadow-luxe-strong',
-        glow: 'border-[rgba(96,165,250,0.28)] bg-[linear-gradient(145deg,rgba(59,130,246,0.18),rgba(14,165,233,0.18)_45%,rgba(255,255,255,0.04))] text-white hover:-translate-y-px hover:shadow-luxe',
+        default: 'border-[#176dff] bg-[#176dff] text-white shadow-[0_10px_24px_rgba(23,109,255,0.22)] hover:bg-[#0d5ee5]',
+        destructive: 'border-red-500 bg-red-600 text-white hover:bg-red-500',
+        outline: 'border-[#c7d7ef] bg-white text-[#132238] hover:border-[#176dff] hover:text-[#176dff]',
+        secondary: 'border-[#dce6f5] bg-[#f3f7ff] text-[#132238] hover:bg-[#eaf2ff]',
+        ghost: 'border-transparent bg-transparent text-[#526176] shadow-none hover:bg-[#eef5ff] hover:text-[#176dff]',
+        link: 'border-transparent bg-transparent px-0 py-0 text-[#176dff] shadow-none underline-offset-4 hover:underline',
+        gradient: 'border-[#176dff] bg-[#176dff] text-white shadow-[0_10px_24px_rgba(23,109,255,0.22)] hover:bg-[#0d5ee5]',
+        glow: 'border-[#176dff]/30 bg-[#eef5ff] text-[#176dff] hover:bg-[#dcecff]',
       },
       size: {
-        default: 'h-12 px-5 py-3',
-        sm: 'h-11 rounded-2xl px-4 text-xs',
-        lg: 'h-13 rounded-[20px] px-8 text-sm',
-        xl: 'h-14 rounded-[22px] px-9 text-base',
-        icon: 'h-12 w-12',
+        default: 'h-11 px-5 py-2.5',
+        sm: 'h-10 rounded-lg px-4 text-xs',
+        lg: 'h-12 rounded-lg px-7 text-sm',
+        xl: 'h-12 rounded-lg px-8 text-base',
+        icon: 'h-11 w-11',
       },
     },
     defaultVariants: {
