@@ -78,7 +78,7 @@ export function OrionChatWindow({
           dragElastic={0.04}
           dragConstraints={{ top: 0, bottom: 0 }}
           onDragEnd={handleDragEnd}
-          className="pointer-events-auto relative z-[80] flex h-[min(40rem,calc(100vh-8rem))] w-[min(23rem,calc(100vw-1.5rem))] max-w-[23rem] origin-bottom-right flex-col overflow-hidden rounded-[18px] border border-slate-200 bg-white text-slate-900 shadow-[0_18px_50px_rgba(15,23,42,0.18)] max-sm:h-[min(34rem,calc(100vh-6rem))] max-sm:w-[min(22rem,calc(100vw-1.5rem))]"
+          className="pointer-events-auto relative z-[80] flex h-[min(33rem,calc(100vh-11rem))] min-h-[24rem] w-[min(23rem,calc(100vw-1.5rem))] max-w-[23rem] origin-bottom-right flex-col overflow-hidden rounded-[18px] border border-slate-200 bg-white text-slate-900 shadow-[0_18px_50px_rgba(15,23,42,0.18)] max-sm:h-[min(32rem,calc(100vh-6rem))] max-sm:min-h-[22rem] max-sm:w-[min(22rem,calc(100vw-1.5rem))]"
           style={{ backgroundColor: '#ffffff', color: '#0f172a', borderColor: '#e2e8f0' }}
         >
           <div
