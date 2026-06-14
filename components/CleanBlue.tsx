@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { Bell, Bookmark, CalendarDays, Heart, MessageCircle, MoreHorizontal, Repeat2, Share2, Star, TrendingUp } from 'lucide-react';
+import { Bell, Bookmark, CalendarDays, Heart, MessageCircle, MoreHorizontal, Repeat2, Share2, Sparkles, Star, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function CleanCard({ children, className = '' }: { children: ReactNode; className?: string }) {
@@ -200,12 +200,16 @@ export function FeedPostCard({
   summary = 'Strong bullish structure forming near resistance. Watching for a clean breakout and retest.',
   image,
   timeLabel = '2h ago',
+  onAiCompare,
+  canAiCompare = Boolean(image),
 }: {
   author?: string;
   market?: string;
   summary?: string;
   image?: string;
   timeLabel?: string;
+  onAiCompare?: () => void;
+  canAiCompare?: boolean;
 }) {
   return (
     <CleanCard className="p-0">
@@ -231,11 +235,19 @@ export function FeedPostCard({
           </div>
         )}
       </div>
-      <div className="grid grid-cols-4 gap-2 p-4 text-sm text-[#6B7280]">
+      <div className="grid grid-cols-2 gap-2 p-4 text-sm text-[#6B7280] sm:grid-cols-5">
         <button className="flex items-center justify-center gap-2 rounded-xl py-2 hover:bg-[#F3F4F6]"><Heart className="h-4 w-4" />45</button>
         <button className="flex items-center justify-center gap-2 rounded-xl py-2 hover:bg-[#F3F4F6]"><MessageCircle className="h-4 w-4" />12</button>
         <button className="flex items-center justify-center gap-2 rounded-xl py-2 hover:bg-[#F3F4F6]"><Share2 className="h-4 w-4" />Share</button>
         <button className="flex items-center justify-center gap-2 rounded-xl py-2 hover:bg-[#F3F4F6]"><Bookmark className="h-4 w-4" />Save</button>
+        <button
+          type="button"
+          onClick={onAiCompare}
+          disabled={!canAiCompare}
+          className="flex items-center justify-center gap-2 rounded-xl py-2 font-bold text-[#2563EB] hover:bg-[#EFF6FF] disabled:cursor-not-allowed disabled:text-[#9CA3AF] disabled:hover:bg-transparent"
+        >
+          <Sparkles className="h-4 w-4" />AI Compare
+        </button>
       </div>
     </CleanCard>
   );
