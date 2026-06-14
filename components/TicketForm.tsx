@@ -155,7 +155,7 @@ export function TicketForm({ open, draft = null }: TicketFormProps) {
             <div>
               <h3 className="text-lg font-semibold">Tracked support requires sign-in</h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                Sign in so your ticket is attached to your Supabase account and your replies stay in one thread.
+                Sign in so your ticket is attached to your TradeVision account and your replies stay in one thread.
               </p>
             </div>
           </div>

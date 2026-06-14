@@ -3,7 +3,7 @@ import { createClient, type Session } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-export const missingSupabaseEnvMessage = 'Missing Supabase environment variables. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.';
+export const missingSupabaseEnvMessage = 'The TradeVision sign-in service is not configured. Please contact support.';
 
 type TradeVisionSupabaseGlobals = typeof globalThis & {
   __tradevisionSupabaseClient?: ReturnType<typeof createClient<any>> | null;
