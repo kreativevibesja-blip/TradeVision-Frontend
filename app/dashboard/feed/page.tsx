@@ -95,7 +95,7 @@ export default function FeedPage() {
   const loadPosts = useCallback(async () => {
     if (!supabase) {
       setLoading(false);
-      setError('Supabase is not configured for the feed.');
+      setError('The feed is not available right now.');
       return;
     }
 
@@ -280,7 +280,7 @@ export default function FeedPage() {
       <aside className="min-h-0 space-y-5 overflow-y-auto pr-1">
         <CleanCard>
           <h2 className="font-extrabold text-[#111827]">Feed Status</h2>
-          <p className="mt-2 text-sm leading-6 text-[#6B7280]">Posts are loaded from Supabase in batches of 10. Comments and large media stay lazy-loaded to avoid heavy dashboard queries.</p>
+          <p className="mt-2 text-sm leading-6 text-[#6B7280]">Posts are loaded in focused batches. Comments and large media stay lazy-loaded to keep the community fast.</p>
         </CleanCard>
         <CleanCard>
           <h2 className="font-extrabold text-[#111827]">Current View</h2>

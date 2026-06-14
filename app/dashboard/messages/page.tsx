@@ -387,7 +387,7 @@ export default function MessagesPage() {
         <CleanCard className="flex min-h-0 flex-col p-0">
           <div className="border-b border-[#E5E7EB] p-5">
             <h2 className="font-extrabold text-[#111827]">{selectedName}</h2>
-            <p className="text-sm text-[#6B7280]">Private conversation records from Supabase.</p>
+            <p className="text-sm text-[#6B7280]">Private conversation history.</p>
           </div>
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-5">
             {!selectedConversationId ? (

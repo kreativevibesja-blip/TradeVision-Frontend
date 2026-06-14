@@ -71,7 +71,7 @@ export default function CommunityPage() {
 
   const loadChannels = useCallback(async () => {
     if (!supabase) {
-      setError('Supabase is not configured for community channels.');
+      setError('Community channels are not available right now.');
       return;
     }
 

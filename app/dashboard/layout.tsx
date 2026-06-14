@@ -116,14 +116,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </main>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[#E5E7EB] bg-white px-2 py-2 lg:hidden">
-        <div className="grid grid-cols-5 gap-1">
-          {userNav.slice(0, 5).map((item) => {
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[#E5E7EB] bg-white py-2 lg:hidden">
+        <div className="flex snap-x gap-2 overflow-x-auto px-3 pb-[env(safe-area-inset-bottom)] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {userNav.map((item) => {
             const active = item.href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(item.href);
             return (
-              <Link key={item.href} href={item.href} className={cn('flex flex-col items-center justify-center rounded-xl px-1 py-2 text-[10px] font-bold', active ? 'bg-[#EFF6FF] text-[#2563EB]' : 'text-[#6B7280]')}>
-                <item.icon className="mb-1 h-4 w-4" />
-                <span className="max-w-full truncate">{item.label.replace('AI ', '')}</span>
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  'flex min-w-[4.6rem] snap-start flex-col items-center justify-center rounded-xl px-2 py-2 text-[10px] font-bold',
+                  active ? 'bg-[#EFF6FF] text-[#2563EB]' : 'text-[#6B7280]',
+                )}
+              >
+                <item.icon className="mb-1 h-4 w-4 shrink-0" />
+                <span className="max-w-full truncate">{item.label.replace('AI ', '').replace(' Live Chart', '')}</span>
               </Link>
             );
           })}
