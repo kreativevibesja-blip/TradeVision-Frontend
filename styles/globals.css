@@ -399,3 +399,71 @@
     border-radius: 0.5rem;
   }
 }
+
+@layer base {
+  html[data-color-mode='dark'] {
+    color-scheme: dark;
+  }
+
+  body[data-color-mode='dark'] {
+    background: #0f172a;
+    color: #f8fafc;
+  }
+}
+
+@layer utilities {
+  html[data-color-mode='dark'] .bg-white,
+  html[data-color-mode='dark'] [class*='bg-white/'],
+  html[data-color-mode='dark'] .bg-\[\#FFFFFF\] {
+    background-color: #111827 !important;
+  }
+
+  html[data-color-mode='dark'] .bg-\[\#F7F9FC\],
+  html[data-color-mode='dark'] .bg-\[\#F3F4F6\],
+  html[data-color-mode='dark'] .bg-\[\#EFF6FF\],
+  html[data-color-mode='dark'] .bg-\[\#DBEAFE\] {
+    background-color: #1f2937 !important;
+  }
+
+  html[data-color-mode='dark'] .text-\[\#111827\],
+  html[data-color-mode='dark'] .text-\[\#132238\],
+  html[data-color-mode='dark'] .text-\[\#07111f\],
+  html[data-color-mode='dark'] .text-\[\#374151\],
+  html[data-color-mode='dark'] .text-\[\#4B5563\] {
+    color: #f8fafc !important;
+  }
+
+  html[data-color-mode='dark'] .text-\[\#6B7280\],
+  html[data-color-mode='dark'] .text-\[\#8ea4c2\],
+  html[data-color-mode='dark'] .text-muted-foreground {
+    color: #cbd5e1 !important;
+  }
+
+  html[data-color-mode='dark'] .border-\[\#E5E7EB\],
+  html[data-color-mode='dark'] .border-\[\#dce6f5\],
+  html[data-color-mode='dark'] .border-\[\#c7d7ef\] {
+    border-color: #334155 !important;
+  }
+
+  html[data-color-mode='dark'] input,
+  html[data-color-mode='dark'] textarea,
+  html[data-color-mode='dark'] select {
+    background-color: #111827 !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+  }
+
+  html[data-color-mode='dark'] input::placeholder,
+  html[data-color-mode='dark'] textarea::placeholder {
+    color: #94a3b8 !important;
+  }
+
+  html[data-color-mode='dark'] .divide-\[\#E5E7EB\] > :not([hidden]) ~ :not([hidden]) {
+    border-color: #334155 !important;
+  }
+
+  html[data-color-mode='dark'] .shadow-\[0_10px_30px_rgba\(17\,24\,39\,0\.06\)\],
+  html[data-color-mode='dark'] .shadow-\[0_12px_30px_rgba\(29\,53\,92\,0\.07\)\] {
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.32) !important;
+  }
+}

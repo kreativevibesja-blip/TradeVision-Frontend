@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { AuthModal } from '@/components/AuthModal';
@@ -14,6 +14,8 @@ import {
   LogOut,
   LayoutDashboard,
   Shield,
+  Moon,
+  Sun,
 } from 'lucide-react';
 
 const navLinks = [
@@ -28,6 +30,23 @@ export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [colorMode, setColorMode] = useState<'light' | 'dark'>('light');
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem('tradevision-color-mode');
+    const initial = stored === 'dark' || stored === 'light' ? stored : 'light';
+    setColorMode(initial);
+    document.documentElement.dataset.colorMode = initial;
+    document.body.dataset.colorMode = initial;
+  }, []);
+
+  const toggleColorMode = () => {
+    const next = colorMode === 'dark' ? 'light' : 'dark';
+    setColorMode(next);
+    window.localStorage.setItem('tradevision-color-mode', next);
+    document.documentElement.dataset.colorMode = next;
+    document.body.dataset.colorMode = next;
+  };
 
   const openAuth = (mode: 'login' | 'register') => {
     setAuthMode(mode);
@@ -68,6 +87,14 @@ export function Navbar() {
             </div>
             {user ? (
               <div className="flex shrink-0 items-center gap-2">
+                <button
+                  type="button"
+                  onClick={toggleColorMode}
+                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#374151] transition hover:border-[#2563EB] hover:text-[#2563EB]"
+                  aria-label={colorMode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                >
+                  {colorMode === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                </button>
                 <Link href="/dashboard">
                   <Button variant="ghost" size="sm" className="min-h-10 border-0 bg-transparent px-3 text-[#374151] hover:bg-[#F3F4F6]">
                     <LayoutDashboard className="mr-2 h-4 w-4" />
@@ -93,6 +120,14 @@ export function Navbar() {
               </div>
             ) : (
               <div className="flex shrink-0 items-center gap-5">
+                <button
+                  type="button"
+                  onClick={toggleColorMode}
+                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#374151] transition hover:border-[#2563EB] hover:text-[#2563EB]"
+                  aria-label={colorMode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                >
+                  {colorMode === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                </button>
                 <Button variant="ghost" size="sm" onClick={() => openAuth('login')} className="h-10 min-h-10 border-0 bg-transparent px-0 text-[13px] font-semibold normal-case tracking-0 text-[#374151] shadow-none hover:bg-transparent hover:text-[#2563EB]">
                   Log In
                 </Button>
@@ -118,6 +153,14 @@ export function Navbar() {
             className="border-t border-[#E5E7EB] bg-white/98 backdrop-blur-2xl md:hidden"
           >
             <div className="page-shell flex flex-col gap-2 py-4">
+              <button
+                type="button"
+                onClick={toggleColorMode}
+                className="flex min-h-12 items-center gap-3 rounded-xl border border-[#E5E7EB] px-4 text-sm font-semibold text-[#374151]"
+              >
+                {colorMode === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                {colorMode === 'dark' ? 'Light Mode' : 'Dark Mode'}
+              </button>
               {navLinks.map((link) => (
                 <Link
                   key={link.label}
