@@ -39,7 +39,7 @@ export function Navbar() {
       <motion.nav
         initial={false}
         animate={{ y: 0 }}
-        className="fixed left-0 right-0 top-0 z-50 bg-[#020916]/88 backdrop-blur-xl"
+        className="fixed left-0 right-0 top-0 z-50 border-b border-[#E5E7EB] bg-white/92 backdrop-blur-xl"
       >
         <div className="page-shell flex h-16 items-center justify-between gap-6 lg:h-[68px]">
           <Link href="/" className="flex shrink-0 items-center">
@@ -60,7 +60,7 @@ export function Navbar() {
                 <Link
                   key={link.label}
                   href={link.href}
-                  className="text-[13px] font-semibold text-white transition-colors hover:text-[#60a5ff]"
+                  className="text-[13px] font-semibold text-[#374151] transition-colors hover:text-[#2563EB]"
                 >
                   {link.label}
                 </Link>
@@ -69,34 +69,34 @@ export function Navbar() {
             {user ? (
               <div className="flex shrink-0 items-center gap-2">
                 <Link href="/dashboard">
-                  <Button variant="ghost" size="sm" className="min-h-10 border-0 bg-transparent px-3 text-white hover:bg-white/10">
+                  <Button variant="ghost" size="sm" className="min-h-10 border-0 bg-transparent px-3 text-[#374151] hover:bg-[#F3F4F6]">
                     <LayoutDashboard className="mr-2 h-4 w-4" />
                     Workspace
                   </Button>
                 </Link>
                 {user.role === 'ADMIN' && (
                   <Link href="/admin">
-                    <Button variant="ghost" size="sm" className="min-h-10 border-0 bg-transparent px-3 text-white hover:bg-white/10">
+                    <Button variant="ghost" size="sm" className="min-h-10 border-0 bg-transparent px-3 text-[#374151] hover:bg-[#F3F4F6]">
                       <Shield className="mr-2 h-4 w-4" />
                       Admin
                     </Button>
                   </Link>
                 )}
-                <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-2 py-1">
+                <div className="flex items-center gap-2 rounded-xl border border-[#E5E7EB] bg-white px-2 py-1">
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#176dff]/20 text-[#60a5ff]">
                     <User className="h-4 w-4 text-primary" />
                   </div>
-                  <Button variant="ghost" size="icon" onClick={logout} className="h-8 w-8 border-0 bg-transparent text-white hover:bg-white/10">
+                  <Button variant="ghost" size="icon" onClick={logout} className="h-8 w-8 border-0 bg-transparent text-[#374151] hover:bg-[#F3F4F6]">
                     <LogOut className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
             ) : (
               <div className="flex shrink-0 items-center gap-5">
-                <Button variant="ghost" size="sm" onClick={() => openAuth('login')} className="h-10 min-h-10 border-0 bg-transparent px-0 text-[13px] font-semibold normal-case tracking-0 text-white shadow-none hover:bg-transparent hover:text-[#60a5ff]">
+                <Button variant="ghost" size="sm" onClick={() => openAuth('login')} className="h-10 min-h-10 border-0 bg-transparent px-0 text-[13px] font-semibold normal-case tracking-0 text-[#374151] shadow-none hover:bg-transparent hover:text-[#2563EB]">
                   Log In
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => openAuth('register')} className="h-10 min-h-10 rounded-lg border-0 bg-[#176dff] px-7 text-[13px] font-bold normal-case tracking-0 text-white shadow-[0_10px_24px_rgba(23,109,255,0.28)] hover:bg-[#0e5fe6]">
+                <Button variant="ghost" size="sm" onClick={() => openAuth('register')} className="h-10 min-h-10 rounded-xl border-0 bg-[#2563EB] px-7 text-[13px] font-bold normal-case tracking-0 text-white shadow-[0_10px_24px_rgba(37,99,235,0.22)] hover:bg-[#1D4ED8]">
                   Start Free
                 </Button>
               </div>
@@ -104,7 +104,7 @@ export function Navbar() {
           </div>
 
           {/* Mobile Toggle */}
-          <button className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/15 bg-white/[0.04] text-white md:hidden" onClick={() => setMobileOpen(!mobileOpen)}>
+          <button className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#374151] md:hidden" onClick={() => setMobileOpen(!mobileOpen)}>
             {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
@@ -115,14 +115,14 @@ export function Navbar() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="border-t border-white/10 bg-[#020916]/98 backdrop-blur-2xl md:hidden"
+            className="border-t border-[#E5E7EB] bg-white/98 backdrop-blur-2xl md:hidden"
           >
             <div className="page-shell flex flex-col gap-2 py-4">
               {navLinks.map((link) => (
                 <Link
                   key={link.label}
                   href={link.href}
-                  className="flex min-h-12 items-center rounded-xl border border-transparent px-4 text-sm font-semibold text-white hover:border-white/10 hover:bg-white/[0.06]"
+                  className="flex min-h-12 items-center rounded-xl border border-transparent px-4 text-sm font-semibold text-[#374151] hover:border-[#E5E7EB] hover:bg-[#F7F9FC]"
                   onClick={() => setMobileOpen(false)}
                 >
                   {link.label}
@@ -130,11 +130,11 @@ export function Navbar() {
               ))}
               {user ? (
                 <>
-                  <Link href="/dashboard" className="flex min-h-12 items-center rounded-xl border border-transparent px-4 text-sm font-semibold text-white hover:border-white/10 hover:bg-white/[0.06]" onClick={() => setMobileOpen(false)}>
+                  <Link href="/dashboard" className="flex min-h-12 items-center rounded-xl border border-transparent px-4 text-sm font-semibold text-[#374151] hover:border-[#E5E7EB] hover:bg-[#F7F9FC]" onClick={() => setMobileOpen(false)}>
                     Workspace
                   </Link>
                   {user.role === 'ADMIN' && (
-                    <Link href="/admin" className="flex min-h-12 items-center rounded-xl border border-transparent px-4 text-sm font-semibold text-white hover:border-white/10 hover:bg-white/[0.06]" onClick={() => setMobileOpen(false)}>
+                    <Link href="/admin" className="flex min-h-12 items-center rounded-xl border border-transparent px-4 text-sm font-semibold text-[#374151] hover:border-[#E5E7EB] hover:bg-[#F7F9FC]" onClick={() => setMobileOpen(false)}>
                       Admin
                     </Link>
                   )}
@@ -144,10 +144,10 @@ export function Navbar() {
                 </>
               ) : (
                 <>
-                  <Button variant="ghost" size="sm" className="mt-2 w-full border-white/10 bg-transparent text-white" onClick={() => { openAuth('login'); setMobileOpen(false); }}>
+                  <Button variant="ghost" size="sm" className="mt-2 w-full border-[#E5E7EB] bg-transparent text-[#374151]" onClick={() => { openAuth('login'); setMobileOpen(false); }}>
                     Log In
                   </Button>
-                  <Button variant="ghost" size="sm" className="w-full border-0 bg-[#176dff] text-white hover:bg-[#0e5fe6]" onClick={() => { openAuth('register'); setMobileOpen(false); }}>
+                  <Button variant="ghost" size="sm" className="w-full border-0 bg-[#2563EB] text-white hover:bg-[#1D4ED8]" onClick={() => { openAuth('register'); setMobileOpen(false); }}>
                     Start Free
                   </Button>
                 </>

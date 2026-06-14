@@ -25,7 +25,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const setHydrated = useThemeStore((state) => state.setHydrated);
 
   useEffect(() => {
-    setUserThemePreference(resolvePlatformTheme(user?.themePreference, 'legacy'));
+    setUserThemePreference(resolvePlatformTheme(user?.themePreference, 'clean-blue'));
   }, [setUserThemePreference, user?.themePreference]);
 
   useEffect(() => {
@@ -42,7 +42,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       })
       .catch(() => {
         if (active) {
-          setActiveTheme('goldx-premium');
+          setActiveTheme('clean-blue');
         }
       })
       .finally(() => {
@@ -94,7 +94,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
             },
             (payload) => {
               const nextRow = payload.new as UserThemeRow | null;
-              setUserThemePreference(resolvePlatformTheme(nextRow?.theme_preference, 'legacy'));
+              setUserThemePreference(resolvePlatformTheme(nextRow?.theme_preference, 'clean-blue'));
             }
           )
           .subscribe()

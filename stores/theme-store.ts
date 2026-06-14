@@ -14,12 +14,12 @@ type ThemeStore = {
 };
 
 const computeResolvedTheme = (activeTheme: PlatformTheme, userThemePreference: PlatformTheme): PlatformTheme =>
-  resolvePlatformTheme(activeTheme || userThemePreference, 'goldx-premium');
+  resolvePlatformTheme(activeTheme || userThemePreference, 'clean-blue');
 
 export const useThemeStore = create<ThemeStore>((set) => ({
-  activeTheme: 'goldx-premium',
-  userThemePreference: 'legacy',
-  resolvedTheme: 'goldx-premium',
+  activeTheme: 'clean-blue',
+  userThemePreference: 'clean-blue',
+  resolvedTheme: 'clean-blue',
   hydrated: false,
   setActiveTheme: (theme) =>
     set((state) => ({

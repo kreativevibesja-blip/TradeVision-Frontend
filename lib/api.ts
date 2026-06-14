@@ -684,7 +684,7 @@ export interface AnnouncementPopupSettings {
   repeatHours: number;
 }
 
-export type PlatformTheme = 'legacy' | 'goldx-premium';
+export type PlatformTheme = 'clean-blue' | 'legacy' | 'goldx-premium';
 
 export interface ThemePreferenceResponse {
   themePreference: PlatformTheme;

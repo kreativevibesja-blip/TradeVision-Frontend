@@ -14,7 +14,7 @@ interface User {
   role: string;
   subscription: string;
   createdAt?: string;
-  themePreference?: 'legacy' | 'goldx-premium';
+  themePreference?: 'clean-blue' | 'legacy' | 'goldx-premium';
   dailyUsage?: number;
   onboarding?: UserOnboardingState | null;
 }
