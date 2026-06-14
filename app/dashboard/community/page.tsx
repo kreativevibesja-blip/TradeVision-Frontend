@@ -50,7 +50,7 @@ export default function CommunityPage() {
 
   const loadProfiles = useCallback(async (rows: Message[]) => {
     if (!supabase || rows.length === 0) return;
-    const ids = Array.from(new Set(rows.map((row) => row.user_id))).filter((id) => !profiles[id]);
+    const ids = Array.from(new Set(rows.map((row) => row.user_id)));
     if (ids.length === 0) return;
 
     const { data } = await supabase
@@ -65,7 +65,7 @@ export default function CommunityPage() {
         return acc;
       }, {}),
     }));
-  }, [profiles]);
+  }, []);
 
   const loadChannels = useCallback(async () => {
     if (!supabase) {
@@ -88,9 +88,12 @@ export default function CommunityPage() {
     setSelectedChannelId((current) => current || rows[0]?.id || '');
   }, []);
 
-  const loadMessages = useCallback(async (channelId: string) => {
+  const loadMessages = useCallback(async (channelId: string, options: { showLoader?: boolean } = {}) => {
     if (!supabase || !channelId) return;
-    setLoadingMessages(true);
+    const showLoader = options.showLoader ?? false;
+    if (showLoader) {
+      setLoadingMessages(true);
+    }
     setError('');
 
     const { data, error: messageError } = await supabase
@@ -110,7 +113,9 @@ export default function CommunityPage() {
       await loadProfiles(rows);
     }
 
-    setLoadingMessages(false);
+    if (showLoader) {
+      setLoadingMessages(false);
+    }
   }, [loadProfiles]);
 
   useEffect(() => {
@@ -119,7 +124,7 @@ export default function CommunityPage() {
 
   useEffect(() => {
     if (!selectedChannelId) return;
-    void loadMessages(selectedChannelId);
+    void loadMessages(selectedChannelId, { showLoader: true });
     const poll = window.setInterval(() => {
       void loadMessages(selectedChannelId);
     }, 15000);
