@@ -1,8 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ImagePlus, Loader2, Send, UploadCloud } from 'lucide-react';
+import { ImagePlus, Loader2, Send, Sparkles, UploadCloud, X } from 'lucide-react';
 import { CleanButton, CleanCard, CleanBadge, FeedPostCard, PageHeader } from '@/components/CleanBlue';
+import { api, type AiCompareRecord, type AiCompareUsage } from '@/lib/api';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -34,6 +35,21 @@ const relativeTime = (value: string) => {
   return `${Math.floor(hours / 24)}d ago`;
 };
 
+const loadingSteps = [
+  'Reading chart structure',
+  'Detecting key levels',
+  'Reviewing market bias',
+  'Comparing idea',
+  'Generating mentor feedback',
+];
+
+const agreementLabel = {
+  agrees: 'Agrees',
+  partially_agrees: 'Partially agrees',
+  disagrees: 'Disagrees',
+  unclear: 'Unclear',
+};
+
 export default function FeedPage() {
   const { user, loading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState('For You');
@@ -44,6 +60,13 @@ export default function FeedPage() {
   const [loading, setLoading] = useState(true);
   const [posting, setPosting] = useState(false);
   const [error, setError] = useState('');
+  const [comparePost, setComparePost] = useState<FeedPost | null>(null);
+  const [compareResult, setCompareResult] = useState<AiCompareRecord | null>(null);
+  const [compareUsage, setCompareUsage] = useState<AiCompareUsage | null>(null);
+  const [compareLoading, setCompareLoading] = useState(false);
+  const [compareStep, setCompareStep] = useState(loadingSteps[0]);
+  const [compareError, setCompareError] = useState('');
+  const [compareSavedMessage, setCompareSavedMessage] = useState('');
 
   const profileName = useCallback((userId: string) => {
     if (userId === user?.id) return user.name || user.email.split('@')[0] || 'You';
@@ -129,6 +152,59 @@ export default function FeedPage() {
     setPosting(false);
   };
 
+  const openAiCompare = (post: FeedPost) => {
+    setComparePost(post);
+    setCompareResult(null);
+    setCompareUsage(null);
+    setCompareError('');
+    setCompareSavedMessage('');
+    setCompareStep(loadingSteps[0]);
+  };
+
+  const runAiCompare = async () => {
+    if (!comparePost) return;
+    setCompareLoading(true);
+    setCompareError('');
+    setCompareSavedMessage('');
+
+    let index = 0;
+    const timer = window.setInterval(() => {
+      index = (index + 1) % loadingSteps.length;
+      setCompareStep(loadingSteps[index]);
+    }, 900);
+
+    try {
+      const response = await api.runAiCompare(comparePost.id);
+      setCompareResult(response.compare);
+      setCompareUsage(response.usage);
+      setCompareStep('Orion’s independent view is ready');
+    } catch (err) {
+      setCompareError(err instanceof Error ? err.message : 'AI Compare failed');
+    } finally {
+      window.clearInterval(timer);
+      setCompareLoading(false);
+    }
+  };
+
+  const publishCompare = async () => {
+    if (!compareResult) return;
+    const response = await api.publishAiCompare(compareResult.id);
+    setCompareResult(response.compare);
+    setCompareSavedMessage('Posted as Orion AI Compare.');
+  };
+
+  const saveCompareToJournal = async () => {
+    if (!compareResult) return;
+    await api.saveAiCompareToJournal(compareResult.id);
+    setCompareSavedMessage('Saved to Journal.');
+  };
+
+  const sendCompareToRadar = async () => {
+    if (!compareResult) return;
+    await api.sendAiCompareToRadar(compareResult.id);
+    setCompareSavedMessage('Sent to Trade Radar.');
+  };
+
   if (!authLoading && !user) {
     return (
       <div className="mx-auto max-w-3xl">
@@ -192,6 +268,8 @@ export default function FeedPage() {
                 summary={post.ai_summary || post.body}
                 image={post.image_url || undefined}
                 timeLabel={relativeTime(post.created_at)}
+                canAiCompare={Boolean(post.image_url)}
+                onAiCompare={() => openAiCompare(post)}
               />
             ))
           )}
@@ -208,6 +286,105 @@ export default function FeedPage() {
           <div className="mt-3"><CleanBadge tone="blue">{activeTab}</CleanBadge></div>
         </CleanCard>
       </aside>
+
+      {comparePost ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#111827]/50 p-4">
+          <div className="max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
+            <div className="flex items-start justify-between gap-4 border-b border-[#E5E7EB] p-5">
+              <div>
+                <h2 className="flex items-center gap-2 text-xl font-extrabold text-[#111827]">
+                  <Sparkles className="h-5 w-5 text-[#2563EB]" />
+                  Run Orion AI Compare?
+                </h2>
+                <p className="mt-1 text-sm text-[#6B7280]">Orion’s independent view helps compare the posted idea without attacking the trader.</p>
+              </div>
+              <button onClick={() => setComparePost(null)} className="rounded-xl p-2 text-[#6B7280] hover:bg-[#F3F4F6]">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="grid gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_22rem]">
+              <div className="space-y-5">
+                <div className="overflow-hidden rounded-2xl border border-[#E5E7EB] bg-[#0B1220]">
+                  {comparePost.image_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={comparePost.image_url} alt="Posted chart" className="max-h-80 w-full object-contain" />
+                  ) : (
+                    <div className="flex h-56 items-center justify-center text-[#60A5FA]">No chart image</div>
+                  )}
+                </div>
+
+                <CleanCard>
+                  <h3 className="font-extrabold text-[#111827]">Original Post Summary</h3>
+                  <p className="mt-2 text-sm leading-6 text-[#4B5563]">{comparePost.ai_summary || comparePost.body}</p>
+                  <p className="mt-3 text-xs font-bold text-[#2563EB]">{comparePost.market_tag || 'Community chart'}</p>
+                </CleanCard>
+
+                {compareResult ? (
+                  <CleanCard>
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <h3 className="font-extrabold text-[#111827]">Orion’s independent view</h3>
+                      <CleanBadge tone={compareResult.agreement === 'disagrees' ? 'red' : compareResult.agreement === 'unclear' ? 'gray' : 'blue'}>
+                        {agreementLabel[compareResult.agreement]}
+                      </CleanBadge>
+                    </div>
+                    <div className="mt-4 h-2 overflow-hidden rounded-full bg-[#E5E7EB]">
+                      <div className="h-full rounded-full bg-[#2563EB]" style={{ width: `${compareResult.confidence}%` }} />
+                    </div>
+                    <p className="mt-2 text-xs font-bold text-[#6B7280]">Confidence {compareResult.confidence}%</p>
+                    <div className="mt-5 grid gap-4 text-sm text-[#4B5563] md:grid-cols-2">
+                      <p><strong className="text-[#111827]">Bias:</strong> {compareResult.result_json.bias}</p>
+                      <p><strong className="text-[#111827]">Recommended action:</strong> {compareResult.result_json.recommendedAction.replaceAll('_', ' ')}</p>
+                      <p><strong className="text-[#111827]">Structure:</strong> {compareResult.result_json.marketStructure}</p>
+                      <p><strong className="text-[#111827]">Liquidity:</strong> {compareResult.result_json.liquidity}</p>
+                    </div>
+                    <p className="mt-4 rounded-2xl bg-[#EFF6FF] p-4 text-sm leading-6 text-[#1D4ED8]">{compareResult.result_json.mentorFeedback}</p>
+                    <div className="mt-4">
+                      <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[#6B7280]">Key Levels</p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {compareResult.result_json.keyLevels.map((level) => <CleanBadge key={level} tone="gray">{level}</CleanBadge>)}
+                      </div>
+                    </div>
+                  </CleanCard>
+                ) : null}
+              </div>
+
+              <aside className="space-y-4">
+                <CleanCard>
+                  <h3 className="font-extrabold text-[#111827]">Quota</h3>
+                  <p className="mt-2 text-sm text-[#6B7280]">
+                    {compareUsage ? `${compareUsage.used_count} of ${compareUsage.limit_count} used this period.` : 'Quota is checked before Orion runs AI Compare.'}
+                  </p>
+                </CleanCard>
+
+                {compareLoading ? (
+                  <CleanCard>
+                    <Loader2 className="mb-3 h-5 w-5 animate-spin text-[#2563EB]" />
+                    <p className="text-sm font-bold text-[#111827]">{compareStep}</p>
+                  </CleanCard>
+                ) : null}
+
+                {compareError ? <p className="rounded-xl bg-[#FEF2F2] p-3 text-sm font-semibold text-[#EF4444]">{compareError}</p> : null}
+                {compareSavedMessage ? <p className="rounded-xl bg-[#ECFDF5] p-3 text-sm font-semibold text-[#16A34A]">{compareSavedMessage}</p> : null}
+
+                {!compareResult ? (
+                  <CleanButton onClick={runAiCompare} className={compareLoading || !comparePost.image_url ? 'pointer-events-none w-full opacity-60' : 'w-full'}>
+                    {compareLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                    Run AI Compare
+                  </CleanButton>
+                ) : (
+                  <div className="space-y-2">
+                    <CleanButton onClick={() => setComparePost(null)} variant="secondary" className="w-full">Keep Private</CleanButton>
+                    <CleanButton onClick={publishCompare} className="w-full">Post as Comment</CleanButton>
+                    <CleanButton onClick={saveCompareToJournal} variant="secondary" className="w-full">Save to Journal</CleanButton>
+                    <CleanButton onClick={sendCompareToRadar} variant="secondary" className="w-full">Send to Trade Radar</CleanButton>
+                  </div>
+                )}
+              </aside>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
