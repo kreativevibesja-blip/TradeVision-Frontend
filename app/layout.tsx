@@ -39,6 +39,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" data-theme="clean-blue">
       <body className={`${bodyFont.variable} ${displayFont.variable} ${monoFont.variable} min-h-screen bg-background font-sans antialiased overflow-x-hidden`}>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: "try{var m=localStorage.getItem('tradevision-color-mode')||'light';document.documentElement.dataset.colorMode=m;document.body.dataset.colorMode=m;}catch(e){}",
+          }}
+        />
         <GlobalUpdatesModal />
         <AuthProvider>
           <ThemeProvider>
