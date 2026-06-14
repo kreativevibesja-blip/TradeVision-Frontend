@@ -1480,6 +1480,13 @@ function AnalyzePageContent() {
                     Open Command Center
                   </Button>
                   {analysis?.id ? <TrackSetupButton analysisId={analysis.id} /> : null}
+                  {analysis?.id ? (
+                    <Link href={`/dashboard/feed?analysisId=${encodeURIComponent(analysis.id)}`}>
+                      <Button variant="secondary" className="gap-2">
+                        Post to Feed
+                      </Button>
+                    </Link>
+                  ) : null}
                 </div>
               </div>
               </div>

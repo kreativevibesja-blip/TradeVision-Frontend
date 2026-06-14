@@ -15,36 +15,35 @@ import {
   Users,
   FileText,
   CreditCard,
-  Tag,
   Settings,
-  Megaphone,
   BarChart3,
   Shield,
   ChevronRight,
   LifeBuoy,
-  Percent,
-  Gift,
-  Mail,
   MessageSquare,
-  TrendingUp,
+  Bot,
+  CalendarDays,
+  Database,
+  Flag,
+  Newspaper,
+  Receipt,
 } from 'lucide-react';
 
 const adminNav = [
-  { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+  { label: 'Overview', href: '/admin', icon: LayoutDashboard },
   { label: 'Users', href: '/admin/users', icon: Users },
-  { label: 'Analyses', href: '/admin/analyses', icon: FileText },
+  { label: 'Subscriptions', href: '/admin/subscriptions', icon: Receipt },
   { label: 'Payments', href: '/admin/payments', icon: CreditCard, badgeKey: 'payments' as const },
-  { label: 'Policies', href: '/admin/policies', icon: FileText },
-  { label: 'Referrals', href: '/admin/referrals', icon: Gift },
-  { label: 'Pricing Plans', href: '/admin/pricing', icon: Tag },
-  { label: 'Coupons', href: '/admin/coupons', icon: Percent },
+  { label: 'Feed Moderation', href: '/admin/feed-moderation', icon: Flag, badgeKey: 'feedback' as const },
+  { label: 'Community Moderation', href: '/admin/community-moderation', icon: MessageSquare },
+  { label: 'Events', href: '/admin/events', icon: CalendarDays },
+  { label: 'Content', href: '/admin/content', icon: Newspaper },
+  { label: 'Orion Knowledge', href: '/admin/orion-knowledge', icon: Bot },
+  { label: 'AI & Data', href: '/admin/ai-data', icon: Database },
+  { label: 'Reports', href: '/admin/reports', icon: BarChart3 },
   { label: 'Settings', href: '/admin/settings', icon: Settings },
-  { label: 'Updates', href: '/admin/updates', icon: Megaphone },
-  { label: 'Tickets', href: '/admin/tickets', icon: LifeBuoy, badgeKey: 'tickets' as const },
-  { label: 'Email Campaigns', href: '/admin/emails', icon: Mail },
-  { label: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
-  { label: 'Feedback', href: '/admin/feedback', icon: MessageSquare, badgeKey: 'feedback' as const },
-  { label: 'GoldX', href: '/admin/goldx', icon: TrendingUp },
+  { label: 'Support Tickets', href: '/admin/support-tickets', icon: LifeBuoy, badgeKey: 'tickets' as const },
+  { label: 'Legacy Analyses', href: '/admin/analyses', icon: FileText },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -130,7 +129,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <Shield className="h-4 w-4 text-primary" />
               Admin Workspace
             </div>
-            <p className="mt-3 text-sm leading-6 text-[#8ea4c2]">Manage pricing, analytics, support, and platform settings.</p>
+            <p className="mt-3 text-sm leading-6 text-[#8ea4c2]">Manage users, social trading, Orion knowledge, billing, and support.</p>
           </div>
           <nav className="space-y-1">
             {adminNav.map((item) => {

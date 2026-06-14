@@ -37,7 +37,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-theme="goldx-premium">
+    <html lang="en" data-theme="clean-blue">
       <body className={`${bodyFont.variable} ${displayFont.variable} ${monoFont.variable} min-h-screen bg-background font-sans antialiased overflow-x-hidden`}>
         <GlobalUpdatesModal />
         <AuthProvider>

@@ -149,7 +149,7 @@ export default function AdminSettingsPage() {
       setFindTradeCategories(nextFindTradeCategories);
       if (announcementPopups) setAnnouncementPopupsEnabled(Boolean(announcementPopups.value));
       if (announcementPopupRepeat?.value != null) setAnnouncementPopupRepeatHours(String(announcementPopupRepeat.value));
-      if (activeTheme?.value === 'legacy' || activeTheme?.value === 'goldx-premium') setPlatformTheme(activeTheme.value);
+      if (activeTheme?.value === 'clean-blue' || activeTheme?.value === 'legacy' || activeTheme?.value === 'goldx-premium') setPlatformTheme(activeTheme.value);
     } catch {
     } finally {
       setLoading(false);
