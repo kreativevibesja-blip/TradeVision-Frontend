@@ -21,9 +21,9 @@ type FeedPost = {
 };
 
 type ProfilePreview = {
-  user_id: string;
-  display_name: string | null;
-  avatar_url: string | null;
+  id: string;
+  name: string | null;
+  email: string;
 };
 
 const relativeTime = (value: string) => {
@@ -70,7 +70,8 @@ export default function FeedPage() {
 
   const profileName = useCallback((userId: string) => {
     if (userId === user?.id) return user.name || user.email.split('@')[0] || 'You';
-    return profiles[userId]?.display_name || `Trader ${userId.slice(0, 6)}`;
+    const profile = profiles[userId];
+    return profile?.name || profile?.email?.split('@')[0] || 'Trader';
   }, [profiles, user]);
 
   const loadProfiles = useCallback(async (rows: FeedPost[]) => {
@@ -79,12 +80,12 @@ export default function FeedPage() {
     if (ids.length === 0) return;
 
     const { data } = await supabase
-      .from('profiles')
-      .select('user_id, display_name, avatar_url')
-      .in('user_id', ids);
+      .from('User')
+      .select('id, name, email')
+      .in('id', ids);
 
     const nextProfiles = (data || []).reduce<Record<string, ProfilePreview>>((acc, profile) => {
-      acc[profile.user_id] = profile;
+      acc[profile.id] = profile;
       return acc;
     }, {});
 
@@ -217,8 +218,8 @@ export default function FeedPage() {
   }
 
   return (
-    <div className="mx-auto grid max-w-6xl gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
-      <div>
+    <div className="mx-auto grid h-[calc(100svh-8rem)] min-h-[42rem] max-w-6xl gap-6 overflow-hidden xl:grid-cols-[minmax(0,1fr)_20rem]">
+      <div className="min-h-0 overflow-y-auto pr-1">
         <PageHeader title="Feed" subtitle="Share chart ideas, AI analysis, radar setups, and journal recaps with traders." />
         <CleanCard className="mb-5">
           <textarea
@@ -254,7 +255,7 @@ export default function FeedPage() {
           ))}
         </div>
 
-        <div className="space-y-5">
+        <div className="space-y-5 pb-6">
           {loading ? (
             <CleanCard><p className="text-sm text-[#6B7280]">Loading posts...</p></CleanCard>
           ) : posts.length === 0 ? (
@@ -276,7 +277,7 @@ export default function FeedPage() {
         </div>
       </div>
 
-      <aside className="space-y-5">
+      <aside className="min-h-0 space-y-5 overflow-y-auto pr-1">
         <CleanCard>
           <h2 className="font-extrabold text-[#111827]">Feed Status</h2>
           <p className="mt-2 text-sm leading-6 text-[#6B7280]">Posts are loaded from Supabase in batches of 10. Comments and large media stay lazy-loaded to avoid heavy dashboard queries.</p>

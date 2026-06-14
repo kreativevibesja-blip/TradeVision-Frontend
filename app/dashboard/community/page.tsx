@@ -22,8 +22,9 @@ type Message = {
 };
 
 type ProfilePreview = {
-  user_id: string;
-  display_name: string | null;
+  id: string;
+  name: string | null;
+  email: string;
 };
 
 const fallbackChannels = ['General', 'Forex', 'Gold', 'Crypto', 'Indices', 'Synthetic Indices', 'Beginners', 'Trade Reviews', 'Platform Help'];
@@ -45,7 +46,8 @@ export default function CommunityPage() {
 
   const authorName = useCallback((userId: string) => {
     if (userId === user?.id) return user.name || user.email.split('@')[0] || 'You';
-    return profiles[userId]?.display_name || `Trader ${userId.slice(0, 6)}`;
+    const profile = profiles[userId];
+    return profile?.name || profile?.email?.split('@')[0] || 'Trader';
   }, [profiles, user]);
 
   const loadProfiles = useCallback(async (rows: Message[]) => {
@@ -54,14 +56,14 @@ export default function CommunityPage() {
     if (ids.length === 0) return;
 
     const { data } = await supabase
-      .from('profiles')
-      .select('user_id, display_name')
-      .in('user_id', ids);
+      .from('User')
+      .select('id, name, email')
+      .in('id', ids);
 
     setProfiles((current) => ({
       ...current,
       ...(data || []).reduce<Record<string, ProfilePreview>>((acc, profile) => {
-        acc[profile.user_id] = profile;
+        acc[profile.id] = profile;
         return acc;
       }, {}),
     }));
@@ -164,10 +166,10 @@ export default function CommunityPage() {
   return (
     <div className="mx-auto max-w-7xl">
       <PageHeader title="Community" subtitle="Trading rooms for discussion, analysis sharing, mentoring, and platform support." />
-      <div className="grid min-h-[70vh] gap-5 lg:grid-cols-[15rem_minmax(0,1fr)_18rem]">
-        <CleanCard className="p-3">
+      <div className="grid h-[calc(100svh-13rem)] min-h-[34rem] gap-5 overflow-hidden lg:grid-cols-[15rem_minmax(0,1fr)_18rem]">
+        <CleanCard className="flex min-h-0 flex-col p-3">
           <p className="px-2 pb-3 text-xs font-extrabold uppercase tracking-[0.14em] text-[#6B7280]">Channels</p>
-          <div className="space-y-1">
+          <div className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-1">
             {channels.length > 0 ? channels.map((item) => (
               <button key={item.id} onClick={() => setSelectedChannelId(item.id)} className={`flex w-full items-center rounded-xl px-3 py-2.5 text-left text-sm font-bold ${selectedChannelId === item.id ? 'bg-[#EFF6FF] text-[#2563EB]' : 'text-[#4B5563] hover:bg-[#F7F9FC]'}`}>
                 # {item.name}
@@ -178,12 +180,12 @@ export default function CommunityPage() {
           </div>
         </CleanCard>
 
-        <CleanCard className="flex flex-col p-0">
+        <CleanCard className="flex min-h-0 flex-col p-0">
           <div className="border-b border-[#E5E7EB] p-5">
             <h2 className="font-extrabold text-[#111827]"># {selectedChannel?.name || 'Community'}</h2>
             <p className="text-sm text-[#6B7280]">{selectedChannel?.description || 'Latest 30 messages with controlled polling.'}</p>
           </div>
-          <div className="flex-1 space-y-4 overflow-y-auto p-5">
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-5">
             {loadingMessages ? (
               <p className="text-sm text-[#6B7280]">Loading messages...</p>
             ) : messages.length === 0 ? (
@@ -228,12 +230,12 @@ export default function CommunityPage() {
           </div>
         </CleanCard>
 
-        <aside className="space-y-5">
+        <aside className="min-h-0 space-y-5 overflow-y-auto pr-1">
           <CleanCard>
             <h2 className="font-extrabold text-[#111827]">Members</h2>
             <div className="mt-4 space-y-3 text-sm text-[#4B5563]">
               {Object.values(profiles).slice(0, 6).map((profile) => (
-                <p key={profile.user_id}>{profile.display_name || `Trader ${profile.user_id.slice(0, 6)}`}</p>
+                <p key={profile.id}>{profile.name || profile.email.split('@')[0]}</p>
               ))}
               {Object.keys(profiles).length === 0 ? <p>Members appear as messages load.</p> : null}
             </div>

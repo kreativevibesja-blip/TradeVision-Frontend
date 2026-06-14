@@ -34,7 +34,7 @@ const userNav = [
   { href: '/dashboard/events', label: 'Events', icon: CalendarDays },
   { href: '/dashboard/journal', label: 'Journal', icon: BookOpen },
   { href: '/dashboard/orion', label: 'Orion AI', icon: Sparkles },
-  { href: '/dashboard/messages', label: 'Messages', icon: MessageCircle, count: 3 },
+  { href: '/dashboard/messages', label: 'Messages', icon: MessageCircle },
   { href: '/dashboard/tradingview', label: 'Forex Live Chart', icon: CandlestickChart },
   { href: '/dashboard/deriv', label: 'Deriv Live Chart', icon: Activity },
   { href: '/dashboard/billing', label: 'Billing', icon: CreditCard },
@@ -79,7 +79,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               >
                 <item.icon className="h-4 w-4" />
                 <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                {item.count ? <span className="rounded-full bg-[#2563EB] px-2 py-0.5 text-[10px] text-white">{item.count}</span> : null}
               </Link>
             );
           })}

@@ -11,6 +11,8 @@ type Conversation = {
   participant_key: string;
   created_by: string;
   updated_at: string;
+  last_read_at?: string | null;
+  unread_count?: number;
 };
 
 type DirectMessage = {
@@ -22,6 +24,12 @@ type DirectMessage = {
 };
 
 type UserSuggestion = {
+  id: string;
+  name: string | null;
+  email: string;
+};
+
+type UserPreview = {
   id: string;
   name: string | null;
   email: string;
@@ -43,6 +51,7 @@ export default function MessagesPage() {
   const [userSuggestions, setUserSuggestions] = useState<UserSuggestion[]>([]);
   const [targetUserId, setTargetUserId] = useState('');
   const [draft, setDraft] = useState('');
+  const [userPreviews, setUserPreviews] = useState<Record<string, UserPreview>>({});
   const [loadingConversations, setLoadingConversations] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [searchingUsers, setSearchingUsers] = useState(false);
@@ -51,20 +60,46 @@ export default function MessagesPage() {
 
   const selectedConversation = conversations.find((conversation) => conversation.id === selectedConversationId);
 
+  const displayName = useCallback((userId: string) => {
+    if (userId === user?.id) return user.name || user.email.split('@')[0] || 'You';
+    const preview = userPreviews[userId];
+    return preview?.name || preview?.email?.split('@')[0] || 'Trader';
+  }, [user, userPreviews]);
+
   const selectedName = useMemo(() => {
     if (!user || !selectedConversation) return 'Select a conversation';
     const id = otherParticipant(selectedConversation.participant_key, user.id);
-    return id === user.id ? 'Saved notes' : `Trader ${id.slice(0, 8)}`;
-  }, [selectedConversation, user]);
+    return id === user.id ? 'Saved notes' : displayName(id);
+  }, [displayName, selectedConversation, user]);
+
+  const loadUserPreviews = useCallback(async (ids: string[]) => {
+    if (!supabase || ids.length === 0) return;
+    const missing = Array.from(new Set(ids)).filter((id) => id && id !== user?.id);
+    if (missing.length === 0) return;
+
+    const { data } = await supabase
+      .from('User')
+      .select('id, name, email')
+      .in('id', missing);
+
+    setUserPreviews((current) => ({
+      ...current,
+      ...(data || []).reduce<Record<string, UserPreview>>((acc, item) => {
+        acc[item.id] = item;
+        return acc;
+      }, {}),
+    }));
+  }, [user?.id]);
 
   const loadConversations = useCallback(async () => {
     if (!supabase || !user) return;
+    const supabaseClient = supabase;
     setLoadingConversations(true);
     setError('');
 
     const { data, error: conversationsError } = await supabase
       .from('direct_conversation_participants')
-      .select('conversation_id, direct_conversations(id, participant_key, created_by, updated_at)')
+      .select('conversation_id, last_read_at, direct_conversations(id, participant_key, created_by, updated_at)')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
@@ -72,20 +107,43 @@ export default function MessagesPage() {
       setError(conversationsError.message);
       setConversations([]);
     } else {
-      const rows = (data || [])
-        .map((row) => row.direct_conversations as unknown as Conversation | null)
-        .filter(Boolean) as Conversation[];
-      rows.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
-      setConversations(rows);
-      setSelectedConversationId((current) => current || rows[0]?.id || '');
+      const rows = ((data || [])
+        .map((row) => {
+          const conversation = row.direct_conversations as unknown as Conversation | null;
+          return conversation ? { ...conversation, last_read_at: row.last_read_at ?? null } : null;
+        })
+        .filter(Boolean) as Conversation[]);
+
+      await loadUserPreviews(rows.map((conversation) => otherParticipant(conversation.participant_key, user.id)));
+
+      const rowsWithUnread = await Promise.all(rows.map(async (conversation) => {
+        let query = supabaseClient
+          .from('direct_messages')
+          .select('id', { count: 'exact', head: true })
+          .eq('conversation_id', conversation.id)
+          .neq('sender_id', user.id)
+          .eq('is_deleted', false);
+
+        if (conversation.last_read_at) {
+          query = query.gt('created_at', conversation.last_read_at);
+        }
+
+        const { count } = await query;
+        return { ...conversation, unread_count: count || 0 };
+      }));
+
+      rowsWithUnread.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+      setConversations(rowsWithUnread);
+      setSelectedConversationId((current) => current || rowsWithUnread[0]?.id || '');
     }
 
     setLoadingConversations(false);
-  }, [user]);
+  }, [loadUserPreviews, user]);
 
-  const loadMessages = useCallback(async (conversationId: string) => {
+  const loadMessages = useCallback(async (conversationId: string, options: { showLoader?: boolean; markRead?: boolean } = {}) => {
     if (!supabase || !conversationId) return;
-    setLoadingMessages(true);
+    const showLoader = options.showLoader ?? false;
+    if (showLoader) setLoadingMessages(true);
     setError('');
 
     const { data, error: messagesError } = await supabase
@@ -101,10 +159,21 @@ export default function MessagesPage() {
       setMessages([]);
     } else {
       setMessages(data || []);
+      if (options.markRead && user) {
+        const readAt = new Date().toISOString();
+        await supabase
+          .from('direct_conversation_participants')
+          .update({ last_read_at: readAt })
+          .eq('conversation_id', conversationId)
+          .eq('user_id', user.id);
+        setConversations((current) => current.map((conversation) => (
+          conversation.id === conversationId ? { ...conversation, last_read_at: readAt, unread_count: 0 } : conversation
+        )));
+      }
     }
 
-    setLoadingMessages(false);
-  }, []);
+    if (showLoader) setLoadingMessages(false);
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -113,7 +182,7 @@ export default function MessagesPage() {
 
   useEffect(() => {
     if (!selectedConversationId) return;
-    void loadMessages(selectedConversationId);
+    void loadMessages(selectedConversationId, { showLoader: true, markRead: true });
     const poll = window.setInterval(() => {
       void loadMessages(selectedConversationId);
     }, 15000);
@@ -246,8 +315,8 @@ export default function MessagesPage() {
   return (
     <div className="mx-auto max-w-6xl">
       <PageHeader title="Messages" subtitle="Direct messages, shared analyses, setup discussion, block, and report controls." />
-      <div className="grid min-h-[68vh] gap-5 lg:grid-cols-[18rem_minmax(0,1fr)]">
-        <CleanCard className="p-3">
+      <div className="grid h-[calc(100svh-13rem)] min-h-[34rem] gap-5 overflow-hidden lg:grid-cols-[18rem_minmax(0,1fr)]">
+        <CleanCard className="flex min-h-0 flex-col p-3">
           <div className="mb-3 space-y-2 rounded-xl bg-[#F7F9FC] p-3">
             <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9CA3AF]" />
@@ -293,28 +362,34 @@ export default function MessagesPage() {
               {targetUserId ? 'Open chat' : 'Select a user'}
             </CleanButton>
           </div>
-          {loadingConversations ? <p className="p-3 text-sm text-[#6B7280]">Loading conversations...</p> : null}
-          {conversations.length === 0 && !loadingConversations ? <p className="p-3 text-sm text-[#6B7280]">No conversations yet.</p> : null}
-          {conversations.map((conversation) => {
-            const otherId = user ? otherParticipant(conversation.participant_key, user.id) : '';
-            const active = conversation.id === selectedConversationId;
-            return (
-              <button key={conversation.id} onClick={() => setSelectedConversationId(conversation.id)} className={`mb-1 flex w-full items-center gap-3 rounded-xl p-3 text-left ${active ? 'bg-[#EFF6FF]' : 'hover:bg-[#F7F9FC]'}`}>
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#DBEAFE] font-extrabold text-[#2563EB]">{otherId.slice(0, 1).toUpperCase()}</div>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-extrabold text-[#111827]">{otherId === user?.id ? 'Saved notes' : `Trader ${otherId.slice(0, 8)}`}</p>
-                  <p className="text-xs text-[#6B7280]">{new Date(conversation.updated_at).toLocaleDateString()}</p>
-                </div>
-              </button>
-            );
-          })}
+          <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+            {loadingConversations ? <p className="p-3 text-sm text-[#6B7280]">Loading conversations...</p> : null}
+            {conversations.length === 0 && !loadingConversations ? <p className="p-3 text-sm text-[#6B7280]">No conversations yet.</p> : null}
+            {conversations.map((conversation) => {
+              const otherId = user ? otherParticipant(conversation.participant_key, user.id) : '';
+              const active = conversation.id === selectedConversationId;
+              const label = otherId === user?.id ? 'Saved notes' : displayName(otherId);
+              return (
+                <button key={conversation.id} onClick={() => setSelectedConversationId(conversation.id)} className={`mb-1 flex w-full items-center gap-3 rounded-xl p-3 text-left ${active ? 'bg-[#EFF6FF]' : 'hover:bg-[#F7F9FC]'}`}>
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#DBEAFE] font-extrabold text-[#2563EB]">{label.slice(0, 1).toUpperCase()}</div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-extrabold text-[#111827]">{label}</p>
+                    <p className="text-xs text-[#6B7280]">{new Date(conversation.updated_at).toLocaleDateString()}</p>
+                  </div>
+                  {(conversation.unread_count || 0) > 0 ? (
+                    <span className="rounded-full bg-[#2563EB] px-2 py-0.5 text-xs font-extrabold text-white">{conversation.unread_count}</span>
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
         </CleanCard>
-        <CleanCard className="flex flex-col p-0">
+        <CleanCard className="flex min-h-0 flex-col p-0">
           <div className="border-b border-[#E5E7EB] p-5">
             <h2 className="font-extrabold text-[#111827]">{selectedName}</h2>
             <p className="text-sm text-[#6B7280]">Private conversation records from Supabase.</p>
           </div>
-          <div className="flex-1 space-y-4 overflow-y-auto p-5">
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-5">
             {!selectedConversationId ? (
               <p className="text-sm text-[#6B7280]">Select or start a conversation.</p>
             ) : loadingMessages ? (
