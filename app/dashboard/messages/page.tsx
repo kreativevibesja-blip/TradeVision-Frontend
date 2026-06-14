@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Loader2, MessageSquarePlus, Send, ShieldAlert } from 'lucide-react';
+import { Loader2, MessageSquarePlus, Search, Send, ShieldAlert } from 'lucide-react';
 import { CleanButton, CleanCard, PageHeader } from '@/components/CleanBlue';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -21,6 +21,12 @@ type DirectMessage = {
   created_at: string;
 };
 
+type UserSuggestion = {
+  id: string;
+  name: string | null;
+  email: string;
+};
+
 const formatTime = (value: string) => new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
 const otherParticipant = (participantKey: string, currentUserId: string) => {
@@ -33,10 +39,13 @@ export default function MessagesPage() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversationId, setSelectedConversationId] = useState('');
   const [messages, setMessages] = useState<DirectMessage[]>([]);
+  const [userSearch, setUserSearch] = useState('');
+  const [userSuggestions, setUserSuggestions] = useState<UserSuggestion[]>([]);
   const [targetUserId, setTargetUserId] = useState('');
   const [draft, setDraft] = useState('');
   const [loadingConversations, setLoadingConversations] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
+  const [searchingUsers, setSearchingUsers] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
 
@@ -111,9 +120,49 @@ export default function MessagesPage() {
     return () => window.clearInterval(poll);
   }, [loadMessages, selectedConversationId]);
 
-  const startConversation = async () => {
-    if (!supabase || !user || !targetUserId.trim()) return;
-    const otherUserId = targetUserId.trim();
+  useEffect(() => {
+    if (!supabase || !user) return;
+    const supabaseClient = supabase;
+
+    const query = userSearch.trim();
+    if (query.length < 2 || targetUserId) {
+      setUserSuggestions([]);
+      setSearchingUsers(false);
+      return;
+    }
+
+    let active = true;
+    setSearchingUsers(true);
+
+    const timer = window.setTimeout(async () => {
+      const safeQuery = query.replace(/[%_,]/g, '');
+      const { data, error: searchError } = await supabaseClient
+        .from('User')
+        .select('id, name, email')
+        .or(`name.ilike.%${safeQuery}%,email.ilike.%${safeQuery}%`)
+        .neq('id', user.id)
+        .limit(6);
+
+      if (!active) return;
+      if (searchError) {
+        setError(searchError.message);
+        setUserSuggestions([]);
+      } else {
+        setUserSuggestions(data || []);
+      }
+      setSearchingUsers(false);
+    }, 250);
+
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [targetUserId, user, userSearch]);
+
+  const startConversation = async (selectedUserId = targetUserId) => {
+    if (!supabase || !user || !selectedUserId.trim()) return;
+    const otherUserId = selectedUserId.trim();
+    if (otherUserId === user.id) return;
     const participantKey = [user.id, otherUserId].sort().join(':');
     setError('');
 
@@ -156,6 +205,8 @@ export default function MessagesPage() {
     }
 
     setTargetUserId('');
+    setUserSearch('');
+    setUserSuggestions([]);
     setSelectedConversationId(conversation.id);
     await loadConversations();
   };
@@ -198,14 +249,48 @@ export default function MessagesPage() {
       <div className="grid min-h-[68vh] gap-5 lg:grid-cols-[18rem_minmax(0,1fr)]">
         <CleanCard className="p-3">
           <div className="mb-3 space-y-2 rounded-xl bg-[#F7F9FC] p-3">
-            <input
-              value={targetUserId}
-              onChange={(event) => setTargetUserId(event.target.value)}
-              placeholder="Start by user ID"
-              className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm text-[#111827] outline-none placeholder:text-[#9CA3AF] focus:border-[#2563EB]"
-            />
-            <CleanButton onClick={startConversation} className={!targetUserId.trim() ? 'pointer-events-none w-full opacity-60' : 'w-full'}>
-              <MessageSquarePlus className="h-4 w-4" />New chat
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9CA3AF]" />
+              <input
+                value={userSearch}
+                onChange={(event) => {
+                  setUserSearch(event.target.value);
+                  setTargetUserId('');
+                }}
+                placeholder="Search users by name or email"
+                className="h-10 w-full rounded-xl border border-[#E5E7EB] bg-white pl-9 pr-3 text-sm text-[#111827] outline-none placeholder:text-[#9CA3AF] focus:border-[#2563EB]"
+              />
+            </div>
+            {userSuggestions.length > 0 ? (
+              <div className="overflow-hidden rounded-xl border border-[#E5E7EB] bg-white">
+                {userSuggestions.map((suggestion) => {
+                  const label = suggestion.name || suggestion.email.split('@')[0] || 'Trader';
+                  return (
+                    <button
+                      key={suggestion.id}
+                      type="button"
+                      onClick={() => {
+                        setUserSearch(label);
+                        setTargetUserId(suggestion.id);
+                        void startConversation(suggestion.id);
+                      }}
+                      className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-[#F7F9FC]"
+                    >
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#DBEAFE] text-xs font-extrabold text-[#2563EB]">{label[0]}</div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-bold text-[#111827]">{label}</p>
+                        <p className="truncate text-xs text-[#6B7280]">{suggestion.email}</p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : userSearch.trim().length >= 2 && !targetUserId && !searchingUsers ? (
+              <p className="px-1 text-xs text-[#6B7280]">No matching users found.</p>
+            ) : null}
+            <CleanButton onClick={() => startConversation()} className={!targetUserId.trim() ? 'pointer-events-none w-full opacity-60' : 'w-full'}>
+              {searchingUsers ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageSquarePlus className="h-4 w-4" />}
+              {targetUserId ? 'Open chat' : 'Select a user'}
             </CleanButton>
           </div>
           {loadingConversations ? <p className="p-3 text-sm text-[#6B7280]">Loading conversations...</p> : null}
