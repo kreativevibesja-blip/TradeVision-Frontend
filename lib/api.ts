@@ -818,6 +818,41 @@ interface FetchOptions extends RequestInit {
   token?: string;
 }
 
+export interface AiCompareResultJson {
+  bias: string;
+  marketStructure: string;
+  liquidity: string;
+  keyLevels: string[];
+  tradeIdea: string;
+  confidence: number;
+  riskNotes: string;
+  agreementWithPost: 'agrees' | 'partially_agrees' | 'disagrees' | 'unclear';
+  recommendedAction: 'enter_now' | 'wait_for_confirmation' | 'send_to_trade_radar' | 'avoid_trade';
+  mentorFeedback: string;
+}
+
+export interface AiCompareRecord {
+  id: string;
+  post_id: string;
+  user_id: string;
+  chart_image_url: string;
+  result_json: AiCompareResultJson;
+  agreement: AiCompareResultJson['agreementWithPost'];
+  confidence: number;
+  visibility: 'private' | 'public_comment';
+  created_at: string;
+}
+
+export interface AiCompareUsage {
+  id: string;
+  user_id: string;
+  period_start: string;
+  period_end: string;
+  used_count: number;
+  limit_count: number;
+  plan: string;
+}
+
 const resolveAuthToken = (token?: string | null) => token ?? getCachedAccessToken();
 
 const sendRequest = async (endpoint: string, fetchOptions: RequestInit, token?: string | null) => {
@@ -1027,6 +1062,33 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payload),
       keepalive: true,
+    }),
+
+  runAiCompare: (postId: string, payload: { rerun?: boolean } = {}) =>
+    apiFetch<{ compare: AiCompareRecord; usage: AiCompareUsage; cached: boolean }>(`/community/posts/${postId}/ai-compare`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  getPostAiCompares: (postId: string) =>
+    apiFetch<{ compares: AiCompareRecord[] }>(`/community/posts/${postId}/ai-compares`),
+
+  publishAiCompare: (compareId: string) =>
+    apiFetch<{ compare: AiCompareRecord; commentId: string }>(`/community/ai-compare/${compareId}/publish`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    }),
+
+  saveAiCompareToJournal: (compareId: string) =>
+    apiFetch<{ journal: { id: string } }>(`/community/ai-compare/${compareId}/save-journal`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    }),
+
+  sendAiCompareToRadar: (compareId: string) =>
+    apiFetch<{ setup: { id: string } }>(`/community/ai-compare/${compareId}/send-radar`, {
+      method: 'POST',
+      body: JSON.stringify({}),
     }),
 
   // Analysis
