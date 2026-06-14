@@ -199,11 +199,13 @@ export function FeedPostCard({
   market = 'EUR/USD 4H',
   summary = 'Strong bullish structure forming near resistance. Watching for a clean breakout and retest.',
   image,
+  timeLabel = '2h ago',
 }: {
   author?: string;
   market?: string;
   summary?: string;
   image?: string;
+  timeLabel?: string;
 }) {
   return (
     <CleanCard className="p-0">
@@ -214,7 +216,7 @@ export function FeedPostCard({
             <p className="font-extrabold text-[#111827]">{author}</p>
             <CleanBadge tone="green">Bullish</CleanBadge>
           </div>
-          <p className="text-xs text-[#6B7280]">2h ago · {market}</p>
+          <p className="text-xs text-[#6B7280]">{timeLabel} · {market}</p>
           <p className="mt-3 text-sm leading-6 text-[#111827]">{summary}</p>
         </div>
         <button className="rounded-lg p-2 text-[#6B7280] hover:bg-[#F3F4F6]"><MoreHorizontal className="h-4 w-4" /></button>
