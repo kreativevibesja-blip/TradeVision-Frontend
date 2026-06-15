@@ -54,11 +54,34 @@ export default function AdminOverviewPage() {
     };
   }, [token]);
 
-  const recentGrowth = useMemo(() => {
+  const growthChart = useMemo(() => {
     const rows = analytics?.userGrowth ?? [];
-    if (rows.length === 0) return [8, 16, 12, 24, 18, 28, 34];
-    const max = Math.max(...rows.map((row) => row._count ?? 0), 1);
-    return rows.slice(-7).map((row) => Math.max(8, Math.round(((row._count ?? 0) / max) * 100)));
+    const visibleRows = rows.slice(-14);
+    const values = visibleRows.map((row) => row._count ?? 0);
+    const labels = visibleRows.map((row) => new Date(row.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }));
+    const max = Math.max(...values, 1);
+    const width = 560;
+    const height = 220;
+    const padding = 24;
+    const innerWidth = width - padding * 2;
+    const innerHeight = height - padding * 2;
+    const pointValues = values.length ? values : [0, 0, 0, 0, 0, 0, 0];
+    const pointLabels = labels.length ? labels : ['No data'];
+    const denominator = Math.max(pointValues.length - 1, 1);
+    const points = pointValues.map((value, index) => {
+      const x = padding + (index / denominator) * innerWidth;
+      const y = padding + innerHeight - (value / max) * innerHeight;
+      return { x, y, value, label: pointLabels[index] ?? '' };
+    });
+
+    return {
+      width,
+      height,
+      points,
+      path: points.map((point) => `${point.x},${point.y}`).join(' '),
+      max,
+      total: values.reduce((sum, value) => sum + value, 0),
+    };
   }, [analytics?.userGrowth]);
 
   const completedPayments = payments.filter((payment) => payment.status === 'COMPLETED');
@@ -87,15 +110,49 @@ export default function AdminOverviewPage() {
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
         <CleanCard>
-          <h2 className="font-extrabold text-[#111827]">User Growth</h2>
-          <div className="mt-5 h-64 rounded-2xl bg-[#F7F9FC] p-4">
-            <div className="flex h-full items-end gap-3">
-              {recentGrowth.map((height, index) => (
-                <div key={index} className="flex flex-1 flex-col justify-end">
-                  <div className="rounded-t-xl bg-[#2563EB]" style={{ height: `${height}%` }} />
-                </div>
-              ))}
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="font-extrabold text-[#111827]">User Growth</h2>
+              <p className="mt-1 text-xs font-semibold text-[#6B7280]">New signups over the selected analytics range</p>
             </div>
+            <CleanBadge tone="blue">{formatNumber(growthChart.total)} signups</CleanBadge>
+          </div>
+          <div className="mt-5 rounded-2xl bg-[#F7F9FC] p-4">
+            <svg viewBox={`0 0 ${growthChart.width} ${growthChart.height}`} className="h-64 w-full overflow-visible" role="img" aria-label="User growth line chart">
+              <defs>
+                <linearGradient id="userGrowthFill" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stopColor="#2563EB" stopOpacity="0.22" />
+                  <stop offset="100%" stopColor="#2563EB" stopOpacity="0.02" />
+                </linearGradient>
+              </defs>
+              {[0, 1, 2, 3].map((line) => {
+                const y = 24 + line * 56;
+                return <line key={line} x1="24" x2="536" y1={y} y2={y} stroke="#E5E7EB" strokeWidth="1" />;
+              })}
+              <polyline
+                points={`24,196 ${growthChart.path} 536,196`}
+                fill="url(#userGrowthFill)"
+                stroke="none"
+              />
+              <polyline
+                points={growthChart.path}
+                fill="none"
+                stroke="#2563EB"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="4"
+              />
+              {growthChart.points.map((point, index) => (
+                <g key={`${point.x}-${index}`}>
+                  <circle cx={point.x} cy={point.y} r="5" fill="#2563EB" />
+                  <circle cx={point.x} cy={point.y} r="9" fill="#2563EB" opacity="0.12" />
+                  {index === 0 || index === growthChart.points.length - 1 ? (
+                    <text x={point.x} y="216" textAnchor={index === 0 ? 'start' : 'end'} className="fill-[#6B7280] text-[11px] font-semibold">{point.label}</text>
+                  ) : null}
+                </g>
+              ))}
+              <text x="24" y="18" className="fill-[#6B7280] text-[11px] font-semibold">Max {formatNumber(growthChart.max)}</text>
+            </svg>
           </div>
         </CleanCard>
 
