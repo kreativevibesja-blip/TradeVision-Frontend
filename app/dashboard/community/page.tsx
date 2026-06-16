@@ -5,6 +5,7 @@ import { ImagePlus, Loader2, Pin, Send, Shield } from 'lucide-react';
 import { CleanButton, CleanCard, PageHeader } from '@/components/CleanBlue';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { VerifiedBadge } from '@/components/VerifiedBadge';
 
 type Channel = {
   id: string;
@@ -25,6 +26,7 @@ type ProfilePreview = {
   id: string;
   name: string | null;
   email: string;
+  subscription?: string | null;
 };
 
 const fallbackChannels = ['General', 'Forex', 'Gold', 'Crypto', 'Indices', 'Synthetic Indices', 'Beginners', 'Trade Reviews', 'Platform Help'];
@@ -57,7 +59,7 @@ export default function CommunityPage() {
 
     const { data } = await supabase
       .from('User')
-      .select('id, name, email')
+      .select('id, name, email, subscription')
       .in('id', ids);
 
     setProfiles((current) => ({
@@ -197,7 +199,10 @@ export default function CommunityPage() {
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#DBEAFE] text-sm font-extrabold text-[#2563EB]">{name[0]}</div>
                   <div className="max-w-[min(42rem,100%)] rounded-2xl bg-[#F7F9FC] px-4 py-3">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-sm font-extrabold text-[#111827]">{name}</p>
+                      <p className="flex items-center gap-1 text-sm font-extrabold text-[#111827]">
+                        {name}
+                        <VerifiedBadge subscription={message.user_id === user?.id ? user.subscription : profiles[message.user_id]?.subscription} size="xs" />
+                      </p>
                       <span className="text-xs text-[#9CA3AF]">{timeLabel(message.created_at)}</span>
                     </div>
                     <p className="whitespace-pre-wrap break-words text-sm leading-6 text-[#4B5563]">{message.body}</p>
@@ -235,7 +240,10 @@ export default function CommunityPage() {
             <h2 className="font-extrabold text-[#111827]">Members</h2>
             <div className="mt-4 space-y-3 text-sm text-[#4B5563]">
               {Object.values(profiles).slice(0, 6).map((profile) => (
-                <p key={profile.id}>{profile.name || profile.email.split('@')[0]}</p>
+                <p key={profile.id} className="flex items-center gap-1">
+                  {profile.name || profile.email.split('@')[0]}
+                  <VerifiedBadge subscription={profile.subscription} size="xs" />
+                </p>
               ))}
               {Object.keys(profiles).length === 0 ? <p>Members appear as messages load.</p> : null}
             </div>

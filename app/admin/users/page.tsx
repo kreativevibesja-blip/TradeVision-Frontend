@@ -12,6 +12,7 @@ import { addDaysToDateInputValue, formatJamaicaDate, formatJamaicaDateTime, getE
 import { Users, Search, Crown, Ban, ShieldCheck, Zap, X, CalendarRange, KeyRound, CheckCircle2, ShieldX } from 'lucide-react';
 import { ProSubscribersModal } from '@/components/ProSubscribersModal';
 import { GoldxUsersModal } from '@/components/GoldxUsersModal';
+import { VerifiedBadge } from '@/components/VerifiedBadge';
 
 type SubscriptionFilter = 'ALL' | 'FREE' | 'PRO' | 'TOP_TIER' | 'VIP_AUTO_TRADER';
 type DateFilter = 'ALL' | 'TODAY' | 'LAST_7_DAYS' | 'LAST_30_DAYS' | 'CUSTOM';
@@ -440,7 +441,10 @@ export default function AdminUsersPage() {
                     <tr key={u.id} className="cursor-pointer border-b border-white/5 transition" onClick={() => setSelectedUser(u)}>
                       <td className="p-4">
                         <div>
-                          <p className="font-medium">{u.name || 'No name'}</p>
+                          <p className="flex items-center gap-1 font-medium">
+                            {u.name || 'No name'}
+                            <VerifiedBadge subscription={u.subscription} size="xs" />
+                          </p>
                           <p className="text-xs text-muted-foreground">{u.email}</p>
                         </div>
                       </td>
@@ -560,7 +564,10 @@ export default function AdminUsersPage() {
             <div className="flex items-center justify-between border-b border-[rgba(255,223,112,0.1)] px-6 py-5">
               <div>
                 <p className="premium-kicker">User Details</p>
-                <h2 className="mt-3 font-display text-2xl font-semibold uppercase tracking-[-0.05em] text-white">{selectedUser.name || selectedUser.email}</h2>
+                <h2 className="mt-3 flex items-center gap-2 font-display text-2xl font-semibold uppercase tracking-[-0.05em] text-white">
+                  {selectedUser.name || selectedUser.email}
+                  <VerifiedBadge subscription={selectedUser.subscription} />
+                </h2>
               </div>
               <Button variant="ghost" size="sm" onClick={() => setSelectedUser(null)}>
                 <X className="h-4 w-4" />

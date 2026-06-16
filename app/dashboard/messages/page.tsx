@@ -5,6 +5,7 @@ import { ArrowLeft, Loader2, MessageSquarePlus, Search, Send, ShieldAlert } from
 import { CleanButton, CleanCard, PageHeader } from '@/components/CleanBlue';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { VerifiedBadge } from '@/components/VerifiedBadge';
 
 type Conversation = {
   id: string;
@@ -27,12 +28,14 @@ type UserSuggestion = {
   id: string;
   name: string | null;
   email: string;
+  subscription?: string | null;
 };
 
 type UserPreview = {
   id: string;
   name: string | null;
   email: string;
+  subscription?: string | null;
 };
 
 const formatTime = (value: string) => new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -73,6 +76,12 @@ export default function MessagesPage() {
     return id === user.id ? 'Saved notes' : displayName(id);
   }, [displayName, selectedConversation, user]);
 
+  const selectedSubscription = useMemo(() => {
+    if (!user || !selectedConversation) return null;
+    const id = otherParticipant(selectedConversation.participant_key, user.id);
+    return id === user.id ? user.subscription : userPreviews[id]?.subscription;
+  }, [selectedConversation, user, userPreviews]);
+
   const loadUserPreviews = useCallback(async (ids: string[]) => {
     if (!supabase || ids.length === 0) return;
     const missing = Array.from(new Set(ids)).filter((id) => id && id !== user?.id);
@@ -80,7 +89,7 @@ export default function MessagesPage() {
 
     const { data } = await supabase
       .from('User')
-      .select('id, name, email')
+      .select('id, name, email, subscription')
       .in('id', missing);
 
     setUserPreviews((current) => ({
@@ -207,7 +216,7 @@ export default function MessagesPage() {
       const safeQuery = query.replace(/[%_,]/g, '');
       const { data, error: searchError } = await supabaseClient
         .from('User')
-        .select('id, name, email')
+        .select('id, name, email, subscription')
         .or(`name.ilike.%${safeQuery}%,email.ilike.%${safeQuery}%`)
         .neq('id', user.id)
         .limit(6);
@@ -348,7 +357,10 @@ export default function MessagesPage() {
                     >
                       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#DBEAFE] text-xs font-extrabold text-[#2563EB]">{label[0]}</div>
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-bold text-[#111827]">{label}</p>
+                        <p className="flex min-w-0 items-center gap-1 truncate text-sm font-bold text-[#111827]">
+                          <span className="truncate">{label}</span>
+                          <VerifiedBadge subscription={suggestion.subscription} size="xs" />
+                        </p>
                         <p className="truncate text-xs text-[#6B7280]">{suggestion.email}</p>
                       </div>
                     </button>
@@ -381,7 +393,10 @@ export default function MessagesPage() {
                 >
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#DBEAFE] font-extrabold text-[#2563EB]">{label.slice(0, 1).toUpperCase()}</div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-extrabold text-[#111827]">{label}</p>
+                    <p className="flex min-w-0 items-center gap-1 truncate text-sm font-extrabold text-[#111827]">
+                      <span className="truncate">{label}</span>
+                      <VerifiedBadge subscription={otherId === user?.id ? user?.subscription : userPreviews[otherId]?.subscription} size="xs" />
+                    </p>
                     <p className="text-xs text-[#6B7280]">{new Date(conversation.updated_at).toLocaleDateString()}</p>
                   </div>
                   {(conversation.unread_count || 0) > 0 ? (
@@ -403,7 +418,10 @@ export default function MessagesPage() {
               <ArrowLeft className="h-4 w-4" />
             </button>
             <div className="min-w-0">
-              <h2 className="truncate font-extrabold text-[#111827]">{selectedName}</h2>
+              <h2 className="flex min-w-0 items-center gap-2 font-extrabold text-[#111827]">
+                <span className="truncate">{selectedName}</span>
+                <VerifiedBadge subscription={selectedSubscription} />
+              </h2>
               <p className="text-sm text-[#6B7280]">Private conversation history.</p>
             </div>
           </div>

@@ -5,6 +5,7 @@ import { CalendarDays, Radar, Sparkles, UploadCloud } from 'lucide-react';
 import { ActiveOpportunitiesWidget, CleanBadge, CleanButton, CleanCard, EventsWidget, MarketOverviewWidget, OrionWidget, PageHeader, SimpleChartCard } from '@/components/CleanBlue';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase/client';
+import { VerifiedBadge } from '@/components/VerifiedBadge';
 
 type DashboardFeedPost = {
   id: string;
@@ -21,6 +22,7 @@ type ProfilePreview = {
   id: string;
   name: string | null;
   email: string;
+  subscription?: string | null;
 };
 
 const relativeTime = (value: string) => {
@@ -45,7 +47,7 @@ export default function DashboardPage() {
     const ids = Array.from(new Set(rows.map((post) => post.user_id)));
     const { data } = await supabase
       .from('User')
-      .select('id, name, email')
+      .select('id, name, email, subscription')
       .in('id', ids);
 
     setFeedProfiles((data || []).reduce<Record<string, ProfilePreview>>((acc, profile) => {
@@ -172,6 +174,7 @@ export default function DashboardPage() {
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-2">
                               <p className="font-extrabold text-[#111827]">{author}</p>
+                              <VerifiedBadge subscription={post.user_id === user?.id ? user.subscription : feedProfiles[post.user_id]?.subscription} />
                               <CleanBadge tone="gray">{post.market_tag || post.post_type}</CleanBadge>
                             </div>
                             <p className="text-xs font-semibold text-[#9CA3AF]">{relativeTime(post.created_at)}</p>

@@ -24,6 +24,7 @@ type ProfilePreview = {
   id: string;
   name: string | null;
   email: string;
+  subscription?: string | null;
 };
 
 const relativeTime = (value: string) => {
@@ -81,7 +82,7 @@ export default function FeedPage() {
 
     const { data } = await supabase
       .from('User')
-      .select('id, name, email')
+      .select('id, name, email, subscription')
       .in('id', ids);
 
     const nextProfiles = (data || []).reduce<Record<string, ProfilePreview>>((acc, profile) => {
@@ -265,6 +266,7 @@ export default function FeedPage() {
               <FeedPostCard
                 key={post.id}
                 author={profileName(post.user_id)}
+                authorSubscription={post.user_id === user?.id ? user.subscription : profiles[post.user_id]?.subscription}
                 market={post.market_tag || post.post_type}
                 summary={post.ai_summary || post.body}
                 image={post.image_url || undefined}
