@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  Bell,
   BookOpen,
   CalendarDays,
   CreditCard,
@@ -22,6 +21,7 @@ import {
   CandlestickChart,
 } from 'lucide-react';
 import PushNotificationPrompt from '@/components/PushNotificationPrompt';
+import { NotificationCenter } from '@/components/NotificationCenter';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 
@@ -95,9 +95,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 placeholder="Search markets, traders, ideas..."
               />
             </div>
-            <button className="ml-auto flex h-11 w-11 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#6B7280] hover:text-[#2563EB]">
-              <Bell className="h-5 w-5" />
-            </button>
+            <NotificationCenter userId={user?.id} />
             <div className="flex items-center gap-3 rounded-xl border border-[#E5E7EB] bg-white px-3 py-2">
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#DBEAFE] text-sm font-extrabold text-[#2563EB]">
                 {(user?.name || user?.email || 'J').slice(0, 1).toUpperCase()}
