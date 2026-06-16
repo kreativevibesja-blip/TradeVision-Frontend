@@ -53,11 +53,11 @@ export function OrionMessageBubble({
       <div className={`min-w-0 ${isAssistant ? 'max-w-[88%]' : 'max-w-[82%] items-end'} flex flex-col gap-2`}>
         <div
           className={isAssistant
-            ? 'max-w-full rounded-[18px] rounded-tl-[8px] border border-sky-100 bg-sky-50 px-3.5 py-3 text-slate-700 shadow-[0_4px_14px_rgba(15,23,42,0.06)]'
-            : 'max-w-full rounded-[18px] rounded-tr-[8px] border border-blue-300 bg-gradient-to-r from-blue-600 to-sky-500 px-3.5 py-3 text-white shadow-[0_8px_20px_rgba(37,99,235,0.18)]'}
+            ? 'max-w-full rounded-2xl bg-[#F7F9FC] px-4 py-3 text-[#4B5563]'
+            : 'max-w-full rounded-2xl bg-[#2563EB] px-4 py-3 text-white'}
           style={isAssistant
-            ? { backgroundColor: '#eff6ff', color: '#334155', borderColor: '#dbeafe' }
-            : { background: 'linear-gradient(90deg, #2563eb 0%, #0ea5e9 100%)', color: '#ffffff', borderColor: '#93c5fd' }}
+            ? { backgroundColor: '#F7F9FC', color: '#4B5563' }
+            : { backgroundColor: '#2563EB', color: '#ffffff' }}
         >
           <div className="max-w-full whitespace-pre-wrap break-words text-sm leading-6 [overflow-wrap:anywhere] [word-break:break-word]">{renderedText}</div>
         </div>
@@ -71,8 +71,8 @@ export function OrionMessageBubble({
                 key={choice.id}
                 type="button"
                 onClick={() => onChoice(choice)}
-                className="rounded-full border border-blue-200 bg-white px-3 py-2 text-xs font-medium text-blue-700 transition hover:bg-sky-50"
-                style={{ backgroundColor: '#ffffff', color: '#1d4ed8', borderColor: '#bfdbfe' }}
+                className="rounded-xl border border-[#E5E7EB] bg-white px-3 py-2 text-xs font-bold text-[#2563EB] transition hover:bg-[#EFF6FF]"
+                style={{ backgroundColor: '#ffffff', color: '#2563EB', borderColor: '#E5E7EB' }}
               >
                 {choice.label}
               </button>

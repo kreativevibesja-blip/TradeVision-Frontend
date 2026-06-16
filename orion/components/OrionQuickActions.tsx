@@ -49,16 +49,16 @@ export function OrionQuickActions({
             transition={{ delay: index * 0.04 }}
             whileHover={{ y: -2, scale: 1.01 }}
             onClick={() => onAction(action.id)}
-            className="rounded-[16px] border border-slate-200 bg-sky-50 p-3 text-left text-slate-900 transition hover:border-blue-300 hover:bg-sky-100"
-            style={{ backgroundColor: '#f8fbff', color: '#0f172a', borderColor: '#dbeafe' }}
+            className="rounded-xl border border-[#E5E7EB] bg-[#F7F9FC] p-3 text-left text-[#111827] transition hover:border-[#BFDBFE] hover:bg-[#EFF6FF]"
+            style={{ backgroundColor: '#F7F9FC', color: '#111827', borderColor: '#E5E7EB' }}
           >
             <div className="flex items-start gap-3">
-              <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-xl border border-blue-200 bg-white text-blue-600" style={{ backgroundColor: '#ffffff', color: '#2563eb', borderColor: '#bfdbfe' }}>
+              <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-xl border border-[#DBEAFE] bg-white text-[#2563EB]" style={{ backgroundColor: '#ffffff', color: '#2563EB', borderColor: '#DBEAFE' }}>
                 <Icon className="h-4.5 w-4.5" />
               </div>
               <div className="min-w-0">
-                <div className="text-sm font-semibold text-slate-900" style={{ color: '#0f172a' }}>{action.label}</div>
-                <div className="mt-1 whitespace-normal text-xs leading-5 text-slate-600 [overflow-wrap:anywhere] [word-break:break-word]" style={{ color: '#475569' }}>{action.description}</div>
+                <div className="text-sm font-extrabold text-[#111827]" style={{ color: '#111827' }}>{action.label}</div>
+                <div className="mt-1 whitespace-normal text-xs leading-5 text-[#6B7280] [overflow-wrap:anywhere] [word-break:break-word]" style={{ color: '#6B7280' }}>{action.description}</div>
               </div>
             </div>
           </motion.button>
