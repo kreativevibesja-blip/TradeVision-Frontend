@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Loader2, MessageSquarePlus, Search, Send, ShieldAlert } from 'lucide-react';
+import { ArrowLeft, Loader2, MessageSquarePlus, Search, Send, ShieldAlert } from 'lucide-react';
 import { CleanButton, CleanCard, PageHeader } from '@/components/CleanBlue';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -57,6 +57,7 @@ export default function MessagesPage() {
   const [searchingUsers, setSearchingUsers] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
+  const [mobileChatOpen, setMobileChatOpen] = useState(false);
 
   const selectedConversation = conversations.find((conversation) => conversation.id === selectedConversationId);
 
@@ -134,7 +135,6 @@ export default function MessagesPage() {
 
       rowsWithUnread.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
       setConversations(rowsWithUnread);
-      setSelectedConversationId((current) => current || rowsWithUnread[0]?.id || '');
     }
 
     setLoadingConversations(false);
@@ -277,6 +277,7 @@ export default function MessagesPage() {
     setUserSearch('');
     setUserSuggestions([]);
     setSelectedConversationId(conversation.id);
+    setMobileChatOpen(true);
     await loadConversations();
   };
 
@@ -316,7 +317,7 @@ export default function MessagesPage() {
     <div className="mx-auto max-w-6xl">
       <PageHeader title="Messages" subtitle="Direct messages, shared analyses, setup discussion, block, and report controls." />
       <div className="grid h-[calc(100svh-13rem)] min-h-[34rem] gap-5 overflow-hidden lg:grid-cols-[18rem_minmax(0,1fr)]">
-        <CleanCard className="flex min-h-0 flex-col p-3">
+        <CleanCard className={`${mobileChatOpen ? 'hidden lg:flex' : 'flex'} min-h-0 flex-col p-3`}>
           <div className="mb-3 space-y-2 rounded-xl bg-[#F7F9FC] p-3">
             <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9CA3AF]" />
@@ -370,7 +371,14 @@ export default function MessagesPage() {
               const active = conversation.id === selectedConversationId;
               const label = otherId === user?.id ? 'Saved notes' : displayName(otherId);
               return (
-                <button key={conversation.id} onClick={() => setSelectedConversationId(conversation.id)} className={`mb-1 flex w-full items-center gap-3 rounded-xl p-3 text-left ${active ? 'bg-[#EFF6FF]' : 'hover:bg-[#F7F9FC]'}`}>
+                <button
+                  key={conversation.id}
+                  onClick={() => {
+                    setSelectedConversationId(conversation.id);
+                    setMobileChatOpen(true);
+                  }}
+                  className={`mb-1 flex w-full items-center gap-3 rounded-xl p-3 text-left ${active ? 'bg-[#EFF6FF]' : 'hover:bg-[#F7F9FC]'}`}
+                >
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#DBEAFE] font-extrabold text-[#2563EB]">{label.slice(0, 1).toUpperCase()}</div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-extrabold text-[#111827]">{label}</p>
@@ -384,10 +392,20 @@ export default function MessagesPage() {
             })}
           </div>
         </CleanCard>
-        <CleanCard className="flex min-h-0 flex-col p-0">
-          <div className="border-b border-[#E5E7EB] p-5">
-            <h2 className="font-extrabold text-[#111827]">{selectedName}</h2>
-            <p className="text-sm text-[#6B7280]">Private conversation history.</p>
+        <CleanCard className={`${mobileChatOpen ? 'flex' : 'hidden lg:flex'} min-h-0 flex-col p-0`}>
+          <div className="flex items-center gap-3 border-b border-[#E5E7EB] p-5">
+            <button
+              type="button"
+              onClick={() => setMobileChatOpen(false)}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#E5E7EB] text-[#111827] lg:hidden"
+              aria-label="Back to conversations"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </button>
+            <div className="min-w-0">
+              <h2 className="truncate font-extrabold text-[#111827]">{selectedName}</h2>
+              <p className="text-sm text-[#6B7280]">Private conversation history.</p>
+            </div>
           </div>
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-5">
             {!selectedConversationId ? (
