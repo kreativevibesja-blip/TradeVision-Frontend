@@ -1547,7 +1547,7 @@ export const api = {
         token,
       }),
     replyToTicket: (id: string, message: string, token: string) =>
-      apiFetch<{ ticket: SupportTicket; emailSent: boolean }>(`/admin/tickets/${encodeURIComponent(id)}/reply`, {
+      apiFetch<{ ticket: SupportTicket; emailSent: boolean; inboxSent: boolean }>(`/admin/tickets/${encodeURIComponent(id)}/reply`, {
         method: 'POST',
         body: JSON.stringify({ message }),
         token,
