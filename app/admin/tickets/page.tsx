@@ -226,19 +226,19 @@ export default function AdminTicketsPage() {
     setReplyOpen(true);
   };
 
-  const sendEmailReply = async () => {
+  const sendInboxReply = async () => {
     if (!token || !selectedTicket || !replyMessage.trim()) return;
 
     try {
       setReplySending(true);
       setReplyFeedback(null);
-      await api.admin.replyToTicket(selectedTicket.id, replyMessage.trim(), token);
-      setReplyFeedback({ type: 'success', text: 'Email sent successfully' });
+      const result = await api.admin.replyToTicket(selectedTicket.id, replyMessage.trim(), token);
+      setReplyFeedback({ type: 'success', text: result.emailSent ? 'Message sent to inbox and email.' : 'Message sent to inbox.' });
       setAdminResponse(replyMessage.trim());
       await loadTickets();
       setTimeout(() => setReplyOpen(false), 1500);
     } catch (err: any) {
-      setReplyFeedback({ type: 'error', text: err?.message || 'Failed to send email' });
+      setReplyFeedback({ type: 'error', text: err?.message || 'Failed to send inbox message' });
     } finally {
       setReplySending(false);
     }
@@ -297,7 +297,7 @@ export default function AdminTicketsPage() {
       <div className="flex flex-shrink-0 flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h1 className="text-xl font-bold">Support Tickets</h1>
-          <p className="text-xs text-muted-foreground">Review issues, create follow-up tickets, and reply by email.</p>
+          <p className="text-xs text-muted-foreground">Review issues, create follow-up tickets, and reply to customer inboxes.</p>
         </div>
         <div className="flex items-center gap-2">
           <Button size="sm" onClick={openCreateModal} className="gap-2">
@@ -420,7 +420,7 @@ export default function AdminTicketsPage() {
                       className="inline-flex items-center gap-1.5 rounded-lg border border-blue-400/20 bg-blue-500/10 px-2.5 py-1.5 text-xs text-blue-100 transition-colors hover:bg-blue-500/20"
                     >
                       <Send className="h-3.5 w-3.5" />
-                      Reply via Email
+                      Reply via Message
                     </button>
                   </div>
                 </div>
@@ -495,7 +495,7 @@ export default function AdminTicketsPage() {
             <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
               <div className="flex items-center gap-2">
                 <Send className="h-4 w-4 text-blue-400" />
-                <h3 className="text-sm font-semibold">Reply via Email</h3>
+                <h3 className="text-sm font-semibold">Reply via Message</h3>
               </div>
               <button type="button" onClick={() => !replySending && setReplyOpen(false)} className="rounded-lg p-1 text-muted-foreground hover:bg-white/10 hover:text-foreground transition-colors">
                 <X className="h-4 w-4" />
@@ -505,8 +505,8 @@ export default function AdminTicketsPage() {
             <div className="space-y-4 px-5 py-4">
               {selectedTicket && (
                 <div className="rounded-lg border border-white/10 bg-white/5 p-3">
-                  <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground mb-1">Sending to</p>
-                  <p className="text-xs font-medium">{selectedTicket.userName || 'User'} &lt;{selectedTicket.userEmail}&gt;</p>
+                  <p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground mb-1">Sending to inbox</p>
+                <p className="text-xs font-medium">{selectedTicket.userName || 'User'} &lt;{selectedTicket.userEmail}&gt;</p>
                   <p className="text-[11px] text-muted-foreground mt-0.5">Re: {selectedTicket.ticketNumber} — {selectedTicket.subject}</p>
                 </div>
               )}
@@ -539,9 +539,9 @@ export default function AdminTicketsPage() {
               <Button variant="outline" size="sm" onClick={() => setReplyOpen(false)} disabled={replySending}>
                 Cancel
               </Button>
-              <Button size="sm" onClick={sendEmailReply} disabled={replySending || !replyMessage.trim()} className="min-w-28">
+              <Button size="sm" onClick={sendInboxReply} disabled={replySending || !replyMessage.trim()} className="min-w-28">
                 {replySending ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Send className="mr-2 h-3.5 w-3.5" />}
-                Send Email
+                Send Message
               </Button>
             </div>
           </div>

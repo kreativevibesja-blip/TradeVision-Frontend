@@ -14,6 +14,8 @@ type Conversation = {
   participant_key: string;
   created_by: string;
   updated_at: string;
+  is_support?: boolean;
+  display_title?: string | null;
   last_read_at?: string | null;
   unread_count?: number;
 };
@@ -23,6 +25,8 @@ type DirectMessage = {
   conversation_id: string;
   sender_id: string;
   body: string;
+  sender_display_name?: string | null;
+  sender_is_verified?: boolean | null;
   created_at: string;
 };
 
@@ -76,12 +80,14 @@ export default function MessagesPage() {
 
   const selectedName = useMemo(() => {
     if (!user || !selectedConversation) return 'Select a conversation';
+    if (selectedConversation.is_support) return selectedConversation.display_title || 'Support';
     const id = otherParticipant(selectedConversation.participant_key, user.id);
     return id === user.id ? 'Saved notes' : displayName(id);
   }, [displayName, selectedConversation, user]);
 
   const selectedSubscription = useMemo(() => {
     if (!user || !selectedConversation) return null;
+    if (selectedConversation.is_support) return 'TOP_TIER';
     const id = otherParticipant(selectedConversation.participant_key, user.id);
     return id === user.id ? user.subscription : userPreviews[id]?.subscription;
   }, [selectedConversation, user, userPreviews]);
@@ -123,7 +129,7 @@ export default function MessagesPage() {
 
     const { data, error: conversationsError } = await supabase
       .from('direct_conversation_participants')
-      .select('conversation_id, last_read_at, direct_conversations(id, participant_key, created_by, updated_at)')
+      .select('conversation_id, last_read_at, direct_conversations(id, participant_key, created_by, updated_at, is_support, display_title)')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
@@ -171,7 +177,7 @@ export default function MessagesPage() {
 
     const { data, error: messagesError } = await supabase
       .from('direct_messages')
-      .select('id, conversation_id, sender_id, body, created_at')
+      .select('id, conversation_id, sender_id, body, sender_display_name, sender_is_verified, created_at')
       .eq('conversation_id', conversationId)
       .eq('is_deleted', false)
       .order('created_at', { ascending: true })
@@ -406,7 +412,7 @@ export default function MessagesPage() {
             {conversations.map((conversation) => {
               const otherId = user ? otherParticipant(conversation.participant_key, user.id) : '';
               const active = conversation.id === selectedConversationId;
-              const label = otherId === user?.id ? 'Saved notes' : displayName(otherId);
+              const label = conversation.is_support ? (conversation.display_title || 'Support') : otherId === user?.id ? 'Saved notes' : displayName(otherId);
               return (
                 <button
                   key={conversation.id}
@@ -416,11 +422,11 @@ export default function MessagesPage() {
                   }}
                   className={`mb-1 flex w-full items-center gap-3 rounded-xl p-3 text-left ${active ? 'bg-[#EFF6FF]' : 'hover:bg-[#F7F9FC]'}`}
                 >
-                  <UserAvatar name={label} avatarUrl={userPreviews[otherId]?.avatar_url} className="h-10 w-10 font-extrabold" />
+                  <UserAvatar name={label} avatarUrl={conversation.is_support ? null : userPreviews[otherId]?.avatar_url} className="h-10 w-10 font-extrabold" />
                   <div className="min-w-0 flex-1">
                     <p className="flex min-w-0 items-center gap-1 truncate text-sm font-extrabold text-[#111827]">
                       <span className="truncate">{label}</span>
-                      <VerifiedBadge subscription={otherId === user?.id ? user?.subscription : userPreviews[otherId]?.subscription} size="xs" />
+                      <VerifiedBadge subscription={conversation.is_support ? 'TOP_TIER' : otherId === user?.id ? user?.subscription : userPreviews[otherId]?.subscription} size="xs" />
                     </p>
                     <p className="text-xs text-[#6B7280]">{new Date(conversation.updated_at).toLocaleDateString()}</p>
                   </div>
@@ -444,7 +450,7 @@ export default function MessagesPage() {
             </button>
             <div className="min-w-0">
               <h2 className="flex min-w-0 items-center gap-2 font-extrabold text-[#111827]">
-                {selectedConversation && user ? (
+                {selectedConversation && user && !selectedConversation.is_support ? (
                   <Link href={`/profile/${encodeURIComponent(otherParticipant(selectedConversation.participant_key, user.id))}`} className="truncate hover:text-[#2563EB]">{selectedName}</Link>
                 ) : <span className="truncate">{selectedName}</span>}
                 <VerifiedBadge subscription={selectedSubscription} />
@@ -461,15 +467,26 @@ export default function MessagesPage() {
               <p className="text-sm text-[#6B7280]">No messages yet. Send the first one.</p>
             ) : messages.map((message) => {
               const own = message.sender_id === user?.id;
-              const senderName = displayName(message.sender_id);
+              const senderName = message.sender_display_name || displayName(message.sender_id);
+              const senderVerified = Boolean(message.sender_is_verified);
               return (
                 <div key={message.id} className={`flex items-end gap-2 ${own ? 'justify-end' : 'justify-start'}`}>
                   {!own ? (
-                    <Link href={`/profile/${encodeURIComponent(message.sender_id)}`}>
-                      <UserAvatar name={senderName} avatarUrl={userPreviews[message.sender_id]?.avatar_url} className="h-8 w-8" />
-                    </Link>
+                    message.sender_display_name ? (
+                      <UserAvatar name={senderName} avatarUrl={null} className="h-8 w-8" />
+                    ) : (
+                      <Link href={`/profile/${encodeURIComponent(message.sender_id)}`}>
+                        <UserAvatar name={senderName} avatarUrl={userPreviews[message.sender_id]?.avatar_url} className="h-8 w-8" />
+                      </Link>
+                    )
                   ) : null}
                   <div className={`${own ? 'bg-[#2563EB] text-white' : 'bg-[#F7F9FC] text-[#4B5563]'} max-w-[75%] rounded-2xl p-4 text-sm`}>
+                    {!own && message.sender_display_name ? (
+                      <p className="mb-1 flex items-center gap-1 text-xs font-extrabold text-[#111827]">
+                        {message.sender_display_name}
+                        <VerifiedBadge subscription={senderVerified ? 'TOP_TIER' : null} size="xs" />
+                      </p>
+                    ) : null}
                     <p className="whitespace-pre-wrap break-words leading-6">{message.body}</p>
                     <p className={`mt-2 text-xs ${own ? 'text-white/70' : 'text-[#9CA3AF]'}`}>{formatTime(message.created_at)}</p>
                   </div>
