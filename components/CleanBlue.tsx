@@ -4,6 +4,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { Bell, Bookmark, CalendarDays, Heart, MessageCircle, MoreHorizontal, Repeat2, Share2, Sparkles, Star, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { VerifiedBadge } from '@/components/VerifiedBadge';
 
 export function CleanCard({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
@@ -196,6 +197,7 @@ export function ActiveOpportunitiesWidget() {
 
 export function FeedPostCard({
   author = 'AlphaTrader',
+  authorSubscription,
   market = 'EUR/USD 4H',
   summary = 'Strong bullish structure forming near resistance. Watching for a clean breakout and retest.',
   image,
@@ -204,6 +206,7 @@ export function FeedPostCard({
   canAiCompare = Boolean(image),
 }: {
   author?: string;
+  authorSubscription?: string | null;
   market?: string;
   summary?: string;
   image?: string;
@@ -218,6 +221,7 @@ export function FeedPostCard({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <p className="font-extrabold text-[#111827]">{author}</p>
+            <VerifiedBadge subscription={authorSubscription} />
             <CleanBadge tone="green">Bullish</CleanBadge>
           </div>
           <p className="text-xs text-[#6B7280]">{timeLabel} · {market}</p>
