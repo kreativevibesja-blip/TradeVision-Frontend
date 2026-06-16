@@ -6,6 +6,8 @@ import { CleanButton, CleanCard, PageHeader } from '@/components/CleanBlue';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
+import { UserAvatar } from '@/components/UserAvatar';
+import Link from 'next/link';
 
 type Conversation = {
   id: string;
@@ -36,6 +38,8 @@ type UserPreview = {
   name: string | null;
   email: string;
   subscription?: string | null;
+  display_name?: string | null;
+  avatar_url?: string | null;
 };
 
 const formatTime = (value: string) => new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -65,9 +69,9 @@ export default function MessagesPage() {
   const selectedConversation = conversations.find((conversation) => conversation.id === selectedConversationId);
 
   const displayName = useCallback((userId: string) => {
-    if (userId === user?.id) return user.name || user.email.split('@')[0] || 'You';
     const preview = userPreviews[userId];
-    return preview?.name || preview?.email?.split('@')[0] || 'Trader';
+    if (userId === user?.id) return preview?.display_name || user.name || user.email.split('@')[0] || 'You';
+    return preview?.display_name || preview?.name || preview?.email?.split('@')[0] || 'Trader';
   }, [user, userPreviews]);
 
   const selectedName = useMemo(() => {
@@ -84,22 +88,32 @@ export default function MessagesPage() {
 
   const loadUserPreviews = useCallback(async (ids: string[]) => {
     if (!supabase || ids.length === 0) return;
-    const missing = Array.from(new Set(ids)).filter((id) => id && id !== user?.id);
+    const missing = Array.from(new Set(ids)).filter(Boolean);
     if (missing.length === 0) return;
 
     const { data } = await supabase
       .from('User')
       .select('id, name, email, subscription')
       .in('id', missing);
+    const { data: profileRows } = await supabase
+      .from('profiles')
+      .select('user_id, display_name, avatar_url')
+      .in('user_id', missing);
+    const profileByUserId = new Map((profileRows || []).map((profile) => [profile.user_id, profile]));
 
     setUserPreviews((current) => ({
       ...current,
       ...(data || []).reduce<Record<string, UserPreview>>((acc, item) => {
-        acc[item.id] = item;
+        const profileMeta = profileByUserId.get(item.id);
+        acc[item.id] = {
+          ...item,
+          display_name: profileMeta?.display_name ?? null,
+          avatar_url: profileMeta?.avatar_url ?? null,
+        };
         return acc;
       }, {}),
     }));
-  }, [user?.id]);
+  }, []);
 
   const loadConversations = useCallback(async () => {
     if (!supabase || !user) return;
@@ -167,7 +181,9 @@ export default function MessagesPage() {
       setError(messagesError.message);
       setMessages([]);
     } else {
-      setMessages(data || []);
+      const rows = data || [];
+      setMessages(rows);
+      await loadUserPreviews(rows.map((message) => message.sender_id));
       if (options.markRead && user) {
         const readAt = new Date().toISOString();
         await supabase
@@ -182,12 +198,21 @@ export default function MessagesPage() {
     }
 
     if (showLoader) setLoadingMessages(false);
-  }, [user]);
+  }, [loadUserPreviews, user]);
 
   useEffect(() => {
     if (!user) return;
     void loadConversations();
   }, [loadConversations, user]);
+
+  useEffect(() => {
+    if (!user || typeof window === 'undefined') return;
+    const targetId = new URLSearchParams(window.location.search).get('userId');
+    if (targetId && targetId !== user.id) {
+      void startConversation(targetId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   useEffect(() => {
     if (!selectedConversationId) return;
@@ -391,7 +416,7 @@ export default function MessagesPage() {
                   }}
                   className={`mb-1 flex w-full items-center gap-3 rounded-xl p-3 text-left ${active ? 'bg-[#EFF6FF]' : 'hover:bg-[#F7F9FC]'}`}
                 >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#DBEAFE] font-extrabold text-[#2563EB]">{label.slice(0, 1).toUpperCase()}</div>
+                  <UserAvatar name={label} avatarUrl={userPreviews[otherId]?.avatar_url} className="h-10 w-10 font-extrabold" />
                   <div className="min-w-0 flex-1">
                     <p className="flex min-w-0 items-center gap-1 truncate text-sm font-extrabold text-[#111827]">
                       <span className="truncate">{label}</span>
@@ -419,7 +444,9 @@ export default function MessagesPage() {
             </button>
             <div className="min-w-0">
               <h2 className="flex min-w-0 items-center gap-2 font-extrabold text-[#111827]">
-                <span className="truncate">{selectedName}</span>
+                {selectedConversation && user ? (
+                  <Link href={`/profile/${encodeURIComponent(otherParticipant(selectedConversation.participant_key, user.id))}`} className="truncate hover:text-[#2563EB]">{selectedName}</Link>
+                ) : <span className="truncate">{selectedName}</span>}
                 <VerifiedBadge subscription={selectedSubscription} />
               </h2>
               <p className="text-sm text-[#6B7280]">Private conversation history.</p>
@@ -434,10 +461,23 @@ export default function MessagesPage() {
               <p className="text-sm text-[#6B7280]">No messages yet. Send the first one.</p>
             ) : messages.map((message) => {
               const own = message.sender_id === user?.id;
+              const senderName = displayName(message.sender_id);
               return (
-                <div key={message.id} className={`${own ? 'ml-auto bg-[#2563EB] text-white' : 'bg-[#F7F9FC] text-[#4B5563]'} max-w-[75%] rounded-2xl p-4 text-sm`}>
-                  <p className="whitespace-pre-wrap break-words leading-6">{message.body}</p>
-                  <p className={`mt-2 text-xs ${own ? 'text-white/70' : 'text-[#9CA3AF]'}`}>{formatTime(message.created_at)}</p>
+                <div key={message.id} className={`flex items-end gap-2 ${own ? 'justify-end' : 'justify-start'}`}>
+                  {!own ? (
+                    <Link href={`/profile/${encodeURIComponent(message.sender_id)}`}>
+                      <UserAvatar name={senderName} avatarUrl={userPreviews[message.sender_id]?.avatar_url} className="h-8 w-8" />
+                    </Link>
+                  ) : null}
+                  <div className={`${own ? 'bg-[#2563EB] text-white' : 'bg-[#F7F9FC] text-[#4B5563]'} max-w-[75%] rounded-2xl p-4 text-sm`}>
+                    <p className="whitespace-pre-wrap break-words leading-6">{message.body}</p>
+                    <p className={`mt-2 text-xs ${own ? 'text-white/70' : 'text-[#9CA3AF]'}`}>{formatTime(message.created_at)}</p>
+                  </div>
+                  {own ? (
+                    <Link href={`/profile/${encodeURIComponent(message.sender_id)}`}>
+                      <UserAvatar name={senderName} avatarUrl={userPreviews[message.sender_id]?.avatar_url} className="h-8 w-8" />
+                    </Link>
+                  ) : null}
                 </div>
               );
             })}

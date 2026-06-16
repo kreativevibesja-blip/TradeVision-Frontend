@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import PushNotificationPrompt from '@/components/PushNotificationPrompt';
 import { NotificationCenter } from '@/components/NotificationCenter';
+import { UserAvatar } from '@/components/UserAvatar';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 
@@ -54,7 +55,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-screen bg-[#F7F9FC] text-[#111827]">
-      <aside className="fixed left-0 top-20 z-30 hidden h-[calc(100vh-5rem)] w-64 border-r border-[#E5E7EB] bg-white px-4 py-5 lg:block">
+      <aside className="fixed left-0 top-20 z-30 hidden h-[calc(100vh-5rem)] w-64 flex-col border-r border-[#E5E7EB] bg-white px-4 py-5 lg:flex">
         <Link href="/" className="mb-6 flex items-center gap-2 px-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB]">
             <Home className="h-5 w-5" />
@@ -65,7 +66,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </Link>
 
-        <nav className="space-y-1 overflow-y-auto pb-6">
+        <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto pb-6 pr-1">
           {userNav.map((item) => {
             const active = item.href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(item.href);
             return (
@@ -97,9 +98,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
             <NotificationCenter userId={user?.id} />
             <div className="flex items-center gap-3 rounded-xl border border-[#E5E7EB] bg-white px-3 py-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#DBEAFE] text-sm font-extrabold text-[#2563EB]">
-                {(user?.name || user?.email || 'J').slice(0, 1).toUpperCase()}
-              </div>
+              <UserAvatar name={user?.name || user?.email} className="h-9 w-9 text-sm font-extrabold" />
               <div className="hidden sm:block">
                 <p className="text-sm font-extrabold text-[#111827]">{user?.name || user?.email?.split('@')[0] || 'Trader'}</p>
                 <p className="text-xs text-[#6B7280]">{user?.subscription || 'Free'} Trader</p>

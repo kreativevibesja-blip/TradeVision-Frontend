@@ -25,6 +25,8 @@ type ProfilePreview = {
   name: string | null;
   email: string;
   subscription?: string | null;
+  display_name?: string | null;
+  avatar_url?: string | null;
 };
 
 const relativeTime = (value: string) => {
@@ -70,9 +72,9 @@ export default function FeedPage() {
   const [compareSavedMessage, setCompareSavedMessage] = useState('');
 
   const profileName = useCallback((userId: string) => {
-    if (userId === user?.id) return user.name || user.email.split('@')[0] || 'You';
     const profile = profiles[userId];
-    return profile?.name || profile?.email?.split('@')[0] || 'Trader';
+    if (userId === user?.id) return profile?.display_name || user.name || user.email.split('@')[0] || 'You';
+    return profile?.display_name || profile?.name || profile?.email?.split('@')[0] || 'Trader';
   }, [profiles, user]);
 
   const loadProfiles = useCallback(async (rows: FeedPost[]) => {
@@ -84,9 +86,19 @@ export default function FeedPage() {
       .from('User')
       .select('id, name, email, subscription')
       .in('id', ids);
+    const { data: profileRows } = await supabase
+      .from('profiles')
+      .select('user_id, display_name, avatar_url')
+      .in('user_id', ids);
+    const profileByUserId = new Map((profileRows || []).map((profile) => [profile.user_id, profile]));
 
     const nextProfiles = (data || []).reduce<Record<string, ProfilePreview>>((acc, profile) => {
-      acc[profile.id] = profile;
+      const profileMeta = profileByUserId.get(profile.id);
+      acc[profile.id] = {
+        ...profile,
+        display_name: profileMeta?.display_name ?? null,
+        avatar_url: profileMeta?.avatar_url ?? null,
+      };
       return acc;
     }, {});
 
@@ -265,7 +277,9 @@ export default function FeedPage() {
             posts.map((post) => (
               <FeedPostCard
                 key={post.id}
+                authorId={post.user_id}
                 author={profileName(post.user_id)}
+                authorAvatar={profiles[post.user_id]?.avatar_url}
                 authorSubscription={post.user_id === user?.id ? user.subscription : profiles[post.user_id]?.subscription}
                 market={post.market_tag || post.post_type}
                 summary={post.ai_summary || post.body}

@@ -6,6 +6,8 @@ import { ActiveOpportunitiesWidget, CleanBadge, CleanButton, CleanCard, EventsWi
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase/client';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
+import { UserAvatar } from '@/components/UserAvatar';
+import Link from 'next/link';
 
 type DashboardFeedPost = {
   id: string;
@@ -23,6 +25,8 @@ type ProfilePreview = {
   name: string | null;
   email: string;
   subscription?: string | null;
+  display_name?: string | null;
+  avatar_url?: string | null;
 };
 
 const relativeTime = (value: string) => {
@@ -49,9 +53,19 @@ export default function DashboardPage() {
       .from('User')
       .select('id, name, email, subscription')
       .in('id', ids);
+    const { data: profileRows } = await supabase
+      .from('profiles')
+      .select('user_id, display_name, avatar_url')
+      .in('user_id', ids);
+    const profileByUserId = new Map((profileRows || []).map((profile) => [profile.user_id, profile]));
 
     setFeedProfiles((data || []).reduce<Record<string, ProfilePreview>>((acc, profile) => {
-      acc[profile.id] = profile;
+      const profileMeta = profileByUserId.get(profile.id);
+      acc[profile.id] = {
+        ...profile,
+        display_name: profileMeta?.display_name ?? null,
+        avatar_url: profileMeta?.avatar_url ?? null,
+      };
       return acc;
     }, {}));
   }, []);
@@ -112,9 +126,9 @@ export default function DashboardPage() {
   }, [loadDashboardFeed]);
 
   const profileName = (userId: string) => {
-    if (userId === user?.id) return user.name || user.email.split('@')[0] || 'You';
     const profile = feedProfiles[userId];
-    return profile?.name || profile?.email?.split('@')[0] || 'Trader';
+    if (userId === user?.id) return profile?.display_name || user.name || user.email.split('@')[0] || 'You';
+    return profile?.display_name || profile?.name || profile?.email?.split('@')[0] || 'Trader';
   };
 
   return (
@@ -168,12 +182,12 @@ export default function DashboardPage() {
                     return (
                       <article key={post.id} className="rounded-2xl border border-[#E5E7EB] bg-[#F7F9FC] p-4">
                         <div className="flex items-start gap-3">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#DBEAFE] text-sm font-extrabold text-[#2563EB]">
-                            {author.slice(0, 1).toUpperCase()}
-                          </div>
+                          <Link href={`/profile/${encodeURIComponent(post.user_id)}`}>
+                            <UserAvatar name={author} avatarUrl={feedProfiles[post.user_id]?.avatar_url} className="h-10 w-10 text-sm font-extrabold" />
+                          </Link>
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-2">
-                              <p className="font-extrabold text-[#111827]">{author}</p>
+                              <Link href={`/profile/${encodeURIComponent(post.user_id)}`} className="font-extrabold text-[#111827] hover:text-[#2563EB]">{author}</Link>
                               <VerifiedBadge subscription={post.user_id === user?.id ? user.subscription : feedProfiles[post.user_id]?.subscription} />
                               <CleanBadge tone="gray">{post.market_tag || post.post_type}</CleanBadge>
                             </div>

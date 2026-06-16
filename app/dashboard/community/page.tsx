@@ -6,6 +6,8 @@ import { CleanButton, CleanCard, PageHeader } from '@/components/CleanBlue';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
+import { UserAvatar } from '@/components/UserAvatar';
+import Link from 'next/link';
 
 type Channel = {
   id: string;
@@ -27,6 +29,8 @@ type ProfilePreview = {
   name: string | null;
   email: string;
   subscription?: string | null;
+  display_name?: string | null;
+  avatar_url?: string | null;
 };
 
 const fallbackChannels = ['General', 'Forex', 'Gold', 'Crypto', 'Indices', 'Synthetic Indices', 'Beginners', 'Trade Reviews', 'Platform Help'];
@@ -47,9 +51,9 @@ export default function CommunityPage() {
   const selectedChannel = channels.find((item) => item.id === selectedChannelId);
 
   const authorName = useCallback((userId: string) => {
-    if (userId === user?.id) return user.name || user.email.split('@')[0] || 'You';
     const profile = profiles[userId];
-    return profile?.name || profile?.email?.split('@')[0] || 'Trader';
+    if (userId === user?.id) return profile?.display_name || user.name || user.email.split('@')[0] || 'You';
+    return profile?.display_name || profile?.name || profile?.email?.split('@')[0] || 'Trader';
   }, [profiles, user]);
 
   const loadProfiles = useCallback(async (rows: Message[]) => {
@@ -61,11 +65,21 @@ export default function CommunityPage() {
       .from('User')
       .select('id, name, email, subscription')
       .in('id', ids);
+    const { data: profileRows } = await supabase
+      .from('profiles')
+      .select('user_id, display_name, avatar_url')
+      .in('user_id', ids);
+    const profileByUserId = new Map((profileRows || []).map((profile) => [profile.user_id, profile]));
 
     setProfiles((current) => ({
       ...current,
       ...(data || []).reduce<Record<string, ProfilePreview>>((acc, profile) => {
-        acc[profile.id] = profile;
+        const profileMeta = profileByUserId.get(profile.id);
+        acc[profile.id] = {
+          ...profile,
+          display_name: profileMeta?.display_name ?? null,
+          avatar_url: profileMeta?.avatar_url ?? null,
+        };
         return acc;
       }, {}),
     }));
@@ -196,13 +210,15 @@ export default function CommunityPage() {
               const name = authorName(message.user_id);
               return (
                 <div key={message.id} className="flex gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#DBEAFE] text-sm font-extrabold text-[#2563EB]">{name[0]}</div>
+                  <Link href={`/profile/${encodeURIComponent(message.user_id)}`}>
+                    <UserAvatar name={name} avatarUrl={profiles[message.user_id]?.avatar_url} className="h-10 w-10 text-sm font-extrabold" />
+                  </Link>
                   <div className="max-w-[min(42rem,100%)] rounded-2xl bg-[#F7F9FC] px-4 py-3">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="flex items-center gap-1 text-sm font-extrabold text-[#111827]">
+                      <Link href={`/profile/${encodeURIComponent(message.user_id)}`} className="flex items-center gap-1 text-sm font-extrabold text-[#111827] hover:text-[#2563EB]">
                         {name}
                         <VerifiedBadge subscription={message.user_id === user?.id ? user.subscription : profiles[message.user_id]?.subscription} size="xs" />
-                      </p>
+                      </Link>
                       <span className="text-xs text-[#9CA3AF]">{timeLabel(message.created_at)}</span>
                     </div>
                     <p className="whitespace-pre-wrap break-words text-sm leading-6 text-[#4B5563]">{message.body}</p>
@@ -241,7 +257,7 @@ export default function CommunityPage() {
             <div className="mt-4 space-y-3 text-sm text-[#4B5563]">
               {Object.values(profiles).slice(0, 6).map((profile) => (
                 <p key={profile.id} className="flex items-center gap-1">
-                  {profile.name || profile.email.split('@')[0]}
+                  <Link href={`/profile/${encodeURIComponent(profile.id)}`} className="hover:text-[#2563EB]">{profile.display_name || profile.name || profile.email.split('@')[0]}</Link>
                   <VerifiedBadge subscription={profile.subscription} size="xs" />
                 </p>
               ))}
