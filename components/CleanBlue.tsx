@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import { Bell, Bookmark, CalendarDays, Heart, MessageCircle, MoreHorizontal, Repeat2, Share2, Sparkles, Star, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
+import { UserAvatar } from '@/components/UserAvatar';
 
 export function CleanCard({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
@@ -197,6 +198,8 @@ export function ActiveOpportunitiesWidget() {
 
 export function FeedPostCard({
   author = 'AlphaTrader',
+  authorId,
+  authorAvatar,
   authorSubscription,
   market = 'EUR/USD 4H',
   summary = 'Strong bullish structure forming near resistance. Watching for a clean breakout and retest.',
@@ -206,6 +209,8 @@ export function FeedPostCard({
   canAiCompare = Boolean(image),
 }: {
   author?: string;
+  authorId?: string;
+  authorAvatar?: string | null;
   authorSubscription?: string | null;
   market?: string;
   summary?: string;
@@ -217,10 +222,12 @@ export function FeedPostCard({
   return (
     <CleanCard className="p-0">
       <div className="flex items-start gap-3 p-5">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#DBEAFE] text-sm font-extrabold text-[#2563EB]">{author.slice(0, 1)}</div>
+        <Link href={authorId ? `/profile/${encodeURIComponent(authorId)}` : '#'} className={!authorId ? 'pointer-events-none' : ''}>
+          <UserAvatar name={author} avatarUrl={authorAvatar} className="h-10 w-10 text-sm font-extrabold" />
+        </Link>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <p className="font-extrabold text-[#111827]">{author}</p>
+            <Link href={authorId ? `/profile/${encodeURIComponent(authorId)}` : '#'} className={`font-extrabold text-[#111827] hover:text-[#2563EB] ${!authorId ? 'pointer-events-none' : ''}`}>{author}</Link>
             <VerifiedBadge subscription={authorSubscription} />
             <CleanBadge tone="green">Bullish</CleanBadge>
           </div>
