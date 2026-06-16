@@ -178,12 +178,12 @@ function formatPlannedMessage(message: OrionPlannedMessage): OrionPlannedMessage
   };
 }
 
-function OrionMentorAssistantShell() {
+function OrionMentorAssistantShell({ surface = 'floating' }: { surface?: 'floating' | 'embedded' }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, token } = useAuth();
   const { pageContext, activity, greeting, firstName } = useOrionPageAwareness();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(surface === 'embedded');
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<OrionMessage[]>([]);
   const [workflow, setWorkflow] = useState<OrionConversationWorkflow>({ type: 'idle' });
@@ -297,7 +297,7 @@ function OrionMentorAssistantShell() {
   };
 
   const handleAttachFile = async (file: File) => {
-    setOpen(true);
+    if (surface === 'floating') setOpen(true);
 
     try {
       const prepared = await prepareChartUploadFile(file);
@@ -350,7 +350,7 @@ function OrionMentorAssistantShell() {
       return;
     }
 
-    setOpen(true);
+    if (surface === 'floating') setOpen(true);
     setInput('');
     setMessages((current) => [...current.slice(-19), createMessage('user', displayText ?? trimmed)]);
     OrionMemoryStore.rememberInteraction(trimmed);
@@ -481,9 +481,13 @@ function OrionMentorAssistantShell() {
 
   return (
     <>
-      <div className="pointer-events-none fixed inset-x-0 bottom-16 z-[80] flex justify-center px-3 sm:inset-x-auto sm:bottom-24 sm:right-6 sm:block sm:w-[23rem] sm:px-0">
+      <div className={surface === 'floating'
+        ? 'pointer-events-none fixed inset-x-0 bottom-16 z-[80] flex justify-center px-3 sm:inset-x-auto sm:bottom-24 sm:right-6 sm:block sm:w-[23rem] sm:px-0'
+        : 'h-full min-h-[68vh] w-full'
+      }>
         <OrionChatWindow
-          open={open}
+          open={surface === 'embedded' ? true : open}
+          variant={surface}
           greeting={greeting}
           pageLabel={pageContext.knowledge.label}
           pageSummary={pageContext.knowledge.summary}
@@ -512,10 +516,20 @@ function OrionMentorAssistantShell() {
           }}
         />
       </div>
-      <div className="pointer-events-none fixed bottom-3 right-3 z-[80] sm:bottom-6 sm:right-6">
-        <OrionFloatingButton open={open} onClick={() => setOpen((current) => !current)} />
-      </div>
+      {surface === 'floating' ? (
+        <div className="pointer-events-none fixed bottom-3 right-3 z-[80] sm:bottom-6 sm:right-6">
+          <OrionFloatingButton open={open} onClick={() => setOpen((current) => !current)} />
+        </div>
+      ) : null}
     </>
+  );
+}
+
+export function OrionMentorChatExperience({ surface = 'embedded' }: { surface?: 'floating' | 'embedded' }) {
+  return (
+    <OrionPageAwarenessProvider>
+      <OrionMentorAssistantShell surface={surface} />
+    </OrionPageAwarenessProvider>
   );
 }
 
@@ -524,17 +538,14 @@ export function OrionMentorAssistant() {
   const { user } = useAuth();
   const isWorkspaceSurface = pathname.startsWith('/dashboard') || pathname.startsWith('/analyze');
   const isPublicSurface = PUBLIC_MENTOR_PATHS.has(pathname);
+  const isDedicatedOrionPage = pathname === '/dashboard/orion';
   const shouldRender = isPublicSurface || (Boolean(user) && isWorkspaceSurface);
 
-  if (!shouldRender) {
+  if (!shouldRender || isDedicatedOrionPage) {
     return null;
   }
 
-  return (
-    <OrionPageAwarenessProvider>
-      <OrionMentorAssistantShell />
-    </OrionPageAwarenessProvider>
-  );
+  return <OrionMentorChatExperience surface="floating" />;
 }
 
 export default OrionMentorAssistant;

@@ -7,6 +7,7 @@ import { OrionMessageBubble } from '@/orion/components/OrionMessageBubble';
 import { OrionQuickActions } from '@/orion/components/OrionQuickActions';
 import { OrionTypingBubble } from '@/orion/components/OrionTypingBubble';
 import type { OrionChatChoice, OrionMessage, OrionQuickAction, OrionQuickActionId } from '@/orion/types';
+import { cn } from '@/lib/utils';
 
 export function OrionChatWindow({
   open,
@@ -25,6 +26,8 @@ export function OrionChatWindow({
   onAttachFile,
   onQuickAction,
   onChoice,
+  variant = 'floating',
+  className,
 }: {
   open: boolean;
   greeting: string;
@@ -42,6 +45,8 @@ export function OrionChatWindow({
   onAttachFile: (file: File) => void | Promise<void>;
   onQuickAction: (actionId: OrionQuickActionId) => void;
   onChoice: (choice: OrionChatChoice) => void;
+  variant?: 'floating' | 'embedded';
+  className?: string;
 }) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -74,11 +79,17 @@ export function OrionChatWindow({
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 22, scale: 0.94 }}
           transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-          drag="y"
+          drag={variant === 'floating' ? 'y' : false}
           dragElastic={0.04}
           dragConstraints={{ top: 0, bottom: 0 }}
-          onDragEnd={handleDragEnd}
-          className="pointer-events-auto relative z-[80] flex h-[min(33rem,calc(100vh-11rem))] min-h-[24rem] w-[min(23rem,calc(100vw-1.5rem))] max-w-[23rem] origin-bottom-right flex-col overflow-hidden rounded-[18px] border border-slate-200 bg-white text-slate-900 shadow-[0_18px_50px_rgba(15,23,42,0.18)] max-sm:h-[min(32rem,calc(100vh-6rem))] max-sm:min-h-[22rem] max-sm:w-[min(22rem,calc(100vw-1.5rem))]"
+          onDragEnd={variant === 'floating' ? handleDragEnd : undefined}
+          className={cn(
+            'pointer-events-auto relative flex flex-col overflow-hidden rounded-[18px] border border-slate-200 bg-white text-slate-900 shadow-[0_18px_50px_rgba(15,23,42,0.18)]',
+            variant === 'floating'
+              ? 'z-[80] h-[min(33rem,calc(100vh-11rem))] min-h-[24rem] w-[min(23rem,calc(100vw-1.5rem))] max-w-[23rem] origin-bottom-right max-sm:h-[min(32rem,calc(100vh-6rem))] max-sm:min-h-[22rem] max-sm:w-[min(22rem,calc(100vw-1.5rem))]'
+              : 'h-full min-h-[34rem] w-full max-w-none shadow-[0_10px_30px_rgba(17,24,39,0.06)]',
+            className,
+          )}
           style={{ backgroundColor: '#ffffff', color: '#0f172a', borderColor: '#e2e8f0' }}
         >
           <div
@@ -93,13 +104,15 @@ export function OrionChatWindow({
                 </div>
                 <div className="mt-1 truncate text-xs text-white/80">Orion AI</div>
               </div>
-              <button
-                type="button"
-                onClick={onClose}
-                className="rounded-full p-1.5 text-white/85 transition hover:bg-white/15 hover:text-white"
-              >
-                <X className="h-4 w-4" />
-              </button>
+              {variant === 'floating' ? (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="rounded-full p-1.5 text-white/85 transition hover:bg-white/15 hover:text-white"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              ) : null}
             </div>
           </div>
 
