@@ -483,7 +483,7 @@ function OrionMentorAssistantShell({ surface = 'floating' }: { surface?: 'floati
     <>
       <div className={surface === 'floating'
         ? 'pointer-events-none fixed inset-x-0 bottom-16 z-[80] flex justify-center px-3 sm:inset-x-auto sm:bottom-24 sm:right-6 sm:block sm:w-[23rem] sm:px-0'
-        : 'h-full min-h-[68vh] w-full'
+        : 'h-full min-h-0 w-full overflow-hidden'
       }>
         <OrionChatWindow
           open={surface === 'embedded' ? true : open}

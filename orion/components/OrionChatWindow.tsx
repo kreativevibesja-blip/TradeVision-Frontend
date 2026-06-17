@@ -75,10 +75,10 @@ export function OrionChatWindow({
           dragConstraints={{ top: 0, bottom: 0 }}
           onDragEnd={variant === 'floating' ? handleDragEnd : undefined}
           className={cn(
-            'pointer-events-auto relative flex flex-col overflow-hidden rounded-2xl border border-[#E5E7EB] bg-white text-[#111827]',
+            'pointer-events-auto relative flex min-h-0 flex-col overflow-hidden rounded-2xl border border-[#E5E7EB] bg-white text-[#111827]',
             variant === 'floating'
               ? 'z-[80] h-[min(33rem,calc(100vh-11rem))] min-h-[24rem] w-[min(23rem,calc(100vw-1.5rem))] max-w-[23rem] origin-bottom-right shadow-[0_18px_50px_rgba(15,23,42,0.18)] max-sm:h-[min(32rem,calc(100vh-6rem))] max-sm:min-h-[22rem] max-sm:w-[min(22rem,calc(100vw-1.5rem))]'
-              : 'h-full min-h-[34rem] w-full max-w-none shadow-[0_10px_30px_rgba(17,24,39,0.06)]',
+              : 'h-full w-full max-w-none shadow-[0_10px_30px_rgba(17,24,39,0.06)]',
             className,
           )}
         >
@@ -104,7 +104,7 @@ export function OrionChatWindow({
             </div>
           </div>
 
-          <div ref={scrollRef} className="flex-1 space-y-4 overflow-x-hidden overflow-y-auto bg-white p-5 text-[#111827] max-sm:p-4">
+          <div ref={scrollRef} className="min-h-0 flex-1 space-y-4 overflow-x-hidden overflow-y-auto overscroll-contain bg-white p-5 text-[#111827] max-sm:p-4">
             <div className="max-w-full whitespace-normal rounded-xl border border-[#E5E7EB] bg-[#F7F9FC] px-3 py-2.5 text-xs leading-5 text-[#4B5563] [overflow-wrap:anywhere] [word-break:break-word]">
               <span className="font-bold text-[#111827]">{pageLabel}</span>
               <span> · {pageSummary}</span>
