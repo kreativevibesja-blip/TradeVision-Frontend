@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api';
+import { supabase } from '@/lib/supabase/client';
 import { usePageActivity } from '@/hooks/usePageActivity';
 import { trackPollingMetric } from '@/lib/egressMetrics';
 import { Card, CardContent } from '@/components/ui/card';
@@ -38,10 +39,10 @@ const adminNav = [
     { label: 'Coupons', href: '/admin/coupons' },
   ] },
   { label: 'Payments', href: '/admin/payments', icon: CreditCard, badgeKey: 'payments' as const },
-  { label: 'Feed Moderation', href: '/admin/feed-moderation', icon: Flag, badgeKey: 'feedback' as const, children: [
+  { label: 'Feed Moderation', href: '/admin/feed-moderation', icon: Flag, badgeKey: 'feedReports' as const, children: [
     { label: 'Feedback', href: '/admin/feedback' },
   ] },
-  { label: 'Community Moderation', href: '/admin/community-moderation', icon: MessageSquare },
+  { label: 'Community Moderation', href: '/admin/community-moderation', icon: MessageSquare, badgeKey: 'communityReports' as const },
   { label: 'Events', href: '/admin/events', icon: CalendarDays },
   { label: 'Content', href: '/admin/content', icon: Newspaper, children: [
     { label: 'Email Campaigns', href: '/admin/emails' },
@@ -68,6 +69,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const [openTicketCount, setOpenTicketCount] = useState(0);
   const [feedbackCount, setFeedbackCount] = useState(0);
+  const [feedReportCount, setFeedReportCount] = useState(0);
+  const [communityReportCount, setCommunityReportCount] = useState(0);
   const [pendingBankTransferCount, setPendingBankTransferCount] = useState(0);
 
   useEffect(() => {
@@ -81,11 +84,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         api.admin.getOpenTicketCount(token).catch(() => null),
         api.admin.getWorkspaceBadges(token).catch(() => null),
       ]);
+      const [feedReports, communityReports] = await Promise.all([
+        supabase
+          ? supabase.from('post_reports').select('id', { count: 'exact', head: true }).in('status', ['open', 'reviewing'])
+          : Promise.resolve({ count: 0 }),
+        supabase
+          ? supabase.from('community_reports').select('id', { count: 'exact', head: true }).in('status', ['open', 'reviewing'])
+          : Promise.resolve({ count: 0 }),
+      ]);
 
       if (!active) return;
 
       setOpenTicketCount(ticketResult?.count ?? 0);
       setFeedbackCount(workspaceBadges?.feedbackUnreadCount ?? 0);
+      setFeedReportCount(feedReports.count ?? 0);
+      setCommunityReportCount(communityReports.count ?? 0);
       setPendingBankTransferCount(workspaceBadges?.pendingBankTransferCount ?? 0);
     };
 
@@ -134,6 +147,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
+  const getBadgeCount = (badgeKey?: string) => {
+    if (badgeKey === 'tickets') return openTicketCount;
+    if (badgeKey === 'payments') return pendingBankTransferCount;
+    if (badgeKey === 'feedback') return feedbackCount;
+    if (badgeKey === 'feedReports') return feedReportCount;
+    if (badgeKey === 'communityReports') return communityReportCount;
+    return 0;
+  };
+
   return (
     <div className="min-h-screen overflow-x-hidden">
       <div className="mx-auto flex w-full max-w-7xl flex-col lg:flex-row">
@@ -142,13 +164,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <nav className="space-y-1">
             {adminNav.map((item) => {
               const isActive = pathname === item.href || Boolean(item.children?.some((child) => pathname === child.href || pathname.startsWith(`${child.href}/`)));
-              const badgeCount = item.badgeKey === 'tickets'
-                ? openTicketCount
-                : item.badgeKey === 'payments'
-                  ? pendingBankTransferCount
-                : item.badgeKey === 'feedback'
-                  ? feedbackCount
-                  : 0;
+              const badgeCount = getBadgeCount(item.badgeKey);
               return (
                 <div key={item.href}>
                   <Link href={item.href}>
@@ -196,13 +212,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="flex gap-1 min-w-max">
             {adminNav.map((item) => {
               const isActive = pathname === item.href || Boolean(item.children?.some((child) => pathname === child.href || pathname.startsWith(`${child.href}/`)));
-              const badgeCount = item.badgeKey === 'tickets'
-                ? openTicketCount
-                : item.badgeKey === 'payments'
-                  ? pendingBankTransferCount
-                : item.badgeKey === 'feedback'
-                  ? feedbackCount
-                  : 0;
+              const badgeCount = getBadgeCount(item.badgeKey);
               return (
                 <Link key={item.href} href={item.href}>
                   <div
@@ -252,3 +262,4 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     </div>
   );
 }
+
