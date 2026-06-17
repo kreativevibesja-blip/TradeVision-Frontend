@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { ImagePlus, Loader2, Pin, Send, Shield } from 'lucide-react';
+import { ArrowLeft, ImagePlus, Loader2, Pin, Send, Shield } from 'lucide-react';
 import { CleanButton, CleanCard, PageHeader } from '@/components/CleanBlue';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -47,8 +47,26 @@ export default function CommunityPage() {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
+  const [mobileRoomOpen, setMobileRoomOpen] = useState(false);
+  const [readTimestamps, setReadTimestamps] = useState<Record<string, string>>({});
+  const [latestActivity, setLatestActivity] = useState<Record<string, string>>({});
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
 
   const selectedChannel = channels.find((item) => item.id === selectedChannelId);
+  const readStorageKey = user?.id ? `tradevision:community:last_read:${user.id}` : '';
+
+  const markChannelRead = useCallback((channelId: string) => {
+    const readAt = new Date().toISOString();
+    setReadTimestamps((current) => {
+      return { ...current, [channelId]: readAt };
+    });
+    if (typeof window !== 'undefined' && readStorageKey) {
+      const current = JSON.parse(window.localStorage.getItem(readStorageKey) || '{}');
+      const next = { ...(current && typeof current === 'object' ? current : {}), [channelId]: readAt };
+      window.localStorage.setItem(readStorageKey, JSON.stringify(next));
+    }
+    setUnreadCounts((current) => ({ ...current, [channelId]: 0 }));
+  }, [readStorageKey]);
 
   const authorName = useCallback((userId: string) => {
     const profile = profiles[userId];
@@ -103,8 +121,45 @@ export default function CommunityPage() {
 
     const rows = data || [];
     setChannels(rows);
-    setSelectedChannelId((current) => current || rows[0]?.id || '');
   }, []);
+
+  const loadChannelBadges = useCallback(async (channelRows = channels, readRows = readTimestamps) => {
+    if (!supabase || channelRows.length === 0) return;
+    const supabaseClient = supabase;
+
+    const nextActivity: Record<string, string> = {};
+    const nextUnread: Record<string, number> = {};
+
+    await Promise.all(channelRows.map(async (channel) => {
+      const latestQuery = supabaseClient
+        .from('community_messages')
+        .select('id, created_at')
+        .eq('channel_id', channel.id)
+        .eq('is_deleted', false)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      const { data: latestRows } = await latestQuery;
+      const latest = latestRows?.[0]?.created_at as string | undefined;
+      if (latest) nextActivity[channel.id] = latest;
+
+      let countQuery = supabaseClient
+        .from('community_messages')
+        .select('id', { count: 'exact', head: true })
+        .eq('channel_id', channel.id)
+        .eq('is_deleted', false);
+
+      if (readRows[channel.id]) {
+        countQuery = countQuery.gt('created_at', readRows[channel.id]);
+      }
+
+      const { count } = await countQuery;
+      nextUnread[channel.id] = count || 0;
+    }));
+
+    setLatestActivity(nextActivity);
+    setUnreadCounts(nextUnread);
+  }, [channels, readTimestamps]);
 
   const loadMessages = useCallback(async (channelId: string, options: { showLoader?: boolean } = {}) => {
     if (!supabase || !channelId) return;
@@ -129,16 +184,36 @@ export default function CommunityPage() {
       const rows = (data || []).reverse();
       setMessages(rows);
       await loadProfiles(rows);
+      markChannelRead(channelId);
     }
 
     if (showLoader) {
       setLoadingMessages(false);
     }
-  }, [loadProfiles]);
+  }, [loadProfiles, markChannelRead]);
+
+  useEffect(() => {
+    if (!readStorageKey || typeof window === 'undefined') return;
+    try {
+      const parsed = JSON.parse(window.localStorage.getItem(readStorageKey) || '{}');
+      setReadTimestamps(parsed && typeof parsed === 'object' ? parsed : {});
+    } catch {
+      setReadTimestamps({});
+    }
+  }, [readStorageKey]);
 
   useEffect(() => {
     void loadChannels();
   }, [loadChannels]);
+
+  useEffect(() => {
+    if (channels.length === 0) return;
+    void loadChannelBadges(channels, readTimestamps);
+    const poll = window.setInterval(() => {
+      void loadChannelBadges(channels, readTimestamps);
+    }, 15000);
+    return () => window.clearInterval(poll);
+  }, [channels, loadChannelBadges, readTimestamps]);
 
   useEffect(() => {
     if (!selectedChannelId) return;
@@ -165,6 +240,7 @@ export default function CommunityPage() {
     } else {
       setDraft('');
       await loadMessages(selectedChannelId);
+      await loadChannelBadges();
     }
 
     setSending(false);
@@ -183,12 +259,26 @@ export default function CommunityPage() {
     <div className="mx-auto max-w-7xl">
       <PageHeader title="Community" subtitle="Trading rooms for discussion, analysis sharing, mentoring, and platform support." />
       <div className="grid h-[calc(100svh-13rem)] min-h-[34rem] gap-5 overflow-hidden lg:grid-cols-[15rem_minmax(0,1fr)_18rem]">
-        <CleanCard className="flex min-h-0 flex-col p-3">
+        <CleanCard className={`${mobileRoomOpen ? 'hidden lg:flex' : 'flex'} min-h-0 flex-col p-3`}>
           <p className="px-2 pb-3 text-xs font-extrabold uppercase tracking-[0.14em] text-[#6B7280]">Channels</p>
           <div className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-1">
             {channels.length > 0 ? channels.map((item) => (
-              <button key={item.id} onClick={() => setSelectedChannelId(item.id)} className={`flex w-full items-center rounded-xl px-3 py-2.5 text-left text-sm font-bold ${selectedChannelId === item.id ? 'bg-[#EFF6FF] text-[#2563EB]' : 'text-[#4B5563] hover:bg-[#F7F9FC]'}`}>
-                # {item.name}
+              <button
+                key={item.id}
+                onClick={() => {
+                  setSelectedChannelId(item.id);
+                  setMobileRoomOpen(true);
+                }}
+                className={`flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-bold ${selectedChannelId === item.id ? 'bg-[#EFF6FF] text-[#2563EB]' : 'text-[#4B5563] hover:bg-[#F7F9FC]'}`}
+              >
+                <span className="min-w-0 flex-1 truncate"># {item.name}</span>
+                {(unreadCounts[item.id] || 0) > 0 ? (
+                  <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#2563EB] px-1.5 text-[10px] font-extrabold text-white">
+                    {unreadCounts[item.id] > 99 ? '99+' : unreadCounts[item.id]}
+                  </span>
+                ) : latestActivity[item.id] ? (
+                  <span className="h-2 w-2 rounded-full bg-[#16A34A]" />
+                ) : null}
               </button>
             )) : fallbackChannels.map((item) => (
               <div key={item} className="flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-bold text-[#9CA3AF]"># {item}</div>
@@ -196,13 +286,25 @@ export default function CommunityPage() {
           </div>
         </CleanCard>
 
-        <CleanCard className="flex min-h-0 flex-col p-0">
-          <div className="border-b border-[#E5E7EB] p-5">
-            <h2 className="font-extrabold text-[#111827]"># {selectedChannel?.name || 'Community'}</h2>
-            <p className="text-sm text-[#6B7280]">{selectedChannel?.description || 'Latest 30 messages with controlled polling.'}</p>
+        <CleanCard className={`${mobileRoomOpen ? 'flex' : 'hidden lg:flex'} min-h-0 flex-col p-0`}>
+          <div className="flex items-center gap-3 border-b border-[#E5E7EB] p-5">
+            <button
+              type="button"
+              onClick={() => setMobileRoomOpen(false)}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#E5E7EB] text-[#111827] lg:hidden"
+              aria-label="Back to channels"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </button>
+            <div className="min-w-0">
+              <h2 className="truncate font-extrabold text-[#111827]"># {selectedChannel?.name || 'Community'}</h2>
+              <p className="text-sm text-[#6B7280]">{selectedChannel?.description || 'Latest 30 messages with controlled polling.'}</p>
+            </div>
           </div>
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-5">
-            {loadingMessages ? (
+            {!selectedChannelId ? (
+              <p className="text-sm text-[#6B7280]">Select a channel to start reading.</p>
+            ) : loadingMessages ? (
               <p className="text-sm text-[#6B7280]">Loading messages...</p>
             ) : messages.length === 0 ? (
               <p className="text-sm text-[#6B7280]">No messages yet. Start the room conversation.</p>
@@ -251,7 +353,7 @@ export default function CommunityPage() {
           </div>
         </CleanCard>
 
-        <aside className="min-h-0 space-y-5 overflow-y-auto pr-1">
+        <aside className={`${mobileRoomOpen ? 'hidden lg:block' : 'hidden lg:block'} min-h-0 space-y-5 overflow-y-auto pr-1`}>
           <CleanCard>
             <h2 className="font-extrabold text-[#111827]">Members</h2>
             <div className="mt-4 space-y-3 text-sm text-[#4B5563]">
