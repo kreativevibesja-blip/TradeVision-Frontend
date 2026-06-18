@@ -1064,6 +1064,17 @@ export const api = {
       keepalive: true,
     }),
 
+  uploadAttachment: (file: File, context: 'feed' | 'community' | 'messages' | 'journal' | 'support' = 'feed') => {
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('context', context);
+
+    return apiFetch<{ imageUrl: string }>('/attachments/upload', {
+      method: 'POST',
+      body: formData,
+    });
+  },
+
   runAiCompare: (postId: string, payload: { rerun?: boolean } = {}) =>
     apiFetch<{ compare: AiCompareRecord; usage: AiCompareUsage; cached: boolean }>(`/community/posts/${postId}/ai-compare`, {
       method: 'POST',
