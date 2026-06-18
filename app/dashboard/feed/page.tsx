@@ -247,7 +247,7 @@ export default function FeedPage() {
   }
 
   return (
-    <div className="mx-auto grid h-[calc(100svh-8rem)] min-h-[42rem] max-w-6xl gap-6 overflow-hidden xl:grid-cols-[minmax(0,1fr)_20rem]">
+    <div className="mx-auto h-[calc(100svh-8rem)] min-h-[42rem] max-w-5xl overflow-hidden">
       <div className="min-h-0 overflow-y-auto pr-1">
         <PageHeader title="Feed" subtitle="Share chart ideas, AI analysis, radar setups, and journal recaps with traders." />
         <CleanCard className="mb-5">
@@ -321,17 +321,6 @@ export default function FeedPage() {
           )}
         </div>
       </div>
-
-      <aside className="min-h-0 space-y-5 overflow-y-auto pr-1">
-        <CleanCard>
-          <h2 className="font-extrabold text-[#111827]">Feed Status</h2>
-          <p className="mt-2 text-sm leading-6 text-[#6B7280]">Posts are loaded in focused batches. Comments and large media stay lazy-loaded to keep the community fast.</p>
-        </CleanCard>
-        <CleanCard>
-          <h2 className="font-extrabold text-[#111827]">Current View</h2>
-          <div className="mt-3"><CleanBadge tone="blue">{activeTab}</CleanBadge></div>
-        </CleanCard>
-      </aside>
 
       {comparePost ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#111827]/50 p-4">
