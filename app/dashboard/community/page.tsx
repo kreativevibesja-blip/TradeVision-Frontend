@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ImagePlus, Loader2, Pin, Send, Shield } from 'lucide-react';
 import { CleanButton, CleanCard, PageHeader } from '@/components/CleanBlue';
+import { api } from '@/lib/api';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
@@ -21,6 +22,7 @@ type Message = {
   channel_id: string;
   user_id: string;
   body: string;
+  image_url: string | null;
   created_at: string;
 };
 
@@ -44,6 +46,7 @@ export default function CommunityPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [profiles, setProfiles] = useState<Record<string, ProfilePreview>>({});
   const [draft, setDraft] = useState('');
+  const [attachment, setAttachment] = useState<File | null>(null);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
@@ -51,6 +54,7 @@ export default function CommunityPage() {
   const [readTimestamps, setReadTimestamps] = useState<Record<string, string>>({});
   const [latestActivity, setLatestActivity] = useState<Record<string, string>>({});
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const selectedChannel = channels.find((item) => item.id === selectedChannelId);
   const readStorageKey = user?.id ? `tradevision:community:last_read:${user.id}` : '';
@@ -171,7 +175,7 @@ export default function CommunityPage() {
 
     const { data, error: messageError } = await supabase
       .from('community_messages')
-      .select('id, channel_id, user_id, body, created_at')
+      .select('id, channel_id, user_id, body, image_url, created_at')
       .eq('channel_id', channelId)
       .eq('is_deleted', false)
       .order('created_at', { ascending: false })
@@ -225,20 +229,34 @@ export default function CommunityPage() {
   }, [loadMessages, selectedChannelId]);
 
   const sendMessage = async () => {
-    if (!supabase || !user || !selectedChannelId || !draft.trim()) return;
+    if (!supabase || !user || !selectedChannelId || (!draft.trim() && !attachment)) return;
     setSending(true);
     setError('');
+
+    let imageUrl: string | null = null;
+    if (attachment) {
+      try {
+        const uploaded = await api.uploadAttachment(attachment, 'community');
+        imageUrl = uploaded.imageUrl;
+      } catch (uploadError) {
+        setError(uploadError instanceof Error ? uploadError.message : 'Attachment upload failed.');
+        setSending(false);
+        return;
+      }
+    }
 
     const { error: sendError } = await supabase.from('community_messages').insert({
       channel_id: selectedChannelId,
       user_id: user.id,
-      body: draft.trim(),
+      body: draft.trim() || 'Shared an image.',
+      image_url: imageUrl,
     });
 
     if (sendError) {
       setError(sendError.message);
     } else {
       setDraft('');
+      setAttachment(null);
       await loadMessages(selectedChannelId);
       await loadChannelBadges();
     }
@@ -324,14 +342,31 @@ export default function CommunityPage() {
                       <span className="text-xs text-[#9CA3AF]">{timeLabel(message.created_at)}</span>
                     </div>
                     <p className="whitespace-pre-wrap break-words text-sm leading-6 text-[#4B5563]">{message.body}</p>
+                    {message.image_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={message.image_url} alt="Community attachment" className="mt-3 max-h-72 rounded-xl border border-[#E5E7EB] object-contain" loading="lazy" />
+                    ) : null}
                   </div>
                 </div>
               );
             })}
           </div>
           <div className="border-t border-[#E5E7EB] p-4">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className="hidden"
+              onChange={(event) => setAttachment(event.target.files?.[0] ?? null)}
+            />
+            {attachment ? (
+              <div className="mb-2 flex items-center justify-between gap-3 rounded-xl border border-[#DBEAFE] bg-[#EFF6FF] px-3 py-2 text-sm text-[#1D4ED8]">
+                <span className="min-w-0 truncate">{attachment.name}</span>
+                <button type="button" onClick={() => setAttachment(null)} className="font-extrabold text-[#2563EB]">Remove</button>
+              </div>
+            ) : null}
             <div className="flex gap-2">
-              <button type="button" className="rounded-xl border border-[#E5E7EB] px-3 text-[#6B7280]"><ImagePlus className="h-4 w-4" /></button>
+              <button type="button" onClick={() => fileInputRef.current?.click()} className="rounded-xl border border-[#E5E7EB] px-3 text-[#6B7280]" aria-label="Attach image"><ImagePlus className="h-4 w-4" /></button>
               <input
                 value={draft}
                 onChange={(event) => setDraft(event.target.value)}
@@ -344,7 +379,7 @@ export default function CommunityPage() {
                 className="h-11 min-w-0 flex-1 rounded-xl border border-[#E5E7EB] px-4 text-sm text-[#111827] outline-none placeholder:text-[#9CA3AF] focus:border-[#2563EB]"
                 placeholder={`Message #${selectedChannel?.name || 'community'}`}
               />
-              <CleanButton onClick={sendMessage} className={!draft.trim() || sending ? 'pointer-events-none opacity-60' : ''}>
+              <CleanButton onClick={sendMessage} className={(!draft.trim() && !attachment) || sending ? 'pointer-events-none opacity-60' : ''}>
                 {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                 Send
               </CleanButton>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ImagePlus, Loader2, Send, Sparkles, UploadCloud, X } from 'lucide-react';
 import { CleanButton, CleanCard, CleanBadge, FeedPostCard, PageHeader } from '@/components/CleanBlue';
 import { api, type AiCompareRecord, type AiCompareUsage } from '@/lib/api';
@@ -58,6 +58,7 @@ export default function FeedPage() {
   const [activeTab, setActiveTab] = useState('For You');
   const [draft, setDraft] = useState('');
   const [marketTag, setMarketTag] = useState('');
+  const [attachment, setAttachment] = useState<File | null>(null);
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [profiles, setProfiles] = useState<Record<string, ProfilePreview>>({});
   const [loading, setLoading] = useState(true);
@@ -70,6 +71,7 @@ export default function FeedPage() {
   const [compareStep, setCompareStep] = useState(loadingSteps[0]);
   const [compareError, setCompareError] = useState('');
   const [compareSavedMessage, setCompareSavedMessage] = useState('');
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const profileName = useCallback((userId: string) => {
     const profile = profiles[userId];
@@ -139,18 +141,31 @@ export default function FeedPage() {
     void loadPosts();
   }, [loadPosts]);
 
-  const canPost = useMemo(() => Boolean(user && draft.trim() && !posting), [draft, posting, user]);
+  const canPost = useMemo(() => Boolean(user && (draft.trim() || attachment) && !posting), [attachment, draft, posting, user]);
 
   const createPost = async () => {
-    if (!supabase || !user || !draft.trim()) return;
+    if (!supabase || !user || (!draft.trim() && !attachment)) return;
 
     setPosting(true);
     setError('');
 
+    let imageUrl: string | null = null;
+    if (attachment) {
+      try {
+        const uploaded = await api.uploadAttachment(attachment, 'feed');
+        imageUrl = uploaded.imageUrl;
+      } catch (uploadError) {
+        setError(uploadError instanceof Error ? uploadError.message : 'Attachment upload failed.');
+        setPosting(false);
+        return;
+      }
+    }
+
     const { error: postError } = await supabase.from('feed_posts').insert({
       user_id: user.id,
-      body: draft.trim(),
+      body: draft.trim() || 'Shared a chart screenshot.',
       market_tag: marketTag.trim() || null,
+      image_url: imageUrl,
       post_type: 'text',
       visibility: 'public',
     });
@@ -160,6 +175,7 @@ export default function FeedPage() {
     } else {
       setDraft('');
       setMarketTag('');
+      setAttachment(null);
       await loadPosts();
     }
 
@@ -241,6 +257,19 @@ export default function FeedPage() {
             placeholder="Share a trading idea..."
             className="min-h-24 w-full resize-none rounded-xl border border-[#E5E7EB] bg-[#F7F9FC] p-4 text-sm text-[#111827] outline-none placeholder:text-[#9CA3AF] focus:border-[#2563EB] focus:bg-white"
           />
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            className="hidden"
+            onChange={(event) => setAttachment(event.target.files?.[0] ?? null)}
+          />
+          {attachment ? (
+            <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-[#DBEAFE] bg-[#EFF6FF] px-3 py-2 text-sm text-[#1D4ED8]">
+              <span className="min-w-0 truncate">{attachment.name}</span>
+              <button type="button" onClick={() => setAttachment(null)} className="font-extrabold text-[#2563EB]">Remove</button>
+            </div>
+          ) : null}
           <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <input
               value={marketTag}
@@ -249,7 +278,7 @@ export default function FeedPage() {
               className="h-11 min-w-0 rounded-xl border border-[#E5E7EB] bg-white px-4 text-sm text-[#111827] outline-none placeholder:text-[#9CA3AF] focus:border-[#2563EB]"
             />
             <div className="flex flex-wrap gap-2">
-              <CleanButton variant="secondary"><ImagePlus className="h-4 w-4" />Screenshot</CleanButton>
+              <CleanButton variant="secondary" onClick={() => fileInputRef.current?.click()}><ImagePlus className="h-4 w-4" />Screenshot</CleanButton>
               <CleanButton variant="secondary" href="/analyze"><UploadCloud className="h-4 w-4" />AI Analysis</CleanButton>
               <CleanButton onClick={createPost} className={!canPost ? 'pointer-events-none opacity-60' : ''}>
                 {posting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}

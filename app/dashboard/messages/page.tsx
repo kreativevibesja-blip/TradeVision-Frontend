@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, Loader2, MessageSquarePlus, Search, Send, ShieldAlert } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowLeft, ImagePlus, Loader2, MessageSquarePlus, Search, Send, ShieldAlert } from 'lucide-react';
 import { CleanButton, CleanCard, PageHeader } from '@/components/CleanBlue';
+import { api } from '@/lib/api';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
@@ -25,6 +26,7 @@ type DirectMessage = {
   conversation_id: string;
   sender_id: string;
   body: string;
+  attachment_url: string | null;
   sender_display_name?: string | null;
   sender_is_verified?: boolean | null;
   created_at: string;
@@ -62,6 +64,7 @@ export default function MessagesPage() {
   const [userSuggestions, setUserSuggestions] = useState<UserSuggestion[]>([]);
   const [targetUserId, setTargetUserId] = useState('');
   const [draft, setDraft] = useState('');
+  const [attachment, setAttachment] = useState<File | null>(null);
   const [userPreviews, setUserPreviews] = useState<Record<string, UserPreview>>({});
   const [loadingConversations, setLoadingConversations] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
@@ -69,6 +72,7 @@ export default function MessagesPage() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   const [mobileChatOpen, setMobileChatOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const selectedConversation = conversations.find((conversation) => conversation.id === selectedConversationId);
 
@@ -177,7 +181,7 @@ export default function MessagesPage() {
 
     const { data, error: messagesError } = await supabase
       .from('direct_messages')
-      .select('id, conversation_id, sender_id, body, sender_display_name, sender_is_verified, created_at')
+      .select('id, conversation_id, sender_id, body, attachment_url, sender_display_name, sender_is_verified, created_at')
       .eq('conversation_id', conversationId)
       .eq('is_deleted', false)
       .order('created_at', { ascending: true })
@@ -322,14 +326,27 @@ export default function MessagesPage() {
   };
 
   const sendMessage = async () => {
-    if (!supabase || !user || !selectedConversationId || !draft.trim()) return;
+    if (!supabase || !user || !selectedConversationId || (!draft.trim() && !attachment)) return;
     setSending(true);
     setError('');
+
+    let attachmentUrl: string | null = null;
+    if (attachment) {
+      try {
+        const uploaded = await api.uploadAttachment(attachment, 'messages');
+        attachmentUrl = uploaded.imageUrl;
+      } catch (uploadError) {
+        setError(uploadError instanceof Error ? uploadError.message : 'Attachment upload failed.');
+        setSending(false);
+        return;
+      }
+    }
 
     const { error: sendError } = await supabase.from('direct_messages').insert({
       conversation_id: selectedConversationId,
       sender_id: user.id,
-      body: draft.trim(),
+      body: draft.trim() || 'Shared an image.',
+      attachment_url: attachmentUrl,
     });
 
     if (sendError) {
@@ -337,6 +354,7 @@ export default function MessagesPage() {
     } else {
       await supabase.from('direct_conversations').update({ updated_at: new Date().toISOString() }).eq('id', selectedConversationId);
       setDraft('');
+      setAttachment(null);
       await loadMessages(selectedConversationId);
       await loadConversations();
     }
@@ -488,6 +506,10 @@ export default function MessagesPage() {
                       </p>
                     ) : null}
                     <p className="whitespace-pre-wrap break-words leading-6">{message.body}</p>
+                    {message.attachment_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={message.attachment_url} alt="Message attachment" className="mt-3 max-h-72 rounded-xl border border-white/20 object-contain" loading="lazy" />
+                    ) : null}
                     <p className={`mt-2 text-xs ${own ? 'text-white/70' : 'text-[#9CA3AF]'}`}>{formatTime(message.created_at)}</p>
                   </div>
                   {own ? (
@@ -500,7 +522,29 @@ export default function MessagesPage() {
             })}
           </div>
           <div className="border-t border-[#E5E7EB] p-4">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className="hidden"
+              onChange={(event) => setAttachment(event.target.files?.[0] ?? null)}
+            />
+            {attachment ? (
+              <div className="mb-2 flex items-center justify-between gap-3 rounded-xl border border-[#DBEAFE] bg-[#EFF6FF] px-3 py-2 text-sm text-[#1D4ED8]">
+                <span className="min-w-0 truncate">{attachment.name}</span>
+                <button type="button" onClick={() => setAttachment(null)} className="font-extrabold text-[#2563EB]">Remove</button>
+              </div>
+            ) : null}
             <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={!selectedConversationId || sending}
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#E5E7EB] text-[#6B7280] transition hover:bg-[#F7F9FC] disabled:cursor-not-allowed disabled:opacity-50"
+                aria-label="Attach image"
+              >
+                <ImagePlus className="h-4 w-4" />
+              </button>
               <input
                 value={draft}
                 onChange={(event) => setDraft(event.target.value)}
@@ -513,7 +557,7 @@ export default function MessagesPage() {
                 className="h-11 min-w-0 flex-1 rounded-xl border border-[#E5E7EB] px-4 text-sm text-[#111827] outline-none placeholder:text-[#9CA3AF] focus:border-[#2563EB]"
                 placeholder="Write a message..."
               />
-              <CleanButton onClick={sendMessage} className={!selectedConversationId || !draft.trim() || sending ? 'pointer-events-none opacity-60' : ''}>
+              <CleanButton onClick={sendMessage} className={!selectedConversationId || (!draft.trim() && !attachment) || sending ? 'pointer-events-none opacity-60' : ''}>
                 {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                 Send
               </CleanButton>
