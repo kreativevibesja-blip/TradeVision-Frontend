@@ -87,6 +87,51 @@ const mentorHighlights = [
   },
 ];
 
+const seoSections = [
+  {
+    title: 'AI Trading Analysis',
+    body: 'TradeVision AI helps traders turn chart screenshots into a structured market read covering trend, market structure, key levels, risk zones, confidence, and explanation.',
+    href: '/analysis',
+    link: 'Explore AI trading analysis',
+  },
+  {
+    title: 'AI Chart Analysis',
+    body: 'Upload a clear chart screenshot and review what the AI sees on the market, including support, resistance, liquidity context, invalidation, and possible scenarios.',
+    href: '/analyze',
+    link: 'Upload your first chart',
+  },
+  {
+    title: 'Trading Mentor',
+    body: 'Orion AI explains market concepts, platform workflows, risk ideas, and analysis results so traders can learn while using the platform.',
+    href: '/orion',
+    link: 'Meet Orion AI',
+  },
+  {
+    title: 'Trade Radar',
+    body: 'Trade Radar monitors setups created from AI analysis and helps traders wait for confirmation instead of rushing into entries.',
+    href: '/trade-radar',
+    link: 'Activate Trade Radar',
+  },
+  {
+    title: 'Forex Analysis',
+    body: 'Use TradeVision to review forex chart screenshots for pairs like EUR/USD, GBP/JPY, USD/JPY, and other major or minor markets.',
+    href: '/forex-analysis',
+    link: 'Learn about forex analysis',
+  },
+  {
+    title: 'Gold Analysis',
+    body: 'Gold traders can review XAU/USD screenshots for volatility, liquidity, key zones, trend, confirmation, and risk-first planning.',
+    href: '/gold-analysis',
+    link: 'Read the gold guide',
+  },
+  {
+    title: 'Synthetic Indices Analysis',
+    body: 'Analyze synthetic indices charts with the same structured workflow for market structure, risk zones, and patience-based setup tracking.',
+    href: '/synthetic-indices-analysis',
+    link: 'Explore synthetic indices',
+  },
+];
+
 const plans = [
   {
     name: 'Free',
@@ -298,6 +343,27 @@ export default function HomePage() {
                 </div>
                 <p className="text-sm leading-6 text-white/90">{item.title}</p>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-white px-4 py-12">
+        <div className="mx-auto max-w-6xl">
+          <div className="max-w-3xl">
+            <div className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#176dff]">AI trading platform</div>
+            <h2 className="mt-3 text-3xl font-extrabold tracking-[-0.04em] sm:text-4xl">Discover TradeVision AI by market, workflow, and learning goal.</h2>
+            <p className="mt-4 text-base leading-7 text-[#4a5669]">
+              TradeVision connects chart analysis, Orion AI mentorship, Trade Radar monitoring, community discussion, and journaling into one searchable trading workflow.
+            </p>
+          </div>
+          <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {seoSections.map((section) => (
+              <article key={section.title} className="rounded-[12px] border border-[#e6edf8] bg-white p-6 shadow-[0_14px_35px_rgba(44,70,120,0.08)]">
+                <h2 className="text-xl font-extrabold tracking-[-0.03em]">{section.title}</h2>
+                <p className="mt-3 text-sm leading-7 text-[#4a5669]">{section.body}</p>
+                <Link href={section.href} className="mt-4 inline-flex text-sm font-extrabold text-[#176dff]">{section.link}</Link>
+              </article>
             ))}
           </div>
         </div>
