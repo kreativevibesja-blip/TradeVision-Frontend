@@ -19,9 +19,11 @@ import {
 } from 'lucide-react';
 
 const navLinks = [
-  { label: 'AI Analysis', href: '/analyze' },
-  { label: 'Intelligence', href: '/platform' },
-  { label: 'Mentorship', href: '/trade-examples' },
+  { label: 'AI Analysis', href: '/analysis' },
+  { label: 'Trade Radar', href: '/trade-radar' },
+  { label: 'Orion', href: '/orion' },
+  { label: 'Community', href: '/community' },
+  { label: 'Blog', href: '/blog' },
   { label: 'Pricing', href: '/pricing' },
 ];
 

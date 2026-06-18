@@ -35,17 +35,21 @@ export function Footer() {
               <h4 className="mb-4 font-semibold">Product</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><Link href="/analyze" className="transition-colors hover:text-foreground">Chart Analysis</Link></li>
-                <li><Link href="/trade-examples" className="transition-colors hover:text-foreground">Trade Quality Examples</Link></li>
+                <li><Link href="/features" className="transition-colors hover:text-foreground">Features</Link></li>
+                <li><Link href="/trade-radar" className="transition-colors hover:text-foreground">Trade Radar</Link></li>
+                <li><Link href="/orion" className="transition-colors hover:text-foreground">Orion AI</Link></li>
                 <li><Link href="/pricing" className="transition-colors hover:text-foreground">Pricing</Link></li>
-                <li><Link href="/dashboard" className="transition-colors hover:text-foreground">Dashboard</Link></li>
               </ul>
             </div>
 
             <div className="min-w-0">
-              <h4 className="mb-4 font-semibold">Supported</h4>
+              <h4 className="mb-4 font-semibold">Markets</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>TradingView</li>
-                <li>Deriv (Boom/Crash/Volatility)</li>
+                <li><Link href="/forex-analysis" className="transition-colors hover:text-foreground">Forex Analysis</Link></li>
+                <li><Link href="/gold-analysis" className="transition-colors hover:text-foreground">Gold Analysis</Link></li>
+                <li><Link href="/crypto-analysis" className="transition-colors hover:text-foreground">Crypto Analysis</Link></li>
+                <li><Link href="/synthetic-indices-analysis" className="transition-colors hover:text-foreground">Synthetic Indices</Link></li>
+                <li><Link href="/blog" className="transition-colors hover:text-foreground">Blog</Link></li>
               </ul>
             </div>
 
@@ -55,6 +59,8 @@ export function Footer() {
                 <li><Link href="/privacy-policy" className="transition-colors hover:text-foreground">Privacy Policy</Link></li>
                 <li><Link href="/terms-of-service" className="transition-colors hover:text-foreground">Terms of Service</Link></li>
                 <li><Link href="/disclaimer" className="transition-colors hover:text-foreground">Disclaimer</Link></li>
+                <li><Link href="/faq" className="transition-colors hover:text-foreground">FAQ</Link></li>
+                <li><Link href="/contact" className="transition-colors hover:text-foreground">Contact</Link></li>
               </ul>
             </div>
           </div>
