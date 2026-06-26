@@ -31,12 +31,34 @@ const iconMap = {
 export function OrionQuickActions({
   actions,
   onAction,
+  compact = false,
 }: {
   actions: OrionQuickAction[];
   onAction: (actionId: OrionQuickActionId) => void;
+  compact?: boolean;
 }) {
+  if (compact) {
+    return (
+      <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:thin]">
+        {actions.slice(0, 4).map((action, index) => (
+          <motion.button
+            key={action.id}
+            type="button"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.03 }}
+            onClick={() => onAction(action.id)}
+            className="shrink-0 rounded-full border border-[#BFDBFE] bg-[#EFF6FF] px-3 py-2 text-xs font-semibold text-[#2563EB] transition hover:border-[#60A5FA] hover:bg-[#DBEAFE]"
+          >
+            {action.label}
+          </motion.button>
+        ))}
+      </div>
+    );
+  }
+
   return (
-    <div className="grid gap-2">
+    <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:thin]">
       {actions.map((action, index) => {
         const Icon = iconMap[action.icon];
 
@@ -47,18 +69,14 @@ export function OrionQuickActions({
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.04 }}
-            whileHover={{ y: -2, scale: 1.01 }}
+            whileHover={{ y: -1 }}
             onClick={() => onAction(action.id)}
-            className="rounded-xl border border-[#E5E7EB] bg-[#F7F9FC] p-3 text-left text-[#111827] transition hover:border-[#BFDBFE] hover:bg-[#EFF6FF]"
-            style={{ backgroundColor: '#F7F9FC', color: '#111827', borderColor: '#E5E7EB' }}
+            className="shrink-0 rounded-full border border-[#BFDBFE] bg-white px-3 py-2 text-left text-[#2563EB] transition hover:border-[#60A5FA] hover:bg-[#EFF6FF]"
           >
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-xl border border-[#DBEAFE] bg-white text-[#2563EB]" style={{ backgroundColor: '#ffffff', color: '#2563EB', borderColor: '#DBEAFE' }}>
-                <Icon className="h-4.5 w-4.5" />
-              </div>
+            <div className="flex items-center gap-2">
+              <Icon className="h-3.5 w-3.5 shrink-0" />
               <div className="min-w-0">
-                <div className="text-sm font-extrabold text-[#111827]" style={{ color: '#111827' }}>{action.label}</div>
-                <div className="mt-1 whitespace-normal text-xs leading-5 text-[#6B7280] [overflow-wrap:anywhere] [word-break:break-word]" style={{ color: '#6B7280' }}>{action.description}</div>
+                <div className="whitespace-nowrap text-xs font-semibold">{action.label}</div>
               </div>
             </div>
           </motion.button>

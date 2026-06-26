@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { BrainCircuit } from 'lucide-react';
+import { BrainCircuit, X } from 'lucide-react';
 
 export function OrionFloatingButton({
   open,
@@ -16,21 +16,20 @@ export function OrionFloatingButton({
         type="button"
         onClick={onClick}
         aria-label={open ? 'Close Orion AI' : 'Open Orion AI'}
-        className="hidden min-w-[9.5rem] items-center justify-center gap-2 rounded-full border border-[#60a5fa] bg-[linear-gradient(135deg,#1d4ed8,#0ea5e9)] px-5 py-3 text-sm font-medium text-white shadow-[0_16px_36px_rgba(37,99,235,0.3)] transition-transform duration-200 hover:scale-[1.02] sm:flex"
-        style={{ background: 'linear-gradient(135deg, #1d4ed8 0%, #0ea5e9 100%)', borderColor: '#60a5fa', color: '#ffffff' }}
+        className="hidden h-16 w-16 items-center justify-center rounded-full border-[6px] border-[#BFDBFE] bg-[#2563EB] text-white shadow-[0_16px_40px_rgba(37,99,235,0.34)] transition-transform duration-200 hover:scale-[1.04] sm:flex"
+        style={{ background: '#2563EB', borderColor: '#BFDBFE', color: '#ffffff' }}
       >
-        <BrainCircuit className="h-4.5 w-4.5 text-white" style={{ color: '#ffffff' }} />
-        <span>Chat</span>
+        {open ? <X className="h-7 w-7 text-white" /> : <BrainCircuit className="h-7 w-7 text-white" />}
       </button>
 
       <button
         type="button"
         onClick={onClick}
         aria-label={open ? 'Close Orion AI' : 'Open Orion AI'}
-        className="flex h-12 w-12 items-center justify-center rounded-full border border-[#60a5fa] bg-[linear-gradient(135deg,#1d4ed8,#0ea5e9)] text-white shadow-[0_14px_34px_rgba(37,99,235,0.28)] sm:hidden"
-        style={{ background: 'linear-gradient(135deg, #1d4ed8 0%, #0ea5e9 100%)', borderColor: '#60a5fa', color: '#ffffff' }}
+        className="flex h-14 w-14 items-center justify-center rounded-full border-[5px] border-[#BFDBFE] bg-[#2563EB] text-white shadow-[0_14px_34px_rgba(37,99,235,0.32)] sm:hidden"
+        style={{ background: '#2563EB', borderColor: '#BFDBFE', color: '#ffffff' }}
       >
-        <BrainCircuit className="h-5 w-5 text-white" style={{ color: '#ffffff' }} />
+        {open ? <X className="h-6 w-6 text-white" /> : <BrainCircuit className="h-6 w-6 text-white" />}
       </button>
     </div>
   );

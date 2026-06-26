@@ -50,18 +50,18 @@ export function OrionMessageBubble({
       animate={{ opacity: 1, y: 0, scale: 1 }}
       className={`flex ${isAssistant ? 'justify-start' : 'justify-end'}`}
     >
-      <div className={`min-w-0 ${isAssistant ? 'max-w-[88%]' : 'max-w-[82%] items-end'} flex flex-col gap-2`}>
+      <div className={`min-w-0 ${isAssistant ? 'max-w-[82%]' : 'max-w-[78%] items-end'} flex flex-col gap-1.5`}>
         <div
           className={isAssistant
-            ? 'max-w-full rounded-2xl bg-[#F7F9FC] px-4 py-3 text-[#4B5563]'
-            : 'max-w-full rounded-2xl bg-[#2563EB] px-4 py-3 text-white'}
+            ? 'max-w-full rounded-br-2xl rounded-tl-2xl rounded-tr-2xl bg-[#EEF2F7] px-4 py-3 text-[#1F2937]'
+            : 'max-w-full rounded-bl-2xl rounded-tl-2xl rounded-tr-2xl bg-[#2563EB] px-4 py-3 text-white'}
           style={isAssistant
-            ? { backgroundColor: '#F7F9FC', color: '#4B5563' }
+            ? { backgroundColor: '#EEF2F7', color: '#1F2937' }
             : { backgroundColor: '#2563EB', color: '#ffffff' }}
         >
           <div className="max-w-full whitespace-pre-wrap break-words text-sm leading-6 [overflow-wrap:anywhere] [word-break:break-word]">{renderedText}</div>
         </div>
-        <div className={`px-1 text-[10px] uppercase tracking-[0.18em] text-slate-400 ${isAssistant ? '' : 'text-right'}`} style={{ color: '#94a3b8' }}>
+        <div className={`px-1 text-[10px] font-semibold text-slate-400 ${isAssistant ? '' : 'text-right'}`} style={{ color: '#94a3b8' }}>
           {isAssistant ? 'Orion' : 'You'} · {formatTime(message.createdAt)}
         </div>
         {message.choices?.length ? (
@@ -71,8 +71,8 @@ export function OrionMessageBubble({
                 key={choice.id}
                 type="button"
                 onClick={() => onChoice(choice)}
-                className="rounded-xl border border-[#E5E7EB] bg-white px-3 py-2 text-xs font-bold text-[#2563EB] transition hover:bg-[#EFF6FF]"
-                style={{ backgroundColor: '#ffffff', color: '#2563EB', borderColor: '#E5E7EB' }}
+                className="rounded-full border border-[#BFDBFE] bg-white px-3 py-2 text-xs font-bold text-[#2563EB] transition hover:bg-[#EFF6FF]"
+                style={{ backgroundColor: '#ffffff', color: '#2563EB', borderColor: '#BFDBFE' }}
               >
                 {choice.label}
               </button>
