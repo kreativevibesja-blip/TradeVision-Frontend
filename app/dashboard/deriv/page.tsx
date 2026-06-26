@@ -391,7 +391,7 @@ export default function DerivDashboardPage() {
 
             <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Reasoning</p>
-              <p className="mt-3 leading-6 text-slate-300">{analysis.reasoning}</p>
+              <p className="mt-3 whitespace-pre-wrap leading-6 text-slate-300">{analysis.reasoning}</p>
             </div>
 
             {analysis.leftSidePlan && analysis.leftSidePlan.bias !== 'none' ? (

@@ -1637,7 +1637,7 @@ function AnalyzePageContent() {
                       </CardHeader>
                       <CardContent>
                         <div className="premium-panel-muted p-5">
-                          <p className="text-muted-foreground leading-relaxed">{analysis.reasoning}</p>
+                          <p className="whitespace-pre-wrap text-muted-foreground leading-relaxed">{analysis.reasoning}</p>
                         </div>
                       </CardContent>
                     </Card>
