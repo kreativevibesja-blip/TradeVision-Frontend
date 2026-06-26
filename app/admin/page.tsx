@@ -189,9 +189,9 @@ export default function AdminOverviewPage() {
             <h2 className="font-extrabold text-[#111827]">Recent Orders</h2>
             <a href="/admin/payments" className="text-xs font-bold text-[#2563EB]">View all</a>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="text-xs text-[#6B7280]">
+          <div className="max-h-80 overflow-auto">
+            <table className="min-w-full text-left text-sm">
+              <thead className="sticky top-0 z-10 bg-white text-xs text-[#6B7280]">
                 <tr><th className="py-2">User</th><th>Plan</th><th>Amount</th><th>Status</th></tr>
               </thead>
               <tbody className="divide-y divide-[#E5E7EB]">

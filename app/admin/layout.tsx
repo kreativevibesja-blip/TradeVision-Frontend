@@ -16,6 +16,7 @@ import {
   Settings,
   BarChart3,
   Shield,
+  ChevronDown,
   ChevronRight,
   LifeBuoy,
   MessageSquare,
@@ -72,6 +73,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [feedReportCount, setFeedReportCount] = useState(0);
   const [communityReportCount, setCommunityReportCount] = useState(0);
   const [pendingBankTransferCount, setPendingBankTransferCount] = useState(0);
+  const [openMenus, setOpenMenus] = useState<string[]>([]);
+
+  useEffect(() => {
+    const activeChildMenus = adminNav
+      .filter((item) => item.children?.some((child) => pathname === child.href || pathname.startsWith(`${child.href}/`)))
+      .map((item) => item.href);
+
+    if (!activeChildMenus.length) return;
+
+    setOpenMenus((current) => Array.from(new Set([...current, ...activeChildMenus])));
+  }, [pathname]);
 
   useEffect(() => {
     if (!token || !isActive) return;
@@ -156,6 +168,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return 0;
   };
 
+  const toggleMenu = (href: string) => {
+    setOpenMenus((current) => (current.includes(href) ? current.filter((item) => item !== href) : [...current, href]));
+  };
+
   return (
     <div className="min-h-screen overflow-x-hidden">
       <div className="mx-auto flex w-full max-w-7xl flex-col lg:flex-row">
@@ -165,27 +181,41 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {adminNav.map((item) => {
               const isActive = pathname === item.href || Boolean(item.children?.some((child) => pathname === child.href || pathname.startsWith(`${child.href}/`)));
               const badgeCount = getBadgeCount(item.badgeKey);
+              const hasChildren = Boolean(item.children?.length);
+              const isOpen = openMenus.includes(item.href);
               return (
                 <div key={item.href}>
-                  <Link href={item.href}>
-                    <div
-                      className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-semibold transition-all ${
-                        isActive
-                          ? 'bg-[#176dff] text-white shadow-[0_10px_22px_rgba(23,109,255,0.22)]'
-                          : 'text-[#8ea4c2] hover:bg-white/[0.06] hover:text-white'
-                      }`}
-                    >
-                      <item.icon className="h-4 w-4" />
-                      {item.label}
-                      {badgeCount > 0 && (
-                        <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-cyan-500 px-1.5 text-[10px] font-bold text-white">{badgeCount > 99 ? '99+' : badgeCount}</span>
-                      )}
-                      {isActive && !badgeCount && <ChevronRight className="h-3 w-3 ml-auto" />}
-                    </div>
-                  </Link>
-                  {item.children?.length ? (
+                  <div
+                    className={`flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-semibold transition-all ${
+                      isActive
+                        ? 'bg-[#176dff] text-white shadow-[0_10px_22px_rgba(23,109,255,0.22)]'
+                        : 'text-[#8ea4c2] hover:bg-white/[0.06] hover:text-white'
+                    }`}
+                  >
+                    <Link href={item.href} className="flex min-w-0 flex-1 items-center gap-3">
+                      <item.icon className="h-4 w-4 shrink-0" />
+                      <span className="truncate">{item.label}</span>
+                    </Link>
+                    {badgeCount > 0 && (
+                      <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-cyan-500 px-1.5 text-[10px] font-bold text-white">{badgeCount > 99 ? '99+' : badgeCount}</span>
+                    )}
+                    {hasChildren ? (
+                      <button
+                        type="button"
+                        onClick={() => toggleMenu(item.href)}
+                        className="rounded-md p-1 transition hover:bg-white/10"
+                        aria-label={`${isOpen ? 'Collapse' : 'Expand'} ${item.label} menu`}
+                        aria-expanded={isOpen}
+                      >
+                        <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                      </button>
+                    ) : isActive && !badgeCount ? (
+                      <ChevronRight className="h-3 w-3" />
+                    ) : null}
+                  </div>
+                  {hasChildren && isOpen ? (
                     <div className="ml-7 mt-1 space-y-1 border-l border-[#1b3358] pl-3">
-                      {item.children.map((child) => {
+                      {item.children?.map((child) => {
                         const childActive = pathname === child.href || pathname.startsWith(`${child.href}/`);
                         return (
                           <Link
@@ -213,45 +243,58 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {adminNav.map((item) => {
               const isActive = pathname === item.href || Boolean(item.children?.some((child) => pathname === child.href || pathname.startsWith(`${child.href}/`)));
               const badgeCount = getBadgeCount(item.badgeKey);
+              const hasChildren = Boolean(item.children?.length);
+              const isOpen = openMenus.includes(item.href);
               return (
-                <Link key={item.href} href={item.href}>
+                <div key={item.href} className="flex flex-col">
                   <div
                     className={`relative flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold whitespace-nowrap transition-all ${
-                      isActive ? 'bg-[#176dff] text-white' : 'text-[#8ea4c2]'
-                    }`}
+                        isActive
+                          ? 'bg-[#176dff] text-white'
+                          : 'text-[#8ea4c2] hover:bg-white/[0.06] hover:text-white'
+                      }`}
                   >
-                    <item.icon className="h-3 w-3" />
-                    {item.label}
+                    <Link href={item.href} className="flex items-center gap-1.5">
+                      <item.icon className="h-3 w-3" />
+                      {item.label}
+                    </Link>
                     {badgeCount > 0 && (
                       <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-cyan-500 px-1 text-[9px] font-bold text-white">{badgeCount > 99 ? '99+' : badgeCount}</span>
                     )}
+                    {hasChildren ? (
+                      <button
+                        type="button"
+                        onClick={() => toggleMenu(item.href)}
+                        className="rounded p-0.5 transition hover:bg-white/10"
+                        aria-label={`${isOpen ? 'Collapse' : 'Expand'} ${item.label} menu`}
+                        aria-expanded={isOpen}
+                      >
+                        <ChevronDown className={`h-3.5 w-3.5 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                      </button>
+                    ) : null}
                   </div>
-                </Link>
+                  {hasChildren && isOpen ? (
+                    <div className="mt-2 grid gap-1">
+                      {item.children?.map((child) => {
+                        const childActive = pathname === child.href || pathname.startsWith(`${child.href}/`);
+                        return (
+                          <Link
+                            key={child.href}
+                            href={child.href}
+                            className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-[11px] font-semibold ${
+                              childActive ? 'bg-white/[0.12] text-white' : 'text-[#8ea4c2] hover:bg-white/[0.06] hover:text-white'
+                            }`}
+                          >
+                            {child.label}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  ) : null}
+                </div>
               );
             })}
           </div>
-          {adminNav.map((item) => {
-            const groupActive = pathname === item.href || Boolean(item.children?.some((child) => pathname === child.href || pathname.startsWith(`${child.href}/`)));
-            if (!groupActive || !item.children?.length) return null;
-            return (
-              <div key={`${item.href}-children`} className="mt-2 flex gap-1 overflow-x-auto">
-                {item.children.map((child) => {
-                  const childActive = pathname === child.href || pathname.startsWith(`${child.href}/`);
-                  return (
-                    <Link
-                      key={child.href}
-                      href={child.href}
-                      className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-[11px] font-semibold ${
-                        childActive ? 'bg-white/[0.12] text-white' : 'text-[#8ea4c2]'
-                      }`}
-                    >
-                      {child.label}
-                    </Link>
-                  );
-                })}
-              </div>
-            );
-          })}
         </div>
 
         {/* Content */}
