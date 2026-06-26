@@ -77,12 +77,12 @@ export function OrionChatWindow({
           className={cn(
             'pointer-events-auto relative flex min-h-0 flex-col overflow-hidden border border-[#E5E7EB] bg-white text-[#111827]',
             variant === 'floating'
-              ? 'z-[80] h-[min(34.5rem,calc(100vh-8rem))] min-h-[28rem] w-[min(24.5rem,calc(100vw-1.25rem))] max-w-[24.5rem] origin-bottom-right rounded-[18px] shadow-[0_22px_70px_rgba(15,23,42,0.24)] max-sm:h-[min(34rem,calc(100vh-5.5rem))] max-sm:min-h-[26rem] max-sm:w-[calc(100vw-1rem)]'
+              ? 'z-[80] h-[min(34.5rem,calc(100vh-8rem))] max-h-[calc(100vh-8rem)] min-h-0 w-[min(24.5rem,calc(100vw-1.25rem))] max-w-[24.5rem] origin-bottom-right rounded-[18px] shadow-[0_22px_70px_rgba(15,23,42,0.24)] max-sm:h-[min(34rem,calc(100vh-5.5rem))] max-sm:max-h-[calc(100vh-5.5rem)] max-sm:w-[calc(100vw-1rem)]'
               : 'h-full w-full max-w-none rounded-2xl shadow-[0_10px_30px_rgba(17,24,39,0.06)]',
             className,
           )}
         >
-          <div className="bg-[linear-gradient(135deg,#1D4ED8_0%,#2563EB_52%,#0EA5E9_100%)] px-4 py-4 text-white">
+          <div className="shrink-0 bg-[linear-gradient(135deg,#1D4ED8_0%,#2563EB_52%,#0EA5E9_100%)] px-4 py-4 text-white">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <h2 className="font-extrabold leading-none text-white">Orion Assistant</h2>
@@ -111,7 +111,7 @@ export function OrionChatWindow({
             </div>
           </div>
 
-          <div ref={scrollRef} className="min-h-0 flex-1 space-y-4 overflow-x-hidden overflow-y-auto overscroll-contain bg-white p-4 text-[#111827]">
+          <div ref={scrollRef} className="min-h-0 flex-1 basis-0 space-y-4 overflow-x-hidden overflow-y-auto overscroll-contain bg-white p-4 text-[#111827]">
             <div className="max-w-[82%] whitespace-normal rounded-br-2xl rounded-tl-2xl rounded-tr-2xl bg-[#EEF2F7] px-3.5 py-3 text-sm leading-6 text-[#1F2937] [overflow-wrap:anywhere] [word-break:break-word]">
               <span className="font-bold text-[#111827]">{pageLabel}</span>
               <span> · {pageSummary}</span>
@@ -126,7 +126,7 @@ export function OrionChatWindow({
 
           </div>
 
-          <div className="border-t border-[#E5E7EB] bg-white p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+          <div className="shrink-0 border-t border-[#E5E7EB] bg-white p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
             {attachedFileLabel ? (
               <div className="mb-2 flex items-center gap-2 rounded-xl border border-[#BFDBFE] bg-[#EFF6FF] px-3 py-1.5 text-xs font-medium text-[#1D4ED8]">
                 <Paperclip className="h-3.5 w-3.5" />
