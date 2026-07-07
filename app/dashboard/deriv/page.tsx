@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { LiveChart, type LiveChartStatus } from '@/components/LiveChart';
+import { InstantSignalButton } from '@/components/InstantSignalButton';
 import TrackSetupButton from '@/components/TrackSetupButton';
 import { useAuth } from '@/hooks/useAuth';
 import { api, type AnalysisResult } from '@/lib/api';
@@ -526,6 +527,15 @@ export default function DerivDashboardPage() {
                       {analyzing ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Zap className="mr-1.5 h-4 w-4" />}
                       {analyzing ? 'Analyzing...' : 'Analyze'}
                     </Button>
+                    <InstantSignalButton
+                      assetClass="deriv"
+                      symbol={symbol}
+                      timeframe={timeframe}
+                      candles={candles}
+                      currentPrice={candles.at(-1)?.close ?? null}
+                      token={token}
+                      subscription={user?.subscription}
+                    />
                   </div>
                 </div>
               </div>

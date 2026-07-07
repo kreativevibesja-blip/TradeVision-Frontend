@@ -52,6 +52,7 @@ const adminNav = [
   { label: 'Orion Knowledge', href: '/admin/orion-knowledge', icon: Bot },
   { label: 'AI & Data', href: '/admin/ai-data', icon: Database, children: [
     { label: 'Analyses', href: '/admin/analyses' },
+    { label: 'Instant Signals', href: '/admin/instant-signals' },
     { label: 'Trade Log', href: '/admin/trade-log' },
     { label: 'GoldX', href: '/admin/goldx' },
   ] },

@@ -19,6 +19,7 @@ import {
   Users,
   Activity,
   CandlestickChart,
+  Signal,
 } from 'lucide-react';
 import PushNotificationPrompt from '@/components/PushNotificationPrompt';
 import { NotificationCenter } from '@/components/NotificationCenter';
@@ -38,6 +39,7 @@ const userNav = [
   { href: '/dashboard/messages', label: 'Messages', icon: MessageCircle },
   { href: '/dashboard/tradingview', label: 'Forex Live Chart', icon: CandlestickChart },
   { href: '/dashboard/deriv', label: 'Deriv Live Chart', icon: Activity },
+  { href: '/dashboard/signals', label: 'Signals', icon: Signal },
   { href: '/dashboard/billing', label: 'Billing', icon: CreditCard },
   { href: '/dashboard/settings', label: 'Settings', icon: Settings },
   { href: '/dashboard/support', label: 'Support', icon: Headphones },
@@ -46,7 +48,7 @@ const userNav = [
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, token } = useAuth();
-  const isLiveWorkspace = pathname === '/dashboard/tradingview' || pathname === '/dashboard/deriv';
+  const isLiveWorkspace = pathname === '/dashboard/tradingview' || pathname === '/dashboard/deriv' || pathname.startsWith('/dashboard/live-charts/');
   const showPushPrompt = user?.subscription !== 'FREE' && Boolean(token);
 
   if (isLiveWorkspace) {
