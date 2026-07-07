@@ -173,10 +173,10 @@ const avatarGradient = [
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-white text-[#07111f]">
-      <section className="relative overflow-hidden bg-[#020916] pb-16 pt-4 text-white sm:pb-20">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_85%_32%,rgba(27,108,255,0.45),transparent_28%),radial-gradient(circle_at_52%_56%,rgba(40,88,255,0.28),transparent_26%),linear-gradient(145deg,#020916_0%,#030a18_48%,#06194a_100%)]" />
-        <div className="absolute inset-0 opacity-45 [background-image:linear-gradient(115deg,transparent_0%,transparent_54%,rgba(48,115,255,0.34)_54.3%,transparent_55.2%),linear-gradient(125deg,transparent_0%,transparent_61%,rgba(48,115,255,0.24)_61.4%,transparent_62.2%)]" />
+    <div className="min-h-screen bg-background text-foreground">
+      <section className="relative overflow-hidden pb-16 pt-4 sm:pb-20">
+        <div className="home-hero-backdrop absolute inset-0" />
+        <div className="home-hero-lines absolute inset-0 opacity-45" />
 
         <div className="page-shell relative z-10">
           <div className="grid min-h-[470px] items-center gap-10 lg:grid-cols-[0.92fr_1.08fr]">
@@ -185,10 +185,10 @@ export default function HomePage() {
                 AI-powered trading intelligence
               </div>
 
-              <h1 className="max-w-[560px] text-[3rem] font-extrabold leading-[0.98] tracking-[-0.055em] text-white sm:text-[4.5rem] lg:text-[5rem]">
+              <h1 className="max-w-[560px] text-[3rem] font-extrabold leading-[0.98] tracking-[-0.055em] text-foreground sm:text-[4.5rem] lg:text-[5rem]">
                 Become A More <span className="bg-[linear-gradient(90deg,#7e58ff_0%,#3293ff_100%)] bg-clip-text text-transparent">Confident Trader.</span>
               </h1>
-              <p className="mt-5 max-w-[540px] text-lg leading-8 text-white/88">
+              <p className="mt-5 max-w-[540px] text-lg leading-8 text-muted-foreground">
                 TradeVision AI helps traders analyze charts, understand market structure, and improve decision-making with AI-powered insights.
               </p>
 
@@ -202,7 +202,7 @@ export default function HomePage() {
                 </Link>
                 <Link
                   href="/platform"
-                  className="inline-flex h-12 items-center justify-center gap-3 rounded-2xl border border-white/45 bg-transparent px-8 text-sm font-bold text-white transition hover:bg-white/10"
+                  className="inline-flex h-12 items-center justify-center gap-3 rounded-2xl border border-border bg-card px-8 text-sm font-bold text-card-foreground transition hover:border-[#176dff] hover:text-[#176dff]"
                 >
                   <Play className="h-4 w-4" />
                   Watch Demo
@@ -220,7 +220,7 @@ export default function HomePage() {
                 </div>
                 <div>
                   <div className="text-lg leading-none text-[#ffce37]">*****</div>
-                  <div className="mt-1 text-sm font-semibold text-white">Trusted by 10,000+ traders worldwide</div>
+                  <div className="mt-1 text-sm font-semibold text-foreground">Trusted by 10,000+ traders worldwide</div>
                 </div>
               </div>
             </div>
@@ -240,22 +240,22 @@ export default function HomePage() {
       </section>
 
       <section id="testimonials" className="relative z-20 -mt-12 px-4">
-        <div className="mx-auto grid max-w-6xl gap-4 rounded-[14px] border border-[#e5ecfb] bg-white p-5 shadow-[0_18px_55px_rgba(28,61,121,0.16)] sm:grid-cols-2 lg:grid-cols-4 lg:p-6">
+        <div className="mode-surface mx-auto grid max-w-6xl gap-4 rounded-[14px] p-5 sm:grid-cols-2 lg:grid-cols-4 lg:p-6">
           {trustItems.map((item) => (
             <div key={item.title} className="flex gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#f3f7ff] text-[#176dff]">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-secondary text-[#176dff]">
                 <item.icon className="h-7 w-7" />
               </div>
               <div>
                 <h3 className="text-sm font-extrabold">{item.title}</h3>
-                <p className="mt-1 text-sm leading-5 text-[#4a5669]">{item.body}</p>
+                <p className="mt-1 text-sm leading-5 text-muted-foreground">{item.body}</p>
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      <section id="how-it-works" className="bg-white px-4 pb-14 pt-12">
+      <section id="how-it-works" className="mode-section px-4 pb-14 pt-12">
         <div className="mx-auto max-w-5xl text-center">
           <div className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#176dff]">How it works</div>
           <h2 className="mt-2 text-3xl font-extrabold tracking-[-0.04em] sm:text-4xl">Simple. Fast. Powerful.</h2>
@@ -263,14 +263,14 @@ export default function HomePage() {
           <div className="mt-8 grid items-center gap-6 lg:grid-cols-[1fr_56px_1fr_56px_1fr]">
             {steps.map((step, index) => (
               <div key={step.title} className="contents">
-                <div className="rounded-[12px] border border-[#e6edf8] bg-white p-7 text-left shadow-[0_14px_35px_rgba(44,70,120,0.08)]">
+                <div className="mode-surface rounded-[12px] p-7 text-left">
                   <div className="flex items-center gap-5">
                     <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full ${step.tone} text-white`}>
                       <step.icon className="h-7 w-7" />
                     </div>
                     <div>
                       <h3 className="text-lg font-extrabold">{step.title}</h3>
-                      <p className="mt-3 text-sm leading-6 text-[#4a5669]">{step.body}</p>
+                      <p className="mt-3 text-sm leading-6 text-muted-foreground">{step.body}</p>
                     </div>
                   </div>
                 </div>
@@ -286,17 +286,17 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="features" className="bg-[#f4f8ff] px-4 py-10">
+      <section id="features" className="mode-section-muted px-4 py-10">
         <div className="mx-auto grid max-w-6xl items-center gap-8 lg:grid-cols-[0.42fr_0.58fr]">
           <div>
             <div className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#176dff]">Built for traders</div>
             <h2 className="mt-3 text-3xl font-extrabold leading-tight tracking-[-0.04em]">Everything You Need. All In One Platform.</h2>
-            <p className="mt-4 text-base leading-7 text-[#4a5669]">
+            <p className="mt-4 text-base leading-7 text-muted-foreground">
               Powerful tools designed to help you analyze, track and improve your trading performance.
             </p>
             <div className="mt-6 space-y-3">
               {features.map((feature) => (
-                <div key={feature} className="flex items-center gap-3 text-sm font-semibold text-[#223047]">
+                <div key={feature} className="flex items-center gap-3 text-sm font-semibold text-foreground">
                   <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#176dff] text-white">
                     <Check className="h-3.5 w-3.5" />
                   </span>
@@ -348,20 +348,20 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="bg-white px-4 py-12">
+      <section className="mode-section px-4 py-12">
         <div className="mx-auto max-w-6xl">
           <div className="max-w-3xl">
             <div className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#176dff]">AI trading platform</div>
             <h2 className="mt-3 text-3xl font-extrabold tracking-[-0.04em] sm:text-4xl">Discover TradeVision AI by market, workflow, and learning goal.</h2>
-            <p className="mt-4 text-base leading-7 text-[#4a5669]">
+            <p className="mt-4 text-base leading-7 text-muted-foreground">
               TradeVision connects chart analysis, Orion AI mentorship, Trade Radar monitoring, community discussion, and journaling into one searchable trading workflow.
             </p>
           </div>
           <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
             {seoSections.map((section) => (
-              <article key={section.title} className="rounded-[12px] border border-[#e6edf8] bg-white p-6 shadow-[0_14px_35px_rgba(44,70,120,0.08)]">
+              <article key={section.title} className="mode-surface rounded-[12px] p-6">
                 <h2 className="text-xl font-extrabold tracking-[-0.03em]">{section.title}</h2>
-                <p className="mt-3 text-sm leading-7 text-[#4a5669]">{section.body}</p>
+                <p className="mt-3 text-sm leading-7 text-muted-foreground">{section.body}</p>
                 <Link href={section.href} className="mt-4 inline-flex text-sm font-extrabold text-[#176dff]">{section.link}</Link>
               </article>
             ))}
@@ -369,26 +369,26 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="pricing" className="bg-white px-4 py-8">
+      <section id="pricing" className="mode-section px-4 py-8">
         <div className="mx-auto max-w-5xl text-center">
           <div className="text-xs font-extrabold uppercase tracking-[0.16em] text-[#176dff]">Pricing</div>
           <h2 className="mt-2 text-2xl font-extrabold tracking-[-0.04em] sm:text-3xl">Simple Pricing. No Hidden Fees.</h2>
 
           <div className="mt-6 grid gap-6 text-left lg:grid-cols-3">
             {plans.map((plan) => (
-              <div key={plan.name} className={`relative rounded-[10px] border bg-white p-5 shadow-[0_10px_28px_rgba(37,61,110,0.08)] ${plan.featured ? 'border-[#176dff]' : 'border-[#e2e9f5]'}`}>
+              <div key={plan.name} className={`mode-surface relative rounded-[10px] p-5 ${plan.featured ? 'border-[#176dff]' : ''}`}>
                 {plan.featured ? (
                   <div className="absolute -top-3 left-8 right-8 rounded-full bg-[#176dff] py-1 text-center text-[10px] font-extrabold uppercase tracking-[0.14em] text-white">Best value</div>
                 ) : null}
                 <h3 className="text-base font-extrabold">{plan.name}</h3>
-                <p className="mt-1 text-xs text-[#5b6678]">{plan.subtitle}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{plan.subtitle}</p>
                 <div className="mt-5 flex items-end gap-2">
                   <span className="text-3xl font-extrabold tracking-[-0.05em]">{plan.price}</span>
-                  <span className="pb-1 text-sm text-[#5b6678]">{plan.cadence}</span>
+                  <span className="pb-1 text-sm text-muted-foreground">{plan.cadence}</span>
                 </div>
                 <div className="mt-5 space-y-2">
                   {plan.features.map((feature) => (
-                    <div key={feature} className="flex items-center gap-2 text-xs font-semibold text-[#223047]">
+                    <div key={feature} className="flex items-center gap-2 text-xs font-semibold text-foreground">
                       <Check className="h-3.5 w-3.5 text-[#176dff]" />
                       {feature}
                     </div>
@@ -406,7 +406,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="faq" className="bg-white px-4 pb-8">
+      <section id="faq" className="mode-section px-4 pb-8">
         <div className="mx-auto flex max-w-6xl flex-col gap-6 rounded-[10px] bg-[linear-gradient(100deg,#031744_0%,#05246c_100%)] px-8 py-6 text-white shadow-[0_16px_38px_rgba(4,21,65,0.22)] sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-6">
             <div className="hidden h-16 w-16 items-center justify-center rounded-full border border-[#3293ff]/40 text-[#3293ff] sm:flex">
