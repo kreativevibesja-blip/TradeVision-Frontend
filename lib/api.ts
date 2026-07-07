@@ -818,6 +818,48 @@ interface FetchOptions extends RequestInit {
   token?: string;
 }
 
+export type InstantSignalDirection = 'buy' | 'sell' | 'none';
+export type InstantSignalStatus = 'entry_now' | 'wait_confirmation' | 'no_signal' | 'active' | 'tp_hit' | 'sl_hit' | 'expired' | 'cancelled';
+export type InstantSignalResult = 'win' | 'loss' | 'expired' | 'cancelled' | null;
+
+export interface InstantSignal {
+  id: string;
+  userId: string;
+  market: string;
+  assetClass: 'forex' | 'deriv';
+  source: string;
+  timeframe: string;
+  direction: InstantSignalDirection;
+  status: InstantSignalStatus;
+  entry: number | null;
+  stopLoss: number | null;
+  takeProfit: number | null;
+  riskReward: number | null;
+  confidence: number;
+  confirmationRequired: number;
+  confirmationText: string | null;
+  chartSnapshotUrl?: string | null;
+  result: InstantSignalResult;
+  resultPrice: number | null;
+  resultAt: string | null;
+  expiresAt: string;
+  createdAt: string;
+  updatedAt: string;
+  user?: {
+    email?: string | null;
+    name?: string | null;
+    subscription?: SubscriptionTier | string | null;
+  } | null;
+}
+
+export interface InstantSignalRequestPayload {
+  symbol: string;
+  timeframe: string;
+  candles: Array<{ time?: number; timestamp?: string; open: number; high: number; low: number; close: number }>;
+  currentPrice?: number | null;
+  chartSnapshotUrl?: string | null;
+}
+
 export interface AiCompareResultJson {
   bias: string;
   marketStructure: string;
@@ -1151,6 +1193,42 @@ export const api = {
       token,
     }),
 
+  instantSignals: {
+    createForex: (payload: InstantSignalRequestPayload, token: string) =>
+      apiFetch<{ signal: InstantSignal }>('/signals/instant/forex', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        token,
+      }),
+
+    createDeriv: (payload: InstantSignalRequestPayload, token: string) =>
+      apiFetch<{ signal: InstantSignal }>('/signals/instant/deriv', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        token,
+      }),
+
+    list: (token: string) =>
+      apiFetch<{ signals: InstantSignal[] }>('/signals/instant', { token }),
+
+    getActive: (market: string, token: string) =>
+      apiFetch<{ signal: InstantSignal | null }>(`/signals/instant/active?market=${encodeURIComponent(market)}`, { token }),
+
+    refresh: (prices: Record<string, number>, token: string) =>
+      apiFetch<{ success: boolean; updates: InstantSignal[] }>('/signals/instant/refresh', {
+        method: 'POST',
+        body: JSON.stringify({ prices }),
+        token,
+      }),
+
+    close: (id: string, token: string) =>
+      apiFetch<{ signal: InstantSignal }>(`/signals/instant/${encodeURIComponent(id)}/close`, {
+        method: 'POST',
+        body: JSON.stringify({}),
+        token,
+      }),
+  },
+
   notifications: {
     getSignalWatchlist: (source: 'deriv' | 'tradingview', token: string) =>
       apiFetch<{
@@ -1330,6 +1408,24 @@ export const api = {
   admin: {
     getDashboard: (token: string) =>
       apiFetch<AdminDashboardStats>('/admin/dashboard', { token }),
+    getInstantSignals: (
+      token: string,
+      filters?: { user?: string; market?: string; result?: string; from?: string; to?: string },
+    ) => {
+      const params = new URLSearchParams();
+      if (filters?.user) params.set('user', filters.user);
+      if (filters?.market) params.set('market', filters.market);
+      if (filters?.result) params.set('result', filters.result);
+      if (filters?.from) params.set('from', filters.from);
+      if (filters?.to) params.set('to', filters.to);
+      return apiFetch<{ signals: InstantSignal[]; total: number }>(`/admin/instant-signals?${params.toString()}`, { token });
+    },
+    updateInstantSignal: (id: string, payload: { status?: InstantSignalStatus; result?: Exclude<InstantSignalResult, null>; resultPrice?: number }, token: string) =>
+      apiFetch<{ signal: InstantSignal }>(`/admin/instant-signals/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+        token,
+      }),
     getWorkspaceBadges: (token: string) =>
       apiFetch<AdminWorkspaceBadges>('/admin/workspace-badges', { token }),
     getUsers: (
