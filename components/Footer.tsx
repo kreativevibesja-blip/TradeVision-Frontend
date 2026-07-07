@@ -6,17 +6,17 @@ import { BrandLogo } from '@/components/BrandLogo';
 
 export function Footer() {
   const pathname = usePathname();
-  const isLiveWorkspace = pathname === '/dashboard/tradingview' || pathname === '/dashboard/deriv';
+  const isLiveWorkspace = pathname === '/dashboard/tradingview' || pathname === '/dashboard/deriv' || pathname.startsWith('/dashboard/live-charts/');
 
   if (isLiveWorkspace) {
     return null;
   }
 
   return (
-    <footer className="border-t border-[rgba(255,223,112,0.12)] bg-[rgba(5,5,5,0.72)] backdrop-blur-2xl">
-      <div className="border-b border-[rgba(255,223,112,0.08)] md:hidden">
+    <footer className="border-t border-border bg-card/86 text-card-foreground backdrop-blur-2xl">
+      <div className="border-b border-border md:hidden">
         <div className="page-shell py-4 text-[11px] text-muted-foreground">
-          <p className="rounded-2xl border border-[rgba(255,223,112,0.12)] bg-white/[0.03] px-4 py-3 text-center leading-relaxed">
+          <p className="rounded-2xl border border-border bg-background-secondary px-4 py-3 text-center leading-relaxed">
             TradeVision AI delivers premium chart intelligence. It does not replace your own risk management or execution judgment.
           </p>
         </div>
@@ -65,7 +65,7 @@ export function Footer() {
             </div>
           </div>
 
-          <div className="mt-8 flex flex-col gap-2 border-t border-[rgba(255,223,112,0.08)] pt-5 text-sm text-muted-foreground sm:mt-10 sm:gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="mt-8 flex flex-col gap-2 border-t border-border pt-5 text-sm text-muted-foreground sm:mt-10 sm:gap-3 md:flex-row md:items-center md:justify-between">
             <p>&copy; {new Date().getFullYear()} TradeVision AI. All rights reserved.</p>
             <p>Trading involves risk. AI analysis is not financial advice.</p>
           </div>

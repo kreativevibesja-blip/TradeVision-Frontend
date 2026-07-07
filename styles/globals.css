@@ -4,10 +4,52 @@
 
 @layer base {
   :root {
+    --background: 216 100% 98%;
+    --background-secondary: 210 40% 96%;
+    --foreground: 221 39% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 221 39% 11%;
+    --panel: 0 0% 100%;
+    --panel-elevated: 214 45% 97%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 214 45% 94%;
+    --secondary-foreground: 221 39% 11%;
+    --muted: 214 45% 94%;
+    --muted-foreground: 218 16% 43%;
+    --accent: 214 45% 94%;
+    --accent-foreground: 217 91% 36%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 36% 88%;
+    --input: 214 36% 88%;
+    --ring: 224.3 76.3% 48%;
+    --radius: 1.25rem;
+    --gold-primary: #176dff;
+    --gold-light: #60a5ff;
+    --gold-glow: #3293ff;
+    --surface-shadow: 28, 61, 121;
+    --surface-line: rgba(199, 215, 239, 0.92);
+    --surface-line-strong: rgba(23, 109, 255, 0.34);
+    --surface-tint: rgba(255, 255, 255, 0.78);
+    --surface-glass: rgba(255, 255, 255, 0.9);
+    --surface-reflection: linear-gradient(180deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.35) 42%, rgba(255,255,255,0) 100%);
+    --surface-depth-shadow: 0 18px 50px rgba(28, 61, 121, 0.12);
+    --surface-depth-shadow-strong: 0 24px 70px rgba(28, 61, 121, 0.18);
+    --ambient-glow: rgba(23, 109, 255, 0.12);
+    --ambient-glow-strong: rgba(23, 109, 255, 0.18);
+    --hero-radial-a: rgba(23, 109, 255, 0.1);
+    --hero-radial-b: rgba(34, 197, 94, 0.08);
+    --success: #00ff95;
+    --danger: #ff4444;
+    --warning: #ffc107;
+  }
+
+  :root[data-color-mode='dark'] {
     --background: 222.2 84% 4.9%;
     --background-secondary: 220 30% 11%;
     --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
+    --card: 220 30% 11%;
     --card-foreground: 210 40% 98%;
     --panel: 220 28% 10%;
     --panel-elevated: 220 24% 14%;
@@ -19,15 +61,8 @@
     --muted-foreground: 215 20.2% 65.1%;
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
-    --radius: 1.25rem;
-    --gold-primary: #176dff;
-    --gold-light: #60a5ff;
-    --gold-glow: #3293ff;
     --surface-shadow: 10, 25, 47;
     --surface-line: rgba(96, 165, 250, 0.18);
     --surface-line-strong: rgba(96, 165, 250, 0.34);
@@ -40,12 +75,9 @@
     --ambient-glow-strong: rgba(78, 163, 255, 0.3);
     --hero-radial-a: rgba(78, 163, 255, 0.18);
     --hero-radial-b: rgba(159, 208, 255, 0.12);
-    --success: #00ff95;
-    --danger: #ff4444;
-    --warning: #ffc107;
   }
 
-  :root[data-theme='goldx-premium'] {
+  :root[data-theme='goldx-premium'][data-color-mode='dark'] {
     --background: 0 0% 2%;
     --background-secondary: 0 0% 7%;
     --foreground: 0 0% 100%;
@@ -95,13 +127,23 @@
     overflow-x: clip;
     color-scheme: light;
   }
+  html[data-color-mode='dark'] {
+    color-scheme: dark;
+  }
   body {
     @apply bg-background text-foreground overflow-x-hidden;
     font-feature-settings: "rlig" 1, "calt" 1;
     background-image:
-      radial-gradient(circle at 80% 0%, rgba(23,109,255,0.16), transparent 28%),
-      linear-gradient(180deg, #020916 0%, #061426 48%, #f4f8ff 48%, #f4f8ff 100%);
+      radial-gradient(circle at 82% 0%, rgba(23,109,255,0.10), transparent 30%),
+      radial-gradient(circle at 18% 16%, rgba(34,197,94,0.05), transparent 24%),
+      linear-gradient(180deg, #ffffff 0%, #f7f9fc 56%, #eef5ff 100%);
     font-family: var(--font-body), sans-serif;
+  }
+  body[data-color-mode='dark'] {
+    background-image:
+      radial-gradient(circle at 80% 0%, rgba(23,109,255,0.18), transparent 28%),
+      radial-gradient(circle at 18% 18%, rgba(56,189,248,0.08), transparent 28%),
+      linear-gradient(180deg, #07111f 0%, #081426 54%, #020916 100%);
   }
   body::before {
     content: '';
@@ -111,6 +153,9 @@
     background-image: linear-gradient(rgba(96, 165, 250, 0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(96, 165, 250, 0.035) 1px, transparent 1px);
     background-size: 72px 72px;
     mask-image: radial-gradient(circle at center, black 38%, transparent 90%);
+    opacity: 0.16;
+  }
+  body[data-color-mode='dark']::before {
     opacity: 0.42;
   }
   body::after {
@@ -122,6 +167,9 @@
       radial-gradient(circle at 50% -10%, rgba(255,255,255,0.08), transparent 26%),
       linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0));
     mix-blend-mode: screen;
+    opacity: 0.12;
+  }
+  body[data-color-mode='dark']::after {
     opacity: 0.5;
   }
   img {
@@ -138,6 +186,38 @@
 }
 
 @layer utilities {
+  .home-hero-backdrop {
+    background:
+      radial-gradient(circle at 84% 26%, rgba(23,109,255,0.12), transparent 30%),
+      radial-gradient(circle at 18% 18%, rgba(34,197,94,0.06), transparent 24%),
+      linear-gradient(145deg, #ffffff 0%, #f8fbff 52%, #eef5ff 100%);
+  }
+  body[data-color-mode='dark'] .home-hero-backdrop {
+    background:
+      radial-gradient(circle at 85% 32%, rgba(27,108,255,0.45), transparent 28%),
+      radial-gradient(circle at 52% 56%, rgba(40,88,255,0.28), transparent 26%),
+      linear-gradient(145deg,#020916 0%,#030a18 48%,#06194a 100%);
+  }
+  .home-hero-lines {
+    background-image:
+      linear-gradient(115deg, transparent 0%, transparent 54%, rgba(48,115,255,0.12) 54.3%, transparent 55.2%),
+      linear-gradient(125deg, transparent 0%, transparent 61%, rgba(48,115,255,0.10) 61.4%, transparent 62.2%);
+  }
+  body[data-color-mode='dark'] .home-hero-lines {
+    background-image:
+      linear-gradient(115deg, transparent 0%, transparent 54%, rgba(48,115,255,0.34) 54.3%, transparent 55.2%),
+      linear-gradient(125deg, transparent 0%, transparent 61%, rgba(48,115,255,0.24) 61.4%, transparent 62.2%);
+  }
+  .mode-surface {
+    @apply border border-border bg-card text-card-foreground;
+    box-shadow: var(--surface-depth-shadow);
+  }
+  .mode-section {
+    @apply bg-background text-foreground;
+  }
+  .mode-section-muted {
+    @apply bg-background-secondary text-foreground;
+  }
   .page-shell {
     @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
     max-width: min(100%, 80rem);

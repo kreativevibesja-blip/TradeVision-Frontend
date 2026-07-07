@@ -55,12 +55,29 @@ export function Navbar() {
     setAuthOpen(true);
   };
 
+  const isDark = colorMode === 'dark';
+  const navShellClass = isDark
+    ? 'fixed left-0 right-0 top-0 z-50 border-b border-white/10 bg-[#07111f]/92 text-white backdrop-blur-xl'
+    : 'fixed left-0 right-0 top-0 z-50 border-b border-[#E5E7EB] bg-white/92 text-[#07111f] backdrop-blur-xl';
+  const navLinkClass = isDark
+    ? 'text-[13px] font-semibold text-slate-300 transition-colors hover:text-white'
+    : 'text-[13px] font-semibold text-[#374151] transition-colors hover:text-[#2563EB]';
+  const iconButtonClass = isDark
+    ? 'flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-slate-200 transition hover:border-blue-300/35 hover:text-blue-200'
+    : 'flex h-10 w-10 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#374151] transition hover:border-[#2563EB] hover:text-[#2563EB]';
+  const ghostButtonClass = isDark
+    ? 'min-h-10 border-0 bg-transparent px-3 text-slate-200 hover:bg-white/[0.06] hover:text-white'
+    : 'min-h-10 border-0 bg-transparent px-3 text-[#374151] hover:bg-[#F3F4F6]';
+  const mobileLinkClass = isDark
+    ? 'flex min-h-12 items-center rounded-xl border border-transparent px-4 text-sm font-semibold text-slate-200 hover:border-white/10 hover:bg-white/[0.06]'
+    : 'flex min-h-12 items-center rounded-xl border border-transparent px-4 text-sm font-semibold text-[#374151] hover:border-[#E5E7EB] hover:bg-[#F7F9FC]';
+
   return (
     <>
       <motion.nav
         initial={false}
         animate={{ y: 0 }}
-        className="fixed left-0 right-0 top-0 z-50 border-b border-[#E5E7EB] bg-white/92 backdrop-blur-xl"
+        className={navShellClass}
       >
         <div className="page-shell flex h-16 items-center justify-between gap-6 lg:h-[68px]">
           <Link href="/" className="flex shrink-0 items-center">
@@ -81,7 +98,7 @@ export function Navbar() {
                 <Link
                   key={link.label}
                   href={link.href}
-                  className="text-[13px] font-semibold text-[#374151] transition-colors hover:text-[#2563EB]"
+                  className={navLinkClass}
                 >
                   {link.label}
                 </Link>
@@ -92,30 +109,30 @@ export function Navbar() {
                 <button
                   type="button"
                   onClick={toggleColorMode}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#374151] transition hover:border-[#2563EB] hover:text-[#2563EB]"
+                  className={iconButtonClass}
                   aria-label={colorMode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
                 >
                   {colorMode === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                 </button>
                 <Link href="/dashboard">
-                  <Button variant="ghost" size="sm" className="min-h-10 border-0 bg-transparent px-3 text-[#374151] hover:bg-[#F3F4F6]">
+                  <Button variant="ghost" size="sm" className={ghostButtonClass}>
                     <LayoutDashboard className="mr-2 h-4 w-4" />
                     Workspace
                   </Button>
                 </Link>
                 {user.role === 'ADMIN' && (
                   <Link href="/admin">
-                    <Button variant="ghost" size="sm" className="min-h-10 border-0 bg-transparent px-3 text-[#374151] hover:bg-[#F3F4F6]">
+                    <Button variant="ghost" size="sm" className={ghostButtonClass}>
                       <Shield className="mr-2 h-4 w-4" />
                       Admin
                     </Button>
                   </Link>
                 )}
-                <div className="flex items-center gap-2 rounded-xl border border-[#E5E7EB] bg-white px-2 py-1">
+                <div className={isDark ? 'flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-2 py-1' : 'flex items-center gap-2 rounded-xl border border-[#E5E7EB] bg-white px-2 py-1'}>
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#176dff]/20 text-[#60a5ff]">
                     <User className="h-4 w-4 text-primary" />
                   </div>
-                  <Button variant="ghost" size="icon" onClick={logout} className="h-8 w-8 border-0 bg-transparent text-[#374151] hover:bg-[#F3F4F6]">
+                  <Button variant="ghost" size="icon" onClick={logout} className={isDark ? 'h-8 w-8 border-0 bg-transparent text-slate-200 hover:bg-white/[0.08]' : 'h-8 w-8 border-0 bg-transparent text-[#374151] hover:bg-[#F3F4F6]'}>
                     <LogOut className="h-4 w-4" />
                   </Button>
                 </div>
@@ -125,12 +142,12 @@ export function Navbar() {
                 <button
                   type="button"
                   onClick={toggleColorMode}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#374151] transition hover:border-[#2563EB] hover:text-[#2563EB]"
+                  className={iconButtonClass}
                   aria-label={colorMode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
                 >
                   {colorMode === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                 </button>
-                <Button variant="ghost" size="sm" onClick={() => openAuth('login')} className="h-10 min-h-10 border-0 bg-transparent px-0 text-[13px] font-semibold normal-case tracking-0 text-[#374151] shadow-none hover:bg-transparent hover:text-[#2563EB]">
+                <Button variant="ghost" size="sm" onClick={() => openAuth('login')} className={isDark ? 'h-10 min-h-10 border-0 bg-transparent px-0 text-[13px] font-semibold normal-case tracking-0 text-slate-200 shadow-none hover:bg-transparent hover:text-white' : 'h-10 min-h-10 border-0 bg-transparent px-0 text-[13px] font-semibold normal-case tracking-0 text-[#374151] shadow-none hover:bg-transparent hover:text-[#2563EB]'}>
                   Log In
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => openAuth('register')} className="h-10 min-h-10 rounded-xl border-0 bg-[#2563EB] px-7 text-[13px] font-bold normal-case tracking-0 text-white shadow-[0_10px_24px_rgba(37,99,235,0.22)] hover:bg-[#1D4ED8]">
@@ -141,7 +158,7 @@ export function Navbar() {
           </div>
 
           {/* Mobile Toggle */}
-          <button className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#374151] md:hidden" onClick={() => setMobileOpen(!mobileOpen)}>
+          <button className={isDark ? 'flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-slate-100 md:hidden' : 'flex h-11 w-11 items-center justify-center rounded-xl border border-[#E5E7EB] bg-white text-[#374151] md:hidden'} onClick={() => setMobileOpen(!mobileOpen)}>
             {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
@@ -152,13 +169,13 @@ export function Navbar() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="border-t border-[#E5E7EB] bg-white/98 backdrop-blur-2xl md:hidden"
+            className={isDark ? 'border-t border-white/10 bg-[#07111f]/98 backdrop-blur-2xl md:hidden' : 'border-t border-[#E5E7EB] bg-white/98 backdrop-blur-2xl md:hidden'}
           >
             <div className="page-shell flex flex-col gap-2 py-4">
               <button
                 type="button"
                 onClick={toggleColorMode}
-                className="flex min-h-12 items-center gap-3 rounded-xl border border-[#E5E7EB] px-4 text-sm font-semibold text-[#374151]"
+                className={isDark ? 'flex min-h-12 items-center gap-3 rounded-xl border border-white/10 px-4 text-sm font-semibold text-slate-200' : 'flex min-h-12 items-center gap-3 rounded-xl border border-[#E5E7EB] px-4 text-sm font-semibold text-[#374151]'}
               >
                 {colorMode === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                 {colorMode === 'dark' ? 'Light Mode' : 'Dark Mode'}
@@ -167,7 +184,7 @@ export function Navbar() {
                 <Link
                   key={link.label}
                   href={link.href}
-                  className="flex min-h-12 items-center rounded-xl border border-transparent px-4 text-sm font-semibold text-[#374151] hover:border-[#E5E7EB] hover:bg-[#F7F9FC]"
+                  className={mobileLinkClass}
                   onClick={() => setMobileOpen(false)}
                 >
                   {link.label}
@@ -175,21 +192,21 @@ export function Navbar() {
               ))}
               {user ? (
                 <>
-                  <Link href="/dashboard" className="flex min-h-12 items-center rounded-xl border border-transparent px-4 text-sm font-semibold text-[#374151] hover:border-[#E5E7EB] hover:bg-[#F7F9FC]" onClick={() => setMobileOpen(false)}>
+                  <Link href="/dashboard" className={mobileLinkClass} onClick={() => setMobileOpen(false)}>
                     Workspace
                   </Link>
                   {user.role === 'ADMIN' && (
-                    <Link href="/admin" className="flex min-h-12 items-center rounded-xl border border-transparent px-4 text-sm font-semibold text-[#374151] hover:border-[#E5E7EB] hover:bg-[#F7F9FC]" onClick={() => setMobileOpen(false)}>
+                    <Link href="/admin" className={mobileLinkClass} onClick={() => setMobileOpen(false)}>
                       Admin
                     </Link>
                   )}
-                  <button className="flex min-h-12 items-center rounded-xl border border-transparent px-4 text-left text-sm font-semibold text-red-300 hover:border-red-500/20 hover:bg-white/[0.06]" onClick={() => { logout(); setMobileOpen(false); }}>
+                  <button className={isDark ? 'flex min-h-12 items-center rounded-xl border border-transparent px-4 text-left text-sm font-semibold text-red-300 hover:border-red-500/20 hover:bg-white/[0.06]' : 'flex min-h-12 items-center rounded-xl border border-transparent px-4 text-left text-sm font-semibold text-red-600 hover:border-red-200 hover:bg-red-50'} onClick={() => { logout(); setMobileOpen(false); }}>
                     Sign Out
                   </button>
                 </>
               ) : (
                 <>
-                  <Button variant="ghost" size="sm" className="mt-2 w-full border-[#E5E7EB] bg-transparent text-[#374151]" onClick={() => { openAuth('login'); setMobileOpen(false); }}>
+                  <Button variant="ghost" size="sm" className={isDark ? 'mt-2 w-full border-white/10 bg-transparent text-slate-100' : 'mt-2 w-full border-[#E5E7EB] bg-transparent text-[#374151]'} onClick={() => { openAuth('login'); setMobileOpen(false); }}>
                     Log In
                   </Button>
                   <Button variant="ghost" size="sm" className="w-full border-0 bg-[#2563EB] text-white hover:bg-[#1D4ED8]" onClick={() => { openAuth('register'); setMobileOpen(false); }}>
