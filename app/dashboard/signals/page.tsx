@@ -11,7 +11,6 @@ import { api, type InstantSignal } from '@/lib/api';
 
 const isProPlus = (subscription?: string | null) => subscription === 'TOP_TIER' || subscription === 'VIP_AUTO_TRADER';
 const activeStatuses = new Set(['entry_now', 'active']);
-const waitingStatuses = new Set(['wait_confirmation']);
 
 const formatPrice = (value: number | null) => value == null ? '-' : value.toLocaleString(undefined, { maximumFractionDigits: 5 });
 const formatDate = (value: string | null) => value ? new Date(value).toLocaleString() : '-';
@@ -123,8 +122,7 @@ export default function SignalsPage() {
 
   const grouped = useMemo(() => ({
     active: signals.filter((signal) => activeStatuses.has(signal.status)),
-    waiting: signals.filter((signal) => waitingStatuses.has(signal.status)),
-    completed: signals.filter((signal) => signal.result || ['tp_hit', 'sl_hit', 'expired', 'cancelled', 'no_signal'].includes(signal.status)),
+    completed: signals.filter((signal) => signal.result || ['tp_hit', 'sl_hit', 'expired', 'cancelled', 'no_signal', 'wait_confirmation'].includes(signal.status)),
   }), [signals]);
 
   const stats = useMemo(() => {
@@ -133,7 +131,6 @@ export default function SignalsPage() {
     return {
       total: signals.length,
       active: grouped.active.length,
-      waiting: grouped.waiting.length,
       winRate: completed.length ? Math.round((wins / completed.length) * 100) : 0,
     };
   }, [grouped, signals.length]);
@@ -178,7 +175,6 @@ export default function SignalsPage() {
         {[
           ['Total', stats.total],
           ['Active Signals', stats.active],
-          ['Waiting Confirmation', stats.waiting],
           ['Win Rate', `${stats.winRate}%`],
         ].map(([label, value]) => (
           <Card key={label} className="border-slate-200 bg-white">
@@ -196,7 +192,6 @@ export default function SignalsPage() {
       {token ? (
         <>
           <Section title="Active Signals" signals={grouped.active} token={token} onChanged={() => void loadSignals()} />
-          <Section title="Waiting Confirmation" signals={grouped.waiting} token={token} onChanged={() => void loadSignals()} />
           <Section title="Completed Signals" signals={grouped.completed} token={token} onChanged={() => void loadSignals()} />
         </>
       ) : null}
