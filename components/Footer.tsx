@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BrandLogo } from '@/components/BrandLogo';
 
 export function Footer() {
   const pathname = usePathname();
@@ -14,7 +13,7 @@ export function Footer() {
 
   return (
     <footer className="border-t border-border bg-card/86 text-card-foreground backdrop-blur-2xl">
-      <div className="page-shell py-5 md:hidden">
+      <div className="page-shell py-5">
         <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs font-semibold text-muted-foreground">
           <Link href="/privacy-policy" className="transition-colors hover:text-foreground">Privacy</Link>
           <Link href="/terms-of-service" className="transition-colors hover:text-foreground">Terms</Link>
@@ -26,55 +25,6 @@ export function Footer() {
           &copy; {new Date().getFullYear()} TradeVision AI. Trading involves risk.
         </p>
       </div>
-
-      <div className="page-shell hidden py-10 sm:py-12 md:block">
-          <div className="grid grid-cols-2 gap-6 sm:gap-8 lg:grid-cols-4">
-            <div className="space-y-4">
-              <BrandLogo href="/" />
-              <p className="text-sm text-muted-foreground">
-                Institutional trading intelligence built for chart analysis, execution planning, and mobile-first access.
-              </p>
-            </div>
-
-            <div className="min-w-0">
-              <h4 className="mb-4 font-semibold">Product</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="/analyze" className="transition-colors hover:text-foreground">Chart Analysis</Link></li>
-                <li><Link href="/features" className="transition-colors hover:text-foreground">Features</Link></li>
-                <li><Link href="/trade-radar" className="transition-colors hover:text-foreground">Trade Radar</Link></li>
-                <li><Link href="/orion" className="transition-colors hover:text-foreground">Orion AI</Link></li>
-                <li><Link href="/pricing" className="transition-colors hover:text-foreground">Pricing</Link></li>
-              </ul>
-            </div>
-
-            <div className="min-w-0">
-              <h4 className="mb-4 font-semibold">Markets</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="/forex-analysis" className="transition-colors hover:text-foreground">Forex Analysis</Link></li>
-                <li><Link href="/gold-analysis" className="transition-colors hover:text-foreground">Gold Analysis</Link></li>
-                <li><Link href="/crypto-analysis" className="transition-colors hover:text-foreground">Crypto Analysis</Link></li>
-                <li><Link href="/synthetic-indices-analysis" className="transition-colors hover:text-foreground">Synthetic Indices</Link></li>
-                <li><Link href="/blog" className="transition-colors hover:text-foreground">Blog</Link></li>
-              </ul>
-            </div>
-
-            <div className="min-w-0">
-              <h4 className="mb-4 font-semibold">Legal</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="/privacy-policy" className="transition-colors hover:text-foreground">Privacy Policy</Link></li>
-                <li><Link href="/terms-of-service" className="transition-colors hover:text-foreground">Terms of Service</Link></li>
-                <li><Link href="/disclaimer" className="transition-colors hover:text-foreground">Disclaimer</Link></li>
-                <li><Link href="/faq" className="transition-colors hover:text-foreground">FAQ</Link></li>
-                <li><Link href="/contact" className="transition-colors hover:text-foreground">Contact</Link></li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="mt-8 flex flex-col gap-2 border-t border-border pt-5 text-sm text-muted-foreground sm:mt-10 sm:gap-3 md:flex-row md:items-center md:justify-between">
-            <p>&copy; {new Date().getFullYear()} TradeVision AI. All rights reserved.</p>
-            <p>Trading involves risk. AI analysis is not financial advice.</p>
-          </div>
-        </div>
     </footer>
   );
 }
