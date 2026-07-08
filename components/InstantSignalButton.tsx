@@ -158,15 +158,20 @@ export function InstantSignalButton({
       ) : null}
 
       {resultOpen && resultSignal ? (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/70 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 text-slate-950 shadow-2xl">
-            <div className="flex items-start justify-between gap-4">
+        <div className="fixed inset-0 z-[100] grid min-h-[100svh] place-items-center bg-slate-950/75 px-4 py-20 backdrop-blur-sm">
+          <div className="relative max-h-[calc(100svh-6rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-200 bg-white p-6 text-slate-950 shadow-[0_30px_100px_rgba(0,0,0,0.35)]">
+            <button
+              type="button"
+              onClick={() => setResultOpen(false)}
+              className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950"
+              aria-label="Close signal result"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <div className="flex items-start justify-between gap-4 pr-12">
               <div className={resultSignal.status === 'entry_now' ? 'rounded-xl bg-blue-50 p-3 text-blue-600' : 'rounded-xl bg-slate-100 p-3 text-slate-500'}>
                 {resultSignal.status === 'entry_now' ? <Target className="h-5 w-5" /> : <Zap className="h-5 w-5" />}
               </div>
-              <button type="button" onClick={() => setResultOpen(false)} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100">
-                <X className="h-4 w-4" />
-              </button>
             </div>
 
             {resultSignal.status === 'entry_now' ? (
