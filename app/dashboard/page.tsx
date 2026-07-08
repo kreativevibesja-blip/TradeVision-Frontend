@@ -1,8 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { CalendarDays, Radar, Sparkles, UploadCloud } from 'lucide-react';
-import { ActiveOpportunitiesWidget, CleanBadge, CleanButton, CleanCard, EventsWidget, MarketOverviewWidget, OrionWidget, PageHeader, SimpleChartCard } from '@/components/CleanBlue';
+import { UploadCloud } from 'lucide-react';
+import { ActiveOpportunitiesWidget, CleanBadge, CleanButton, CleanCard, EventsWidget, MarketOverviewWidget, OrionWidget, PageHeader } from '@/components/CleanBlue';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase/client';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
@@ -141,24 +141,6 @@ export default function DashboardPage() {
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_24rem]">
         <div className="space-y-5">
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {[
-              { title: 'Orion AI', body: 'Ask your trading mentor for guidance.', href: '/dashboard/orion', icon: Sparkles },
-              { title: 'Trade Radar', body: 'Monitor your active setups.', href: '/dashboard/radar', icon: Radar },
-              { title: 'Upload New Analysis', body: 'Run AI structure analysis.', href: '/analyze', icon: UploadCloud },
-              { title: 'Market Overview', body: "Review today's market pulse.", href: '/dashboard/events', icon: CalendarDays },
-            ].map((item) => (
-              <CleanCard key={item.title} className="transition hover:-translate-y-0.5 hover:shadow-[0_16px_36px_rgba(37,99,235,0.12)]">
-                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-[#EFF6FF] text-[#2563EB]">
-                  <item.icon className="h-5 w-5" />
-                </div>
-                <h2 className="font-extrabold text-[#111827]">{item.title}</h2>
-                <p className="mt-2 text-sm leading-6 text-[#6B7280]">{item.body}</p>
-                <CleanButton href={item.href} variant="ghost" className="mt-4 px-0">Open</CleanButton>
-              </CleanCard>
-            ))}
-          </div>
-
           <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
             <div className="space-y-5">
               <CleanCard>
@@ -216,10 +198,6 @@ export default function DashboardPage() {
         <aside className="space-y-5">
           <EventsWidget />
           <OrionWidget />
-          <CleanCard>
-            <h2 className="mb-4 font-extrabold text-[#111827]">Latest AI Chart</h2>
-            <SimpleChartCard />
-          </CleanCard>
         </aside>
       </div>
     </div>
