@@ -12,14 +12,22 @@ interface BrandLogoProps {
 
 export function BrandLogo({ href = '/', compact = false, showTagline = true, className }: BrandLogoProps) {
   const content = (
-    <div className={cn('group inline-flex items-center gap-2.5', className)}>
-      <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-[14px] border border-[rgba(96,165,250,0.26)] bg-[linear-gradient(155deg,rgba(255,255,255,0.16),rgba(96,165,250,0.18),rgba(2,132,199,0.08))] shadow-luxe transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:shadow-luxe-strong">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.18),transparent_45%)]" />
-        <span className="relative font-display text-[15px] font-bold tracking-[-0.12em] text-gradient">TV</span>
-      </div>
+    <div className={cn('group inline-flex items-center gap-2.5 text-foreground', className)}>
+      <svg
+        viewBox="0 0 44 36"
+        aria-hidden="true"
+        className="h-9 w-11 shrink-0 transition-transform duration-200 group-hover:-translate-y-0.5"
+      >
+        <path d="M2 4h40L22 33 2 4Z" fill="none" stroke="#2563EB" strokeWidth="3.6" strokeLinejoin="round" />
+        <path d="M9 10h26L22 28 9 10Z" fill="none" stroke="#38BDF8" strokeWidth="2.8" strokeLinejoin="round" opacity="0.95" />
+        <path d="M13 10h18L22 22 13 10Z" fill="currentColor" opacity="0.92" />
+        <path d="M18 14h8l-4 6-4-6Z" fill="#60A5FA" />
+      </svg>
       {!compact ? (
         <div className="min-w-0">
-          <div className="truncate font-display text-[15px] font-bold uppercase tracking-[0.16em] text-white sm:text-base">TradeVision AI</div>
+          <div className="truncate font-display text-[15px] font-black uppercase tracking-[0.10em] sm:text-base">
+            <span>Trade</span><span className="text-[#2563EB]">Vision</span><span className="text-[#60A5FA]"> AI</span>
+          </div>
           {showTagline ? (
             <div className="truncate text-[9px] uppercase tracking-[0.28em] text-muted-foreground sm:text-[10px]">
               Institutional Trading Intelligence

@@ -1,12 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { AuthModal } from '@/components/AuthModal';
+import { BrandLogo } from '@/components/BrandLogo';
 import {
   Menu,
   X,
@@ -80,16 +80,7 @@ export function Navbar() {
         className={navShellClass}
       >
         <div className="page-shell flex h-16 items-center justify-between gap-6 lg:h-[68px]">
-          <Link href="/" className="flex shrink-0 items-center">
-            <Image
-              src="/landing/tradevision-logo.png"
-              alt="TradeVision"
-              width={140}
-              height={28}
-              priority
-              className="h-7 w-auto"
-            />
-          </Link>
+          <BrandLogo href="/" showTagline={false} className={isDark ? 'text-white' : 'text-[#07111f]'} />
 
           {/* Desktop Nav */}
           <div className="hidden flex-1 items-center justify-between gap-6 md:flex">
