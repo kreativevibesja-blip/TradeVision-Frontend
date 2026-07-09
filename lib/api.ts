@@ -238,6 +238,36 @@ export interface AnalysisResult {
   takeProfit1?: number | null;
   takeProfit2?: number | null;
   takeProfit3?: number | null;
+  tradingAnalysis?: {
+    marketBias: 'bullish' | 'bearish' | 'neutral' | 'unclear';
+    marketCondition: 'trending' | 'ranging' | 'corrective' | 'volatile' | 'unclear';
+    setupType: 'continuation' | 'reversal' | 'breakout' | 'pullback' | 'range' | 'no_trade';
+    entryReadiness: 'ready' | 'waiting' | 'no_trade';
+    confidence: number;
+    setupQuality: 'A+' | 'A' | 'B' | 'C' | 'avoid';
+    direction: 'buy' | 'sell' | 'none';
+    entryZone: {
+      from: number | null;
+      to: number | null;
+    };
+    stopLoss: number | null;
+    takeProfits: number[];
+    invalidation: string;
+    riskReward: number | null;
+    keyLevels: Array<{
+      type: 'support' | 'resistance' | 'supply' | 'demand' | 'liquidity' | 'fvg' | 'range_high' | 'range_low';
+      price: number | null;
+      description: string;
+    }>;
+    whatToWaitFor: string;
+    tradeRadarRecommendation: {
+      sendToRadar: boolean;
+      reason: string;
+    };
+    summary: string;
+    mentorNotes: string[];
+  };
+  internalPlaybook?: 'liquidity_sweep_reversal' | 'trend_continuation' | 'breakout_retest' | 'range_reversal' | 'pullback_continuation' | 'no_trade';
   // Dual-chart analysis fields
   isDualChart?: boolean;
   htfTimeframe?: string;

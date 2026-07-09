@@ -10,9 +10,10 @@ import { api } from '@/lib/api';
 interface Props {
   analysisId: string;
   className?: string;
+  label?: string;
 }
 
-export default function TrackSetupButton({ analysisId, className }: Props) {
+export default function TrackSetupButton({ analysisId, className, label = 'Track on Radar' }: Props) {
   const { user, token } = useAuth();
   const isUnlocked = user?.subscription === 'TOP_TIER' || user?.subscription === 'VIP_AUTO_TRADER';
   const [state, setState] = useState<'idle' | 'loading' | 'tracked' | 'error'>('idle');
@@ -28,7 +29,7 @@ export default function TrackSetupButton({ analysisId, className }: Props) {
           onClick={() => setShowUpgrade(true)}
         >
           <Lock className="h-3.5 w-3.5" />
-          Track on Radar
+          {label}
         </Button>
         {showUpgrade ? (
           <div className="absolute right-0 top-full z-20 mt-2 w-64 space-y-3 rounded-xl border border-white/10 bg-[#0a0a0f] p-4 shadow-xl">
@@ -88,7 +89,7 @@ export default function TrackSetupButton({ analysisId, className }: Props) {
         ) : (
           <Radar className="h-3.5 w-3.5" />
         )}
-        {state === 'tracked' ? 'On Radar' : state === 'error' ? 'Failed' : 'Track on Radar'}
+        {state === 'tracked' ? 'On Radar' : state === 'error' ? 'Failed' : label}
       </Button>
       {state === 'error' && errorMsg ? (
         <div className="absolute right-0 top-full z-20 mt-1 w-56 rounded-lg border border-red-500/20 bg-red-500/10 p-2">
