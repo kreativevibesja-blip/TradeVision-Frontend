@@ -23,6 +23,7 @@ type ScannerStrategyToggleKey =
   | 'sessionFlip';
 
 type FindTradeCategoryToggleKey = 'forex' | 'indices' | 'commodities' | 'crypto' | 'deriv' | 'volatility';
+type AiAnalysisMode = 'legacy_strategy_selection' | 'ai_first_trading_analyst';
 
 const DEFAULT_SCANNER_STRATEGIES: Record<ScannerStrategyToggleKey, boolean> = {
   trendPullback: false,
@@ -71,6 +72,7 @@ export default function AdminSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [aiPrompt, setAiPrompt] = useState('');
+  const [aiAnalysisMode, setAiAnalysisMode] = useState<AiAnalysisMode>('ai_first_trading_analyst');
   const [freeLimit, setFreeLimit] = useState('3');
   const [proLimit, setProLimit] = useState('999999');
   const [freeMarkupEnabled, setFreeMarkupEnabled] = useState(true);
@@ -99,6 +101,7 @@ export default function AdminSettingsPage() {
     try {
       const data = await api.admin.getSettings(token!);
       const prompt = data.settings.find((s: any) => s.key === 'ai_prompt');
+      const analysisMode = data.settings.find((s: any) => s.key === 'ai_analysis_mode');
       const free = data.settings.find((s: any) => s.key === 'free_daily_limit');
       const pro = data.settings.find((s: any) => s.key === 'pro_daily_limit');
       const freeMarkup = data.settings.find((s: any) => s.key === 'chart_markup_free_enabled');
@@ -118,6 +121,7 @@ export default function AdminSettingsPage() {
       const announcementPopupRepeat = data.settings.find((s: any) => s.key === 'announcement_popup_repeat_hours');
       const activeTheme = data.settings.find((s: any) => s.key === PLATFORM_THEME_SETTING_KEY);
       if (prompt) setAiPrompt(prompt.value);
+      if (analysisMode?.value === 'legacy_strategy_selection' || analysisMode?.value === 'ai_first_trading_analyst') setAiAnalysisMode(analysisMode.value);
       if (free) setFreeLimit(String(free.value));
       if (pro) setProLimit(String(pro.value));
       if (freeMarkup) setFreeMarkupEnabled(Boolean(freeMarkup.value));
@@ -312,6 +316,39 @@ export default function AdminSettingsPage() {
             <Button size="sm" onClick={() => saveSetting('ai_prompt', aiPrompt)} disabled={saving}>
               {saving ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Save className="h-3 w-3 mr-1" />}
               Save Prompt
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="premium-panel premium-noise border-[rgba(255,223,112,0.12)] bg-transparent">
+          <CardHeader>
+            <CardTitle className="text-lg">AI Analysis Mode</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="premium-panel-muted p-4 text-sm text-muted-foreground">
+              AI-first mode lets Orion read the chart, identify market condition, and infer the relevant setup internally without asking users to choose a strategy.
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant={aiAnalysisMode === 'ai_first_trading_analyst' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setAiAnalysisMode('ai_first_trading_analyst')}
+              >
+                AI-First Trading Analyst
+              </Button>
+              <Button
+                type="button"
+                variant={aiAnalysisMode === 'legacy_strategy_selection' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setAiAnalysisMode('legacy_strategy_selection')}
+              >
+                Strategy Selection Legacy
+              </Button>
+            </div>
+            <Button size="sm" onClick={() => saveSetting('ai_analysis_mode', aiAnalysisMode)} disabled={saving}>
+              {saving ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Save className="h-3 w-3 mr-1" />}
+              Save Analysis Mode
             </Button>
           </CardContent>
         </Card>

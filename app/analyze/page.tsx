@@ -219,6 +219,28 @@ const formatLabel = (value: string | null | undefined, fallback: string) => {
     .join(' ');
 };
 
+const getTradingAnalysis = (analysis: AnalysisResult | null) => analysis?.tradingAnalysis ?? null;
+
+const formatTradingEntryZone = (analysis: NonNullable<AnalysisResult['tradingAnalysis']>, pair: string) => {
+  if (analysis.entryZone.from === null || analysis.entryZone.to === null) {
+    return 'Not available';
+  }
+
+  return `${formatPrice(analysis.entryZone.from, pair)} - ${formatPrice(analysis.entryZone.to, pair)}`;
+};
+
+const getOrionMentorText = (analysis: NonNullable<AnalysisResult['tradingAnalysis']>) => {
+  if (analysis.entryReadiness === 'ready') {
+    return 'Orion sees a potential opportunity forming with defined structure and risk. Entry is only valid inside the planned zone and still requires disciplined risk management.';
+  }
+
+  if (analysis.entryReadiness === 'waiting') {
+    return 'Orion does not recommend entering yet. Price needs one more confirmation near the marked level before this becomes valid.';
+  }
+
+  return 'Orion does not see a clean setup right now. The chart is either mid-range, unclear, or lacking confirmation.';
+};
+
 const getExecutionLabel = (analysis: AnalysisResult | null) => {
   const entryType = analysis?.entryPlan?.entryType ?? 'none';
   const bias = analysis?.entryPlan?.bias ?? 'none';
@@ -988,6 +1010,8 @@ function AnalyzePageContent() {
   const entryBias = analysis?.entryPlan?.bias && analysis.entryPlan.bias !== 'none'
     ? analysis.entryPlan.bias
     : null;
+  const tradingAnalysis = getTradingAnalysis(analysis);
+  const noCleanTrade = tradingAnalysis?.entryReadiness === 'no_trade';
   const executionLabel = getExecutionLabel(analysis);
   const executionHint = getExecutionHint(analysis, pair);
   const trendAccent = getTrendAccent(trend);
@@ -1423,11 +1447,11 @@ function AnalyzePageContent() {
                     TradeVision
                   </Badge>
                   <Badge
-                    variant={analysis.recommendation === 'wait' ? 'warning' : 'success'}
+                    variant={noCleanTrade || analysis.recommendation === 'wait' ? 'warning' : 'success'}
                     className="text-sm px-3 py-1"
                   >
                     <Sparkles className="h-4 w-4 mr-1" />
-                    {signalType}
+                    {tradingAnalysis ? formatLabel(tradingAnalysis.entryReadiness, 'Waiting') : signalType}
                   </Badge>
                   <span className="text-muted-foreground">
                     {pair} · {analysis?.isDualChart ? `${timeframe} / ${timeframe2}` : timeframe}
@@ -1435,16 +1459,16 @@ function AnalyzePageContent() {
                 </div>
                 <div className="grid gap-3 sm:grid-cols-3">
                   <div className="mobile-card rounded-[22px] p-4">
-                    <div className="metric-label">Execution</div>
-                    <div className="mt-2 text-sm font-semibold text-white capitalize">{executionLabel}</div>
+                    <div className="metric-label">Entry Readiness</div>
+                    <div className="mt-2 text-sm font-semibold text-white capitalize">{tradingAnalysis ? formatLabel(tradingAnalysis.entryReadiness, executionLabel) : executionLabel}</div>
                   </div>
                   <div className="mobile-card rounded-[22px] p-4">
-                    <div className="metric-label">Trend</div>
-                    <div className="mt-2 text-sm font-semibold text-white capitalize">{analysis.trend}</div>
+                    <div className="metric-label">Market Bias</div>
+                    <div className="mt-2 text-sm font-semibold text-white capitalize">{tradingAnalysis ? formatLabel(tradingAnalysis.marketBias, analysis.trend) : analysis.trend}</div>
                   </div>
                   <div className="mobile-card rounded-[22px] p-4">
-                    <div className="metric-label">Market</div>
-                    <div className="mt-2 text-sm font-semibold text-white capitalize">{analysis.marketCondition || 'ranging'}</div>
+                    <div className="metric-label">Setup Quality</div>
+                    <div className="mt-2 text-sm font-semibold text-white capitalize">{tradingAnalysis?.setupQuality ?? analysis.quality?.setupRating ?? analysis.setupQuality}</div>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -1479,7 +1503,9 @@ function AnalyzePageContent() {
                     <Target className="h-4 w-4" />
                     Open Command Center
                   </Button>
-                  {analysis?.id ? <TrackSetupButton analysisId={analysis.id} /> : null}
+                  {analysis?.id && (!tradingAnalysis || tradingAnalysis.tradeRadarRecommendation.sendToRadar) ? (
+                    <TrackSetupButton analysisId={analysis.id} label="Send to Trade Radar" />
+                  ) : null}
                   {analysis?.id ? (
                     <Link href={`/dashboard/feed?analysisId=${encodeURIComponent(analysis.id)}`}>
                       <Button variant="secondary" className="gap-2">
@@ -1632,12 +1658,45 @@ function AnalyzePageContent() {
                       <CardHeader>
                         <CardTitle className="text-lg flex items-center gap-2">
                           <Brain className="h-5 w-5 text-primary" />
-                          SMC Narrative
+                          Orion Market Read
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="premium-panel-muted p-5">
-                          <p className="whitespace-pre-wrap text-muted-foreground leading-relaxed">{analysis.reasoning}</p>
+                          {tradingAnalysis ? (
+                            <div className="space-y-4">
+                              <div>
+                                <Badge variant={noCleanTrade ? 'warning' : tradingAnalysis.entryReadiness === 'ready' ? 'success' : 'outline'}>
+                                  {noCleanTrade ? 'No clean trade right now' : formatLabel(tradingAnalysis.entryReadiness, 'Waiting')}
+                                </Badge>
+                                <p className="mt-3 whitespace-pre-wrap text-muted-foreground leading-relaxed">{tradingAnalysis.summary}</p>
+                              </div>
+                              <div className="grid gap-3 sm:grid-cols-2">
+                                <div>
+                                  <div className="metric-label">Market Bias</div>
+                                  <p className="mt-1 text-sm font-semibold text-white capitalize">{formatLabel(tradingAnalysis.marketBias, 'Unclear')}</p>
+                                </div>
+                                <div>
+                                  <div className="metric-label">Market Condition</div>
+                                  <p className="mt-1 text-sm font-semibold text-white capitalize">{formatLabel(tradingAnalysis.marketCondition, 'Unclear')}</p>
+                                </div>
+                                <div>
+                                  <div className="metric-label">Setup Quality</div>
+                                  <p className="mt-1 text-sm font-semibold text-white">{tradingAnalysis.setupQuality}</p>
+                                </div>
+                                <div>
+                                  <div className="metric-label">Confidence</div>
+                                  <p className="mt-1 text-sm font-semibold text-white">{tradingAnalysis.confidence}%</p>
+                                </div>
+                              </div>
+                              <div>
+                                <div className="metric-label">Orion Mentor Notes</div>
+                                <p className="mt-1 text-sm text-muted-foreground">{getOrionMentorText(tradingAnalysis)}</p>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="whitespace-pre-wrap text-muted-foreground leading-relaxed">{analysis.reasoning}</p>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
@@ -1651,12 +1710,12 @@ function AnalyzePageContent() {
                           </div>
                           <div className="premium-panel-muted p-4">
                             <div className="metric-label">Entry Zone</div>
-                            <p className="mt-2 text-sm font-semibold text-white">{formatStructuredZone(analysis.entryZone, pair)}</p>
+                            <p className="mt-2 text-sm font-semibold text-white">{tradingAnalysis ? formatTradingEntryZone(tradingAnalysis, pair) : formatStructuredZone(analysis.entryZone, pair)}</p>
                           </div>
                           <div className="premium-panel-muted p-4">
-                            <div className="metric-label">Execution Plan</div>
-                            <p className="mt-2 text-sm font-semibold text-white capitalize">{executionLabel}</p>
-                            <p className="mt-1 text-xs text-muted-foreground">{executionHint}</p>
+                            <div className="metric-label">Trade Idea</div>
+                            <p className="mt-2 text-sm font-semibold text-white capitalize">{tradingAnalysis ? formatLabel(tradingAnalysis.direction, 'None') : executionLabel}</p>
+                            <p className="mt-1 text-xs text-muted-foreground">{tradingAnalysis ? formatLabel(tradingAnalysis.setupType, 'No Trade') : executionHint}</p>
                           </div>
                           <div className="premium-panel-muted p-4">
                             <div className="metric-label">Invalidation</div>
@@ -1665,10 +1724,27 @@ function AnalyzePageContent() {
                                 ? formatPrice(analysis.invalidationLevel, pair)
                                 : 'Structure break'}
                             </p>
-                            <p className="mt-1 text-xs text-muted-foreground">{analysis.invalidationReason || 'Invalidation explanation not available'}</p>
+                            <p className="mt-1 text-xs text-muted-foreground">{tradingAnalysis?.invalidation || analysis.invalidationReason || 'Invalidation explanation not available'}</p>
                           </div>
                         </CardContent>
                       </Card>
+
+                      {tradingAnalysis ? (
+                        <Card className="premium-panel premium-noise overflow-hidden border-[rgba(255,223,112,0.12)] bg-transparent">
+                          <CardHeader>
+                            <CardTitle className="text-lg flex items-center gap-2">
+                              <Clock className="h-5 w-5 text-yellow-400" />
+                              What To Wait For
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <p className="text-sm leading-6 text-muted-foreground">{tradingAnalysis.whatToWaitFor}</p>
+                            {tradingAnalysis.tradeRadarRecommendation.sendToRadar ? (
+                              <p className="mt-3 text-xs text-muted-foreground">{tradingAnalysis.tradeRadarRecommendation.reason}</p>
+                            ) : null}
+                          </CardContent>
+                        </Card>
+                      ) : null}
 
                       {analysis.confirmations && analysis.confirmations.length > 0 ? (
                         <Card className="premium-panel premium-noise overflow-hidden border-[rgba(255,223,112,0.12)] bg-transparent">
@@ -1743,32 +1819,47 @@ function AnalyzePageContent() {
                   <div className="grid gap-6 lg:grid-cols-2">
                     <Card className="premium-panel premium-noise overflow-hidden border-[rgba(255,223,112,0.12)] bg-transparent">
                       <CardHeader>
-                        <CardTitle className="text-lg">Support And Resistance</CardTitle>
+                        <CardTitle className="text-lg">Key Levels</CardTitle>
                       </CardHeader>
                       <CardContent className="grid gap-4">
-                        <div className="premium-panel-muted space-y-2 p-4">
-                          <div className="flex items-center gap-2 text-sm font-medium">
-                            <CircleDollarSign className="h-4 w-4 text-emerald-400" />
-                            Current Price
-                          </div>
-                          <p className="text-sm text-muted-foreground pl-6">{formatPrice(analysis.currentPrice, pair)}</p>
-                        </div>
-                        <div className="premium-panel-muted space-y-2 p-4">
-                          <div className="flex items-center gap-2 text-sm font-medium">
-                            <ShieldAlert className="h-4 w-4 text-red-400" />
-                            Resistance Zone
-                          </div>
-                          <p className="text-sm text-muted-foreground pl-6">{formatStructuredZone(analysis.zones.supplyZone, pair)}</p>
-                          <p className="text-xs text-muted-foreground pl-6">{formatZoneReason(analysis.zones.supplyZone?.reason)}</p>
-                        </div>
-                        <div className="premium-panel-muted space-y-2 p-4">
-                          <div className="flex items-center gap-2 text-sm font-medium">
-                            <CheckCircle2 className="h-4 w-4 text-green-400" />
-                            Support Zone
-                          </div>
-                          <p className="text-sm text-muted-foreground pl-6">{formatStructuredZone(analysis.zones.demandZone, pair)}</p>
-                          <p className="text-xs text-muted-foreground pl-6">{formatZoneReason(analysis.zones.demandZone?.reason)}</p>
-                        </div>
+                        {tradingAnalysis?.keyLevels.length ? (
+                          tradingAnalysis.keyLevels.map((level, index) => (
+                            <div key={`${level.type}-${index}`} className="premium-panel-muted space-y-2 p-4">
+                              <div className="flex items-center gap-2 text-sm font-medium">
+                                <Target className="h-4 w-4 text-cyan-400" />
+                                {formatLabel(level.type, 'Level')}
+                              </div>
+                              <p className="text-sm text-muted-foreground pl-6">{formatPrice(level.price, pair)}</p>
+                              <p className="text-xs text-muted-foreground pl-6">{level.description}</p>
+                            </div>
+                          ))
+                        ) : (
+                          <>
+                            <div className="premium-panel-muted space-y-2 p-4">
+                              <div className="flex items-center gap-2 text-sm font-medium">
+                                <CircleDollarSign className="h-4 w-4 text-emerald-400" />
+                                Current Price
+                              </div>
+                              <p className="text-sm text-muted-foreground pl-6">{formatPrice(analysis.currentPrice, pair)}</p>
+                            </div>
+                            <div className="premium-panel-muted space-y-2 p-4">
+                              <div className="flex items-center gap-2 text-sm font-medium">
+                                <ShieldAlert className="h-4 w-4 text-red-400" />
+                                Resistance Zone
+                              </div>
+                              <p className="text-sm text-muted-foreground pl-6">{formatStructuredZone(analysis.zones.supplyZone, pair)}</p>
+                              <p className="text-xs text-muted-foreground pl-6">{formatZoneReason(analysis.zones.supplyZone?.reason)}</p>
+                            </div>
+                            <div className="premium-panel-muted space-y-2 p-4">
+                              <div className="flex items-center gap-2 text-sm font-medium">
+                                <CheckCircle2 className="h-4 w-4 text-green-400" />
+                                Support Zone
+                              </div>
+                              <p className="text-sm text-muted-foreground pl-6">{formatStructuredZone(analysis.zones.demandZone, pair)}</p>
+                              <p className="text-xs text-muted-foreground pl-6">{formatZoneReason(analysis.zones.demandZone?.reason)}</p>
+                            </div>
+                          </>
+                        )}
                       </CardContent>
                     </Card>
 
