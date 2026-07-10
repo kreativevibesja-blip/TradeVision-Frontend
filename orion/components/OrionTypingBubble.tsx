@@ -8,8 +8,8 @@ export function OrionTypingBubble() {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 10 }}
-      className="max-w-[82%] rounded-br-2xl rounded-tl-2xl rounded-tr-2xl bg-[#EEF2F7] px-4 py-3 text-[#1F2937]"
-      style={{ backgroundColor: '#EEF2F7', color: '#1F2937' }}
+      className="max-w-[86%] rounded-[20px] rounded-bl-md bg-white px-4 py-3 text-[#1F2937] shadow-sm ring-1 ring-slate-200"
+      style={{ backgroundColor: '#ffffff', color: '#1F2937' }}
     >
       <div className="flex items-center gap-1.5">
         {[0, 1, 2].map((index) => (
