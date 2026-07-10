@@ -27,6 +27,21 @@ const normalizeApiUrl = (value?: string) => {
   }
 };
 
+const readJsonResponse = async (response: Response) => {
+  const contentType = response.headers.get('content-type') || '';
+  if (contentType.toLowerCase().includes('application/json')) {
+    return response.json();
+  }
+
+  const text = await response.text().catch(() => '');
+  const preview = text.replace(/\s+/g, ' ').trim().slice(0, 160);
+  return {
+    error: preview
+      ? `Analysis service returned a non-JSON response: ${preview}`
+      : 'Analysis service returned a non-JSON response.',
+  };
+};
+
 export async function POST(request: NextRequest) {
   try {
     const token = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim();
@@ -43,7 +58,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Symbol, timeframe, and at least 50 candles are required.' }, { status: 400 });
     }
 
-    const backendResponse = await fetch(`${normalizeApiUrl(process.env.NEXT_PUBLIC_API_URL)}/analyze-chart`, {
+    const backendUrl = normalizeApiUrl(process.env.NEXT_PUBLIC_API_URL);
+    const backendResponse = await fetch(`${backendUrl}/analyze-chart`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -58,7 +74,7 @@ export async function POST(request: NextRequest) {
       cache: 'no-store',
     });
 
-    const payload = await backendResponse.json().catch(() => ({ error: 'Analysis request failed.' }));
+    const payload = await readJsonResponse(backendResponse);
     if (!backendResponse.ok) {
       return NextResponse.json({ error: payload.error || 'Analysis request failed.' }, { status: backendResponse.status });
     }

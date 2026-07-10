@@ -184,6 +184,11 @@ export default function DerivDashboardPage() {
       return;
     }
 
+    if (!token) {
+      setAnalysisError('Sign in to analyze this live chart.');
+      return;
+    }
+
     const now = Date.now();
     if (now - lastAnalyzeAtRef.current < ANALYZE_DEBOUNCE_MS) {
       return;
@@ -194,23 +199,15 @@ export default function DerivDashboardPage() {
       setAnalyzing(true);
       setAnalysisError('');
 
-      const response = await fetch('/api/analyze', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
+      const data = await api.analyzeLiveChart(
+        {
+          source: 'deriv-live',
           symbol,
           timeframe,
           candles: candles.slice(-DERIV_ANALYSIS_CANDLE_COUNT),
-        }),
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Analysis failed.');
-      }
+        },
+        token
+      );
 
       if (data.queued && data.jobId) {
         const queuedCache: CachedAnalysis = {
