@@ -77,7 +77,7 @@ export function OrionChatWindow({
           className={cn(
             'pointer-events-auto relative flex min-h-0 max-w-full flex-col overflow-hidden border border-[#D8E0EE] bg-white text-[#111827]',
             variant === 'floating'
-              ? 'z-[80] h-[min(34.5rem,calc(100vh-8rem))] max-h-[calc(100vh-8rem)] min-h-0 w-full origin-bottom-right rounded-[24px] shadow-[0_22px_70px_rgba(15,23,42,0.24)] max-sm:h-[min(34rem,calc(100vh-5.5rem))] max-sm:max-h-[calc(100vh-5.5rem)] max-sm:w-[calc(100vw-1rem)]'
+              ? 'z-[80] h-[min(29rem,calc(100dvh-9rem))] max-h-[calc(100dvh-9rem)] min-h-0 w-full origin-bottom-right rounded-[24px] shadow-[0_22px_70px_rgba(15,23,42,0.24)] max-sm:h-[min(30rem,calc(100dvh-6rem))] max-sm:max-h-[calc(100dvh-6rem)] max-sm:w-[calc(100vw-1rem)]'
               : 'h-full w-full max-w-none rounded-2xl shadow-[0_10px_30px_rgba(17,24,39,0.06)]',
             className,
           )}
@@ -111,7 +111,7 @@ export function OrionChatWindow({
             </div>
           </div>
 
-          <div ref={scrollRef} className="min-h-0 flex-1 basis-0 space-y-4 overflow-x-hidden overflow-y-auto overscroll-contain bg-[#F8FAFC] p-4 text-[#111827]">
+          <div ref={scrollRef} className="min-h-0 flex-1 basis-0 space-y-4 overflow-x-hidden overflow-y-auto overscroll-contain bg-[#F8FAFC] p-4 pr-3 text-[#111827] [scrollbar-gutter:stable]">
             <div className="max-w-[88%] whitespace-normal rounded-[20px] rounded-bl-md bg-white px-3.5 py-3 text-sm leading-6 text-[#1F2937] shadow-sm ring-1 ring-slate-200 [overflow-wrap:anywhere] [word-break:break-word]">
               <span className="font-bold text-[#111827]">{pageLabel}</span>
               <span> · {pageSummary}</span>
@@ -126,7 +126,7 @@ export function OrionChatWindow({
 
           </div>
 
-          <div className="shrink-0 border-t border-[#E5E7EB] bg-white p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+          <div className="max-h-[9.5rem] shrink-0 overflow-y-auto border-t border-[#E5E7EB] bg-white p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] [scrollbar-width:thin]">
             {attachedFileLabel ? (
               <div className="mb-2 flex items-center gap-2 rounded-full border border-[#BFDBFE] bg-[#EFF6FF] px-3 py-1.5 text-xs font-medium text-[#1D4ED8]">
                 <Paperclip className="h-3.5 w-3.5" />
@@ -170,7 +170,7 @@ export function OrionChatWindow({
                 }}
                 rows={1}
                 placeholder="Type your question..."
-                className="max-h-28 min-h-11 min-w-0 flex-1 resize-none rounded-[22px] border border-[#D8E0EE] bg-[#F8FAFC] px-4 py-3 text-sm leading-5 text-[#111827] outline-none transition placeholder:text-[#9CA3AF] focus:border-[#2563EB] focus:bg-white"
+                className="max-h-20 min-h-11 min-w-0 flex-1 resize-none overflow-y-auto rounded-[22px] border border-[#D8E0EE] bg-[#F8FAFC] px-4 py-3 text-sm leading-5 text-[#111827] outline-none transition placeholder:text-[#9CA3AF] focus:border-[#2563EB] focus:bg-white"
               />
               <button
                 type="button"

@@ -39,7 +39,7 @@ export function OrionQuickActions({
 }) {
   if (compact) {
     return (
-      <div className="flex max-h-20 flex-wrap gap-2 overflow-y-auto pb-1 [scrollbar-width:thin]">
+      <div className="flex max-h-14 flex-wrap gap-2 overflow-y-auto pb-1 [scrollbar-width:thin]">
         {actions.slice(0, 4).map((action, index) => (
           <motion.button
             key={action.id}
@@ -58,7 +58,7 @@ export function OrionQuickActions({
   }
 
   return (
-    <div className="flex max-h-24 flex-wrap gap-2 overflow-y-auto pb-1 [scrollbar-width:thin]">
+    <div className="flex max-h-16 flex-wrap gap-2 overflow-y-auto pb-1 [scrollbar-width:thin]">
       {actions.map((action, index) => {
         const Icon = iconMap[action.icon];
 
