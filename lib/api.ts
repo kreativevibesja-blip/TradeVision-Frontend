@@ -243,8 +243,12 @@ export interface AnalysisResult {
     marketCondition: 'trending' | 'ranging' | 'corrective' | 'volatile' | 'unclear';
     setupType: 'continuation' | 'reversal' | 'breakout' | 'pullback' | 'range' | 'no_trade';
     entryReadiness: 'ready' | 'waiting' | 'no_trade';
+    analysisMode: 'conservative' | 'balanced' | 'institutional';
+    entryTiming: 'ENTER NOW' | 'WAIT 1 CANDLE' | 'WAIT 2 CANDLES' | 'WAIT FOR RETEST' | 'WATCH ONLY';
     confidence: number;
     setupQuality: 'A+' | 'A' | 'B' | 'C' | 'avoid';
+    tradeQuality: 'Excellent' | 'Strong' | 'Moderate' | 'Weak';
+    riskLevel: 'low' | 'medium' | 'high';
     direction: 'buy' | 'sell' | 'none';
     entryZone: {
       from: number | null;
@@ -1183,6 +1187,7 @@ export const api = {
       source: 'tradingview-live' | 'deriv-live';
       symbol: string;
       timeframe: string;
+      analysisMode?: 'conservative' | 'balanced' | 'institutional';
       candles?: Array<{ time: number; open: number; high: number; low: number; close: number }>;
     },
     token: string
