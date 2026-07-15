@@ -82,6 +82,7 @@ const QUEUE_TRANSITION_MESSAGES = [
 ];
 
 const ANALYZE_RETRY_DRAFT_KEY = 'analyze_retry_draft';
+const AI_ENTRY_STYLE_KEY = 'tradevision:ai-entry-style';
 
 interface StoredAnalyzeFile {
   name: string;
@@ -436,6 +437,7 @@ function AnalyzePageContent() {
   const searchParams = useSearchParams();
   const { user, token, refreshUser } = useAuth();
   const isPro = user?.subscription !== 'FREE';
+  const isProPlus = user?.subscription === 'TOP_TIER' || user?.subscription === 'VIP_AUTO_TRADER';
   const { canUseFeature } = useAnalysisFeatureAccess(user?.subscription);
   const replayAccess = canUseFeature('tradeReplay');
   const retryMode = searchParams.get('retry') === '1';
@@ -898,6 +900,8 @@ function AnalyzePageContent() {
       formData.append('pair', pair);
       formData.append('timeframe', timeframe);
       formData.append('currentPrice', currentPrice.trim());
+      const savedEntryStyle = window.localStorage.getItem(AI_ENTRY_STYLE_KEY);
+      formData.append('analysisMode', savedEntryStyle === 'balanced' || savedEntryStyle === 'institutional' ? savedEntryStyle : 'conservative');
 
       if (file2) {
         formData.append('chart2', file2);
@@ -1653,6 +1657,34 @@ function AnalyzePageContent() {
                 </div>
 
                 {activeResultTab === 'overview' ? (
+                  <div className="space-y-6">
+                    {tradingAnalysis ? (
+                      <Card className={`premium-panel premium-noise overflow-hidden border bg-transparent ${tradingAnalysis.analysisMode === 'institutional' && isProPlus ? 'border-blue-400/45 shadow-[0_0_32px_rgba(59,130,246,0.22)]' : 'border-[rgba(255,223,112,0.12)]'}`}>
+                        <CardHeader>
+                          {tradingAnalysis.analysisMode === 'institutional' && isProPlus ? <Badge className="w-fit border-blue-400/40 bg-blue-500/15 text-blue-200 animate-pulse">⚡ Institutional Entry</Badge> : null}
+                          <CardTitle className="flex items-center gap-2 text-lg"><Target className="h-5 w-5 text-primary" />ENTRY <span className="text-primary">{tradingAnalysis.direction.toUpperCase()}</span> <span className="text-muted-foreground">{analysis.pair}</span></CardTitle>
+                        </CardHeader>
+                        <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                          {[
+                            ['Current Price', formatPrice(analysis.currentPrice, pair)],
+                            ['Entry', formatTradingEntryZone(tradingAnalysis, pair)],
+                            ['Stop Loss', formatPrice(tradingAnalysis.stopLoss, pair)],
+                            ['Take Profit', formatPrice(tradingAnalysis.takeProfits[0], pair)],
+                            ['Confidence', `${tradingAnalysis.confidence}%`],
+                            ['Trade Quality', `${'★'.repeat(tradingAnalysis.confidence >= 85 ? 5 : tradingAnalysis.confidence >= 75 ? 4 : tradingAnalysis.confidence >= 60 ? 3 : 2)} · ${tradingAnalysis.tradeQuality}`],
+                            ['Risk', `${tradingAnalysis.riskLevel === 'low' ? '🟢' : tradingAnalysis.riskLevel === 'medium' ? '🟡' : '🔴'} ${formatLabel(tradingAnalysis.riskLevel, 'High')}`],
+                            ['Entry Timing', tradingAnalysis.entryTiming],
+                            ['Expected RR', tradingAnalysis.riskReward ? `${tradingAnalysis.riskReward}R` : 'N/A'],
+                            ['Analysis Mode', formatLabel(tradingAnalysis.analysisMode, 'Conservative')],
+                          ].map(([label, value]) => <div key={label} className="premium-panel-muted p-4"><p className="metric-label">{label}</p><p className="mt-2 text-sm font-semibold text-white">{value}</p></div>)}
+                        </CardContent>
+                      </Card>
+                    ) : null}
+                    {!isProPlus ? (
+                      <Card className="overflow-hidden border border-blue-400/20 bg-blue-500/[0.05]">
+                        <CardContent className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-bold text-blue-100">⚡ Institutional Entry <span className="ml-2 text-muted-foreground">🔒 Locked</span></p><p className="mt-1 text-sm text-muted-foreground">Earlier institutional entries with improved Reward/Risk. Upgrade to Pro+ to unlock.</p></div><Link href="/pricing"><Button size="sm">Upgrade</Button></Link></CardContent>
+                      </Card>
+                    ) : null}
                   <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
                     <Card className="premium-panel premium-noise overflow-hidden border-[rgba(255,223,112,0.12)] bg-transparent">
                       <CardHeader>
@@ -1770,6 +1802,7 @@ function AnalyzePageContent() {
                         </Card>
                       ) : null}
                     </div>
+                  </div>
                   </div>
                 ) : null}
 

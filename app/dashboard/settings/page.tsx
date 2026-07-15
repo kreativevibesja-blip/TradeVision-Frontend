@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { Camera, Loader2, Save, X } from 'lucide-react';
 import { CleanButton, CleanCard, PageHeader } from '@/components/CleanBlue';
 import { useAuth } from '@/hooks/useAuth';
@@ -25,6 +26,9 @@ const fileToDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
   reader.readAsDataURL(file);
 });
 
+const AI_ENTRY_STYLE_KEY = 'tradevision:ai-entry-style';
+type AiEntryStyle = 'conservative' | 'balanced' | 'institutional';
+
 export default function SettingsPage() {
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -37,12 +41,18 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
+  const [entryStyle, setEntryStyle] = useState<AiEntryStyle>('conservative');
+  const isProPlus = user?.subscription === 'TOP_TIER' || user?.subscription === 'VIP_AUTO_TRADER';
 
   useEffect(() => {
     if (!user) return;
 
     setDisplayName(user.name || user.email.split('@')[0] || '');
     setEmail(user.email || '');
+    const storedStyle = window.localStorage.getItem(AI_ENTRY_STYLE_KEY);
+    if (storedStyle === 'conservative' || storedStyle === 'balanced' || storedStyle === 'institutional') {
+      setEntryStyle(storedStyle);
+    }
 
     if (!supabase) {
       setLoading(false);
@@ -76,6 +86,12 @@ export default function SettingsPage() {
       active = false;
     };
   }, [user]);
+
+  const chooseEntryStyle = (style: AiEntryStyle) => {
+    if (style === 'institutional' && !isProPlus) return;
+    setEntryStyle(style);
+    window.localStorage.setItem(AI_ENTRY_STYLE_KEY, style);
+  };
 
   const handleAvatar = async (file?: File) => {
     if (!file) return;
@@ -182,6 +198,36 @@ export default function SettingsPage() {
             Save profile
           </CleanButton>
           {message ? <p className="text-sm font-semibold text-[#2563EB]">{message}</p> : null}
+        </div>
+      </CleanCard>
+
+      <CleanCard className="mt-6">
+        <div className="mb-5">
+          <p className="text-lg font-extrabold text-[#111827]">AI Entry Style</p>
+          <p className="mt-1 text-sm text-[#6B7280]">Choose how much confirmation Orion should seek before presenting an entry. This changes the analysis objective, not its independent market reasoning.</p>
+        </div>
+        <div className="space-y-3">
+          {([
+            ['conservative', 'Conservative', 'Maximum confirmation. Built for protecting capital first.'],
+            ['balanced', 'Balanced', 'Earlier high-quality opportunities with measured confirmation.'],
+          ] as const).map(([value, label, description]) => (
+            <button key={value} type="button" onClick={() => chooseEntryStyle(value)} className={`flex w-full items-center gap-3 rounded-2xl border p-4 text-left transition ${entryStyle === value ? 'border-[#2563EB] bg-[#EFF6FF]' : 'border-[#E5E7EB] hover:border-[#93C5FD]'}`}>
+              <span className={`flex h-5 w-5 items-center justify-center rounded-full border ${entryStyle === value ? 'border-[#2563EB] bg-[#2563EB]' : 'border-[#9CA3AF]'}`}>{entryStyle === value ? <span className="h-2 w-2 rounded-full bg-white" /> : null}</span>
+              <span><span className="block font-extrabold text-[#111827]">{label}</span><span className="mt-0.5 block text-sm text-[#6B7280]">{description}</span></span>
+            </button>
+          ))}
+          {isProPlus ? (
+            <button type="button" onClick={() => chooseEntryStyle('institutional')} className={`relative flex w-full items-center gap-3 overflow-hidden rounded-2xl border p-4 text-left transition ${entryStyle === 'institutional' ? 'border-[#2563EB] bg-[#EFF6FF] shadow-[0_0_28px_rgba(37,99,235,0.20)]' : 'border-[#BFDBFE] hover:border-[#60A5FA]'}`}>
+              <span className="absolute inset-0 animate-pulse bg-blue-400/5" />
+              <span className={`relative flex h-5 w-5 items-center justify-center rounded-full border ${entryStyle === 'institutional' ? 'border-[#2563EB] bg-[#2563EB]' : 'border-[#9CA3AF]'}`}>{entryStyle === 'institutional' ? <span className="h-2 w-2 rounded-full bg-white" /> : null}</span>
+              <span className="relative"><span className="font-extrabold text-[#111827]">⚡ Institutional <span className="ml-1 rounded-full bg-[#FEF3C7] px-2 py-0.5 text-[10px] text-[#92400E]">PRO+</span></span><span className="mt-0.5 block text-sm text-[#6B7280]">Earlier opportunities informed by advanced market behaviour, with transparent risk.</span></span>
+            </button>
+          ) : (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-dashed border-[#D1D5DB] bg-[#F9FAFB] p-4">
+              <div><p className="font-extrabold text-[#4B5563]">🔒 Institutional <span className="ml-1 text-xs font-bold text-[#2563EB]">Pro+ Exclusive</span></p><p className="mt-1 text-sm text-[#6B7280]">Upgrade to Pro+ to unlock Institutional AI Entries.</p></div>
+              <Link href="/pricing" className="rounded-xl bg-[#2563EB] px-4 py-2 text-sm font-extrabold text-white transition hover:bg-[#1D4ED8]">Upgrade</Link>
+            </div>
+          )}
         </div>
       </CleanCard>
     </div>

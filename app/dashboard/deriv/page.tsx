@@ -204,6 +204,9 @@ export default function DerivDashboardPage() {
           source: 'deriv-live',
           symbol,
           timeframe,
+          analysisMode: window.localStorage.getItem('tradevision:ai-entry-style') === 'institutional'
+            ? 'institutional'
+            : window.localStorage.getItem('tradevision:ai-entry-style') === 'balanced' ? 'balanced' : 'conservative',
           candles: candles.slice(-DERIV_ANALYSIS_CANDLE_COUNT),
         },
         token
