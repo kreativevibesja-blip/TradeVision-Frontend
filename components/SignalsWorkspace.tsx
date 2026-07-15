@@ -694,6 +694,9 @@ export function SignalsWorkspace({ source = 'deriv' }: SignalsWorkspaceProps) {
         source: 'tradingview-live',
         symbol: signal.symbol,
         timeframe: signal.timeframe,
+        analysisMode: window.localStorage.getItem('tradevision:ai-entry-style') === 'institutional'
+          ? 'institutional'
+          : window.localStorage.getItem('tradevision:ai-entry-style') === 'balanced' ? 'balanced' : 'conservative',
       }, token);
 
       let analysisId = response.analysis?.id ?? response.analysisId ?? null;
