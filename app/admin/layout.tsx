@@ -54,7 +54,6 @@ const adminNav = [
     { label: 'Analyses', href: '/admin/analyses' },
     { label: 'Instant Signals', href: '/admin/instant-signals' },
     { label: 'Trade Log', href: '/admin/trade-log' },
-    { label: 'GoldX', href: '/admin/goldx' },
   ] },
   { label: 'Reports', href: '/admin/reports', icon: BarChart3 },
   { label: 'Settings', href: '/admin/settings', icon: Settings, children: [

@@ -44,7 +44,7 @@ const coreFlow = [
   {
     step: 'Step 4',
     title: 'Refine, Monitor, And Execute',
-    detail: 'Use command-center workflows, live chart spaces, journaling, and GoldX when you want tighter execution support or automation.',
+    detail: 'Use command-center workflows, live chart spaces, and journaling when you want tighter execution support.',
     icon: TrendingUp,
   },
 ];
@@ -110,18 +110,6 @@ const featureGuide = [
       'Open the best ideas in chart, replay, or command-center views before committing capital.',
     ],
   },
-  {
-    title: 'GoldX',
-    icon: Shield,
-    tone: 'from-yellow-500/20 to-amber-500/5',
-    audience: 'Dedicated paid execution product',
-    description: 'GoldX is the specialized Gold trading workspace and EA flow for traders who want structured automation, account-linked configuration, and platform-controlled execution support.',
-    steps: [
-      'Subscribe to GoldX and access the GoldX dashboard.',
-      'Configure mode, lot behavior, and operational settings from the dashboard.',
-      'Connect the EA, sync settings in real time, and manage the full workflow from the platform.',
-    ],
-  },
 ];
 
 const paidPlans = [
@@ -151,19 +139,6 @@ const paidPlans = [
       'Faster response time',
     ],
   },
-  {
-    name: 'GoldX',
-    href: '/goldx/checkout',
-    icon: Shield,
-    color: 'from-amber-500 to-yellow-600',
-    description: 'For users who want the dedicated Gold execution ecosystem and EA workflow.',
-    features: [
-      'XAUUSD-focused trading system',
-      'License-protected MT5 access',
-      'Dashboard-controlled configuration',
-      'Realtime EA sync and trading workspace',
-    ],
-  },
 ];
 
 const quickStart = [
@@ -172,7 +147,6 @@ const quickStart = [
   'Move strong analyses into the Command Center and journal important outcomes.',
   'Upgrade to Weekly Pro if you want 100 analyses per week and stronger core AI analysis.',
   'Upgrade to PRO+ if you want higher analysis capacity, scanner workflows, and faster execution support.',
-  'Choose GoldX separately if you want the dedicated Gold trading system and EA flow.',
 ];
 
 export default function PlatformPage() {
@@ -229,7 +203,7 @@ export default function PlatformPage() {
             },
             {
               title: 'Scales With Your Style',
-              description: 'Stay on the core analysis flow, step into live or scanner workflows, or move into GoldX when you want a dedicated execution product.',
+              description: 'Stay on the core analysis flow, step into live or scanner workflows, and build a disciplined execution process.',
               icon: Shield,
             },
           ].map((item) => (

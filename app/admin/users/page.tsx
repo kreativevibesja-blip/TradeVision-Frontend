@@ -9,9 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { api, type AdminUserDetails, type AdminUserListItem } from '@/lib/api';
 import { addDaysToDateInputValue, formatJamaicaDate, formatJamaicaDateTime, getEndOfJamaicaDayIso, getJamaicaDateInputValue, getStartOfJamaicaDayIso } from '@/lib/jamaica-time';
-import { Users, Search, Crown, Ban, ShieldCheck, Zap, X, CalendarRange, KeyRound, CheckCircle2, ShieldX } from 'lucide-react';
+import { Users, Search, Crown, Ban, ShieldCheck, Zap, X, CalendarRange } from 'lucide-react';
 import { ProSubscribersModal } from '@/components/ProSubscribersModal';
-import { GoldxUsersModal } from '@/components/GoldxUsersModal';
 import { VerifiedBadge } from '@/components/VerifiedBadge';
 
 type SubscriptionFilter = 'ALL' | 'FREE' | 'PRO' | 'TOP_TIER' | 'VIP_AUTO_TRADER';
@@ -55,12 +54,6 @@ export default function AdminUsersPage() {
   const [loadingUserDetails, setLoadingUserDetails] = useState(false);
   const [resettingUsage, setResettingUsage] = useState(false);
   const [showProSubs, setShowProSubs] = useState(false);
-  const [showGoldxUsers, setShowGoldxUsers] = useState(false);
-  const [grantingGoldx, setGrantingGoldx] = useState(false);
-  const [revokingGoldx, setRevokingGoldx] = useState(false);
-  const [reissuingGoldx, setReissuingGoldx] = useState(false);
-  const [sendingGoldxFiles, setSendingGoldxFiles] = useState(false);
-  const [goldxGrantMessage, setGoldxGrantMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (token) loadUsers();
@@ -81,7 +74,6 @@ export default function AdminUsersPage() {
     if (!selectedUser || !token) {
       setSelectedUserDetails(null);
       setLoadingUserDetails(false);
-      setGoldxGrantMessage(null);
       return;
     }
 
@@ -204,81 +196,6 @@ export default function AdminUsersPage() {
     }
   };
 
-  const grantGoldxAccess = async (id: string) => {
-    if (!token) {
-      return;
-    }
-
-    try {
-      setGrantingGoldx(true);
-      const result = await api.admin.grantGoldxAccess(id, token);
-      setGoldxGrantMessage(result.licenseKey
-        ? `GoldX access granted. License key: ${result.licenseKey}`
-        : result.message);
-
-      const data = await api.admin.getUserDetails(id, token);
-      setSelectedUserDetails(data.user);
-    } catch {
-      setGoldxGrantMessage('Failed to grant GoldX access.');
-    } finally {
-      setGrantingGoldx(false);
-    }
-  };
-
-  const revokeGoldxAccess = async (licenseId: string, userId: string) => {
-    if (!token) {
-      return;
-    }
-
-    try {
-      setRevokingGoldx(true);
-      await api.goldx.admin.revokeLicense(licenseId, token);
-      setGoldxGrantMessage('GoldX access revoked. Granting access again will generate a new license key.');
-
-      const data = await api.admin.getUserDetails(userId, token);
-      setSelectedUserDetails(data.user);
-    } catch {
-      setGoldxGrantMessage('Failed to revoke GoldX access.');
-    } finally {
-      setRevokingGoldx(false);
-    }
-  };
-
-  const reissueGoldxKey = async (userId: string) => {
-    if (!token) {
-      return;
-    }
-
-    try {
-      setReissuingGoldx(true);
-      const result = await api.admin.reissueGoldxLicense(userId, token);
-      setGoldxGrantMessage(result.licenseKey ? `New GoldX key issued: ${result.licenseKey}` : result.message);
-
-      const data = await api.admin.getUserDetails(userId, token);
-      setSelectedUserDetails(data.user);
-    } catch {
-      setGoldxGrantMessage('Failed to issue a new GoldX key.');
-    } finally {
-      setReissuingGoldx(false);
-    }
-  };
-
-  const sendGoldxFiles = async (userId: string) => {
-    if (!token) {
-      return;
-    }
-
-    try {
-      setSendingGoldxFiles(true);
-      const result = await api.admin.sendGoldxFilesEmail(userId, token);
-      setGoldxGrantMessage(`GoldX delivery email sent using: ${result.downloadUrl}`);
-    } catch (error: any) {
-      setGoldxGrantMessage(error?.message || 'Failed to send the GoldX delivery email.');
-    } finally {
-      setSendingGoldxFiles(false);
-    }
-  };
-
   const paymentMethodLabel = (payment: AdminUserDetails['billing']['recentPayments'][number]) => {
     if (payment.paymentMethod === 'BANK_TRANSFER' && payment.bankTransferBank) {
       return `Bank Transfer (${payment.bankTransferBank})`;
@@ -303,16 +220,9 @@ export default function AdminUsersPage() {
           <div className="max-w-3xl">
             <div className="premium-kicker mb-4">User Command Surface</div>
             <h1 className="font-display text-3xl font-bold uppercase tracking-[-0.05em] text-white sm:text-4xl">User Management</h1>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-white/64">Review subscription state, intervene on entitlements, and move high-value users across TradeVision and GoldX without leaving the command room.</p>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-white/64">Review subscription state and intervene on entitlements without leaving the command room.</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-          <button
-            onClick={() => setShowGoldxUsers(true)}
-            className="premium-button-shell inline-flex items-center gap-2 rounded-2xl border border-amber-500/20 bg-[linear-gradient(135deg,rgba(255,223,112,0.18),rgba(255,223,112,0.05))] px-4 py-3 text-sm font-medium text-amber-100 transition hover:border-amber-400/40"
-          >
-            <KeyRound className="h-4 w-4" />
-            GoldX Users
-          </button>
           <button
             onClick={() => setShowProSubs(true)}
             className="premium-button-shell inline-flex items-center gap-2 rounded-2xl border border-violet-500/20 bg-[linear-gradient(135deg,rgba(139,92,246,0.18),rgba(139,92,246,0.05))] px-4 py-3 text-sm font-medium text-violet-100 transition hover:border-violet-400/40"
@@ -347,7 +257,6 @@ export default function AdminUsersPage() {
       </section>
 
       <ProSubscribersModal open={showProSubs} onClose={() => setShowProSubs(false)} token={token!} />
-      <GoldxUsersModal open={showGoldxUsers} onClose={() => setShowGoldxUsers(false)} token={token!} />
 
       <div className="premium-panel-muted p-5 sm:p-6">
         <div className="mb-4 flex items-center justify-between gap-3">
@@ -663,87 +572,6 @@ export default function AdminUsersPage() {
                       </Badge>
                     ) : null}
                   </div>
-                </div>
-                <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-xs text-muted-foreground">GoldX access</p>
-                      <p className="mt-1 text-sm font-medium">
-                        {loadingUserDetails
-                          ? 'Loading...'
-                          : selectedUserDetails?.goldx.hasAccess
-                            ? selectedUserDetails.goldx.subscriptionStatus === 'cancelled' && selectedUserDetails.goldx.currentPeriodEnd
-                              ? `Active until ${formatJamaicaDateTime(selectedUserDetails.goldx.currentPeriodEnd)}`
-                              : 'Active'
-                            : 'Not granted'}
-                      </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {loadingUserDetails
-                          ? 'Checking GoldX entitlement...'
-                          : selectedUserDetails?.goldx.expiresAt
-                            ? `License expires ${formatJamaicaDateTime(selectedUserDetails.goldx.expiresAt)}`
-                            : 'Grant GoldX without changing the user\'s core TradeVision plan.'}
-                      </p>
-                      {selectedUserDetails?.goldx.mt5Account ? (
-                        <p className="mt-1 text-xs text-muted-foreground">MT5 account: {selectedUserDetails.goldx.mt5Account}</p>
-                      ) : null}
-                      {selectedUserDetails?.goldx.pendingLicenseKey ? (
-                        <div className="mt-3 rounded-lg border border-amber-500/20 bg-black/20 px-3 py-2">
-                          <p className="text-[10px] uppercase tracking-[0.18em] text-amber-200/70">Visible license key</p>
-                          <p className="mt-2 break-all font-mono text-sm font-semibold text-amber-100">{selectedUserDetails.goldx.pendingLicenseKey}</p>
-                          <p className="mt-1 text-[11px] text-muted-foreground">
-                            Issued {selectedUserDetails.goldx.pendingKeyIssuedAt ? formatJamaicaDateTime(selectedUserDetails.goldx.pendingKeyIssuedAt) : 'recently'}
-                          </p>
-                        </div>
-                      ) : null}
-                    </div>
-                    {selectedUserDetails ? (
-                      <Badge variant={selectedUserDetails.goldx.hasAccess ? 'success' : 'outline'}>
-                        {selectedUserDetails.goldx.hasAccess ? 'ACTIVE' : 'NOT GRANTED'}
-                      </Badge>
-                    ) : null}
-                  </div>
-                  {!selectedUserDetails?.goldx.hasAccess ? (
-                    <Button className="mt-4" onClick={() => grantGoldxAccess(selectedUser.id)} disabled={grantingGoldx || loadingUserDetails}>
-                      <KeyRound className="mr-2 h-4 w-4" />
-                      {grantingGoldx ? 'Granting GoldX...' : 'Grant GoldX Access'}
-                    </Button>
-                  ) : selectedUserDetails?.goldx.licenseId ? (
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <Button
-                        variant="outline"
-                        onClick={() => revokeGoldxAccess(selectedUserDetails.goldx.licenseId!, selectedUser.id)}
-                        disabled={revokingGoldx || loadingUserDetails}
-                      >
-                        <ShieldX className="mr-2 h-4 w-4" />
-                        {revokingGoldx ? 'Revoking GoldX...' : 'Revoke GoldX Access'}
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        onClick={() => reissueGoldxKey(selectedUser.id)}
-                        disabled={reissuingGoldx || loadingUserDetails}
-                      >
-                        <KeyRound className="mr-2 h-4 w-4" />
-                        {reissuingGoldx ? 'Issuing Key...' : 'Issue New Key'}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => sendGoldxFiles(selectedUser.id)}
-                        disabled={sendingGoldxFiles || loadingUserDetails}
-                      >
-                        <CheckCircle2 className="mr-2 h-4 w-4" />
-                        {sendingGoldxFiles ? 'Emailing Files...' : 'Email EA Files'}
-                      </Button>
-                    </div>
-                  ) : null}
-                  {goldxGrantMessage ? (
-                    <div className="mt-3 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-100">
-                      <div className="flex items-start gap-2">
-                        <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                        <span className="break-all">{goldxGrantMessage}</span>
-                      </div>
-                    </div>
-                  ) : null}
                 </div>
                 <div className="flex flex-wrap gap-2 pt-2">
                   {selectedUser.subscription === 'FREE' ? (

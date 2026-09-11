@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { api, type PricingPlan } from '@/lib/api';
-import { CheckCircle2, Crown, Radar, Shield, Sparkles, TrendingUp, X, Zap } from 'lucide-react';
+import { CheckCircle2, Crown, Radar, Sparkles, X, Zap } from 'lucide-react';
 
 type DisplayPlan = PricingPlan & {
   period: string;
@@ -101,20 +101,6 @@ const defaultFallbackPlans: DisplayPlan[] = [
   },
 ];
 
-const goldxFallbackPlan = {
-  id: 'goldx-fallback',
-  name: 'GoldX',
-  price: 99.95,
-  billingCycle: 'monthly',
-  features: [
-    'XAUUSD Night Scalping EA',
-    'Fast / Prop / Hybrid modes',
-    'Server-side strategy engine',
-    'Realtime execution logic',
-    'License-based MT5 access',
-  ],
-};
-
 const toDisplayPlan = (plan: PricingPlan): DisplayPlan | null => {
   if (plan.tier === 'VIP_AUTO_TRADER') {
     return null;
@@ -148,24 +134,14 @@ const toDisplayPlan = (plan: PricingPlan): DisplayPlan | null => {
 
 export default function PricingPage() {
   const [plans, setPlans] = useState<DisplayPlan[]>(defaultFallbackPlans);
-  const [goldxPlan, setGoldxPlan] = useState(goldxFallbackPlan);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadPricingPlans = async () => {
       try {
-        const [data, goldx] = await Promise.all([
-          api.getPublicPricingPlans(),
-          api.goldx.getPlan().catch(() => null),
-        ]);
+        const data = await api.getPublicPricingPlans();
         if (Array.isArray(data.plans) && data.plans.length > 0) {
           setPlans(data.plans.map(toDisplayPlan).filter((plan): plan is DisplayPlan => plan !== null));
-        }
-        if (goldx) {
-          setGoldxPlan({
-            ...goldx,
-            price: 99.95,
-          });
         }
       } catch {
       } finally {
@@ -197,13 +173,12 @@ export default function PricingPage() {
                 Pricing built around how you trade.
               </h1>
               <p className="mt-5 max-w-2xl text-sm leading-7 text-white/68 sm:text-base">
-                Choose the plan that fits your workflow, whether you need core chart analysis, deeper execution planning, or the dedicated GoldX execution stack.
+                Choose the plan that fits your workflow, whether you need core chart analysis or deeper execution planning.
               </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
               {[
                 ['Core plans', 'Free, Weekly Pro, PRO+'],
-                ['GoldX suite', 'EA access'],
                 ['Cancel control', 'Upgrade or downgrade anytime'],
               ].map(([label, value]) => (
                 <div key={label} className="mobile-card p-4">
@@ -288,84 +263,6 @@ export default function PricingPage() {
             No active pricing plans are available right now.
           </div>
         ) : null}
-
-        <motion.div
-          id="goldx"
-          initial={false}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.22 }}
-          className="mx-auto mt-16 max-w-6xl sm:mt-20"
-        >
-          <Card className="overflow-hidden border-[#1b3358] bg-[#071426]">
-            <CardContent className="grid gap-8 p-6 sm:p-8 lg:grid-cols-[1.1fr_0.9fr] lg:p-10">
-              <div>
-                <div className="mb-4 flex items-center gap-3">
-                  <div className="rounded-lg border border-[#176dff]/25 bg-[#176dff]/10 p-3 text-[#60a5ff]">
-                    <TrendingUp className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <Badge variant="outline" className="mb-2 border-[#176dff]/25 text-[#60a5ff]">GoldX</Badge>
-                    <h2 className="text-2xl font-bold sm:text-3xl">GoldX EA Subscription</h2>
-                  </div>
-                </div>
-
-                <p className="max-w-2xl text-sm text-muted-foreground sm:text-base">
-                  GoldX is the standalone GoldX SMC EA for traders who want a license-protected MT5 execution system.
-                  Subscribe here, then use the platform to manage access, onboarding, and MT5 account binding while the EA handles live execution from the terminal.
-                </p>
-
-                <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                  {[
-                    ['Modes', 'Fast, Prop, Hybrid'],
-                    ['Execution style', 'Terminal-first automation'],
-                    ['Best fit', 'Elite gold operators'],
-                  ].map(([label, value]) => (
-                    <div key={label} className="mobile-card rounded-[22px] p-4">
-                      <div className="metric-label">{label}</div>
-                      <div className="mt-2 text-sm text-white">{value}</div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                  {goldxPlan.features.map((feature) => (
-                    <div key={feature} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                      <span className="text-sm">{feature}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex flex-col justify-between rounded-xl border border-[#1b3358] bg-[#0b1b33] p-6">
-                <div>
-                  <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-300">
-                    <Shield className="h-3.5 w-3.5" />
-                    License-protected MT5 access
-                  </div>
-                  <div className="mb-2 text-5xl font-bold">
-                    ${goldxPlan.price}
-                    <span className="ml-1 text-lg font-normal text-muted-foreground">/{goldxPlan.billingCycle}</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Best for traders who want a dedicated Gold execution product instead of a chart-only workflow.
-                  </p>
-                </div>
-
-                <div className="mt-8 space-y-3">
-                  <Link href="/checkout?plan=GOLDX" className="block">
-                    <Button size="lg" className="w-full">
-                      Subscribe to GoldX
-                    </Button>
-                  </Link>
-                  <p className="text-xs text-muted-foreground">
-                    After checkout, use the platform to manage your license, setup flow, and MT5 account binding. Execution settings stay inside MT5.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
 
         {/* Feature Comparison Table */}
         <motion.div

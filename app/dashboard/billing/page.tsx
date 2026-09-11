@@ -242,7 +242,6 @@ export default function BillingPage() {
               <CardContent className="space-y-3 text-sm text-muted-foreground">
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-4">Weekly Pro unlocks 100 analyses every 7 days with advanced Smart Money Concepts.</div>
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-4">PRO+ adds Smart Session Scanner access, advanced execution planning, and stronger entry precision.</div>
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">GoldX remains a separate paid product with license-based MT5 access and dashboard-managed setup.</div>
               </CardContent>
             </Card>
           </div>

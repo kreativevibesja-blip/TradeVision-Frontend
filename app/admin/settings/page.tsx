@@ -41,7 +41,7 @@ const SCANNER_STRATEGY_LABELS: Array<{ key: ScannerStrategyToggleKey; title: str
   { key: 'trendPullback', title: 'Trend Pullback', detail: 'Continuation pullbacks aligned with structure and trend flow.' },
   { key: 'countertrendReversal', title: 'Countertrend Reversal', detail: 'Reversal setups from supply or demand against the broader move.' },
   { key: 'fvgContinuation', title: 'FVG Continuation', detail: 'Fair value gap fill continuations that resume directional flow.' },
-  { key: 'emaReclaim', title: 'GoldX SMC EMA', detail: 'GoldX SMC-style EMA reclaim continuation using the 9/14/50 stack.' },
+  { key: 'emaReclaim', title: 'EMA Reclaim', detail: 'EMA reclaim continuation using the 9/14/50 stack.' },
   { key: 'equalLevelSweep', title: 'Equal-Level Sweep', detail: 'EQH or EQL liquidity sweep reversals.' },
   { key: 'poiReclaim', title: 'POI Reclaim', detail: 'Point-of-interest reclaim setups after reaction.' },
   { key: 'rangeRejection', title: 'Range Rejection', detail: 'Support and resistance range rotations.' },
@@ -90,7 +90,7 @@ export default function AdminSettingsPage() {
   const [findTradeCategories, setFindTradeCategories] = useState<Record<FindTradeCategoryToggleKey, boolean>>(DEFAULT_FIND_TRADE_CATEGORIES);
   const [announcementPopupsEnabled, setAnnouncementPopupsEnabled] = useState(true);
   const [announcementPopupRepeatHours, setAnnouncementPopupRepeatHours] = useState('24');
-  const [platformTheme, setPlatformTheme] = useState<PlatformTheme>('goldx-premium');
+  const [platformTheme, setPlatformTheme] = useState<PlatformTheme>('clean-blue');
   const setActiveTheme = useThemeStore((state) => state.setActiveTheme);
 
   useEffect(() => {
@@ -153,7 +153,7 @@ export default function AdminSettingsPage() {
       setFindTradeCategories(nextFindTradeCategories);
       if (announcementPopups) setAnnouncementPopupsEnabled(Boolean(announcementPopups.value));
       if (announcementPopupRepeat?.value != null) setAnnouncementPopupRepeatHours(String(announcementPopupRepeat.value));
-      if (activeTheme?.value === 'clean-blue' || activeTheme?.value === 'legacy' || activeTheme?.value === 'goldx-premium') setPlatformTheme(activeTheme.value);
+      if (activeTheme?.value === 'clean-blue' || activeTheme?.value === 'legacy') setPlatformTheme(activeTheme.value);
     } catch {
     } finally {
       setLoading(false);
@@ -361,7 +361,7 @@ export default function AdminSettingsPage() {
             <div className="premium-panel-muted space-y-4 p-4">
               <div>
                 <label className="text-sm text-muted-foreground">EMA execution filter</label>
-                <p className="mt-1 text-xs text-muted-foreground">Scanner executions must match the same EMA 9/14/50 pullback and reclaim filter used for GoldX SMC behavior.</p>
+                <p className="mt-1 text-xs text-muted-foreground">Scanner executions must match the same EMA 9/14/50 pullback and reclaim filter used by the scanner.</p>
               </div>
               <Button type="button" variant={scannerUseEmaFilter ? 'default' : 'outline'} size="sm" onClick={() => setScannerUseEmaFilter((current) => !current)}>
                 EMA Filter {scannerUseEmaFilter ? 'On' : 'Off'}
