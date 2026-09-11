@@ -21,6 +21,8 @@ interface InstantSignalButtonProps {
 
 const isProPlus = (subscription?: string | null) => subscription === 'TOP_TIER' || subscription === 'VIP_AUTO_TRADER';
 const formatPrice = (value: number | null) => value == null ? '-' : value.toLocaleString(undefined, { maximumFractionDigits: 5 });
+const getDistance = (currentPrice: number | null | undefined, level: number | null) =>
+  Number.isFinite(currentPrice ?? NaN) && level != null ? Math.abs(Number(currentPrice) - level) : null;
 
 export function InstantSignalButton({
   assetClass,
@@ -44,6 +46,8 @@ export function InstantSignalButton({
 
   const allowed = isProPlus(subscription);
   const disabledReason = activeSignal ? 'Signal already active for this market.' : '';
+  const distanceToTp = getDistance(currentPrice, activeSignal?.takeProfit ?? null);
+  const distanceToSl = getDistance(currentPrice, activeSignal?.stopLoss ?? null);
   const buttonLabel = useMemo(() => {
     if (!allowed) return 'Locked';
     if (activeSignal) return 'Active Signal Running';
@@ -79,6 +83,31 @@ export function InstantSignalButton({
       active = false;
     };
   }, [allowed, symbol, token]);
+
+  useEffect(() => {
+    if (!allowed || !token || !activeSignal || !Number.isFinite(currentPrice ?? NaN)) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      api.instantSignals.refresh({ [activeSignal.market]: Number(currentPrice) }, token)
+        .then(({ updates }) => {
+          const updatedSignal = updates.find((signal) => signal.id === activeSignal.id);
+          if (!updatedSignal) {
+            return;
+          }
+
+          setActiveSignal(null);
+          setResultSignal(updatedSignal);
+          onSignal?.(updatedSignal);
+        })
+        .catch(() => {
+          // The next live price update will retry without interrupting chart use.
+        });
+    }, 500);
+
+    return () => window.clearTimeout(timer);
+  }, [activeSignal, allowed, currentPrice, onSignal, token]);
 
   const runSignal = async () => {
     setError('');
@@ -243,6 +272,12 @@ export function InstantSignalButton({
           {!allowed ? <Lock className="mr-1.5 h-4 w-4" /> : scanState === 'scanning' || loadingActive ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Zap className="mr-1.5 h-4 w-4" />}
           {buttonLabel}
         </Button>
+        {activeSignal ? (
+          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] font-semibold text-slate-300">
+            <span>TP: {formatPrice(distanceToTp)} away</span>
+            <span>SL: {formatPrice(distanceToSl)} away</span>
+          </div>
+        ) : null}
         {error ? <div className="mt-1 text-xs font-medium text-red-300">{error}</div> : null}
       </div>
       {mounted ? createPortal(modals, document.body) : null}

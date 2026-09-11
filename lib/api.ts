@@ -876,7 +876,7 @@ export interface InstantSignal {
   result: InstantSignalResult;
   resultPrice: number | null;
   resultAt: string | null;
-  expiresAt: string;
+  expiresAt: string | null;
   createdAt: string;
   updatedAt: string;
   user?: {
