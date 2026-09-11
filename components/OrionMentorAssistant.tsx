@@ -482,7 +482,7 @@ function OrionMentorAssistantShell({ surface = 'floating' }: { surface?: 'floati
   return (
     <>
       <div className={surface === 'floating'
-        ? 'pointer-events-none fixed inset-x-0 bottom-16 z-[80] flex justify-center px-3 sm:inset-x-auto sm:bottom-24 sm:right-6 sm:block sm:w-[23rem] sm:px-0'
+        ? 'pointer-events-none fixed inset-x-0 bottom-16 z-[80] flex justify-center px-3 sm:inset-x-auto sm:bottom-24 sm:right-4 sm:block sm:w-[min(22.5rem,calc(100vw-2rem))] sm:px-0'
         : 'h-full min-h-0 w-full overflow-hidden'
       }>
         <OrionChatWindow
@@ -517,7 +517,7 @@ function OrionMentorAssistantShell({ surface = 'floating' }: { surface?: 'floati
         />
       </div>
       {surface === 'floating' ? (
-        <div className="pointer-events-none fixed bottom-3 right-3 z-[80] sm:bottom-6 sm:right-6">
+        <div className="pointer-events-none fixed bottom-3 right-3 z-[80] sm:bottom-6 sm:right-4">
           <OrionFloatingButton open={open} onClick={() => setOpen((current) => !current)} />
         </div>
       ) : null}

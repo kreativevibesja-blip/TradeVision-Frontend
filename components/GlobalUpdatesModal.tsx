@@ -246,6 +246,7 @@ const COUNTDOWN_THEMES: Record<AnnouncementType, CountdownThemeConfig> = {
     message: 'The event timer adds momentum and lets users know this announcement is only around for a short burst.',
   },
 };
+const isWorkspacePath = (pathname: string) => pathname.startsWith('/dashboard') || pathname.startsWith('/analyze');
 
 export function GlobalUpdatesModal() {
   const pathname = usePathname();
@@ -280,7 +281,7 @@ export function GlobalUpdatesModal() {
   }, []);
 
   useEffect(() => {
-    if (pathname.startsWith('/admin')) {
+    if (pathname.startsWith('/admin') || isWorkspacePath(pathname)) {
       setOpen(false);
       return;
     }
@@ -321,7 +322,7 @@ export function GlobalUpdatesModal() {
   );
 
   useEffect(() => {
-    setOpen(Boolean(popupSettings.enabled && nextAnnouncement) && !pathname.startsWith('/admin'));
+    setOpen(Boolean(popupSettings.enabled && nextAnnouncement) && !pathname.startsWith('/admin') && !isWorkspacePath(pathname));
   }, [nextAnnouncement, pathname, popupSettings.enabled]);
 
   useEffect(() => {
@@ -350,7 +351,7 @@ export function GlobalUpdatesModal() {
     setOpen(false);
   };
 
-  if (!popupSettings.enabled || !nextAnnouncement || pathname.startsWith('/admin')) {
+  if (!popupSettings.enabled || !nextAnnouncement || pathname.startsWith('/admin') || isWorkspacePath(pathname)) {
     return null;
   }
 
