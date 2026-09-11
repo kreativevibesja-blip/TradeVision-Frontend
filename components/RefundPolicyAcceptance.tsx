@@ -74,7 +74,7 @@ export function RefundPolicyAcceptance({ checked, onCheckedChange }: RefundPolic
             </div>
 
             <div className="flex-1 space-y-5 overflow-y-auto px-5 py-5 text-sm leading-7 text-white/78 sm:px-6">
-              <p>By subscribing to any TradeVision or GoldX plan, you acknowledge and agree that all payments are final and non-refundable.</p>
+              <p>By subscribing to any TradeVision plan, you acknowledge and agree that all payments are final and non-refundable.</p>
               <p>Due to the digital nature of our platform, instant access to proprietary trading tools, AI analysis systems, trading automation, educational resources, cloud services, and premium content is granted immediately.</p>
               <div>
                 <p className="mb-2">We do not offer refunds, partial refunds, credits, or chargebacks for:</p>
@@ -87,7 +87,7 @@ export function RefundPolicyAcceptance({ checked, onCheckedChange }: RefundPolic
               <p>Subscribers may cancel future renewals at any time.</p>
               <p>Cancellation stops future billing only.</p>
               <p>Access remains active until the end of the current billing cycle.</p>
-              <p>TradeVision and GoldX do not guarantee profits.</p>
+              <p>TradeVision does not guarantee profits.</p>
               <p>Trading involves risk.</p>
               <p>By completing payment, you confirm acceptance of this policy.</p>
             </div>

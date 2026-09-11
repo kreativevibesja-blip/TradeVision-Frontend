@@ -82,7 +82,7 @@ function buildTradeVisionExplanation(): OrionPlannedMessage[] {
   return [{
     text: 'TradeVision AI is a trading operating system built to help traders move from chart analysis into structured execution instead of impulsive decision-making. It combines AI chart analysis, Trade Radar tracking, journal intelligence, execution workflows, and guided platform routing so users can understand structure, define invalidation, protect risk, and act with more discipline.',
     choices: [
-      { id: 'tv-what-workspaces', label: 'What does each workspace do?', followUpMessage: 'The core flow is simple: Analysis reads structure, Command Center turns that into an execution plan, Trade Radar monitors active ideas, and Journal review improves decision quality over time. GoldX stays separate as a dedicated execution product.' },
+      { id: 'tv-what-workspaces', label: 'What does each workspace do?', followUpMessage: 'The core flow is simple: Analysis reads structure, Command Center turns that into an execution plan, Trade Radar monitors active ideas, and Journal review improves decision quality over time.' },
       { id: 'tv-benefits', label: 'What are the benefits?', followUpMessage: 'The main benefits are clarity, structure, and consistency. TradeVision is designed to reduce random trade selection, improve invalidation discipline, and keep your workflow organized across analysis, tracking, and review.' },
       { id: 'tv-start', label: 'How should I start?', followUpMessage: 'Start with chart analysis. Upload a clean chart, let Orion read structure, and then promote only the strong setups into execution planning or Trade Radar.' },
     ],
@@ -118,17 +118,6 @@ function buildPlanComparisonExplanation(): OrionPlannedMessage[] {
       { id: 'plan-who-pro', label: 'Who should choose Pro?', followUpMessage: 'Choose Pro if your main goal is better analysis quality and you do not yet need the deepest execution and scanner workflow stack.' },
       { id: 'plan-who-proplus', label: 'Who should choose PRO+?', followUpMessage: 'Choose PRO+ if you want the more complete operating environment: stronger execution support, premium workflow depth, and more advanced decision tools.' },
       { id: 'plan-open-pricing', label: 'Open pricing', trigger: { type: 'navigate', href: '/pricing' } },
-    ],
-  }];
-}
-
-function buildGoldXExplanation(): OrionPlannedMessage[] {
-  return [{
-    text: 'GoldX is a dedicated Gold-focused execution environment inside the TradeVision ecosystem. It is not a generic add-on. It exists for traders who specifically want the GoldX workflow, operating intelligence, and execution control built around that product path.',
-    choices: [
-      { id: 'goldx-who', label: 'Who is GoldX for?', followUpMessage: 'GoldX is for traders who specifically want the Gold execution ecosystem rather than the broader core TradeVision workflow alone.' },
-      { id: 'goldx-difference', label: 'How is it different?', followUpMessage: 'The difference is specialization. GoldX is not just more features. It is a separate workflow stack centered on GoldX operating logic and execution management.' },
-      { id: 'goldx-open', label: 'Open GoldX', trigger: { type: 'navigate', href: '/dashboard/goldx' } },
     ],
   }];
 }
@@ -383,7 +372,6 @@ function getReadableSubscription(subscription: string | null) {
       return 'PRO+';
     case 'FREE':
     case 'PRO':
-    case 'GOLDX':
       return subscription;
     default:
       return subscription ?? 'FREE';
@@ -420,7 +408,7 @@ function buildPlanRequirementHelpResponse(user: WorkflowInput['user']): OrionPla
   const plan = getReadableSubscription(user.subscription);
   return [
     {
-      text: `You are currently on ${plan}. In general, Free is for validating the workflow, Pro is for stronger core analysis, PRO+ is for deeper execution and premium workflows, and GoldX is for the dedicated GoldX stack.`,
+      text: `You are currently on ${plan}. In general, Free is for validating the workflow, Pro is for stronger core analysis, and PRO+ is for deeper execution and premium workflows.`,
       choices: [
         { id: 'plan-req-pricing', label: 'Compare plans', trigger: { type: 'navigate', href: '/pricing' } },
         { id: 'plan-req-pro', label: 'Who should use Pro?', followUpMessage: 'Choose Pro if your main need is stronger core chart analysis without the deepest premium workflow stack.' },
@@ -722,12 +710,6 @@ export function resolveOrionReply({ input, pageContext, workflow, activity, user
         messages: buildPlanComparisonExplanation(),
         nextWorkflow: { type: 'idle' },
         memoryAction: 'subscription-help',
-      };
-    case 'GOLDX_EXPLAIN':
-      return {
-        messages: buildGoldXExplanation(),
-        nextWorkflow: { type: 'idle' },
-        memoryAction: 'account-assistance',
       };
     case 'JOURNAL_INTELLIGENCE_EXPLAIN':
       return {

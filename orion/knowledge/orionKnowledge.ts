@@ -82,7 +82,6 @@ export const ORION_PAGE_KNOWLEDGE: OrionPageKnowledge[] = [
     suggestions: [
       'Analysis leads to execution planning, not directly to blind entry.',
       'Trade Radar and journal intelligence matter most after a setup already has structure and invalidation.',
-      'GoldX stays separate because it is a dedicated execution product, not a generic upsell.',
     ],
     quickActions: ['platform-tour', 'create-analysis', 'subscription-help', 'strategy-help'],
   },
@@ -93,7 +92,6 @@ export const ORION_PAGE_KNOWLEDGE: OrionPageKnowledge[] = [
     suggestions: [
       'Choose Pro if you mainly want stronger core AI analysis.',
       'Choose PRO+ if you need deeper execution support and premium scanning workflows.',
-      'GoldX is its own execution stack for users who specifically want the Gold ecosystem.',
     ],
     quickActions: ['subscription-help', 'platform-tour', 'account-assistance', 'create-analysis'],
   },
@@ -218,28 +216,6 @@ export const ORION_PAGE_KNOWLEDGE: OrionPageKnowledge[] = [
     ],
     quickActions: ['account-assistance', 'subscription-help', 'market-overview', 'create-support-ticket'],
   },
-  {
-    id: 'goldx',
-    label: 'GoldX',
-    summary: 'Manage the GoldX workspace around confirmed market state and execution control.',
-    suggestions: [
-      'GoldX is strongest when the market still supports the model assumptions.',
-      'Automation should increase discipline, not reduce it.',
-      'Use Orion to clarify mode changes and workflow logic before changing settings.',
-    ],
-    quickActions: ['market-overview', 'risk-guidance', 'create-support-ticket', 'account-assistance'],
-  },
-  {
-    id: 'goldx-pulse',
-    label: 'GoldX Pulse',
-    summary: 'Review GoldX operating intelligence before widening risk.',
-    suggestions: [
-      'Pulse should tell you when conditions are worth acting on, not encourage constant activity.',
-      'Regime changes matter more than raw momentum spikes.',
-      'Use Orion to understand what the current state implies before acting.',
-    ],
-    quickActions: ['market-overview', 'risk-guidance', 'account-assistance', 'create-support-ticket'],
-  },
 ];
 
 export const ORION_GLOSSARY = {
@@ -253,7 +229,6 @@ export const ORION_SUBSCRIPTION_GUIDANCE = {
   FREE: 'Free is best for validating the chart-analysis workflow before committing capital or upgrading.',
   PRO: 'Pro is designed for traders who want stronger core AI analysis without moving into the deepest premium workflow tier.',
   TOP_TIER: 'PRO+ is built for traders who want stronger execution support, premium scanner workflows, and faster access to the operating system.',
-  GOLDX: 'GoldX is a dedicated Gold execution stack and should be chosen when you specifically want the GoldX ecosystem.',
 };
 
 export const ORION_RESPONSE_VARIANTS = {

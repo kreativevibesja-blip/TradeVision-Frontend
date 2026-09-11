@@ -18,7 +18,6 @@ const intentMatchers: Array<{ intent: OrionIntentId; tests: RegExp[] }> = [
   { intent: 'TRADE_RADAR_EXPLAIN', tests: [/what is trade radar/i, /tell me about trade radar/i, /how does trade radar work/i] },
   { intent: 'COMMAND_CENTER_EXPLAIN', tests: [/what is command center/i, /tell me about command center/i, /how does command center work/i] },
   { intent: 'PLAN_COMPARISON_EXPLAIN', tests: [/pro\+ vs pro/i, /pro plus vs pro/i, /difference between pro and pro\+/i, /difference between pro and top tier/i, /which plan is better/i, /what makes pro\+ different/i] },
-  { intent: 'GOLDX_EXPLAIN', tests: [/what is goldx/i, /tell me about goldx/i, /how does goldx work/i] },
   { intent: 'JOURNAL_INTELLIGENCE_EXPLAIN', tests: [/what is journal intelligence/i, /tell me about journal intelligence/i, /how does journal intelligence work/i, /what does the journal do/i] },
   { intent: 'BEGINNER_WORKFLOW_EXPLAIN', tests: [/how should a beginner use tradevision/i, /how do i start with tradevision/i, /beginner.*tradevision/i, /step by step.*tradevision/i] },
   { intent: 'ORION_EXPLAIN', tests: [/what is orion/i, /who is orion/i, /tell me about orion/i, /how does orion work/i] },

@@ -194,7 +194,7 @@ const THEMES: Record<AnnouncementType, ThemeConfig> = {
   },
 };
 
-const PLAN_LABELS: Record<string, string> = { PRO: 'PRO', TOP_TIER: 'PRO+', GOLDX: 'GoldX', GOLDX_PULSE: 'GoldX Pulse' };
+const PLAN_LABELS: Record<string, string> = { PRO: 'PRO', TOP_TIER: 'PRO+' };
 
 const COUNTDOWN_THEMES: Record<AnnouncementType, CountdownThemeConfig> = {
   update: {
@@ -362,21 +362,15 @@ export function GlobalUpdatesModal() {
   const imageSrc = resolveAssetUrl(nextAnnouncement.imageUrl) || nextAnnouncement.imageUrl || null;
 
   const isDiscount = announcementType === 'discount' && nextAnnouncement.couponCode;
-  const discountBaseUrl = nextAnnouncement.targetPlan === 'GOLDX'
-    ? '/goldx/checkout'
-    : `/checkout?plan=${encodeURIComponent(nextAnnouncement.targetPlan || 'PRO')}`;
+  const discountBaseUrl = `/checkout?plan=${encodeURIComponent(nextAnnouncement.targetPlan || 'PRO')}`;
   const checkoutUrl = isDiscount
-    ? nextAnnouncement.targetPlan === 'GOLDX'
-      ? discountBaseUrl
-      : `${discountBaseUrl}&coupon=${encodeURIComponent(nextAnnouncement.couponCode!)}`
+    ? `${discountBaseUrl}&coupon=${encodeURIComponent(nextAnnouncement.couponCode!)}`
     : null;
 
   // Plan promotion CTA — shown for ANY update with a targetPlan (even non-discount)
   const hasPlanPromo = !isDiscount && nextAnnouncement.targetPlan;
   const planPromoUrl = hasPlanPromo
-    ? (nextAnnouncement.targetPlan === 'GOLDX'
-        ? '/goldx/checkout'
-        : `/checkout?plan=${encodeURIComponent(nextAnnouncement.targetPlan!)}`)
+    ? `/checkout?plan=${encodeURIComponent(nextAnnouncement.targetPlan!)}`
     : null;
   const planLabel = PLAN_LABELS[nextAnnouncement.targetPlan || 'PRO'] || 'PRO';
   const countdownTheme = COUNTDOWN_THEMES[announcementType] || COUNTDOWN_THEMES.update;

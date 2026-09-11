@@ -15,8 +15,6 @@ function resolveKnowledgeId(pathname: string) {
   if (pathname === '/dashboard/radar') return 'radar';
   if (pathname === '/dashboard/billing') return 'billing';
   if (pathname === '/dashboard/referrals') return 'referrals';
-  if (pathname === '/dashboard/goldx-pulse') return 'goldx-pulse';
-  if (pathname === '/dashboard/goldx') return 'goldx';
   return 'dashboard';
 }
 
