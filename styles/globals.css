@@ -501,16 +501,33 @@
   html[data-color-mode='dark'] .bg-\[\#F7F9FC\],
   html[data-color-mode='dark'] .bg-\[\#F3F4F6\],
   html[data-color-mode='dark'] .bg-\[\#EFF6FF\],
-  html[data-color-mode='dark'] .bg-\[\#DBEAFE\] {
+  html[data-color-mode='dark'] .bg-\[\#DBEAFE\],
+  html[data-color-mode='dark'] .bg-\[\#F8FAFC\],
+  html[data-color-mode='dark'] .bg-slate-50 {
     background-color: #1f2937 !important;
+  }
+
+  html[data-color-mode='dark'] .bg-slate-100 {
+    background-color: #334155 !important;
   }
 
   html[data-color-mode='dark'] .text-\[\#111827\],
   html[data-color-mode='dark'] .text-\[\#132238\],
   html[data-color-mode='dark'] .text-\[\#07111f\],
+  html[data-color-mode='dark'] .text-\[\#1F2937\],
   html[data-color-mode='dark'] .text-\[\#374151\],
-  html[data-color-mode='dark'] .text-\[\#4B5563\] {
+  html[data-color-mode='dark'] .text-\[\#4B5563\],
+  html[data-color-mode='dark'] .text-slate-950,
+  html[data-color-mode='dark'] .text-slate-900,
+  html[data-color-mode='dark'] .text-slate-800 {
     color: #f8fafc !important;
+  }
+
+  html[data-color-mode='dark'] .text-slate-700,
+  html[data-color-mode='dark'] .text-slate-600,
+  html[data-color-mode='dark'] .text-gray-700,
+  html[data-color-mode='dark'] .text-gray-600 {
+    color: #cbd5e1 !important;
   }
 
   html[data-color-mode='dark'] .text-\[\#6B7280\],
@@ -521,7 +538,8 @@
 
   html[data-color-mode='dark'] .border-\[\#E5E7EB\],
   html[data-color-mode='dark'] .border-\[\#dce6f5\],
-  html[data-color-mode='dark'] .border-\[\#c7d7ef\] {
+  html[data-color-mode='dark'] .border-\[\#c7d7ef\],
+  html[data-color-mode='dark'] .border-slate-200 {
     border-color: #334155 !important;
   }
 
