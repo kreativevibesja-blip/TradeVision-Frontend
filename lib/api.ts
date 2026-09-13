@@ -781,6 +781,61 @@ export interface BillingSummary {
   }>;
 }
 
+export interface DerivBotAccount {
+  id: string;
+  accountType: 'demo' | 'real';
+  currency: string;
+  balance: number | null;
+  maskedAccountId: string;
+}
+
+export interface DerivBotTick {
+  quote: number;
+  digit: number;
+  epoch: number;
+}
+
+export interface DerivBotScan {
+  symbol: string;
+  targetDigit: number | null;
+  payoutRate: number | null;
+  sampleSize: number;
+  targetOccurrences: number;
+  setupScore: number | null;
+  status: 'eligible' | 'target_repeated' | 'below_threshold' | 'no_trade';
+  reason: string;
+  proposal: { id: string; payoutRate: number | null; askPrice: number; payout: number } | null;
+}
+
+export interface DerivBotProposal {
+  id: string;
+  symbol: string;
+  contractType: 'DIGITMATCH' | 'DIGITDIFF';
+  digit: number;
+  askPrice: number;
+  payout: number;
+  payoutRate: number | null;
+  expiresAt: number | null;
+}
+
+export interface DerivBotTrade {
+  id: string;
+  account_id: string;
+  symbol: string;
+  contract_type: 'DIGITMATCH' | 'DIGITDIFF';
+  digit: number;
+  stake: number;
+  payout: number | null;
+  profit: number | null;
+  payout_rate: number | null;
+  contract_id: string | null;
+  result: 'open' | 'win' | 'loss' | 'cancelled' | null;
+  duration: number;
+  account_type: 'demo' | 'real';
+  created_at: string;
+  completed_at: string | null;
+}
+
 export interface AdminPayment {
   id: string;
   userId: string;
@@ -2124,6 +2179,26 @@ export const api = {
           method: 'POST',
           token,
         }),
+    },
+    derivBot: {
+      connect: (token: string) =>
+        apiFetch<{ authorizationUrl: string }>('/deriv-bot/auth/connect', { token }),
+      getAccounts: (token: string) =>
+        apiFetch<{ accounts: DerivBotAccount[] }>('/deriv-bot/accounts', { token }),
+      selectAccount: (payload: { accountId: string; symbol: string }, token: string) =>
+        apiFetch<{ session: { status: string; symbol: string | null; balance: number | null; currency: string; accountType: 'demo' | 'real'; ticks: DerivBotTick[]; lastError: string | null } }>('/deriv-bot/account/select', { method: 'POST', body: JSON.stringify(payload), token }),
+      getSession: (accountId: string, token: string) =>
+        apiFetch<{ session: { status: string; symbol: string | null; balance: number | null; currency: string; accountType: 'demo' | 'real'; ticks: DerivBotTick[]; lastError: string | null } }>(`/deriv-bot/session?accountId=${encodeURIComponent(accountId)}`, { token }),
+      scan: (payload: { accountId: string; stake: number; duration: number }, token: string) =>
+        apiFetch<{ scan: DerivBotScan }>('/deriv-bot/scan', { method: 'POST', body: JSON.stringify(payload), token }),
+      getProposal: (payload: { accountId: string; contractType: 'DIGITMATCH' | 'DIGITDIFF'; digit: number; stake: number; duration: number }, token: string) =>
+        apiFetch<{ proposal: DerivBotProposal }>('/deriv-bot/proposal', { method: 'POST', body: JSON.stringify(payload), token }),
+      trade: (payload: { accountId: string; contractType: 'DIGITMATCH' | 'DIGITDIFF'; digit: number; stake: number; duration: number }, token: string) =>
+        apiFetch<{ trade: unknown }>('/deriv-bot/trade', { method: 'POST', body: JSON.stringify(payload), token }),
+      getTrades: (accountId: string, token: string) =>
+        apiFetch<{ trades: DerivBotTrade[]; stats: { trades: number; wins: number; losses: number; winRate: number; stakeTotal: number; profitTotal: number } }>(`/deriv-bot/trades?accountId=${encodeURIComponent(accountId)}`, { token }),
+      disconnect: (token: string) =>
+        apiFetch<{ success: boolean }>('/deriv-bot/disconnect', { method: 'POST', token }),
     },
     theme: {
       getActive: () => apiFetch<{ activeTheme: PlatformTheme }>('/theme/active'),

@@ -239,6 +239,24 @@ export function InstantSignalButton({
                   </Link>
                 </div>
               </>
+            ) : resultSignal.status === 'wait_confirmation' ? (
+              <>
+                <p className="mt-5 text-xs font-bold uppercase tracking-[0.22em] text-amber-600">Wait For Confirmation</p>
+                <h3 className="mt-2 text-2xl font-bold">{resultSignal.market} {resultSignal.direction.toUpperCase()} setup developing</h3>
+                <p className="mt-3 text-sm leading-6 text-slate-600">
+                  A directional area of interest is developing, but the chart has not confirmed an entry yet.
+                </p>
+                <div className="mt-5 rounded-xl border border-amber-100 bg-amber-50 p-3 text-sm font-semibold text-amber-800">
+                  {resultSignal.confirmationText || 'Wait for a clear rejection, displacement, or close-confirmed structure break before entry.'}
+                </div>
+                <div className="mt-5 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Confidence</p>
+                    <p className="text-2xl font-black text-amber-600">{resultSignal.confidence}%</p>
+                  </div>
+                  <Button variant="outline" onClick={() => setResultOpen(false)}>Close</Button>
+                </div>
+              </>
             ) : (
               <>
                 <p className="mt-5 text-xs font-bold uppercase tracking-[0.22em] text-slate-500">No Signal</p>
