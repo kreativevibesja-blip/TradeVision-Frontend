@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AlertTriangle, ChevronDown, Link2, Loader2, ShieldCheck, Unplug, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -59,6 +59,7 @@ export default function DerivBotPage() {
   const [trades, setTrades] = useState<DerivBotTrade[]>([]);
   const [stats, setStats] = useState({ trades: 0, wins: 0, losses: 0, winRate: 0, stakeTotal: 0, profitTotal: 0 });
   const [pendingRealTrade, setPendingRealTrade] = useState<'DIGITMATCH' | 'DIGITDIFF' | null>(null);
+  const disconnectingRef = useRef(false);
 
   const loadAccounts = async () => {
     if (!token) return;
@@ -81,10 +82,16 @@ export default function DerivBotPage() {
   useEffect(() => {
     if (!token || !selectedAccount) return;
     let active = true;
+    let latestEpoch = 0;
     const loadSession = async () => {
       try {
         const response = await api.derivBot.selectAccount({ accountId: selectedAccount, symbol }, token);
-        if (active) { setTicks(response.session.ticks); setLiveBalance(response.session.balance); }
+        const newestEpoch = response.session.ticks.at(-1)?.epoch ?? 0;
+        if (active && newestEpoch >= latestEpoch) {
+          latestEpoch = newestEpoch;
+          setTicks(response.session.ticks);
+          setLiveBalance(response.session.balance);
+        }
       } catch (sessionError: any) {
         if (active) setError(sessionError?.message || 'Unable to open the Deriv account session.');
       }
@@ -93,11 +100,44 @@ export default function DerivBotPage() {
     const interval = window.setInterval(async () => {
       try {
         const response = await api.derivBot.getSession(selectedAccount, token);
-        if (active) { setTicks(response.session.ticks); setLiveBalance(response.session.balance); }
+        const newestEpoch = response.session.ticks.at(-1)?.epoch ?? 0;
+        if (active && newestEpoch >= latestEpoch) {
+          latestEpoch = newestEpoch;
+          setTicks(response.session.ticks);
+          setLiveBalance(response.session.balance);
+        }
       } catch { /* the next refresh will retry the server session */ }
     }, 1000);
     return () => { active = false; window.clearInterval(interval); };
   }, [selectedAccount, symbol, token]);
+
+  useEffect(() => {
+    if (!token || !selectedAccount) return;
+    disconnectingRef.current = false;
+    let inactivityTimer: number | null = null;
+    const disconnectSession = () => {
+      if (disconnectingRef.current) return;
+      disconnectingRef.current = true;
+      void api.derivBot.disconnectSession(selectedAccount, token).catch(() => undefined);
+    };
+    const armInactivityDisconnect = () => {
+      if (inactivityTimer !== null) window.clearTimeout(inactivityTimer);
+      inactivityTimer = window.setTimeout(disconnectSession, 5 * 60 * 1000);
+    };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') armInactivityDisconnect();
+      else if (inactivityTimer !== null) window.clearTimeout(inactivityTimer);
+    };
+    const handlePageHide = () => disconnectSession();
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pagehide', handlePageHide);
+    return () => {
+      if (inactivityTimer !== null) window.clearTimeout(inactivityTimer);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pagehide', handlePageHide);
+      disconnectSession();
+    };
+  }, [selectedAccount, token]);
 
   useEffect(() => {
     if (!scanning) { setScanProgress(0); return; }
