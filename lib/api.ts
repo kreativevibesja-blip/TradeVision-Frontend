@@ -2196,6 +2196,8 @@ export const api = {
         apiFetch<{ proposal: DerivBotProposal }>('/deriv-bot/proposal', { method: 'POST', body: JSON.stringify(payload), token }),
       trade: (payload: { accountId: string; contractType: 'DIGITMATCH' | 'DIGITDIFF'; digit: number; stake: number; duration: number }, token: string) =>
         apiFetch<{ trade: unknown }>('/deriv-bot/trade', { method: 'POST', body: JSON.stringify(payload), token }),
+      burstTrade: (payload: { accountId: string; contractType: 'DIGITMATCH' | 'DIGITDIFF'; digit: number; stake: number; duration: number; totalTrades: number }, token: string) =>
+        apiFetch<{ requestedTrades: number; executedTrades: number; remainingBalance: number; trades: unknown[] }>('/deriv-bot/trade/burst', { method: 'POST', body: JSON.stringify(payload), token }),
       getTrades: (accountId: string, token: string) =>
         apiFetch<{ trades: DerivBotTrade[]; stats: { trades: number; wins: number; losses: number; winRate: number; stakeTotal: number; profitTotal: number } }>(`/deriv-bot/trades?accountId=${encodeURIComponent(accountId)}`, { token }),
       disconnectSession: (accountId: string, token: string) =>
