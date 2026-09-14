@@ -793,6 +793,7 @@ export interface DerivBotTick {
   quote: number;
   digit: number;
   epoch: number;
+  pipSize?: number | null;
 }
 
 export interface DerivBotScan {
