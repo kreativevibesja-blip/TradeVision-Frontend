@@ -27,6 +27,7 @@ const proPlusFeatures = [
   'Higher-priority AI processing',
   'Faster response time',
   'Smart Session Scanner',
+  'Deriv Bot with automated Matches/Differs execution',
 ];
 
 const fallbackPlanDetails: Record<'FREE' | 'PRO' | 'TOP_TIER', Omit<DisplayPlan, 'id' | 'name' | 'tier' | 'price' | 'features' | 'dailyLimit' | 'isActive' | 'createdAt' | 'updatedAt'>> = {
@@ -295,6 +296,7 @@ export default function PricingPage() {
                     { feature: 'Advanced Execution Planning', free: false, pro: false, top: true },
                     { feature: 'Advanced Entry Precision', free: false, pro: false, top: true },
                     { feature: 'Faster Response Time', free: false, pro: false, top: true },
+                    { feature: 'Deriv Bot automation', free: false, pro: false, top: true },
                   ].map((row) => (
                     <tr key={row.feature} className="hover:bg-white/[0.02]">
                       <td className="p-4 font-medium">{row.feature}</td>

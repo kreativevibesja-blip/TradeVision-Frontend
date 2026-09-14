@@ -18,6 +18,7 @@ import {
   UploadCloud,
   Users,
   Activity,
+  Bot,
   CandlestickChart,
   Signal,
 } from 'lucide-react';
@@ -39,7 +40,7 @@ const userNav = [
   { href: '/dashboard/messages', label: 'Messages', icon: MessageCircle },
   { href: '/dashboard/tradingview', label: 'Forex Live Chart', icon: CandlestickChart },
   { href: '/dashboard/deriv', label: 'Deriv Live Chart', icon: Activity },
-  { href: '/dashboard/deriv-bot', label: 'Deriv Bot', icon: Signal },
+  { href: '/dashboard/deriv-bot', label: 'Deriv Bot', icon: Bot },
   { href: '/dashboard/signals', label: 'Signals', icon: Signal },
   { href: '/dashboard/billing', label: 'Billing', icon: CreditCard },
   { href: '/dashboard/settings', label: 'Settings', icon: Settings },

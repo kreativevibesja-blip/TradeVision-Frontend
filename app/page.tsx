@@ -15,6 +15,7 @@ import {
   UploadCloud,
   Zap,
 } from 'lucide-react';
+import { DerivBotShowcase } from '@/components/DerivBotShowcase';
 
 const trustItems = [
   {
@@ -66,6 +67,7 @@ const features = [
   'Smart Journal',
   'Market Intelligence',
   'Orion AI Chat',
+  'Deriv Bot Execution',
 ];
 
 const mentorHighlights = [
@@ -149,7 +151,7 @@ const plans = [
     cadence: '/week',
     cta: 'Start Free Trial',
     href: '/checkout?plan=PRO',
-    features: ['Unlimited Analyses', 'Trade Radar Access', 'Smart Journal', 'Priority Support'],
+    features: ['Unlimited Analyses', 'Trade Radar Access', 'Deriv Bot Included', 'Smart Journal', 'Priority Support'],
   },
   {
     name: 'Pro Monthly',
@@ -159,7 +161,7 @@ const plans = [
     cta: 'Start Free Trial',
     href: '/checkout?plan=PRO_MONTHLY',
     featured: true,
-    features: ['Unlimited Analyses', 'Trade Radar Access', 'Smart Journal', 'Priority Support'],
+    features: ['Unlimited Analyses', 'Trade Radar Access', 'Deriv Bot Included', 'Smart Journal', 'Priority Support'],
   },
 ];
 
@@ -318,6 +320,8 @@ export default function HomePage() {
           />
         </div>
       </section>
+
+      <DerivBotShowcase />
 
       <section id="about" className="overflow-hidden bg-[linear-gradient(105deg,#031744_0%,#04246d_48%,#351889_100%)] px-4 text-white">
         <div className="mx-auto grid max-w-6xl items-center gap-8 py-8 lg:grid-cols-[0.22fr_0.28fr_0.5fr]">
