@@ -205,6 +205,12 @@ export default function DerivBotPage() {
     return <div className="mx-auto max-w-3xl px-4 py-12"><Card><CardContent className="p-8 text-center">Sign in to connect a Deriv account.</CardContent></Card></div>;
   }
 
+  const hasDerivBotAccess = user.subscription === 'PRO' || user.subscription === 'TOP_TIER' || user.subscription === 'VIP_AUTO_TRADER';
+
+  if (!hasDerivBotAccess) {
+    return <div className="mx-auto max-w-3xl px-4 py-12"><Card className="border-cyan-900 bg-[#0d1728] text-white"><CardContent className="p-8 text-center"><ShieldCheck className="mx-auto h-10 w-10 text-cyan-400" /><h1 className="mt-4 text-2xl font-black">Deriv Bot requires Pro</h1><p className="mt-3 text-sm leading-6 text-slate-400">Upgrade to Pro or higher to connect Deriv accounts, stream indices, and execute contracts.</p></CardContent></Card></div>;
+  }
+
   return (
     <main className="mx-auto max-w-6xl space-y-5 bg-[#070d1b] px-3 py-5 text-slate-100 sm:px-6 lg:px-8">
       <header className="flex flex-col justify-between gap-4 border-b border-slate-800 pb-5 sm:flex-row sm:items-end">
