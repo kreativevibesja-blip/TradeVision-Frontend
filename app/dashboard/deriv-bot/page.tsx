@@ -38,12 +38,8 @@ const DERIV_INDICES = [
 const DERIV_INDEX_GROUPS = [...new Set(DERIV_INDICES.map((index) => index.group))];
 
 const getTickDigit = (tick: DerivBotTick, selectedSymbol: string) => {
-  const fallbackPrecision = selectedSymbol.startsWith('1HZ') ? 2 : selectedSymbol.startsWith('R_') ? 4 : 2;
-  const pipSize = typeof tick.pipSize === 'number' && tick.pipSize > 0 ? tick.pipSize : 10 ** -fallbackPrecision;
-  const precision = Math.max(0, Math.round(-Math.log10(pipSize)));
-  if (precision === 0) return Math.abs(Math.trunc(tick.quote)) % 10;
-  const decimals = tick.quote.toFixed(Math.max(precision, 8)).split('.')[1] ?? '';
-  const digit = Number(decimals[precision - 1]);
+  const digits = String(tick.quote).replace(/[^0-9]/g, '');
+  const digit = Number(digits.at(-1));
   return Number.isInteger(digit) ? digit : tick.digit;
 };
 
