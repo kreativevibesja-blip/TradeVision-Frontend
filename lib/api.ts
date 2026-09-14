@@ -2197,6 +2197,8 @@ export const api = {
         apiFetch<{ trade: unknown }>('/deriv-bot/trade', { method: 'POST', body: JSON.stringify(payload), token }),
       getTrades: (accountId: string, token: string) =>
         apiFetch<{ trades: DerivBotTrade[]; stats: { trades: number; wins: number; losses: number; winRate: number; stakeTotal: number; profitTotal: number } }>(`/deriv-bot/trades?accountId=${encodeURIComponent(accountId)}`, { token }),
+      disconnectSession: (accountId: string, token: string) =>
+        apiFetch<{ success: boolean }>('/deriv-bot/session/disconnect', { method: 'POST', body: JSON.stringify({ accountId }), keepalive: true, token }),
       disconnect: (token: string) =>
         apiFetch<{ success: boolean }>('/deriv-bot/disconnect', { method: 'POST', token }),
     },
